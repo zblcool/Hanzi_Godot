@@ -36,6 +36,7 @@ var threat_level: int = 1
 var game_over: bool = false
 var levelup_active: bool = false
 var word_choice_active: bool = false
+var paused: bool = false
 
 var radical_counts: Dictionary = {}
 var skill_levels: Dictionary = {}
@@ -71,16 +72,28 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	_update_camera(delta)
 
-	if Input.is_action_just_pressed("return_menu"):
-		get_tree().change_scene_to_file(Session.ZIHAI_MENU_SCENE)
-		return
-
 	if game_over:
 		if Input.is_action_just_pressed("restart_run"):
+			Engine.time_scale = 1.0
+			get_tree().reload_current_scene()
+		elif Input.is_action_just_pressed("return_menu"):
+			Engine.time_scale = 1.0
+			get_tree().change_scene_to_file(Session.ZIHAI_MENU_SCENE)
+		return
+
+	if paused:
+		if Input.is_action_just_pressed("return_menu") or Input.is_action_just_pressed("interact"):
+			_set_paused(false)
+		elif Input.is_action_just_pressed("restart_run"):
+			Engine.time_scale = 1.0
 			get_tree().reload_current_scene()
 		return
 
 	if levelup_active or word_choice_active:
+		return
+
+	if Input.is_action_just_pressed("return_menu"):
+		_set_paused(true)
 		return
 
 	_update_inkstone_interaction()
@@ -123,6 +136,9 @@ func _spawn_hud() -> void:
 	hud.configure(Session.get_selected_hero())
 	hud.radical_choice_selected.connect(_on_radical_choice_selected)
 	hud.word_choice_selected.connect(_on_word_choice_selected)
+	hud.pause_resume_requested.connect(_on_hud_pause_resume_requested)
+	hud.restart_requested.connect(_on_hud_restart_requested)
+	hud.return_menu_requested.connect(_on_hud_return_menu_requested)
 
 
 func _spawn_props() -> void:
@@ -648,9 +664,16 @@ func _on_player_health_changed(current: float, maximum: float) -> void:
 
 func _on_player_defeated() -> void:
 	game_over = true
-	Engine.time_scale = 1.0
+	paused = false
+	Engine.time_scale = 0.0
 	hud.show_banner("字海沉没", Color(1.0, 0.76, 0.58, 1.0), 2.0)
-	hud.set_game_over("墨潮吞没了你。\n按 R 立即重开，或按 Esc 返回二级菜单。")
+	Session.last_run_summary = {
+		"elapsed": elapsed_time,
+		"kills": kills,
+		"threat": threat_level,
+		"level": level
+	}
+	hud.set_game_over("墨潮吞没了你。按 R 立即重开，或按 Esc 返回二级菜单。", elapsed_time, kills, threat_level, level)
 
 
 func _on_bush_activated(message: String) -> void:
@@ -666,6 +689,31 @@ func _sync_hud() -> void:
 	hud.set_status(elapsed_time, kills, threat_level)
 	hud.set_radicals(radical_counts)
 	hud.set_skills(skill_levels, word_skill_levels, word_progress, blade_level, Session.selected_hero)
+
+
+func _set_paused(should_pause: bool) -> void:
+	if game_over:
+		return
+	paused = should_pause
+	Engine.time_scale = 0.0 if paused else 1.0
+	if paused:
+		hud.show_pause_menu(elapsed_time, kills, threat_level, level)
+	else:
+		hud.hide_state_overlay()
+
+
+func _on_hud_pause_resume_requested() -> void:
+	_set_paused(false)
+
+
+func _on_hud_restart_requested() -> void:
+	Engine.time_scale = 1.0
+	get_tree().reload_current_scene()
+
+
+func _on_hud_return_menu_requested() -> void:
+	Engine.time_scale = 1.0
+	get_tree().change_scene_to_file(Session.ZIHAI_MENU_SCENE)
 
 
 func _update_inkstone_interaction() -> void:

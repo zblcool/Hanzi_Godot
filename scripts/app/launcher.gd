@@ -100,13 +100,18 @@ func _build_ui() -> void:
 	root.add_theme_constant_override("margin_left", 44)
 	root.add_theme_constant_override("margin_top", 32)
 	root.add_theme_constant_override("margin_right", 44)
-	root.add_theme_constant_override("margin_bottom", 30)
+	root.add_theme_constant_override("margin_bottom", 24)
 	add_child(root)
 
+	var scroll := ScrollContainer.new()
+	scroll.set_anchors_preset(Control.PRESET_FULL_RECT)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	root.add_child(scroll)
+
 	var layout := VBoxContainer.new()
-	layout.set_anchors_preset(Control.PRESET_FULL_RECT)
+	layout.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	layout.add_theme_constant_override("separation", 20)
-	root.add_child(layout)
+	scroll.add_child(layout)
 
 	var top_bar := HBoxContainer.new()
 	top_bar.add_theme_constant_override("separation", 12)
@@ -119,7 +124,7 @@ func _build_ui() -> void:
 	top_bar.add_child(_make_static_pill("EN", Vector2(78.0, 54.0)))
 
 	var header_panel := PanelContainer.new()
-	header_panel.custom_minimum_size = Vector2(0.0, 216.0)
+	header_panel.custom_minimum_size = Vector2(0.0, 188.0)
 	header_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.06, 0.08, 0.1, 0.8), Color(0.24, 0.3, 0.36, 0.72)))
 	layout.add_child(header_panel)
 
@@ -134,8 +139,8 @@ func _build_ui() -> void:
 	header_box.add_theme_constant_override("separation", 8)
 	header_margin.add_child(header_box)
 	header_box.add_child(_make_label("HANZI GAME LAUNCHER", 18, Color(0.96, 0.82, 0.54, 0.88)))
-	header_box.add_child(_make_label("汉字游戏启动器", 84, Color(1.0, 0.95, 0.86, 1.0)))
-	header_box.add_child(_make_label("从字形、部件到战斗系统，把汉字本身做成游戏的核心机制。", 20, Color(0.9, 0.92, 0.96, 0.94)))
+	header_box.add_child(_make_label("汉字游戏启动器", 72, Color(1.0, 0.95, 0.86, 1.0)))
+	header_box.add_child(_make_label("从字形、部件到战斗系统，把汉字本身做成游戏的核心机制。", 18, Color(0.9, 0.92, 0.96, 0.94)))
 
 	var main_row := HBoxContainer.new()
 	main_row.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -193,7 +198,7 @@ func _build_ui() -> void:
 
 func _make_game_card(title: String, badge_text: String, tagline: String, tags: Array[String], accent: Color, preview_kind: String, button_text: String, callback: Callable, enabled: bool) -> Control:
 	var card := PanelContainer.new()
-	card.custom_minimum_size = Vector2(0.0, 472.0)
+	card.custom_minimum_size = Vector2(0.0, 418.0)
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	card.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.12, accent.g * 0.12, accent.b * 0.16, 0.94), Color(accent.r, accent.g, accent.b, 0.64)))
 
@@ -205,28 +210,28 @@ func _make_game_card(title: String, badge_text: String, tagline: String, tags: A
 	card.add_child(padding)
 
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 12)
+	box.add_theme_constant_override("separation", 10)
 	padding.add_child(box)
 
 	var preview := PanelContainer.new()
-	preview.custom_minimum_size = Vector2(0.0, 176.0)
+	preview.custom_minimum_size = Vector2(0.0, 148.0)
 	preview.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.16, accent.g * 0.15, accent.b * 0.16, 0.38), Color(accent.r, accent.g, accent.b, 0.24)))
 	box.add_child(preview)
 	_build_preview_stage(preview, preview_kind, accent)
 
 	var badge := _make_tag(badge_text, Color(0.12, 0.18, 0.24, 0.78), Color(0.96, 0.82, 0.56, 0.96))
 	box.add_child(badge)
-	box.add_child(_make_label(title, 38, Color(1.0, 0.95, 0.86, 1.0)))
-	box.add_child(_make_label(tagline, 18, Color(0.9, 0.92, 0.96, 0.95)))
+	box.add_child(_make_label(title, 34, Color(1.0, 0.95, 0.86, 1.0)))
+	box.add_child(_make_label(tagline, 17, Color(0.9, 0.92, 0.96, 0.95)))
 
 	var tags_row := HBoxContainer.new()
-	tags_row.add_theme_constant_override("separation", 10)
+	tags_row.add_theme_constant_override("separation", 8)
 	box.add_child(tags_row)
 	for tag_text in tags:
 		tags_row.add_child(_make_tag(tag_text, Color(accent.r * 0.18, accent.g * 0.18, accent.b * 0.2, 0.88), Color(0.95, 0.94, 0.9, 0.96)))
 
 	var spacer := Control.new()
-	spacer.custom_minimum_size = Vector2(0.0, 26.0)
+	spacer.custom_minimum_size = Vector2(0.0, 14.0)
 	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	box.add_child(spacer)
 
@@ -256,36 +261,36 @@ func _build_preview_stage(preview: PanelContainer, preview_kind: String, accent:
 	preview.add_child(stage)
 
 	var ring_a := PanelContainer.new()
-	ring_a.size = Vector2(140.0, 140.0)
-	ring_a.position = Vector2(72.0, 16.0)
+	ring_a.size = Vector2(118.0, 118.0)
+	ring_a.position = Vector2(34.0, 10.0)
 	ring_a.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.12, accent.g * 0.12, accent.b * 0.14, 0.12), Color(accent.r, accent.g, accent.b, 0.24)))
 	stage.add_child(ring_a)
 
 	var ring_b := PanelContainer.new()
-	ring_b.size = Vector2(100.0, 100.0)
-	ring_b.position = Vector2(92.0, 36.0)
+	ring_b.size = Vector2(84.0, 84.0)
+	ring_b.position = Vector2(51.0, 27.0)
 	ring_b.add_theme_stylebox_override("panel", _make_panel_style(Color(0.1, 0.14, 0.18, 0.0), Color(accent.r, accent.g, accent.b, 0.2)))
 	stage.add_child(ring_b)
 
 	var beam_left := ColorRect.new()
 	beam_left.color = Color(accent.r, accent.g, accent.b, 0.86)
-	beam_left.position = Vector2(72.0, 82.0)
-	beam_left.size = Vector2(46.0, 8.0)
+	beam_left.position = Vector2(40.0, 70.0)
+	beam_left.size = Vector2(38.0, 7.0)
 	stage.add_child(beam_left)
 
 	var beam_right := ColorRect.new()
 	beam_right.color = Color(accent.r, accent.g, accent.b, 0.86)
-	beam_right.position = Vector2(176.0, 94.0)
-	beam_right.size = Vector2(54.0, 8.0)
+	beam_right.position = Vector2(142.0, 78.0)
+	beam_right.size = Vector2(42.0, 7.0)
 	stage.add_child(beam_right)
 
 	var core := PanelContainer.new()
-	core.size = Vector2(92.0, 92.0)
-	core.position = Vector2(96.0, 56.0)
+	core.size = Vector2(78.0, 78.0)
+	core.position = Vector2(57.0, 40.0)
 	core.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.24, accent.g * 0.2, accent.b * 0.16, 0.94), Color(accent.r, accent.g, accent.b, 0.32)))
 	stage.add_child(core)
 
-	var glyph_label := _make_label("字" if preview_kind == "zihai" else "仓", 52, Color(1.0, 0.95, 0.86, 1.0))
+	var glyph_label := _make_label("字" if preview_kind == "zihai" else "仓", 44, Color(1.0, 0.95, 0.86, 1.0))
 	glyph_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	glyph_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	glyph_label.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -293,10 +298,10 @@ func _build_preview_stage(preview: PanelContainer, preview_kind: String, accent:
 
 	var chips: Array = []
 	var chip_texts := ["偏", "合", "词"] if preview_kind == "zihai" else ["仓", "颉", "路"]
-	var chip_positions := [Vector2(236.0, 28.0), Vector2(246.0, 78.0), Vector2(210.0, 126.0)]
+	var chip_positions := [Vector2(186.0, 18.0), Vector2(196.0, 58.0), Vector2(168.0, 96.0)]
 	for index in range(chip_texts.size()):
 		var chip := _make_tag(String(chip_texts[index]), Color(accent.r * 0.16, accent.g * 0.18, accent.b * 0.22, 0.88), Color(1.0, 0.95, 0.86, 0.98))
-		chip.custom_minimum_size = Vector2(68.0, 46.0)
+		chip.custom_minimum_size = Vector2(58.0, 38.0)
 		chip.position = chip_positions[index]
 		chip.set_meta("base_x", chip.position.x)
 		chip.set_meta("base_y", chip.position.y)
@@ -318,7 +323,7 @@ func _build_preview_stage(preview: PanelContainer, preview_kind: String, accent:
 func _make_info_panel(title: String, lines: Array[String], accent: Color) -> PanelContainer:
 	var panel := PanelContainer.new()
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	panel.custom_minimum_size = Vector2(0.0, 166.0)
+	panel.custom_minimum_size = Vector2(0.0, 144.0)
 	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.1, accent.g * 0.1, accent.b * 0.12, 0.82), Color(accent.r, accent.g, accent.b, 0.46)))
 
 	var margin := MarginContainer.new()

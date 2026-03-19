@@ -4,6 +4,9 @@ const CJKFont := preload("res://scripts/core/cjk_font.gd")
 
 signal radical_choice_selected(radical: String)
 signal word_choice_selected(word_id: String)
+signal pause_resume_requested
+signal restart_requested
+signal return_menu_requested
 
 var ui_font: Font
 
@@ -30,6 +33,13 @@ var choice_title_label: Label
 var choice_hint_label: Label
 var choice_buttons: Array[Button] = []
 var choice_mode: String = ""
+var state_overlay: Control
+var state_title_label: Label
+var state_body_label: Label
+var state_primary_button: Button
+var state_secondary_button: Button
+var state_tertiary_button: Button
+var state_mode: String = ""
 
 var banner_time := 0.0
 var banner_color: Color = Color(1.0, 0.95, 0.84, 1.0)
@@ -227,10 +237,45 @@ func hide_choice_overlay() -> void:
 	choice_overlay.visible = false
 
 
-func set_game_over(summary: String) -> void:
+func show_pause_menu(elapsed: float, kills: int, threat: int, level: int) -> void:
 	hide_choice_overlay()
-	overlay_label.text = summary
-	overlay_label.visible = true
+	overlay_label.visible = false
+	state_mode = "pause"
+	state_title_label.text = "墨阵暂歇"
+	state_body_label.text = "当前进度\n存活 %s\n波次 %d   击破 %d   等级 Lv.%d\n\n按 E 或 Esc 继续，按 R 立即重开。" % [
+		_format_time(elapsed),
+		threat,
+		kills,
+		level
+	]
+	_configure_state_button(state_primary_button, "继续战斗", Callable(self, "_emit_pause_resume"))
+	_configure_state_button(state_secondary_button, "重新开始", Callable(self, "_emit_restart"))
+	_configure_state_button(state_tertiary_button, "返回菜单", Callable(self, "_emit_return_menu"))
+	state_overlay.visible = true
+
+
+func hide_state_overlay() -> void:
+	state_mode = ""
+	if state_overlay != null:
+		state_overlay.visible = false
+
+
+func set_game_over(summary: String, elapsed: float = 0.0, kills: int = 0, threat: int = 1, level: int = 1) -> void:
+	hide_choice_overlay()
+	state_mode = "game_over"
+	state_title_label.text = "字海沉没"
+	state_body_label.text = "%s\n\n本轮残卷\n存活 %s\n波次 %d   击破 %d   等级 Lv.%d" % [
+		summary,
+		_format_time(elapsed),
+		threat,
+		kills,
+		level
+	]
+	_configure_state_button(state_primary_button, "重新开始", Callable(self, "_emit_restart"))
+	_configure_state_button(state_secondary_button, "返回菜单", Callable(self, "_emit_return_menu"))
+	state_tertiary_button.visible = false
+	overlay_label.visible = false
+	state_overlay.visible = true
 
 
 func _build_ui() -> void:
@@ -353,6 +398,7 @@ func _build_ui() -> void:
 	root.add_child(overlay_label)
 
 	_build_choice_overlay(root)
+	_build_state_overlay(root)
 
 
 func _build_choice_overlay(root: Control) -> void:
@@ -413,6 +459,60 @@ func _build_choice_overlay(root: Control) -> void:
 		cards_row.add_child(button)
 
 
+func _build_state_overlay(root: Control) -> void:
+	state_overlay = Control.new()
+	state_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	state_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	state_overlay.visible = false
+	root.add_child(state_overlay)
+
+	var scrim := ColorRect.new()
+	scrim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	scrim.color = Color(0.01, 0.02, 0.03, 0.8)
+	state_overlay.add_child(scrim)
+
+	var panel := PanelContainer.new()
+	panel.set_anchors_preset(Control.PRESET_CENTER)
+	panel.offset_left = -360.0
+	panel.offset_top = -220.0
+	panel.offset_right = 360.0
+	panel.offset_bottom = 220.0
+	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.06, 0.08, 0.1, 0.96), Color(0.94, 0.7, 0.4, 0.92), 24))
+	state_overlay.add_child(panel)
+
+	var margin := MarginContainer.new()
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left", 28)
+	margin.add_theme_constant_override("margin_top", 24)
+	margin.add_theme_constant_override("margin_right", 28)
+	margin.add_theme_constant_override("margin_bottom", 24)
+	panel.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 14)
+	margin.add_child(box)
+
+	state_title_label = _make_label("", 42, Color(1.0, 0.94, 0.86, 1.0))
+	state_body_label = _make_label("", 20, Color(0.88, 0.92, 0.96, 0.96), 2.0)
+	box.add_child(state_title_label)
+	box.add_child(state_body_label)
+
+	var spacer := Control.new()
+	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	box.add_child(spacer)
+
+	var buttons_box := VBoxContainer.new()
+	buttons_box.add_theme_constant_override("separation", 10)
+	box.add_child(buttons_box)
+
+	state_primary_button = _make_state_button()
+	state_secondary_button = _make_state_button()
+	state_tertiary_button = _make_state_button()
+	buttons_box.add_child(state_primary_button)
+	buttons_box.add_child(state_secondary_button)
+	buttons_box.add_child(state_tertiary_button)
+
+
 func _on_choice_button_pressed(index: int) -> void:
 	if index < 0 or index >= choice_buttons.size():
 		return
@@ -435,6 +535,53 @@ func _configure_choice_button(button: Button, title: String, headline: String, d
 	button.add_theme_stylebox_override("normal", _make_button_style(color, 24))
 	button.add_theme_stylebox_override("hover", _make_button_style(color.lightened(0.08), 24))
 	button.add_theme_stylebox_override("pressed", _make_button_style(color.darkened(0.08), 24))
+
+
+func _make_state_button() -> Button:
+	var button := Button.new()
+	button.custom_minimum_size = Vector2(0.0, 52.0)
+	button.add_theme_font_override("font", ui_font)
+	button.add_theme_font_size_override("font_size", 22)
+	button.add_theme_color_override("font_color", Color(0.08, 0.08, 0.08, 1.0))
+	return button
+
+
+func _configure_state_button(button: Button, text: String, callback: Callable) -> void:
+	button.visible = true
+	button.text = text
+	var resume_callable := Callable(self, "_emit_pause_resume")
+	var restart_callable := Callable(self, "_emit_restart")
+	var menu_callable := Callable(self, "_emit_return_menu")
+	if button.pressed.is_connected(resume_callable):
+		button.pressed.disconnect(resume_callable)
+	if button.pressed.is_connected(restart_callable):
+		button.pressed.disconnect(restart_callable)
+	if button.pressed.is_connected(menu_callable):
+		button.pressed.disconnect(menu_callable)
+	button.add_theme_stylebox_override("normal", _make_button_style(Color(0.92, 0.62, 0.28, 1.0), 18))
+	button.add_theme_stylebox_override("hover", _make_button_style(Color(0.98, 0.7, 0.34, 1.0), 18))
+	button.add_theme_stylebox_override("pressed", _make_button_style(Color(0.84, 0.54, 0.22, 1.0), 18))
+	button.pressed.connect(callback, CONNECT_ONE_SHOT)
+
+
+func _emit_pause_resume() -> void:
+	hide_state_overlay()
+	pause_resume_requested.emit()
+
+
+func _emit_restart() -> void:
+	restart_requested.emit()
+
+
+func _emit_return_menu() -> void:
+	return_menu_requested.emit()
+
+
+func _format_time(elapsed: float) -> String:
+	var total_seconds: int = int(floor(elapsed))
+	var minutes: int = total_seconds / 60
+	var seconds: int = total_seconds % 60
+	return "%02d:%02d" % [minutes, seconds]
 
 
 func _make_panel(fill_color: Color, border_color: Color, size: Vector2) -> PanelContainer:
