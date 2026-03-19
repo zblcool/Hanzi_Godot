@@ -37,6 +37,7 @@ var game_over: bool = false
 var levelup_active: bool = false
 var word_choice_active: bool = false
 var paused: bool = false
+var opening_time: float = 0.0
 
 var radical_counts: Dictionary = {}
 var skill_levels: Dictionary = {}
@@ -64,8 +65,7 @@ func _ready() -> void:
 	_spawn_props()
 	_spawn_hud()
 	_sync_hud()
-	hud.show_banner("字海初开", Color(1.0, 0.84, 0.54, 1.0), 2.2)
-	hud.set_tip(DEFAULT_BATTLE_TIP)
+	_start_opening_sequence()
 	set_process(true)
 
 
@@ -94,6 +94,10 @@ func _process(delta: float) -> void:
 
 	if Input.is_action_just_pressed("return_menu"):
 		_set_paused(true)
+		return
+
+	if opening_time > 0.0:
+		opening_time = max(opening_time - delta, 0.0)
 		return
 
 	_update_inkstone_interaction()
@@ -691,6 +695,61 @@ func _sync_hud() -> void:
 	hud.set_skills(skill_levels, word_skill_levels, word_progress, blade_level, Session.selected_hero)
 
 
+func _start_opening_sequence() -> void:
+	opening_time = 1.65
+	spawn_timer = 1.2
+	var hero_data: Dictionary = Session.get_selected_hero()
+	var accent: Color = hero_data["accent"]
+	hud.show_banner("%s 入卷" % String(hero_data["name"]), accent, 2.3)
+	hud.set_tip("先收第一枚偏旁，尽快合出首个成字。")
+	_spawn_wave_effect(player.global_position, 3.3, accent, String(hero_data["glyph"]))
+	_spawn_intro_symbols(String(hero_data["glyph"]), accent)
+
+
+func _spawn_intro_symbols(glyph: String, tint: Color) -> void:
+	var root := Node3D.new()
+	root.position = player.global_position + Vector3(0.0, 0.4, 0.0)
+	effects_root.add_child(root)
+
+	for index in range(4):
+		var symbol_root := Node3D.new()
+		var angle: float = TAU * float(index) / 4.0
+		symbol_root.position = Vector3(cos(angle) * 1.7, 0.0, sin(angle) * 1.7)
+		root.add_child(symbol_root)
+
+		var disc := MeshInstance3D.new()
+		var disc_mesh := CylinderMesh.new()
+		disc_mesh.top_radius = 0.36
+		disc_mesh.bottom_radius = 0.36
+		disc_mesh.height = 0.05
+		disc.mesh = disc_mesh
+		var disc_material := StandardMaterial3D.new()
+		disc_material.albedo_color = Color(0.05, 0.07, 0.09, 0.84)
+		disc_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		disc_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+		disc_material.emission_enabled = true
+		disc_material.emission = tint.darkened(0.2)
+		disc.material_override = disc_material
+		symbol_root.add_child(disc)
+
+		var label := Label3D.new()
+		label.text = glyph
+		label.font = CJKFont.get_font()
+		label.font_size = 26
+		label.position = Vector3(0.0, 0.04, 0.0)
+		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		label.modulate = Color(1.0, 0.95, 0.86, 0.96)
+		symbol_root.add_child(label)
+
+		var tween := create_tween()
+		tween.parallel().tween_property(symbol_root, "position:y", 1.15, 0.72)
+		tween.parallel().tween_property(symbol_root, "scale", Vector3(1.16, 1.0, 1.16), 0.72)
+		tween.parallel().tween_property(label, "modulate:a", 0.0, 0.72)
+	var cleanup_tween := create_tween()
+	cleanup_tween.tween_interval(0.74)
+	cleanup_tween.tween_callback(root.queue_free)
+
+
 func _set_paused(should_pause: bool) -> void:
 	if game_over:
 		return
@@ -929,16 +988,43 @@ func _create_tree(position: Vector3) -> void:
 	trunk.material_override = trunk_material
 	tree_root.add_child(trunk)
 
-	var canopy := MeshInstance3D.new()
-	var canopy_mesh := SphereMesh.new()
-	canopy_mesh.radius = 1.7
-	canopy_mesh.height = 2.9
-	canopy.mesh = canopy_mesh
-	canopy.position = Vector3(0.0, 3.05, 0.0)
 	var canopy_material := StandardMaterial3D.new()
 	canopy_material.albedo_color = Color(0.19, 0.31, 0.21, 1.0)
-	canopy.material_override = canopy_material
-	tree_root.add_child(canopy)
+	canopy_material.roughness = 0.94
+	canopy_material.emission_enabled = true
+	canopy_material.emission = Color(0.08, 0.16, 0.1, 1.0)
+	canopy_material.emission_energy_multiplier = 0.2
+
+	var canopy_offsets := [
+		Vector3(0.0, 3.08, 0.0),
+		Vector3(-0.84, 2.86, 0.26),
+		Vector3(0.72, 2.78, -0.18)
+	]
+	var canopy_scales := [1.0, 0.72, 0.62]
+	for index in range(canopy_offsets.size()):
+		var canopy := MeshInstance3D.new()
+		var canopy_mesh := SphereMesh.new()
+		canopy_mesh.radius = 1.7 * canopy_scales[index]
+		canopy_mesh.height = canopy_mesh.radius * 1.65
+		canopy.mesh = canopy_mesh
+		canopy.position = canopy_offsets[index]
+		canopy.material_override = canopy_material
+		tree_root.add_child(canopy)
+
+	var lantern := MeshInstance3D.new()
+	var lantern_mesh := CylinderMesh.new()
+	lantern_mesh.top_radius = 0.16
+	lantern_mesh.bottom_radius = 0.2
+	lantern_mesh.height = 0.26
+	lantern.mesh = lantern_mesh
+	lantern.position = Vector3(0.58, 2.08, 0.22)
+	var lantern_material := StandardMaterial3D.new()
+	lantern_material.albedo_color = Color(0.9, 0.82, 0.62, 1.0)
+	lantern_material.emission_enabled = true
+	lantern_material.emission = Color(0.96, 0.84, 0.46, 1.0)
+	lantern_material.emission_energy_multiplier = 0.5
+	lantern.material_override = lantern_material
+	tree_root.add_child(lantern)
 
 
 func _enemy_count() -> int:
