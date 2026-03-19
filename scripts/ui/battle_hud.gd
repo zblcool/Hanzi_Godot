@@ -17,6 +17,9 @@ var tip_label: Label
 var banner_label: Label
 var overlay_label: Label
 var xp_bar: ProgressBar
+var health_bar: ProgressBar
+var controls_label: Label
+var skill_cards_box: VBoxContainer
 
 var choice_overlay: Control
 var choice_title_label: Label
@@ -48,16 +51,18 @@ func _process(delta: float) -> void:
 
 
 func configure(hero_data: Dictionary) -> void:
-	hero_label.text = "%s  ·  %s" % [String(hero_data["name"]), String(hero_data["title"])]
-	tip_label.text = "WASD / 方向键移动，`R` 重开，`Esc` 返回二级菜单。"
+	hero_label.text = "%s" % String(hero_data["name"])
+	controls_label.text = "WASD / 方向键移动\n自动朝最近敌人出手\n升级时三选一偏旁\n靠近砚台按 E 磨词\nR 重开，Esc 返回菜单"
 
 
 func set_health(current: float, maximum: float) -> void:
 	health_label.text = "气血  %d / %d" % [int(ceil(current)), int(ceil(maximum))]
+	health_bar.max_value = max(1.0, maximum)
+	health_bar.value = clamp(current, 0.0, maximum)
 
 
 func set_progress(level: int, current: int, target: int) -> void:
-	progress_label.text = "字力  Lv.%d   %d / %d" % [level, current, target]
+	progress_label.text = "字墨  Lv.%d   %d / %d" % [level, current, target]
 	xp_bar.max_value = max(1, target)
 	xp_bar.value = clamp(current, 0, target)
 
@@ -66,61 +71,83 @@ func set_status(elapsed: float, kills: int, threat: int) -> void:
 	var total_seconds: int = int(floor(elapsed))
 	var minutes: int = int(total_seconds / 60)
 	var seconds: int = total_seconds % 60
-	status_label.text = "波次  %d   存活  %02d:%02d   斩字  %d" % [threat, minutes, seconds, kills]
+	status_label.text = "存活  %02d:%02d\n波次  %d\n击破  %d" % [minutes, seconds, threat, kills]
 
 
 func set_radicals(radicals: Dictionary) -> void:
 	var lines: Array[String] = []
-	var current_line := "偏旁仓  "
+	var line := ""
 	for radical_variant in Session.RADICAL_ORDER:
 		var radical := String(radical_variant)
 		var amount: int = int(radicals.get(radical, 0))
-		var segment := "%s×%d" % [radical, amount]
-		if current_line.length() > 16:
-			lines.append(current_line)
-			current_line = segment
+		var segment := "%s Lv材 ×%d" % [radical, amount]
+		if line.length() > 0 and line.length() + segment.length() > 18:
+			lines.append(line)
+			line = segment
 		else:
-			current_line += segment + "   "
-	if not current_line.is_empty():
-		lines.append(current_line)
+			if not line.is_empty():
+				line += "   "
+			line += segment
+	if not line.is_empty():
+		lines.append(line)
 	radicals_label.text = "\n".join(lines)
 
 
 func set_skills(recipe_levels: Dictionary, word_levels: Dictionary, word_progress: Dictionary, blade_level: int, hero_id: String) -> void:
-	var lines: Array[String] = ["合字"]
+	if skill_cards_box == null:
+		return
+
+	for child in skill_cards_box.get_children():
+		child.queue_free()
+
+	var cards: Array[Dictionary] = []
 	for recipe_id_variant in Session.RECIPE_ORDER:
 		var recipe_id := String(recipe_id_variant)
 		var recipe: Dictionary = Session.get_recipe_data(recipe_id)
-		var level: int = int(recipe_levels.get(recipe_id, 0))
-		var max_level: int = int(recipe["max_level"])
-		if level > 0:
-			lines.append("%s  Lv.%d/%d" % [String(recipe["display"]), level, max_level])
-		else:
-			lines.append("%s  待成字" % String(recipe["display"]))
-
-	lines.append("")
-	lines.append("词技")
-	for word_id_variant in Session.WORD_ORDER:
-		var word_id := String(word_id_variant)
-		var word: Dictionary = Session.get_word_data(word_id)
-		var recipe_id: String = String(word["recipe_id"])
 		var recipe_level: int = int(recipe_levels.get(recipe_id, 0))
-		var recipe_max: int = int(Session.get_recipe_data(recipe_id)["max_level"])
-		var level: int = int(word_levels.get(word_id, 0))
-		if level > 0:
-			lines.append("%s  Lv.%d/%d" % [String(word["display"]), level, int(word["max_level"])])
-		elif recipe_level < recipe_max:
-			lines.append("%s  待满级" % String(word["display"]))
-		else:
-			lines.append("%s  磨词 %d/%d" % [
-				String(word["display"]),
-				int(word_progress.get(word_id, 0)),
-				int(word["unlock_cost"])
-			])
+		var word_id: String = String(recipe["word_id"])
+		var word: Dictionary = Session.get_word_data(word_id)
+		var word_level: int = int(word_levels.get(word_id, 0))
+		if word_level > 0:
+			cards.append({
+				"glyph": String(word["display"]),
+				"badge": "成词技能",
+				"title": String(word["title"]),
+				"detail": String(word["description"]),
+				"recipe": "%s + %s" % [String(recipe["radicals"][0]), String(recipe["radicals"][1])],
+				"level": "Lv.%d/%d" % [word_level, int(word["max_level"])],
+				"color": Color(word["color"])
+			})
+		elif recipe_level > 0:
+			var state_text := "Lv.%d/%d" % [recipe_level, int(recipe["max_level"])]
+			if recipe_level >= int(recipe["max_level"]):
+				state_text = "磨词 %d/%d" % [int(word_progress.get(word_id, 0)), int(word["unlock_cost"])]
+			cards.append({
+				"glyph": String(recipe["display"]),
+				"badge": "成字技能",
+				"title": String(recipe["title"]),
+				"detail": String(recipe["description"]),
+				"recipe": "%s + %s" % [String(recipe["radicals"][0]), String(recipe["radicals"][1])],
+				"level": state_text,
+				"color": Color(recipe["color"])
+			})
 
-	lines.append("")
-	lines.append("%s  Lv.%d" % ["刀势" if hero_id == "xia" else "笔锋", blade_level])
-	skills_label.text = "\n".join(lines)
+	cards.append({
+		"glyph": "刀" if hero_id == "xia" else "笔",
+		"badge": "武器核心",
+		"title": "刀势" if hero_id == "xia" else "笔锋",
+		"detail": "独立强化主武器强度，和角色身份直接绑定。",
+		"recipe": "刂",
+		"level": "Lv.%d" % blade_level,
+		"color": Color(0.96, 0.54, 0.36, 1.0)
+	})
+
+	if cards.is_empty():
+		skill_cards_box.add_child(_make_placeholder_card())
+		return
+
+	for card in cards:
+		skill_cards_box.add_child(_make_skill_card(card))
 
 
 func set_tip(text: String) -> void:
@@ -146,15 +173,12 @@ func show_radical_choices(level: int, choices: Array[Dictionary], pending_count:
 			var choice: Dictionary = choices[index]
 			_configure_choice_button(
 				button,
-				"%s  %s" % [
-					String(choice["radical"]),
-					String(choice["name"])
-				],
+				"%s  %s" % [String(choice["radical"]), String(choice["name"])],
 				String(choice["headline"]),
 				String(choice["description"]),
 				Color(choice["color"]),
 				"radical",
-				String(choice["radical"]),
+				String(choice["radical"])
 			)
 		else:
 			button.visible = false
@@ -172,10 +196,7 @@ func show_word_choices(choices: Array[Dictionary]) -> void:
 			var choice: Dictionary = choices[index]
 			_configure_choice_button(
 				button,
-				"%s  %s" % [
-					String(choice["display"]),
-					String(choice["title"])
-				],
+				"%s  %s" % [String(choice["display"]), String(choice["title"])],
 				String(choice["headline"]),
 				String(choice["description"]),
 				Color(choice["color"]),
@@ -208,76 +229,91 @@ func _build_ui() -> void:
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(root)
 
-	var left_panel := PanelContainer.new()
-	left_panel.position = Vector2(18.0, 18.0)
-	left_panel.size = Vector2(386.0, 272.0)
-	left_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.06, 0.07, 0.09, 0.8), Color(0.93, 0.63, 0.31, 0.95)))
-	root.add_child(left_panel)
+	var left_column := VBoxContainer.new()
+	left_column.position = Vector2(24.0, 24.0)
+	left_column.size = Vector2(410.0, 940.0)
+	left_column.add_theme_constant_override("separation", 16)
+	root.add_child(left_column)
 
-	var left_margin := MarginContainer.new()
-	left_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-	left_margin.add_theme_constant_override("margin_left", 14)
-	left_margin.add_theme_constant_override("margin_top", 12)
-	left_margin.add_theme_constant_override("margin_right", 14)
-	left_margin.add_theme_constant_override("margin_bottom", 12)
-	left_panel.add_child(left_margin)
+	var intro_panel := _make_panel(Color(0.05, 0.08, 0.1, 0.76), Color(0.93, 0.69, 0.38, 0.84), Vector2(410.0, 286.0))
+	left_column.add_child(intro_panel)
+	var intro_box := _panel_box(intro_panel)
+	intro_box.add_child(_make_label("INK-BORN ROGUELITE DEMO", 17, Color(0.96, 0.82, 0.52, 0.86), 4.0))
+	hero_label = _make_label("书生", 56, Color(1.0, 0.95, 0.86, 1.0))
+	intro_box.add_child(hero_label)
+	health_label = _make_label("气血  0 / 0", 18, Color(0.96, 0.92, 0.87, 0.98))
+	intro_box.add_child(health_label)
+	health_bar = _make_bar(Color(0.82, 0.38, 0.31, 0.96))
+	intro_box.add_child(health_bar)
+	progress_label = _make_label("字墨  Lv.1   0 / 4", 18, Color(0.98, 0.91, 0.72, 1.0))
+	intro_box.add_child(progress_label)
+	xp_bar = _make_bar(Color(0.56, 0.84, 0.82, 0.96))
+	intro_box.add_child(xp_bar)
+	status_label = _make_label("存活  00:00\n波次  1\n击破  0", 20, Color(0.86, 0.92, 0.98, 0.98))
+	intro_box.add_child(status_label)
 
-	var left_box := VBoxContainer.new()
-	left_box.add_theme_constant_override("separation", 6)
-	left_margin.add_child(left_box)
+	var radicals_panel := _make_panel(Color(0.05, 0.07, 0.09, 0.72), Color(0.38, 0.72, 0.78, 0.72), Vector2(410.0, 144.0))
+	left_column.add_child(radicals_panel)
+	var radicals_box := _panel_box(radicals_panel)
+	radicals_box.add_child(_make_label("待合偏旁", 22, Color(0.96, 0.9, 0.8, 1.0)))
+	radicals_label = _make_label("已全部化字", 18, Color(0.86, 0.9, 0.92, 0.94))
+	radicals_box.add_child(radicals_label)
 
-	hero_label = _make_label("角色", 28, Color(1.0, 0.92, 0.8, 1.0))
-	health_label = _make_label("气血  0 / 0", 18, Color(0.95, 0.91, 0.86, 1.0))
-	progress_label = _make_label("字力  Lv.1   0 / 4", 18, Color(0.98, 0.91, 0.72, 1.0))
-	status_label = _make_label("波次  1   存活  00:00   斩字  0", 18, Color(0.86, 0.92, 0.98, 0.98))
-	radicals_label = _make_label("偏旁仓", 18, Color(0.91, 0.88, 0.84, 0.96))
-	xp_bar = ProgressBar.new()
-	xp_bar.min_value = 0
-	xp_bar.max_value = 4
-	xp_bar.value = 0
-	xp_bar.custom_minimum_size = Vector2(0.0, 16.0)
-	xp_bar.show_percentage = false
-	xp_bar.add_theme_stylebox_override("background", _make_fill_style(Color(0.12, 0.11, 0.1, 0.95), 7))
-	xp_bar.add_theme_stylebox_override("fill", _make_fill_style(Color(0.94, 0.7, 0.31, 0.98), 7))
-	left_box.add_child(hero_label)
-	left_box.add_child(health_label)
-	left_box.add_child(progress_label)
-	left_box.add_child(xp_bar)
-	left_box.add_child(status_label)
-	left_box.add_child(radicals_label)
+	var controls_panel := _make_panel(Color(0.05, 0.07, 0.09, 0.72), Color(0.92, 0.69, 0.38, 0.58), Vector2(410.0, 220.0))
+	left_column.add_child(controls_panel)
+	var controls_box := _panel_box(controls_panel)
+	controls_box.add_child(_make_label("操作", 22, Color(0.96, 0.9, 0.8, 1.0)))
+	controls_label = _make_label("", 18, Color(0.88, 0.9, 0.93, 0.94))
+	controls_box.add_child(controls_label)
 
-	var right_panel := PanelContainer.new()
-	right_panel.position = Vector2(980.0, 18.0)
-	right_panel.size = Vector2(282.0, 272.0)
-	right_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.08, 0.08, 0.11, 0.82), Color(0.41, 0.64, 0.96, 0.92)))
-	root.add_child(right_panel)
+	var top_pills := HBoxContainer.new()
+	top_pills.position = Vector2(1080.0, 24.0)
+	top_pills.add_theme_constant_override("separation", 12)
+	root.add_child(top_pills)
+	top_pills.add_child(_make_pill("地图"))
+	top_pills.add_child(_make_pill("设置"))
+	top_pills.add_child(_make_pill("EN"))
 
-	var right_margin := MarginContainer.new()
-	right_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-	right_margin.add_theme_constant_override("margin_left", 14)
-	right_margin.add_theme_constant_override("margin_top", 12)
-	right_margin.add_theme_constant_override("margin_right", 14)
-	right_margin.add_theme_constant_override("margin_bottom", 12)
-	right_panel.add_child(right_margin)
+	var objective_panel := _make_panel(Color(0.05, 0.07, 0.09, 0.76), Color(0.94, 0.7, 0.4, 0.6), Vector2(340.0, 150.0))
+	objective_panel.position = Vector2(1540.0, 24.0)
+	root.add_child(objective_panel)
+	var objective_box := _panel_box(objective_panel)
+	objective_box.add_child(_make_label("待合偏旁", 20, Color(0.96, 0.82, 0.56, 0.98)))
+	tip_label = _make_label("尚未收集，或已经全部化字。", 18, Color(0.88, 0.9, 0.93, 0.95))
+	objective_box.add_child(tip_label)
 
-	skills_label = _make_label("合字 / 词技", 18, Color(0.92, 0.94, 0.99, 0.97))
-	right_margin.add_child(skills_label)
+	var skills_panel := _make_panel(Color(0.05, 0.07, 0.09, 0.74), Color(0.38, 0.74, 0.82, 0.62), Vector2(340.0, 860.0))
+	skills_panel.position = Vector2(1540.0, 190.0)
+	root.add_child(skills_panel)
+	var skills_margin := MarginContainer.new()
+	skills_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	skills_margin.add_theme_constant_override("margin_left", 18)
+	skills_margin.add_theme_constant_override("margin_top", 18)
+	skills_margin.add_theme_constant_override("margin_right", 18)
+	skills_margin.add_theme_constant_override("margin_bottom", 18)
+	skills_panel.add_child(skills_margin)
 
-	tip_label = _make_label("", 18, Color(0.93, 0.9, 0.84, 0.95))
-	tip_label.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
-	tip_label.offset_left = 28.0
-	tip_label.offset_right = -28.0
-	tip_label.offset_top = -52.0
-	tip_label.offset_bottom = -16.0
-	tip_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	root.add_child(tip_label)
+	var skills_layout := VBoxContainer.new()
+	skills_layout.add_theme_constant_override("separation", 14)
+	skills_margin.add_child(skills_layout)
 
-	banner_label = _make_label("", 38, Color(1.0, 0.9, 0.76, 1.0))
+	skills_label = _make_label("已成技能字", 22, Color(0.96, 0.9, 0.8, 1.0))
+	skills_layout.add_child(skills_label)
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	skills_layout.add_child(scroll)
+
+	skill_cards_box = VBoxContainer.new()
+	skill_cards_box.add_theme_constant_override("separation", 12)
+	scroll.add_child(skill_cards_box)
+
+	banner_label = _make_label("", 44, Color(1.0, 0.92, 0.78, 1.0))
 	banner_label.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	banner_label.offset_left = 160.0
-	banner_label.offset_right = -160.0
-	banner_label.offset_top = 24.0
-	banner_label.offset_bottom = 86.0
+	banner_label.offset_left = 420.0
+	banner_label.offset_right = -420.0
+	banner_label.offset_top = 86.0
+	banner_label.offset_bottom = 150.0
 	banner_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	banner_label.visible = false
 	root.add_child(banner_label)
@@ -305,51 +341,50 @@ func _build_choice_overlay(root: Control) -> void:
 
 	var scrim := ColorRect.new()
 	scrim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	scrim.color = Color(0.01, 0.01, 0.02, 0.72)
+	scrim.color = Color(0.01, 0.02, 0.03, 0.76)
 	choice_overlay.add_child(scrim)
 
 	var panel := PanelContainer.new()
 	panel.set_anchors_preset(Control.PRESET_CENTER)
-	panel.offset_left = -450.0
-	panel.offset_top = -220.0
-	panel.offset_right = 450.0
-	panel.offset_bottom = 220.0
-	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.08, 0.08, 0.1, 0.96), Color(0.95, 0.68, 0.32, 0.98)))
+	panel.offset_left = -500.0
+	panel.offset_top = -250.0
+	panel.offset_right = 500.0
+	panel.offset_bottom = 250.0
+	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.06, 0.08, 0.1, 0.96), Color(0.94, 0.7, 0.4, 0.92), 24))
 	choice_overlay.add_child(panel)
 
 	var margin := MarginContainer.new()
 	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-	margin.add_theme_constant_override("margin_left", 22)
-	margin.add_theme_constant_override("margin_top", 18)
-	margin.add_theme_constant_override("margin_right", 22)
-	margin.add_theme_constant_override("margin_bottom", 18)
+	margin.add_theme_constant_override("margin_left", 26)
+	margin.add_theme_constant_override("margin_top", 22)
+	margin.add_theme_constant_override("margin_right", 26)
+	margin.add_theme_constant_override("margin_bottom", 22)
 	panel.add_child(margin)
 
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 14)
 	margin.add_child(box)
 
-	choice_title_label = _make_label("字力突破", 34, Color(1.0, 0.92, 0.82, 1.0))
-	choice_hint_label = _make_label("", 18, Color(0.9, 0.92, 0.97, 0.96))
+	choice_title_label = _make_label("字力突破", 38, Color(1.0, 0.94, 0.86, 1.0))
+	choice_hint_label = _make_label("", 18, Color(0.88, 0.92, 0.96, 0.96))
 	box.add_child(choice_title_label)
 	box.add_child(choice_hint_label)
 
 	var cards_row := HBoxContainer.new()
 	cards_row.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	cards_row.add_theme_constant_override("separation", 14)
+	cards_row.add_theme_constant_override("separation", 16)
 	box.add_child(cards_row)
 
 	for index in range(3):
 		var button := Button.new()
-		button.custom_minimum_size = Vector2(0.0, 240.0)
+		button.custom_minimum_size = Vector2(0.0, 278.0)
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		button.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		button.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 		button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		button.add_theme_font_override("font", ui_font)
 		button.add_theme_font_size_override("font_size", 22)
-		button.add_theme_color_override("font_color", Color(0.08, 0.07, 0.07, 1.0))
+		button.add_theme_color_override("font_color", Color(0.08, 0.08, 0.08, 1.0))
 		button.pressed.connect(_on_choice_button_pressed.bind(index))
 		choice_buttons.append(button)
 		cards_row.add_child(button)
@@ -374,12 +409,123 @@ func _configure_choice_button(button: Button, title: String, headline: String, d
 	button.modulate = Color(1.0, 1.0, 1.0, 1.0)
 	button.set_meta(meta_key, meta_value)
 	button.disabled = false
-	button.add_theme_stylebox_override("normal", _make_button_style(color))
-	button.add_theme_stylebox_override("hover", _make_button_style(color.lightened(0.08)))
-	button.add_theme_stylebox_override("pressed", _make_button_style(color.darkened(0.08)))
+	button.add_theme_stylebox_override("normal", _make_button_style(color, 24))
+	button.add_theme_stylebox_override("hover", _make_button_style(color.lightened(0.08), 24))
+	button.add_theme_stylebox_override("pressed", _make_button_style(color.darkened(0.08), 24))
 
 
-func _make_label(text: String, font_size: int, color: Color) -> Label:
+func _make_panel(fill_color: Color, border_color: Color, size: Vector2) -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = size
+	panel.add_theme_stylebox_override("panel", _make_panel_style(fill_color, border_color, 24))
+	return panel
+
+
+func _panel_box(panel: PanelContainer) -> VBoxContainer:
+	var margin := MarginContainer.new()
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left", 22)
+	margin.add_theme_constant_override("margin_top", 18)
+	margin.add_theme_constant_override("margin_right", 22)
+	margin.add_theme_constant_override("margin_bottom", 18)
+	panel.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 10)
+	margin.add_child(box)
+	return box
+
+
+func _make_pill(text: String) -> PanelContainer:
+	var pill := PanelContainer.new()
+	pill.custom_minimum_size = Vector2(94.0, 52.0)
+	pill.add_theme_stylebox_override("panel", _make_panel_style(Color(0.04, 0.06, 0.08, 0.8), Color(0.28, 0.34, 0.4, 0.6), 26))
+	var label := _make_label(text, 17, Color(0.96, 0.9, 0.8, 0.98))
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.set_anchors_preset(Control.PRESET_FULL_RECT)
+	pill.add_child(label)
+	return pill
+
+
+func _make_bar(fill_color: Color) -> ProgressBar:
+	var bar := ProgressBar.new()
+	bar.min_value = 0.0
+	bar.max_value = 100.0
+	bar.value = 0.0
+	bar.custom_minimum_size = Vector2(0.0, 16.0)
+	bar.show_percentage = false
+	bar.add_theme_stylebox_override("background", _make_fill_style(Color(0.14, 0.16, 0.2, 0.72), 10))
+	bar.add_theme_stylebox_override("fill", _make_fill_style(fill_color, 10))
+	return bar
+
+
+func _make_skill_card(data: Dictionary) -> PanelContainer:
+	var color: Color = data["color"]
+	var card := PanelContainer.new()
+	card.custom_minimum_size = Vector2(0.0, 156.0)
+	card.add_theme_stylebox_override("panel", _make_panel_style(Color(color.r * 0.16, color.g * 0.16, color.b * 0.2, 0.92), Color(color.r, color.g, color.b, 0.58), 24))
+
+	var margin := MarginContainer.new()
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left", 16)
+	margin.add_theme_constant_override("margin_top", 16)
+	margin.add_theme_constant_override("margin_right", 16)
+	margin.add_theme_constant_override("margin_bottom", 16)
+	card.add_child(margin)
+
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 14)
+	margin.add_child(row)
+
+	var badge := PanelContainer.new()
+	badge.custom_minimum_size = Vector2(64.0, 64.0)
+	badge.add_theme_stylebox_override("panel", _make_panel_style(Color(0.12, 0.16, 0.2, 0.76), Color(color.r, color.g, color.b, 0.36), 22))
+	row.add_child(badge)
+
+	var badge_label := _make_label(String(data["glyph"]), 34, Color(0.96, 0.94, 0.88, 1.0))
+	badge_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	badge_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	badge_label.set_anchors_preset(Control.PRESET_FULL_RECT)
+	badge.add_child(badge_label)
+
+	var text_col := VBoxContainer.new()
+	text_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	text_col.add_theme_constant_override("separation", 6)
+	row.add_child(text_col)
+
+	text_col.add_child(_make_label(String(data["badge"]), 14, Color(0.9, 0.86, 0.8, 0.74), 3.0))
+	text_col.add_child(_make_label(String(data["title"]), 24, Color(1.0, 0.95, 0.86, 1.0)))
+	text_col.add_child(_make_label(String(data["detail"]), 17, Color(0.88, 0.9, 0.93, 0.92)))
+	text_col.add_child(_make_label(String(data["recipe"]), 15, Color(0.94, 0.82, 0.56, 0.86)))
+
+	var level_pill := PanelContainer.new()
+	level_pill.custom_minimum_size = Vector2(76.0, 48.0)
+	level_pill.add_theme_stylebox_override("panel", _make_panel_style(Color(color.r * 0.25, color.g * 0.28, color.b * 0.32, 0.88), Color(color.r, color.g, color.b, 0.44), 24))
+	row.add_child(level_pill)
+
+	var level_label := _make_label(String(data["level"]), 18, Color(0.95, 0.95, 0.92, 0.98))
+	level_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	level_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	level_label.set_anchors_preset(Control.PRESET_FULL_RECT)
+	level_pill.add_child(level_label)
+
+	return card
+
+
+func _make_placeholder_card() -> PanelContainer:
+	return _make_skill_card({
+		"glyph": "字",
+		"badge": "等待成字",
+		"title": "尚未成型",
+		"detail": "先通过偏旁三选一推进合字，再把满级合字带去砚台磨成词技。",
+		"recipe": "日 + 月 / 亻 + 木 / 氵 + 每",
+		"level": "预备",
+		"color": Color(0.44, 0.58, 0.72, 1.0)
+	})
+
+
+func _make_label(text: String, font_size: int, color: Color, spacing: float = 0.0) -> Label:
 	var label := Label.new()
 	label.text = text
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -388,11 +534,16 @@ func _make_label(text: String, font_size: int, color: Color) -> Label:
 	settings.font = ui_font
 	settings.font_size = font_size
 	settings.font_color = color
+	settings.outline_size = 1
+	settings.outline_color = Color(0.02, 0.03, 0.04, 0.32)
+	settings.shadow_size = 1
+	settings.shadow_color = Color(0.0, 0.0, 0.0, 0.18)
+	settings.line_spacing = spacing
 	label.label_settings = settings
 	return label
 
 
-func _make_panel_style(fill_color: Color, border_color: Color) -> StyleBoxFlat:
+func _make_panel_style(fill_color: Color, border_color: Color, radius: int) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	style.bg_color = fill_color
 	style.border_width_left = 2
@@ -400,10 +551,12 @@ func _make_panel_style(fill_color: Color, border_color: Color) -> StyleBoxFlat:
 	style.border_width_right = 2
 	style.border_width_bottom = 2
 	style.border_color = border_color
-	style.corner_radius_top_left = 16
-	style.corner_radius_top_right = 16
-	style.corner_radius_bottom_left = 16
-	style.corner_radius_bottom_right = 16
+	style.corner_radius_top_left = radius
+	style.corner_radius_top_right = radius
+	style.corner_radius_bottom_left = radius
+	style.corner_radius_bottom_right = radius
+	style.shadow_color = Color(0.0, 0.0, 0.0, 0.18)
+	style.shadow_size = 10
 	return style
 
 
@@ -417,11 +570,11 @@ func _make_fill_style(fill_color: Color, radius: int) -> StyleBoxFlat:
 	return style
 
 
-func _make_button_style(fill_color: Color) -> StyleBoxFlat:
+func _make_button_style(fill_color: Color, radius: int) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	style.bg_color = fill_color
-	style.corner_radius_top_left = 18
-	style.corner_radius_top_right = 18
-	style.corner_radius_bottom_left = 18
-	style.corner_radius_bottom_right = 18
+	style.corner_radius_top_left = radius
+	style.corner_radius_top_right = radius
+	style.corner_radius_bottom_left = radius
+	style.corner_radius_bottom_right = radius
 	return style

@@ -456,112 +456,164 @@ func _build_visuals() -> void:
 	body_material = _make_material(tint)
 	accent_material = _make_material(tint.lightened(0.15))
 
-	body_node = MeshInstance3D.new()
-	body_node.mesh = _build_body_mesh()
-	body_node.position = Vector3(0.0, hit_radius, 0.0)
-	body_node.material_override = body_material
-	add_child(body_node)
+	if enemy_type == "cavalry":
+		_build_cavalry_visuals()
+	else:
+		_build_humanoid_visuals()
 
-	var crest := MeshInstance3D.new()
-	var crest_shape := BoxMesh.new()
-	crest_shape.size = Vector3(hit_radius * 0.9, 0.14, hit_radius * 0.42)
-	crest.mesh = crest_shape
-	crest.position = Vector3(0.0, hit_radius * 1.48, 0.0)
-	crest.material_override = accent_material
-	add_child(crest)
+	_build_glyph_badge()
+
+
+func _build_humanoid_visuals() -> void:
+	var head_material := _make_material(tint.lightened(0.06))
+	var torso_size := Vector3(0.82, 1.02, 0.52)
+	var pelvis_size := Vector3(0.68, 0.22, 0.44)
+	var arm_size := Vector3(0.16, 0.72, 0.16)
+	var leg_size := Vector3(0.2, 0.78, 0.22)
+
+	if enemy_type == "tank":
+		torso_size = Vector3(1.14, 1.18, 0.72)
+		pelvis_size = Vector3(0.92, 0.28, 0.58)
+		arm_size = Vector3(0.22, 0.84, 0.22)
+		leg_size = Vector3(0.26, 0.84, 0.28)
+	elif enemy_type == "elite":
+		torso_size = Vector3(1.02, 1.24, 0.62)
+		pelvis_size = Vector3(0.78, 0.24, 0.52)
+		arm_size = Vector3(0.2, 0.8, 0.18)
+		leg_size = Vector3(0.24, 0.86, 0.24)
+	elif enemy_type == "ritualist":
+		torso_size = Vector3(0.74, 1.14, 0.5)
+		leg_size = Vector3(0.16, 0.72, 0.18)
+
+	body_node = _add_box_part(torso_size, Vector3(0.0, 1.34, 0.0), body_material)
+	_add_box_part(pelvis_size, Vector3(0.0, 0.78, 0.0), accent_material)
+	_add_box_part(arm_size, Vector3(-torso_size.x * 0.58, 1.32, 0.0), accent_material)
+	_add_box_part(arm_size, Vector3(torso_size.x * 0.58, 1.32, 0.0), accent_material)
+	_add_box_part(leg_size, Vector3(-0.18, 0.34, 0.0), body_material)
+	_add_box_part(leg_size, Vector3(0.18, 0.34, 0.0), body_material)
+
+	var head := MeshInstance3D.new()
+	var head_mesh := SphereMesh.new()
+	head_mesh.radius = 0.28 if enemy_type != "elite" else 0.34
+	head_mesh.height = head_mesh.radius * 2.0
+	head.mesh = head_mesh
+	head.position = Vector3(0.0, 2.06 if enemy_type != "elite" else 2.18, 0.0)
+	head.material_override = head_material
+	add_child(head)
 
 	match enemy_type:
+		"swift":
+			_add_box_part(Vector3(0.56, 0.1, 0.38), Vector3(0.0, 1.7, -0.18), accent_material)
+		"tank":
+			_add_box_part(Vector3(0.46, 0.26, 0.36), Vector3(-0.54, 1.82, 0.0), accent_material)
+			_add_box_part(Vector3(0.46, 0.26, 0.36), Vector3(0.54, 1.82, 0.0), accent_material)
+			_add_box_part(Vector3(0.76, 0.12, 0.24), Vector3(0.0, 1.92, -0.26), accent_material)
 		"archer":
-			var bow := MeshInstance3D.new()
-			var bow_mesh := BoxMesh.new()
-			bow_mesh.size = Vector3(0.08, 0.96, 0.08)
-			bow.mesh = bow_mesh
-			bow.position = Vector3(0.52, hit_radius * 1.02, -0.18)
+			var bow := _add_box_part(Vector3(0.08, 1.02, 0.08), Vector3(0.56, 1.24, -0.1), accent_material)
 			bow.rotation_degrees.z = 18.0
-			bow.material_override = accent_material
-			add_child(bow)
+			_add_box_part(Vector3(0.3, 0.44, 0.18), Vector3(-0.32, 1.44, 0.24), accent_material)
 		"assassin":
-			var blade := MeshInstance3D.new()
-			var blade_mesh := BoxMesh.new()
-			blade_mesh.size = Vector3(0.08, 0.08, 0.92)
-			blade.mesh = blade_mesh
-			blade.position = Vector3(0.42, hit_radius * 0.95, -0.56)
-			blade.material_override = accent_material
-			add_child(blade)
-		"cavalry":
-			var rider := MeshInstance3D.new()
-			var rider_mesh := BoxMesh.new()
-			rider_mesh.size = Vector3(0.7, 0.74, 0.54)
-			rider.mesh = rider_mesh
-			rider.position = Vector3(0.0, hit_radius * 1.5, -0.1)
-			rider.material_override = accent_material
-			add_child(rider)
+			_add_box_part(Vector3(0.62, 0.18, 0.48), Vector3(0.0, 1.94, 0.0), accent_material)
+			var blade_left := _add_box_part(Vector3(0.06, 0.08, 0.82), Vector3(-0.46, 1.0, -0.42), accent_material)
+			blade_left.rotation_degrees.y = 12.0
+			var blade_right := _add_box_part(Vector3(0.06, 0.08, 0.82), Vector3(0.46, 1.0, -0.42), accent_material)
+			blade_right.rotation_degrees.y = -12.0
 		"ritualist":
+			var skirt := MeshInstance3D.new()
+			var skirt_mesh := CylinderMesh.new()
+			skirt_mesh.top_radius = 0.32
+			skirt_mesh.bottom_radius = 0.58
+			skirt_mesh.height = 0.96
+			skirt.mesh = skirt_mesh
+			skirt.position = Vector3(0.0, 0.82, 0.0)
+			skirt.material_override = body_material
+			add_child(skirt)
+			_add_box_part(Vector3(0.08, 1.18, 0.08), Vector3(0.42, 1.32, -0.28), accent_material)
 			var ring := MeshInstance3D.new()
 			var ring_mesh := CylinderMesh.new()
-			ring_mesh.top_radius = hit_radius * 0.74
-			ring_mesh.bottom_radius = hit_radius * 0.9
-			ring_mesh.height = 0.08
+			ring_mesh.top_radius = 0.62
+			ring_mesh.bottom_radius = 0.72
+			ring_mesh.height = 0.06
 			ring.mesh = ring_mesh
-			ring.position = Vector3(0.0, 0.22, 0.0)
+			ring.position = Vector3(0.0, 0.18, 0.0)
 			ring.material_override = accent_material
 			add_child(ring)
 		"elite":
+			_add_box_part(Vector3(0.56, 1.04, 0.08), Vector3(0.0, 1.1, 0.34), accent_material)
+			_add_box_part(Vector3(0.44, 0.24, 0.34), Vector3(-0.5, 1.82, 0.0), accent_material)
+			_add_box_part(Vector3(0.44, 0.24, 0.34), Vector3(0.5, 1.82, 0.0), accent_material)
 			for index in range(3):
-				var spike := MeshInstance3D.new()
-				var spike_mesh := BoxMesh.new()
-				spike_mesh.size = Vector3(0.12, 0.48, 0.12)
-				spike.mesh = spike_mesh
-				spike.position = Vector3(-0.32 + float(index) * 0.32, hit_radius * 1.9, -0.16)
-				spike.material_override = accent_material
-				add_child(spike)
+				_add_box_part(Vector3(0.1, 0.34, 0.1), Vector3(-0.24 + float(index) * 0.24, 2.46, -0.12), accent_material)
+
+
+func _build_cavalry_visuals() -> void:
+	body_node = _add_box_part(Vector3(1.68, 0.92, 2.38), Vector3(0.0, 0.9, 0.08), body_material)
+	_add_box_part(Vector3(0.44, 0.92, 0.52), Vector3(0.0, 1.56, -0.88), accent_material)
+	_add_box_part(Vector3(0.46, 0.36, 0.62), Vector3(0.0, 1.9, -1.34), body_material)
+	_add_box_part(Vector3(0.16, 1.02, 0.18), Vector3(-0.52, 0.3, -0.54), accent_material)
+	_add_box_part(Vector3(0.16, 1.02, 0.18), Vector3(0.52, 0.3, -0.54), accent_material)
+	_add_box_part(Vector3(0.16, 1.02, 0.18), Vector3(-0.52, 0.3, 0.74), accent_material)
+	_add_box_part(Vector3(0.16, 1.02, 0.18), Vector3(0.52, 0.3, 0.74), accent_material)
+
+	_add_box_part(Vector3(0.66, 0.8, 0.46), Vector3(0.0, 1.72, -0.08), accent_material)
+	_add_box_part(Vector3(0.42, 0.36, 0.34), Vector3(0.0, 2.26, -0.08), _make_material(tint.lightened(0.08)))
+	_add_box_part(Vector3(0.08, 0.08, 1.34), Vector3(0.54, 1.78, -1.0), accent_material)
+
+
+func _build_glyph_badge() -> void:
+	var badge_height := 2.76 if enemy_type == "cavalry" else (2.72 if enemy_type == "elite" else 2.5)
+	var badge_root := Node3D.new()
+	badge_root.position = Vector3(0.0, badge_height, 0.0)
+	add_child(badge_root)
+
+	var badge_material := StandardMaterial3D.new()
+	badge_material.albedo_color = Color(0.04, 0.06, 0.08, 0.86)
+	badge_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	badge_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+
+	var ring_material := StandardMaterial3D.new()
+	ring_material.albedo_color = Color(accent_material.albedo_color.r, accent_material.albedo_color.g, accent_material.albedo_color.b, 0.46)
+	ring_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	ring_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+
+	var disc := MeshInstance3D.new()
+	var disc_mesh := CylinderMesh.new()
+	disc_mesh.top_radius = 0.42 if enemy_type != "elite" else 0.5
+	disc_mesh.bottom_radius = disc_mesh.top_radius
+	disc_mesh.height = 0.08
+	disc.mesh = disc_mesh
+	disc.material_override = badge_material
+	badge_root.add_child(disc)
+
+	var ring := MeshInstance3D.new()
+	var ring_mesh := CylinderMesh.new()
+	ring_mesh.top_radius = disc_mesh.top_radius + 0.05
+	ring_mesh.bottom_radius = ring_mesh.top_radius
+	ring_mesh.height = 0.02
+	ring.mesh = ring_mesh
+	ring.position = Vector3(0.0, 0.05, 0.0)
+	ring.material_override = ring_material
+	badge_root.add_child(ring)
 
 	label_node = Label3D.new()
 	label_node.text = glyph
 	label_node.font = CJKFont.get_font()
-	label_node.font_size = 48 if enemy_type == "elite" else (44 if enemy_type == "cavalry" or enemy_type == "tank" else 40)
-	label_node.position = Vector3(0.0, hit_radius * 1.45, 0.0)
-	label_node.modulate = Color(1.0, 0.95, 0.89, 0.98)
-	add_child(label_node)
+	label_node.font_size = 42 if enemy_type != "elite" else 50
+	label_node.position = Vector3(0.0, 0.04, 0.0)
+	label_node.modulate = Color(0.98, 0.94, 0.84, 0.98)
+	label_node.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	badge_root.add_child(label_node)
 
 
-func _build_body_mesh() -> PrimitiveMesh:
-	match enemy_type:
-		"tank":
-			var mesh := BoxMesh.new()
-			mesh.size = Vector3(1.8, 1.3, 1.8)
-			return mesh
-		"archer":
-			var mesh := CylinderMesh.new()
-			mesh.top_radius = 0.38
-			mesh.bottom_radius = 0.44
-			mesh.height = 1.6
-			return mesh
-		"assassin":
-			var mesh := SphereMesh.new()
-			mesh.radius = hit_radius
-			mesh.height = hit_radius * 2.2
-			return mesh
-		"cavalry":
-			var mesh := BoxMesh.new()
-			mesh.size = Vector3(1.8, 1.15, 2.5)
-			return mesh
-		"ritualist":
-			var mesh := SphereMesh.new()
-			mesh.radius = hit_radius
-			mesh.height = hit_radius * 2.0
-			return mesh
-		"elite":
-			var mesh := CylinderMesh.new()
-			mesh.top_radius = 0.76
-			mesh.bottom_radius = 1.0
-			mesh.height = 2.25
-			return mesh
-		_:
-			var mesh := SphereMesh.new()
-			mesh.radius = hit_radius
-			mesh.height = hit_radius * 2.0
-			return mesh
+func _add_box_part(size: Vector3, position: Vector3, material: Material) -> MeshInstance3D:
+	var mesh_instance := MeshInstance3D.new()
+	var mesh := BoxMesh.new()
+	mesh.size = size
+	mesh_instance.mesh = mesh
+	mesh_instance.position = position
+	mesh_instance.material_override = material
+	add_child(mesh_instance)
+	return mesh_instance
 
 
 func _update_visual_state() -> void:

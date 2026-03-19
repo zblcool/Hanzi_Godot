@@ -39,8 +39,10 @@ func _process(delta: float) -> void:
 
 func _draw() -> void:
 	var rect: Rect2 = get_viewport_rect()
-	draw_rect(rect, Color(0.04, 0.05, 0.07, 1.0), true)
-	draw_rect(Rect2(0.0, 0.0, rect.size.x, rect.size.y * 0.5), Color(0.09, 0.11, 0.15, 0.95), true)
+	draw_rect(rect, Color(0.03, 0.05, 0.07, 1.0), true)
+	draw_circle(Vector2(rect.size.x * 0.24, rect.size.y * 0.24), 200.0, Color(0.86, 0.58, 0.3, 0.07))
+	draw_circle(Vector2(rect.size.x * 0.76, rect.size.y * 0.2), 220.0, Color(0.42, 0.74, 0.88, 0.06))
+	draw_circle(Vector2(rect.size.x * 0.56, rect.size.y * 0.7), 280.0, Color(0.9, 0.72, 0.34, 0.04))
 
 	for symbol in floating_symbols:
 		var position: Vector2 = symbol["position"]
@@ -53,24 +55,65 @@ func _draw() -> void:
 func _build_ui() -> void:
 	var root := MarginContainer.new()
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
-	root.add_theme_constant_override("margin_left", 48)
-	root.add_theme_constant_override("margin_top", 40)
-	root.add_theme_constant_override("margin_right", 48)
-	root.add_theme_constant_override("margin_bottom", 34)
+	root.add_theme_constant_override("margin_left", 40)
+	root.add_theme_constant_override("margin_top", 34)
+	root.add_theme_constant_override("margin_right", 40)
+	root.add_theme_constant_override("margin_bottom", 28)
 	add_child(root)
 
 	var layout := VBoxContainer.new()
 	layout.set_anchors_preset(Control.PRESET_FULL_RECT)
-	layout.add_theme_constant_override("separation", 20)
+	layout.add_theme_constant_override("separation", 18)
 	root.add_child(layout)
 
-	layout.add_child(_make_label("字海残卷", 46, Color(1.0, 0.93, 0.84, 1.0)))
-	layout.add_child(_make_label("先选角色，再把首个 Godot 3D 战场跑起来。当前版本优先验证战斗循环、多兵种与偏旁合字。", 18, Color(0.88, 0.91, 0.96, 0.95)))
+	var top_bar := HBoxContainer.new()
+	top_bar.add_theme_constant_override("separation", 12)
+	layout.add_child(top_bar)
+	top_bar.add_child(_make_pill("返回游戏选择"))
+	var spacer := Control.new()
+	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	top_bar.add_child(spacer)
+	top_bar.add_child(_make_pill("EN"))
+
+	var shell_panel := PanelContainer.new()
+	shell_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	shell_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.05, 0.08, 0.1, 0.74), Color(0.24, 0.3, 0.36, 0.62)))
+	layout.add_child(shell_panel)
+
+	var shell_margin := MarginContainer.new()
+	shell_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	shell_margin.add_theme_constant_override("margin_left", 28)
+	shell_margin.add_theme_constant_override("margin_top", 26)
+	shell_margin.add_theme_constant_override("margin_right", 28)
+	shell_margin.add_theme_constant_override("margin_bottom", 26)
+	shell_panel.add_child(shell_margin)
+
+	var shell_box := VBoxContainer.new()
+	shell_box.add_theme_constant_override("separation", 20)
+	shell_margin.add_child(shell_box)
+
+	var hero_panel := PanelContainer.new()
+	hero_panel.custom_minimum_size = Vector2(0.0, 190.0)
+	hero_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.04, 0.07, 0.09, 0.88), Color(0.2, 0.26, 0.32, 0.4)))
+	shell_box.add_child(hero_panel)
+	var hero_margin := MarginContainer.new()
+	hero_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	hero_margin.add_theme_constant_override("margin_left", 32)
+	hero_margin.add_theme_constant_override("margin_top", 28)
+	hero_margin.add_theme_constant_override("margin_right", 32)
+	hero_margin.add_theme_constant_override("margin_bottom", 28)
+	hero_panel.add_child(hero_margin)
+	var hero_box := VBoxContainer.new()
+	hero_box.add_theme_constant_override("separation", 10)
+	hero_margin.add_child(hero_box)
+	hero_box.add_child(_make_label("INK-BORN ROGUELITE", 18, Color(0.96, 0.82, 0.54, 0.86)))
+	hero_box.add_child(_make_label("字海残卷", 70, Color(1.0, 0.95, 0.86, 1.0)))
+	hero_box.add_child(_make_label("从汉字中来，到战斗中去。先进入残卷，再决定由谁执笔。", 18, Color(0.88, 0.91, 0.96, 0.95)))
 
 	var content_row := HBoxContainer.new()
 	content_row.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	content_row.add_theme_constant_override("separation", 18)
-	layout.add_child(content_row)
+	shell_box.add_child(content_row)
 
 	var cards_column := VBoxContainer.new()
 	cards_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -103,7 +146,7 @@ func _build_ui() -> void:
 
 	var detail_panel := PanelContainer.new()
 	detail_panel.custom_minimum_size = Vector2(360.0, 0.0)
-	detail_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.12, 0.09, 0.08, 0.9), Color(0.92, 0.67, 0.39, 0.95)))
+	detail_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.07, 0.09, 0.11, 0.88), Color(0.36, 0.72, 0.82, 0.56)))
 	content_row.add_child(detail_panel)
 
 	var detail_margin := MarginContainer.new()
@@ -201,27 +244,29 @@ func _make_panel_style(fill_color: Color, border_color: Color) -> StyleBoxFlat:
 	style.border_width_right = 2
 	style.border_width_bottom = 2
 	style.border_color = border_color
-	style.corner_radius_top_left = 20
-	style.corner_radius_top_right = 20
-	style.corner_radius_bottom_left = 20
-	style.corner_radius_bottom_right = 20
+	style.corner_radius_top_left = 28
+	style.corner_radius_top_right = 28
+	style.corner_radius_bottom_left = 28
+	style.corner_radius_bottom_right = 28
+	style.shadow_color = Color(0.0, 0.0, 0.0, 0.18)
+	style.shadow_size = 12
 	return style
 
 
 func _make_card_style(selected: bool, accent: Color) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(accent.r * 0.17, accent.g * 0.16, accent.b * 0.2, 0.93)
+	style.bg_color = Color(accent.r * 0.14, accent.g * 0.14, accent.b * 0.18, 0.93)
 	style.border_width_left = 3 if selected else 2
 	style.border_width_top = 3 if selected else 2
 	style.border_width_right = 3 if selected else 2
 	style.border_width_bottom = 3 if selected else 2
 	style.border_color = accent if selected else Color(accent.r, accent.g, accent.b, 0.65)
-	style.corner_radius_top_left = 20
-	style.corner_radius_top_right = 20
-	style.corner_radius_bottom_left = 20
-	style.corner_radius_bottom_right = 20
+	style.corner_radius_top_left = 28
+	style.corner_radius_top_right = 28
+	style.corner_radius_bottom_left = 28
+	style.corner_radius_bottom_right = 28
 	style.shadow_color = Color(0.0, 0.0, 0.0, 0.2)
-	style.shadow_size = 10
+	style.shadow_size = 12
 	return style
 
 
@@ -233,6 +278,18 @@ func _make_button_style(accent: Color) -> StyleBoxFlat:
 	style.corner_radius_bottom_left = 14
 	style.corner_radius_bottom_right = 14
 	return style
+
+
+func _make_pill(text: String) -> PanelContainer:
+	var pill := PanelContainer.new()
+	pill.custom_minimum_size = Vector2(180.0 if text == "返回游戏选择" else 74.0, 54.0)
+	pill.add_theme_stylebox_override("panel", _make_panel_style(Color(0.04, 0.06, 0.08, 0.78), Color(0.2, 0.26, 0.32, 0.54)))
+	var label := _make_label(text, 18, Color(0.98, 0.92, 0.82, 0.98))
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.set_anchors_preset(Control.PRESET_FULL_RECT)
+	pill.add_child(label)
+	return pill
 
 
 func _build_floating_symbols() -> void:
