@@ -8,6 +8,8 @@ signal word_choice_selected(word_id: String)
 var ui_font: Font
 
 var hero_label: Label
+var hero_title_label: Label
+var hero_focus_label: Label
 var health_label: Label
 var progress_label: Label
 var status_label: Label
@@ -20,6 +22,8 @@ var xp_bar: ProgressBar
 var health_bar: ProgressBar
 var controls_label: Label
 var skill_cards_box: VBoxContainer
+var hero_tag_row: HBoxContainer
+var radical_chip_container: HFlowContainer
 
 var choice_overlay: Control
 var choice_title_label: Label
@@ -52,6 +56,9 @@ func _process(delta: float) -> void:
 
 func configure(hero_data: Dictionary) -> void:
 	hero_label.text = "%s" % String(hero_data["name"])
+	hero_title_label.text = "%s  ·  %s" % [String(hero_data["title"]), String(hero_data["role_label"])]
+	hero_focus_label.text = String(hero_data["focus"])
+	_refresh_hero_tags(hero_data)
 	controls_label.text = "WASD / 方向键移动\n自动朝最近敌人出手\n升级时三选一偏旁\n靠近砚台按 E 磨词\nR 重开，Esc 返回菜单"
 
 
@@ -75,22 +82,25 @@ func set_status(elapsed: float, kills: int, threat: int) -> void:
 
 
 func set_radicals(radicals: Dictionary) -> void:
-	var lines: Array[String] = []
-	var line := ""
+	if radical_chip_container == null:
+		return
+
+	for child in radical_chip_container.get_children():
+		child.queue_free()
+
+	var total_count: int = 0
 	for radical_variant in Session.RADICAL_ORDER:
 		var radical := String(radical_variant)
 		var amount: int = int(radicals.get(radical, 0))
-		var segment := "%s Lv材 ×%d" % [radical, amount]
-		if line.length() > 0 and line.length() + segment.length() > 18:
-			lines.append(line)
-			line = segment
-		else:
-			if not line.is_empty():
-				line += "   "
-			line += segment
-	if not line.is_empty():
-		lines.append(line)
-	radicals_label.text = "\n".join(lines)
+		total_count += amount
+		if amount > 0:
+			radical_chip_container.add_child(_make_radical_chip(radical, amount))
+
+	if total_count <= 0:
+		radicals_label.text = "当前尚未留存偏旁"
+		radical_chip_container.add_child(_make_radical_chip("字", 0, Color(0.4, 0.54, 0.68, 1.0), "全部化字"))
+	else:
+		radicals_label.text = "当前留存 %d 枚偏旁，可继续合字或磨词" % total_count
 
 
 func set_skills(recipe_levels: Dictionary, word_levels: Dictionary, word_progress: Dictionary, blade_level: int, hero_id: String) -> void:
@@ -235,12 +245,21 @@ func _build_ui() -> void:
 	left_column.add_theme_constant_override("separation", 16)
 	root.add_child(left_column)
 
-	var intro_panel := _make_panel(Color(0.05, 0.08, 0.1, 0.76), Color(0.93, 0.69, 0.38, 0.84), Vector2(410.0, 286.0))
+	var intro_panel := _make_panel(Color(0.05, 0.08, 0.1, 0.76), Color(0.93, 0.69, 0.38, 0.84), Vector2(410.0, 330.0))
 	left_column.add_child(intro_panel)
 	var intro_box := _panel_box(intro_panel)
 	intro_box.add_child(_make_label("INK-BORN ROGUELITE DEMO", 17, Color(0.96, 0.82, 0.52, 0.86), 4.0))
 	hero_label = _make_label("书生", 56, Color(1.0, 0.95, 0.86, 1.0))
 	intro_box.add_child(hero_label)
+	hero_title_label = _make_label("", 18, Color(0.96, 0.82, 0.54, 0.96))
+	intro_box.add_child(hero_title_label)
+	hero_focus_label = _make_label("", 17, Color(0.86, 0.91, 0.98, 0.94))
+	intro_box.add_child(hero_focus_label)
+
+	hero_tag_row = HBoxContainer.new()
+	hero_tag_row.add_theme_constant_override("separation", 10)
+	intro_box.add_child(hero_tag_row)
+
 	health_label = _make_label("气血  0 / 0", 18, Color(0.96, 0.92, 0.87, 0.98))
 	intro_box.add_child(health_label)
 	health_bar = _make_bar(Color(0.82, 0.38, 0.31, 0.96))
@@ -252,12 +271,16 @@ func _build_ui() -> void:
 	status_label = _make_label("存活  00:00\n波次  1\n击破  0", 20, Color(0.86, 0.92, 0.98, 0.98))
 	intro_box.add_child(status_label)
 
-	var radicals_panel := _make_panel(Color(0.05, 0.07, 0.09, 0.72), Color(0.38, 0.72, 0.78, 0.72), Vector2(410.0, 144.0))
+	var radicals_panel := _make_panel(Color(0.05, 0.07, 0.09, 0.72), Color(0.38, 0.72, 0.78, 0.72), Vector2(410.0, 184.0))
 	left_column.add_child(radicals_panel)
 	var radicals_box := _panel_box(radicals_panel)
 	radicals_box.add_child(_make_label("待合偏旁", 22, Color(0.96, 0.9, 0.8, 1.0)))
-	radicals_label = _make_label("已全部化字", 18, Color(0.86, 0.9, 0.92, 0.94))
+	radicals_label = _make_label("当前尚未留存偏旁", 17, Color(0.86, 0.9, 0.92, 0.94))
 	radicals_box.add_child(radicals_label)
+	radical_chip_container = HFlowContainer.new()
+	radical_chip_container.add_theme_constant_override("h_separation", 10)
+	radical_chip_container.add_theme_constant_override("v_separation", 10)
+	radicals_box.add_child(radical_chip_container)
 
 	var controls_panel := _make_panel(Color(0.05, 0.07, 0.09, 0.72), Color(0.92, 0.69, 0.38, 0.58), Vector2(410.0, 220.0))
 	left_column.add_child(controls_panel)
@@ -278,7 +301,7 @@ func _build_ui() -> void:
 	objective_panel.position = Vector2(1540.0, 24.0)
 	root.add_child(objective_panel)
 	var objective_box := _panel_box(objective_panel)
-	objective_box.add_child(_make_label("待合偏旁", 20, Color(0.96, 0.82, 0.56, 0.98)))
+	objective_box.add_child(_make_label("当前目标", 20, Color(0.96, 0.82, 0.56, 0.98)))
 	tip_label = _make_label("尚未收集，或已经全部化字。", 18, Color(0.88, 0.9, 0.93, 0.95))
 	objective_box.add_child(tip_label)
 
@@ -460,6 +483,28 @@ func _make_bar(fill_color: Color) -> ProgressBar:
 	return bar
 
 
+func _make_radical_chip(radical: String, amount: int, override_color: Color = Color(-1.0, -1.0, -1.0, -1.0), override_text: String = "") -> PanelContainer:
+	var chip_color: Color = override_color
+	if chip_color.r < 0.0:
+		chip_color = Session.RADICAL_COLORS.get(radical, Color(0.44, 0.58, 0.72, 1.0))
+
+	var chip := PanelContainer.new()
+	chip.custom_minimum_size = Vector2(90.0, 44.0)
+	chip.add_theme_stylebox_override("panel", _make_panel_style(Color(chip_color.r * 0.16, chip_color.g * 0.16, chip_color.b * 0.18, 0.92), Color(chip_color.r, chip_color.g, chip_color.b, 0.46), 18))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 12)
+	margin.add_theme_constant_override("margin_top", 8)
+	margin.add_theme_constant_override("margin_right", 12)
+	margin.add_theme_constant_override("margin_bottom", 8)
+	chip.add_child(margin)
+
+	var label := _make_label("%s  %s" % [radical, override_text if not override_text.is_empty() else "×%d" % amount], 16, Color(0.98, 0.95, 0.88, 0.98))
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	margin.add_child(label)
+	return chip
+
+
 func _make_skill_card(data: Dictionary) -> PanelContainer:
 	var color: Color = data["color"]
 	var card := PanelContainer.new()
@@ -541,6 +586,26 @@ func _make_label(text: String, font_size: int, color: Color, spacing: float = 0.
 	settings.line_spacing = spacing
 	label.label_settings = settings
 	return label
+
+
+func _refresh_hero_tags(hero_data: Dictionary) -> void:
+	if hero_tag_row == null:
+		return
+	for child in hero_tag_row.get_children():
+		child.queue_free()
+
+	var accent: Color = hero_data["accent"]
+	for tag_text in hero_data["tags"]:
+		var tag := PanelContainer.new()
+		tag.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.16, accent.g * 0.16, accent.b * 0.18, 0.88), Color(accent.r, accent.g, accent.b, 0.42), 18))
+		var margin := MarginContainer.new()
+		margin.add_theme_constant_override("margin_left", 12)
+		margin.add_theme_constant_override("margin_top", 8)
+		margin.add_theme_constant_override("margin_right", 12)
+		margin.add_theme_constant_override("margin_bottom", 8)
+		tag.add_child(margin)
+		margin.add_child(_make_label(String(tag_text), 15, Color(0.98, 0.95, 0.88, 0.98)))
+		hero_tag_row.add_child(tag)
 
 
 func _make_panel_style(fill_color: Color, border_color: Color, radius: int) -> StyleBoxFlat:

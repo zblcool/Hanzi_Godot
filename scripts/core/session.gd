@@ -9,7 +9,11 @@ const HEROES := {
 	"scholar": {
 		"id": "scholar",
 		"name": "书生",
+		"glyph": "书",
 		"title": "墨诀远射",
+		"role_label": "远程控场",
+		"focus": "稳扎稳打地收束偏旁，让合字更早成型。",
+		"tags": ["索敌", "连射", "成字稳定"],
 		"weapon": "笔阵 / 远程自动索敌",
 		"description": "更稳定地积累偏旁，靠连射字诀把字海撑开。",
 		"role": "ranged",
@@ -26,7 +30,11 @@ const HEROES := {
 	"xia": {
 		"id": "xia",
 		"name": "侠",
+		"glyph": "侠",
 		"title": "长剑近战",
+		"role_label": "近战斩阵",
+		"focus": "压进敌潮里以斩势拆阵，让 `刂` 直接转成武器成长。",
+		"tags": ["贴脸", "爆发", "剑势成长"],
 		"weapon": "巨刃 / 扇形斩击",
 		"description": "贴脸斩碎字灵，`刂` 会直接夸张地放大剑势。",
 		"role": "melee",
