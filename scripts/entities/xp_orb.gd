@@ -1,58 +1,68 @@
-extends Area2D
+extends Node3D
+
+const CJKFont := preload("res://scripts/core/cjk_font.gd")
 
 signal collected(value: int)
 
-const CJKFont := preload("res://scripts/cjk_font.gd")
+var player = null
+var value: int = 1
 
-@export var value := 1
+var hover_time: float = 0.0
+var drift_velocity: Vector3 = Vector3.ZERO
 
-var player: Area2D
-var character := "字"
 
-var drift_velocity := Vector2.ZERO
-var draw_font: Font
-var rng := RandomNumberGenerator.new()
+func configure(player_ref, xp_value: int) -> void:
+	player = player_ref
+	value = xp_value
 
 
 func _ready() -> void:
-	rng.randomize()
-	draw_font = _build_font()
-	drift_velocity = Vector2(rng.randf_range(-18.0, 18.0), rng.randf_range(-22.0, -6.0))
-	area_entered.connect(_on_area_entered)
+	_build_visuals()
+	drift_velocity = Vector3(randf_range(-0.9, 0.9), 0.0, randf_range(-0.9, 0.9))
 	set_physics_process(true)
-	queue_redraw()
 
 
 func _physics_process(delta: float) -> void:
-	if is_instance_valid(player):
-		var offset: Vector2 = player.global_position - global_position
-		var distance: float = offset.length()
-		if distance <= 180.0:
-			var pull_speed: float = 180.0 + max(0.0, 180.0 - distance) * 4.0
-			if distance > 1.0:
-				global_position += offset.normalized() * pull_speed * delta
-		else:
-			global_position += drift_velocity * delta
-			drift_velocity = drift_velocity.move_toward(Vector2.ZERO, 24.0 * delta)
+	hover_time += delta
+	position.y = 0.45 + sin(hover_time * 3.2) * 0.16
+
+	if not is_instance_valid(player):
+		return
+
+	var target: Vector3 = player.global_position + Vector3(0.0, 0.55, 0.0)
+	var distance: float = global_position.distance_to(target)
+	var attraction_radius: float = 5.0
+	if player.has_method("get_collect_radius"):
+		attraction_radius = player.get_collect_radius() + 1.8
+	if distance < attraction_radius:
+		var direction: Vector3 = (target - global_position).normalized()
+		global_position += direction * (5.4 + max(0.0, attraction_radius - distance) * 3.5) * delta
 	else:
 		global_position += drift_velocity * delta
-		drift_velocity = drift_velocity.move_toward(Vector2.ZERO, 24.0 * delta)
+		drift_velocity = drift_velocity.move_toward(Vector3.ZERO, 1.4 * delta)
 
-	queue_redraw()
-
-
-func _on_area_entered(area: Area2D) -> void:
-	if area.is_in_group("player"):
+	if distance < 1.0:
 		collected.emit(value)
 		queue_free()
 
 
-func _draw() -> void:
-	draw_circle(Vector2.ZERO, 10.0, Color(0.48, 0.86, 1.0, 0.95))
-	draw_arc(Vector2.ZERO, 13.0, -PI, PI, 20, Color(1.0, 1.0, 1.0, 0.82), 2.0)
-	if draw_font != null:
-		draw_string(draw_font, Vector2(-8.0, 6.0), character, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 18, Color(0.04, 0.18, 0.24))
+func _build_visuals() -> void:
+	var orb := MeshInstance3D.new()
+	var orb_mesh := SphereMesh.new()
+	orb_mesh.radius = 0.28
+	orb_mesh.height = 0.56
+	orb.mesh = orb_mesh
+	var material := StandardMaterial3D.new()
+	material.albedo_color = Color(0.48, 0.88, 1.0, 1.0)
+	material.emission_enabled = true
+	material.emission = Color(0.28, 0.72, 0.96, 1.0)
+	orb.material_override = material
+	add_child(orb)
 
-
-func _build_font() -> Font:
-	return CJKFont.get_font()
+	var label := Label3D.new()
+	label.text = "灵"
+	label.font = CJKFont.get_font()
+	label.font_size = 26
+	label.position = Vector3(0.0, 0.08, 0.0)
+	label.modulate = Color(0.08, 0.14, 0.18, 0.95)
+	add_child(label)
