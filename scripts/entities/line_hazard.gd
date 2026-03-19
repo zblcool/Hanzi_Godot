@@ -18,6 +18,9 @@ var warning_material: StandardMaterial3D
 var active_material: StandardMaterial3D
 var active_mesh: MeshInstance3D
 var label_node: Label3D
+var edge_left_mesh: MeshInstance3D
+var edge_right_mesh: MeshInstance3D
+var glow_mesh: MeshInstance3D
 
 
 func configure(player_ref, origin: Vector3, forward: Vector3, hazard_length: float, hazard_width: float, warning: float, active_duration: float, damage_value: float, tint_value: Color, label_value: String, stun_duration: float = 0.0) -> void:
@@ -45,6 +48,14 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	elapsed += delta
+	if label_node != null:
+		label_node.position.y = 0.12 + sin(elapsed * 4.0) * 0.03
+	if edge_left_mesh != null:
+		edge_left_mesh.scale.z = 0.94 + sin(elapsed * 7.2) * 0.06
+	if edge_right_mesh != null:
+		edge_right_mesh.scale.z = 0.94 + sin(elapsed * 7.2 + 0.8) * 0.06
+	if glow_mesh != null:
+		glow_mesh.scale.x = 0.94 + sin(elapsed * 6.8) * 0.05
 	if elapsed < warning_time:
 		var pulse: float = 0.96 + sin(elapsed * 9.0) * 0.06
 		scale = Vector3.ONE * pulse
@@ -90,6 +101,8 @@ func _build_visuals() -> void:
 	active_material.albedo_color = Color(tint.r, tint.g, tint.b, 0.0)
 	active_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	active_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	active_material.emission_enabled = true
+	active_material.emission = tint.lightened(0.08)
 
 	var warning_box := MeshInstance3D.new()
 	var warning_mesh := BoxMesh.new()
@@ -97,6 +110,14 @@ func _build_visuals() -> void:
 	warning_box.mesh = warning_mesh
 	warning_box.material_override = warning_material
 	add_child(warning_box)
+
+	glow_mesh = MeshInstance3D.new()
+	var glow_shape := BoxMesh.new()
+	glow_shape.size = Vector3(width * 1.12, 0.03, length * 0.92)
+	glow_mesh.mesh = glow_shape
+	glow_mesh.position = Vector3(0.0, 0.01, 0.0)
+	glow_mesh.material_override = warning_material
+	add_child(glow_mesh)
 
 	active_mesh = MeshInstance3D.new()
 	var active_shape := BoxMesh.new()
@@ -107,10 +128,27 @@ func _build_visuals() -> void:
 	active_mesh.visible = false
 	add_child(active_mesh)
 
+	edge_left_mesh = MeshInstance3D.new()
+	var edge_shape := BoxMesh.new()
+	edge_shape.size = Vector3(0.12, 0.06, length)
+	edge_left_mesh.mesh = edge_shape
+	edge_left_mesh.position = Vector3(-width * 0.42, 0.03, 0.0)
+	edge_left_mesh.material_override = active_material
+	add_child(edge_left_mesh)
+
+	edge_right_mesh = MeshInstance3D.new()
+	var edge_right_shape := BoxMesh.new()
+	edge_right_shape.size = Vector3(0.12, 0.06, length)
+	edge_right_mesh.mesh = edge_right_shape
+	edge_right_mesh.position = Vector3(width * 0.42, 0.03, 0.0)
+	edge_right_mesh.material_override = active_material
+	add_child(edge_right_mesh)
+
 	label_node = Label3D.new()
 	label_node.text = label
 	label_node.font = CJKFont.get_font()
 	label_node.font_size = 30
 	label_node.position = Vector3(0.0, 0.12, 0.0)
 	label_node.modulate = Color(1.0, 0.92, 0.9, 0.94)
+	label_node.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	add_child(label_node)

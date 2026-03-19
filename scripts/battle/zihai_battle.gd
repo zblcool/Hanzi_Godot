@@ -581,18 +581,49 @@ func _spawn_wave_effect(origin: Vector3, radius: float, tint: Color, label: Stri
 	effect_root.position = Vector3(origin.x, 0.05, origin.z)
 	effects_root.add_child(effect_root)
 
-	var ring := MeshInstance3D.new()
-	var mesh := CylinderMesh.new()
-	mesh.top_radius = radius
-	mesh.bottom_radius = radius
-	mesh.height = 0.05
-	ring.mesh = mesh
-	var material := StandardMaterial3D.new()
-	material.albedo_color = Color(tint.r, tint.g, tint.b, 0.42)
-	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	material.cull_mode = BaseMaterial3D.CULL_DISABLED
-	ring.material_override = material
-	effect_root.add_child(ring)
+	var outer_ring := MeshInstance3D.new()
+	var outer_mesh := CylinderMesh.new()
+	outer_mesh.top_radius = radius
+	outer_mesh.bottom_radius = radius
+	outer_mesh.height = 0.04
+	outer_ring.mesh = outer_mesh
+	var outer_material := StandardMaterial3D.new()
+	outer_material.albedo_color = Color(tint.r, tint.g, tint.b, 0.24)
+	outer_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	outer_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	outer_material.emission_enabled = true
+	outer_material.emission = tint.lightened(0.12)
+	outer_ring.material_override = outer_material
+	effect_root.add_child(outer_ring)
+
+	var inner_ring := MeshInstance3D.new()
+	var inner_mesh := CylinderMesh.new()
+	inner_mesh.top_radius = radius * 0.78
+	inner_mesh.bottom_radius = radius * 0.78
+	inner_mesh.height = 0.06
+	inner_ring.mesh = inner_mesh
+	var inner_material := StandardMaterial3D.new()
+	inner_material.albedo_color = Color(tint.r, tint.g, tint.b, 0.5)
+	inner_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	inner_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	inner_material.emission_enabled = true
+	inner_material.emission = tint
+	inner_ring.material_override = inner_material
+	inner_ring.position = Vector3(0.0, 0.01, 0.0)
+	effect_root.add_child(inner_ring)
+
+	var shard_root := Node3D.new()
+	effect_root.add_child(shard_root)
+	for index in range(4):
+		var shard := MeshInstance3D.new()
+		var shard_mesh := BoxMesh.new()
+		shard_mesh.size = Vector3(max(0.12, radius * 0.12), 0.04, max(0.28, radius * 0.22))
+		shard.mesh = shard_mesh
+		var angle: float = TAU * float(index) / 4.0
+		shard.position = Vector3(cos(angle) * radius * 0.34, 0.03, sin(angle) * radius * 0.34)
+		shard.rotation_degrees.y = rad_to_deg(angle)
+		shard.material_override = inner_material
+		shard_root.add_child(shard)
 
 	var glyph := Label3D.new()
 	glyph.text = label
@@ -600,10 +631,14 @@ func _spawn_wave_effect(origin: Vector3, radius: float, tint: Color, label: Stri
 	glyph.font_size = 32
 	glyph.position = Vector3(0.0, 0.12, 0.0)
 	glyph.modulate = Color(1.0, 0.95, 0.88, 0.96)
+	glyph.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	effect_root.add_child(glyph)
 
 	var tween := create_tween()
-	tween.tween_property(effect_root, "scale", Vector3(1.12, 1.0, 1.12), 0.26)
+	tween.parallel().tween_property(effect_root, "scale", Vector3(1.18, 1.0, 1.18), 0.28)
+	tween.parallel().tween_property(outer_ring, "rotation_degrees:y", 28.0, 0.28)
+	tween.parallel().tween_property(inner_ring, "rotation_degrees:y", -36.0, 0.28)
+	tween.parallel().tween_property(shard_root, "rotation_degrees:y", 42.0, 0.28)
 	tween.tween_callback(effect_root.queue_free)
 
 

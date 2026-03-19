@@ -45,6 +45,17 @@ var body_material: StandardMaterial3D
 var accent_material: StandardMaterial3D
 var label_node: Label3D
 var body_node: MeshInstance3D
+var head_node: MeshInstance3D
+var visual_root: Node3D
+var glyph_root: Node3D
+var glyph_ring_node: MeshInstance3D
+var left_arm_node: MeshInstance3D
+var right_arm_node: MeshInstance3D
+var left_leg_node: MeshInstance3D
+var right_leg_node: MeshInstance3D
+var rear_left_leg_node: MeshInstance3D
+var rear_right_leg_node: MeshInstance3D
+var gait_amount: float = 0.0
 
 
 func configure(kind: String, difficulty: float, player_ref) -> void:
@@ -112,6 +123,8 @@ func _physics_process(delta: float) -> void:
 
 	if motion.length_squared() > 0.01:
 		_face_direction(motion.normalized(), delta)
+	var motion_reference: float = move_speed * (dash_speed_multiplier if dash_time > 0.0 else 1.0)
+	gait_amount = clamp(motion.length() / max(motion_reference, 0.001), 0.0, 1.8)
 
 	_update_visual_state()
 
@@ -455,6 +468,8 @@ func _face_direction(direction: Vector3, delta: float) -> void:
 func _build_visuals() -> void:
 	body_material = _make_material(tint)
 	accent_material = _make_material(tint.lightened(0.15))
+	visual_root = Node3D.new()
+	add_child(visual_root)
 
 	if enemy_type == "cavalry":
 		_build_cavalry_visuals()
@@ -487,10 +502,10 @@ func _build_humanoid_visuals() -> void:
 
 	body_node = _add_box_part(torso_size, Vector3(0.0, 1.34, 0.0), body_material)
 	_add_box_part(pelvis_size, Vector3(0.0, 0.78, 0.0), accent_material)
-	_add_box_part(arm_size, Vector3(-torso_size.x * 0.58, 1.32, 0.0), accent_material)
-	_add_box_part(arm_size, Vector3(torso_size.x * 0.58, 1.32, 0.0), accent_material)
-	_add_box_part(leg_size, Vector3(-0.18, 0.34, 0.0), body_material)
-	_add_box_part(leg_size, Vector3(0.18, 0.34, 0.0), body_material)
+	left_arm_node = _add_box_part(arm_size, Vector3(-torso_size.x * 0.58, 1.32, 0.0), accent_material)
+	right_arm_node = _add_box_part(arm_size, Vector3(torso_size.x * 0.58, 1.32, 0.0), accent_material)
+	left_leg_node = _add_box_part(leg_size, Vector3(-0.18, 0.34, 0.0), body_material)
+	right_leg_node = _add_box_part(leg_size, Vector3(0.18, 0.34, 0.0), body_material)
 
 	var head := MeshInstance3D.new()
 	var head_mesh := SphereMesh.new()
@@ -499,7 +514,8 @@ func _build_humanoid_visuals() -> void:
 	head.mesh = head_mesh
 	head.position = Vector3(0.0, 2.06 if enemy_type != "elite" else 2.18, 0.0)
 	head.material_override = head_material
-	add_child(head)
+	visual_root.add_child(head)
+	head_node = head
 
 	match enemy_type:
 		"swift":
@@ -527,7 +543,7 @@ func _build_humanoid_visuals() -> void:
 			skirt.mesh = skirt_mesh
 			skirt.position = Vector3(0.0, 0.82, 0.0)
 			skirt.material_override = body_material
-			add_child(skirt)
+			visual_root.add_child(skirt)
 			_add_box_part(Vector3(0.08, 1.18, 0.08), Vector3(0.42, 1.32, -0.28), accent_material)
 			var ring := MeshInstance3D.new()
 			var ring_mesh := CylinderMesh.new()
@@ -537,7 +553,7 @@ func _build_humanoid_visuals() -> void:
 			ring.mesh = ring_mesh
 			ring.position = Vector3(0.0, 0.18, 0.0)
 			ring.material_override = accent_material
-			add_child(ring)
+			visual_root.add_child(ring)
 		"elite":
 			_add_box_part(Vector3(0.56, 1.04, 0.08), Vector3(0.0, 1.1, 0.34), accent_material)
 			_add_box_part(Vector3(0.44, 0.24, 0.34), Vector3(-0.5, 1.82, 0.0), accent_material)
@@ -549,11 +565,11 @@ func _build_humanoid_visuals() -> void:
 func _build_cavalry_visuals() -> void:
 	body_node = _add_box_part(Vector3(1.68, 0.92, 2.38), Vector3(0.0, 0.9, 0.08), body_material)
 	_add_box_part(Vector3(0.44, 0.92, 0.52), Vector3(0.0, 1.56, -0.88), accent_material)
-	_add_box_part(Vector3(0.46, 0.36, 0.62), Vector3(0.0, 1.9, -1.34), body_material)
-	_add_box_part(Vector3(0.16, 1.02, 0.18), Vector3(-0.52, 0.3, -0.54), accent_material)
-	_add_box_part(Vector3(0.16, 1.02, 0.18), Vector3(0.52, 0.3, -0.54), accent_material)
-	_add_box_part(Vector3(0.16, 1.02, 0.18), Vector3(-0.52, 0.3, 0.74), accent_material)
-	_add_box_part(Vector3(0.16, 1.02, 0.18), Vector3(0.52, 0.3, 0.74), accent_material)
+	head_node = _add_box_part(Vector3(0.46, 0.36, 0.62), Vector3(0.0, 1.9, -1.34), body_material)
+	left_leg_node = _add_box_part(Vector3(0.16, 1.02, 0.18), Vector3(-0.52, 0.3, -0.54), accent_material)
+	right_leg_node = _add_box_part(Vector3(0.16, 1.02, 0.18), Vector3(0.52, 0.3, -0.54), accent_material)
+	rear_left_leg_node = _add_box_part(Vector3(0.16, 1.02, 0.18), Vector3(-0.52, 0.3, 0.74), accent_material)
+	rear_right_leg_node = _add_box_part(Vector3(0.16, 1.02, 0.18), Vector3(0.52, 0.3, 0.74), accent_material)
 
 	_add_box_part(Vector3(0.66, 0.8, 0.46), Vector3(0.0, 1.72, -0.08), accent_material)
 	_add_box_part(Vector3(0.42, 0.36, 0.34), Vector3(0.0, 2.26, -0.08), _make_material(tint.lightened(0.08)))
@@ -564,7 +580,8 @@ func _build_glyph_badge() -> void:
 	var badge_height := 2.76 if enemy_type == "cavalry" else (2.72 if enemy_type == "elite" else 2.5)
 	var badge_root := Node3D.new()
 	badge_root.position = Vector3(0.0, badge_height, 0.0)
-	add_child(badge_root)
+	visual_root.add_child(badge_root)
+	glyph_root = badge_root
 
 	var badge_material := StandardMaterial3D.new()
 	badge_material.albedo_color = Color(0.04, 0.06, 0.08, 0.86)
@@ -594,6 +611,7 @@ func _build_glyph_badge() -> void:
 	ring.position = Vector3(0.0, 0.05, 0.0)
 	ring.material_override = ring_material
 	badge_root.add_child(ring)
+	glyph_ring_node = ring
 
 	label_node = Label3D.new()
 	label_node.text = glyph
@@ -612,7 +630,7 @@ func _add_box_part(size: Vector3, position: Vector3, material: Material) -> Mesh
 	mesh_instance.mesh = mesh
 	mesh_instance.position = position
 	mesh_instance.material_override = material
-	add_child(mesh_instance)
+	visual_root.add_child(mesh_instance)
 	return mesh_instance
 
 
@@ -629,9 +647,86 @@ func _update_visual_state() -> void:
 	else:
 		accent_material.albedo_color = tint.lightened(0.16)
 
+	var bob_phase: float = drift_time * (3.2 + gait_amount * 1.8) + float(int(get_instance_id()) % 9) * 0.35
+	if visual_root != null:
+		visual_root.position.y = sin(bob_phase) * (0.04 + gait_amount * 0.04) + (0.06 if dash_time > 0.0 else 0.0)
+
+	if glyph_root != null:
+		glyph_root.position.y = (2.76 if enemy_type == "cavalry" else (2.72 if enemy_type == "elite" else 2.5)) + sin(drift_time * 1.8 + 0.6) * 0.05
+	if glyph_ring_node != null:
+		glyph_ring_node.rotation_degrees.y = wrapf(glyph_ring_node.rotation_degrees.y + 1.4 + gait_amount * 2.6, 0.0, 360.0)
+	if label_node != null:
+		label_node.modulate = Color(0.98, 0.94, 0.84, 0.92 + sin(drift_time * 2.0) * 0.05)
+
+	var gait: float = sin(drift_time * 7.0) * 16.0 * gait_amount
+	if enemy_type == "cavalry":
+		if body_node != null:
+			body_node.rotation_degrees.x = -3.0 - dash_time * 14.0 + sin(drift_time * 6.0) * 2.4 * gait_amount
+			body_node.rotation_degrees.z = sin(drift_time * 3.2) * 2.2
+		if head_node != null:
+			head_node.rotation_degrees.x = 6.0 + sin(drift_time * 6.6 + 0.6) * 6.0
+		if left_leg_node != null:
+			left_leg_node.rotation_degrees.x = gait
+		if right_leg_node != null:
+			right_leg_node.rotation_degrees.x = -gait
+		if rear_left_leg_node != null:
+			rear_left_leg_node.rotation_degrees.x = -gait
+		if rear_right_leg_node != null:
+			rear_right_leg_node.rotation_degrees.x = gait
+		return
+
+	if body_node != null:
+		body_node.scale = Vector3.ONE
+		body_node.rotation_degrees.z = sin(drift_time * 3.2) * 3.2 * (0.3 + gait_amount)
+		body_node.rotation_degrees.x = (-12.0 if dash_time > 0.0 else 0.0) + (-8.0 if windup_time > 0.0 and enemy_type == "archer" else 0.0)
+	if head_node != null:
+		head_node.rotation_degrees.z = -sin(drift_time * 3.2) * 1.8
+	if left_leg_node != null:
+		left_leg_node.rotation_degrees.x = gait
+	if right_leg_node != null:
+		right_leg_node.rotation_degrees.x = -gait
+	if left_arm_node != null:
+		left_arm_node.rotation_degrees.x = -gait * 0.65
+		left_arm_node.rotation_degrees.z = -6.0
+	if right_arm_node != null:
+		right_arm_node.rotation_degrees.x = gait * 0.65
+		right_arm_node.rotation_degrees.z = 6.0
+
+	match enemy_type:
+		"archer":
+			if right_arm_node != null:
+				right_arm_node.rotation_degrees.x = -28.0 - windup_time * 58.0
+				right_arm_node.rotation_degrees.y = 12.0
+			if left_arm_node != null:
+				left_arm_node.rotation_degrees.x = 12.0 + windup_time * 28.0
+		"assassin":
+			if left_arm_node != null:
+				left_arm_node.rotation_degrees.z = -18.0 - dash_time * 24.0
+			if right_arm_node != null:
+				right_arm_node.rotation_degrees.z = 18.0 + dash_time * 24.0
+			if body_node != null:
+				body_node.rotation_degrees.x = -10.0 if windup_time > 0.0 or dash_time > 0.0 else 0.0
+		"ritualist":
+			if left_arm_node != null:
+				left_arm_node.rotation_degrees.x = -22.0 + sin(drift_time * 2.4) * 8.0
+				left_arm_node.rotation_degrees.z = -18.0
+			if right_arm_node != null:
+				right_arm_node.rotation_degrees.x = -22.0 + sin(drift_time * 2.4 + 1.1) * 8.0
+				right_arm_node.rotation_degrees.z = 18.0
+		"elite":
+			if body_node != null:
+				body_node.scale = Vector3.ONE * (1.0 + sin(drift_time * 2.1) * 0.02)
+			if left_arm_node != null:
+				left_arm_node.rotation_degrees.z = -10.0 + sin(drift_time * 2.3) * 4.0
+			if right_arm_node != null:
+				right_arm_node.rotation_degrees.z = 10.0 - sin(drift_time * 2.3) * 4.0
+
 
 func _make_material(color: Color) -> StandardMaterial3D:
 	var material := StandardMaterial3D.new()
 	material.albedo_color = color
-	material.roughness = 0.84
+	material.roughness = 0.82
+	material.metallic = 0.05
+	material.emission_enabled = true
+	material.emission = Color(color.r * 0.12, color.g * 0.12, color.b * 0.12, 1.0)
 	return material

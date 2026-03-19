@@ -61,6 +61,22 @@ var accent_mesh: MeshInstance3D
 var body_material: StandardMaterial3D
 var accent_material: StandardMaterial3D
 var weapon_material: StandardMaterial3D
+var head_material: StandardMaterial3D
+var trim_material: StandardMaterial3D
+var visual_root: Node3D
+var torso_root: Node3D
+var glyph_root: Node3D
+var glyph_label: Label3D
+var shoulder_left_mesh: MeshInstance3D
+var shoulder_right_mesh: MeshInstance3D
+var left_arm_mesh: MeshInstance3D
+var right_arm_mesh: MeshInstance3D
+var left_leg_mesh: MeshInstance3D
+var right_leg_mesh: MeshInstance3D
+var waist_mesh: MeshInstance3D
+var cloak_mesh: MeshInstance3D
+var motion_time: float = 0.0
+var move_blend: float = 0.0
 
 
 func configure(hero_data: Dictionary) -> void:
@@ -106,6 +122,8 @@ func _physics_process(delta: float) -> void:
 		look_direction = move_vector.normalized()
 		var target_yaw: float = atan2(-look_direction.x, -look_direction.z)
 		rotation.y = lerp_angle(rotation.y, target_yaw, delta * 10.0)
+	move_blend = move_vector.length()
+	motion_time += delta * (1.8 + move_blend * 6.0 + (0.9 if stun_time > 0.0 else 0.0))
 	global_position += move_vector * move_speed * delta
 	global_position.y = ground_height
 
@@ -292,91 +310,241 @@ func _apply_skill_levels() -> void:
 func _build_visuals() -> void:
 	body_material = _make_material(body_color)
 	accent_material = _make_material(accent_color)
-	weapon_material = _make_material(accent_color.lightened(0.1))
+	weapon_material = _make_material(accent_color.lightened(0.14))
+	head_material = _make_material(body_color.lightened(0.08))
+	trim_material = _make_material(Color(0.96, 0.9, 0.8, 1.0))
 
-	body_mesh = MeshInstance3D.new()
-	var body_shape := CylinderMesh.new()
-	body_shape.top_radius = 0.42
-	body_shape.bottom_radius = 0.48
-	body_shape.height = 1.0
-	body_mesh.mesh = body_shape
-	body_mesh.position = Vector3(0.0, 0.55, 0.0)
-	body_mesh.material_override = body_material
-	add_child(body_mesh)
+	visual_root = Node3D.new()
+	add_child(visual_root)
+
+	torso_root = Node3D.new()
+	visual_root.add_child(torso_root)
+
+	var torso_size := Vector3(0.72, 1.04, 0.46)
+	var waist_size := Vector3(0.62, 0.18, 0.4)
+	var arm_size := Vector3(0.14, 0.72, 0.16)
+	var leg_size := Vector3(0.18, 0.86, 0.2)
+	var head_radius: float = 0.28
+
+	if role == "melee":
+		torso_size = Vector3(0.82, 1.02, 0.52)
+		waist_size = Vector3(0.68, 0.2, 0.42)
+		arm_size = Vector3(0.16, 0.78, 0.18)
+		leg_size = Vector3(0.2, 0.9, 0.22)
+		head_radius = 0.29
+
+	body_mesh = _add_box_part(torso_root, torso_size, Vector3(0.0, 1.3, 0.0), body_material)
+	waist_mesh = _add_box_part(torso_root, waist_size, Vector3(0.0, 0.76, 0.0), accent_material)
+	accent_mesh = _add_box_part(torso_root, Vector3(torso_size.x * 0.74, 0.14, 0.38), Vector3(0.0, 1.1, 0.16), trim_material)
+
+	shoulder_left_mesh = _add_box_part(torso_root, Vector3(0.22, 0.16, 0.24), Vector3(-torso_size.x * 0.54, 1.72, 0.0), accent_material)
+	shoulder_right_mesh = _add_box_part(torso_root, Vector3(0.22, 0.16, 0.24), Vector3(torso_size.x * 0.54, 1.72, 0.0), accent_material)
+	left_arm_mesh = _add_box_part(torso_root, arm_size, Vector3(-torso_size.x * 0.58, 1.22, 0.0), accent_material)
+	right_arm_mesh = _add_box_part(torso_root, arm_size, Vector3(torso_size.x * 0.58, 1.22, 0.0), accent_material)
+	left_leg_mesh = _add_box_part(torso_root, leg_size, Vector3(-0.18, 0.34, 0.0), body_material)
+	right_leg_mesh = _add_box_part(torso_root, leg_size, Vector3(0.18, 0.34, 0.0), body_material)
 
 	head_mesh = MeshInstance3D.new()
 	var head_shape := SphereMesh.new()
-	head_shape.radius = 0.28
-	head_shape.height = 0.56
+	head_shape.radius = head_radius
+	head_shape.height = head_radius * 2.0
 	head_mesh.mesh = head_shape
-	head_mesh.position = Vector3(0.0, 1.26, 0.0)
-	head_mesh.material_override = _make_material(body_color.lightened(0.06))
-	add_child(head_mesh)
+	head_mesh.position = Vector3(0.0, 2.0, 0.02)
+	head_mesh.material_override = head_material
+	torso_root.add_child(head_mesh)
 
-	accent_mesh = MeshInstance3D.new()
-	var accent_shape := BoxMesh.new()
-	accent_shape.size = Vector3(0.66, 0.12, 0.42)
-	accent_mesh.mesh = accent_shape
-	accent_mesh.position = Vector3(0.0, 0.9, 0.0)
-	accent_mesh.material_override = accent_material
-	add_child(accent_mesh)
+	if role == "ranged":
+		var robe := MeshInstance3D.new()
+		var robe_mesh := CylinderMesh.new()
+		robe_mesh.top_radius = 0.28
+		robe_mesh.bottom_radius = 0.56
+		robe_mesh.height = 1.08
+		robe.mesh = robe_mesh
+		robe.position = Vector3(0.0, 0.78, 0.0)
+		robe.material_override = body_material
+		visual_root.add_child(robe)
+		cloak_mesh = robe
+		_add_box_part(torso_root, Vector3(0.18, 0.52, 0.1), Vector3(0.0, 1.3, -0.28), accent_material)
+		_add_box_part(torso_root, Vector3(0.12, 0.66, 0.12), Vector3(-0.28, 1.04, 0.16), trim_material)
+		_add_box_part(torso_root, Vector3(0.12, 0.66, 0.12), Vector3(0.28, 1.04, 0.16), trim_material)
+	else:
+		cloak_mesh = _add_box_part(torso_root, Vector3(0.2, 1.0, 0.08), Vector3(0.0, 1.14, 0.34), accent_material)
+		_add_box_part(torso_root, Vector3(0.24, 0.86, 0.14), Vector3(-0.5, 1.18, 0.0), trim_material)
+		_add_box_part(torso_root, Vector3(0.24, 0.86, 0.14), Vector3(0.5, 1.18, 0.0), trim_material)
+		_add_box_part(torso_root, Vector3(0.4, 0.16, 0.28), Vector3(0.0, 1.76, -0.18), accent_material)
 
 	weapon_root = Node3D.new()
-	weapon_root.position = Vector3(0.45, 0.9, -0.1)
-	add_child(weapon_root)
+	weapon_root.position = Vector3(0.12, 0.06, -0.12)
+	right_arm_mesh.add_child(weapon_root)
 
 	weapon_mesh = MeshInstance3D.new()
 	weapon_root.add_child(weapon_mesh)
 	if role == "melee":
 		var sword_mesh := BoxMesh.new()
-		sword_mesh.size = Vector3(0.12, 0.12, 1.9)
+		sword_mesh.size = Vector3(0.12, 0.12, 1.86)
 		weapon_mesh.mesh = sword_mesh
-		weapon_mesh.position = Vector3(0.0, 0.0, -0.95)
+		weapon_mesh.position = Vector3(0.0, -0.14, -0.94)
 		weapon_mesh.material_override = weapon_material
+		var guard := MeshInstance3D.new()
+		var guard_mesh := BoxMesh.new()
+		guard_mesh.size = Vector3(0.38, 0.08, 0.08)
+		guard.mesh = guard_mesh
+		guard.position = Vector3(0.0, -0.12, -0.12)
+		guard.material_override = trim_material
+		weapon_root.add_child(guard)
 	else:
 		var brush_mesh := BoxMesh.new()
-		brush_mesh.size = Vector3(0.14, 0.14, 1.25)
+		brush_mesh.size = Vector3(0.1, 0.1, 1.18)
 		weapon_mesh.mesh = brush_mesh
-		weapon_mesh.position = Vector3(0.0, 0.0, -0.63)
-		weapon_mesh.material_override = weapon_material
+		weapon_mesh.position = Vector3(0.0, -0.08, -0.6)
+		weapon_mesh.material_override = trim_material
+		var brush_tip := MeshInstance3D.new()
+		var brush_tip_mesh := BoxMesh.new()
+		brush_tip_mesh.size = Vector3(0.16, 0.16, 0.24)
+		brush_tip.mesh = brush_tip_mesh
+		brush_tip.position = Vector3(0.0, -0.1, -1.1)
+		brush_tip.material_override = weapon_material
+		weapon_root.add_child(brush_tip)
 
-	var label := Label3D.new()
-	label.text = "文" if role == "ranged" else "侠"
-	label.font = CJKFont.get_font()
-	label.font_size = 44
-	label.position = Vector3(0.0, 1.78, 0.0)
-	label.modulate = Color(1.0, 0.92, 0.74, 0.96)
-	add_child(label)
+	_build_glyph_badge("文" if role == "ranged" else "侠")
 
 
 func _update_visual_state() -> void:
 	var current_body: Color = body_color
 	var current_accent: Color = accent_color
+	var current_trim: Color = Color(0.96, 0.9, 0.8, 1.0)
 	if invulnerability_time > 0.0:
 		current_body = Color(1.0, 0.82, 0.74, 1.0)
 	if stun_time > 0.0:
 		current_body = Color(0.72, 0.76, 0.94, 1.0)
 		current_accent = Color(0.48, 0.58, 0.9, 1.0)
+		current_trim = Color(0.78, 0.84, 1.0, 1.0)
 	if stealth_time > 0.0:
 		current_body = Color(0.44, 0.6, 0.52, 1.0)
 		current_accent = Color(0.6, 0.84, 0.7, 1.0)
+		current_trim = Color(0.82, 0.96, 0.88, 1.0)
 
 	body_material.albedo_color = current_body
 	accent_material.albedo_color = current_accent
 	weapon_material.albedo_color = current_accent.lightened(0.06)
+	head_material.albedo_color = current_body.lightened(0.08)
+	trim_material.albedo_color = current_trim
+
+	var bob: float = sin(motion_time * 0.9) * (0.04 + move_blend * 0.03)
+	if slash_anim_time > 0.0:
+		bob += 0.03
+	if visual_root != null:
+		visual_root.position.y = bob
+	if glyph_root != null:
+		glyph_root.position.y = 2.58 + sin(motion_time * 1.2 + 0.6) * 0.05
+		glyph_root.rotation_degrees.y = wrapf(glyph_root.rotation_degrees.y + (0.4 + move_blend * 1.6), 0.0, 360.0)
+
+	var gait: float = sin(motion_time * 1.8) * 18.0 * move_blend
+	var sway: float = sin(motion_time * 0.9) * 4.5 * (0.3 + move_blend)
+	torso_root.rotation_degrees.z = sway * 0.35
+	left_leg_mesh.rotation_degrees.x = gait
+	right_leg_mesh.rotation_degrees.x = -gait
+	left_arm_mesh.rotation_degrees.x = -gait * 0.6
+	right_arm_mesh.rotation_degrees.x = gait * 0.45
+	left_arm_mesh.rotation_degrees.z = -6.0 - sway * 0.6
+	right_arm_mesh.rotation_degrees.z = 6.0 + sway * 0.6
+	head_mesh.rotation_degrees.z = -sway * 0.18
 
 	if role == "melee":
 		if slash_anim_time > 0.0:
 			var phase: float = 1.0 - slash_anim_time / 0.18
-			weapon_root.rotation_degrees.y = lerp(110.0, -68.0, phase)
+			right_arm_mesh.rotation_degrees.x = lerp(44.0, -124.0, phase)
+			right_arm_mesh.rotation_degrees.y = lerp(18.0, -74.0, phase)
+			weapon_root.rotation_degrees.x = lerp(-18.0, -54.0, phase)
+			weapon_root.rotation_degrees.y = lerp(72.0, -42.0, phase)
+			weapon_root.rotation_degrees.z = lerp(18.0, -22.0, phase)
 		else:
-			weapon_root.rotation_degrees.y = 28.0
+			right_arm_mesh.rotation_degrees.x = -18.0 + gait * 0.3
+			right_arm_mesh.rotation_degrees.y = 8.0
+			weapon_root.rotation_degrees.x = -18.0
+			weapon_root.rotation_degrees.y = 32.0
+			weapon_root.rotation_degrees.z = 12.0
 	else:
-		weapon_root.rotation_degrees.y = -20.0 + sin(Time.get_ticks_msec() / 220.0) * 4.0
+		right_arm_mesh.rotation_degrees.x = -28.0 - move_blend * 8.0 + sin(motion_time * 1.5 + 0.4) * 4.0
+		right_arm_mesh.rotation_degrees.y = 10.0 + sin(motion_time * 0.9) * 4.0
+		weapon_root.rotation_degrees.x = -12.0 + sin(motion_time * 1.8) * 4.0
+		weapon_root.rotation_degrees.y = 18.0 + sin(motion_time * 1.1) * 6.0
+		weapon_root.rotation_degrees.z = 8.0
+
+	if cloak_mesh != null:
+		cloak_mesh.rotation_degrees.x = 3.0 + sin(motion_time * 1.4 + 0.8) * (3.0 + move_blend * 3.0)
+	if accent_mesh != null:
+		accent_mesh.rotation_degrees.x = sin(motion_time * 1.2 + 0.2) * 2.4
+	if waist_mesh != null:
+		waist_mesh.rotation_degrees.y = sin(motion_time * 0.8) * 3.2
+	if glyph_label != null:
+		glyph_label.modulate = current_trim.lightened(0.02)
 
 
 func _make_material(color: Color) -> StandardMaterial3D:
 	var material := StandardMaterial3D.new()
 	material.albedo_color = color
-	material.roughness = 0.82
+	material.roughness = 0.8
+	material.metallic = 0.06
+	material.emission_enabled = true
+	material.emission = Color(color.r * 0.16, color.g * 0.16, color.b * 0.16, 1.0)
 	return material
+
+
+func _build_glyph_badge(symbol: String) -> void:
+	glyph_root = Node3D.new()
+	glyph_root.position = Vector3(0.0, 2.58, 0.0)
+	visual_root.add_child(glyph_root)
+
+	var badge_material := StandardMaterial3D.new()
+	badge_material.albedo_color = Color(0.03, 0.05, 0.08, 0.86)
+	badge_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	badge_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	badge_material.emission_enabled = true
+	badge_material.emission = Color(0.04, 0.06, 0.1, 1.0)
+
+	var ring_material := StandardMaterial3D.new()
+	ring_material.albedo_color = Color(accent_color.r, accent_color.g, accent_color.b, 0.42)
+	ring_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	ring_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	ring_material.emission_enabled = true
+	ring_material.emission = accent_color.lightened(0.08)
+
+	var disc := MeshInstance3D.new()
+	var disc_mesh := CylinderMesh.new()
+	disc_mesh.top_radius = 0.34
+	disc_mesh.bottom_radius = 0.34
+	disc_mesh.height = 0.06
+	disc.mesh = disc_mesh
+	disc.material_override = badge_material
+	glyph_root.add_child(disc)
+
+	var ring := MeshInstance3D.new()
+	var ring_mesh := CylinderMesh.new()
+	ring_mesh.top_radius = 0.4
+	ring_mesh.bottom_radius = 0.4
+	ring_mesh.height = 0.02
+	ring.mesh = ring_mesh
+	ring.position = Vector3(0.0, 0.04, 0.0)
+	ring.material_override = ring_material
+	glyph_root.add_child(ring)
+
+	glyph_label = Label3D.new()
+	glyph_label.text = symbol
+	glyph_label.font = CJKFont.get_font()
+	glyph_label.font_size = 36
+	glyph_label.position = Vector3(0.0, 0.03, 0.0)
+	glyph_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	glyph_label.modulate = Color(1.0, 0.95, 0.84, 0.98)
+	glyph_root.add_child(glyph_label)
+
+
+func _add_box_part(parent: Node3D, size: Vector3, box_position: Vector3, material: Material) -> MeshInstance3D:
+	var mesh_instance := MeshInstance3D.new()
+	var mesh := BoxMesh.new()
+	mesh.size = size
+	mesh_instance.mesh = mesh
+	mesh_instance.position = box_position
+	mesh_instance.material_override = material
+	parent.add_child(mesh_instance)
+	return mesh_instance

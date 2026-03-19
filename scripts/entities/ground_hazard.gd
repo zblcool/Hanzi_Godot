@@ -16,6 +16,9 @@ var telegraph_material: StandardMaterial3D
 var active_material: StandardMaterial3D
 var active_mesh: MeshInstance3D
 var label_node: Label3D
+var ring_mesh: MeshInstance3D
+var glow_mesh: MeshInstance3D
+var shard_root: Node3D
 
 
 func configure(player_ref, origin: Vector3, hazard_radius: float, warning: float, active_duration: float, damage_value: float, tint_value: Color, label_value: String) -> void:
@@ -36,6 +39,14 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	elapsed += delta
+	if ring_mesh != null:
+		ring_mesh.rotation_degrees.y += delta * 64.0
+	if shard_root != null:
+		shard_root.rotation_degrees.y -= delta * 48.0
+	if label_node != null:
+		label_node.position.y = 0.12 + sin(elapsed * 4.4) * 0.03
+	if glow_mesh != null:
+		glow_mesh.scale = Vector3.ONE * (0.94 + sin(elapsed * 6.4) * 0.08)
 	if elapsed < warning_time:
 		var pulse: float = 0.94 + sin(elapsed * 8.0) * 0.08
 		scale = Vector3.ONE * pulse
@@ -80,6 +91,8 @@ func _build_visuals() -> void:
 	active_material.albedo_color = Color(tint.r, tint.g, tint.b, 0.0)
 	active_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	active_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	active_material.emission_enabled = true
+	active_material.emission = tint.lightened(0.08)
 
 	var warning_disc := MeshInstance3D.new()
 	var warning_mesh := CylinderMesh.new()
@@ -89,6 +102,16 @@ func _build_visuals() -> void:
 	warning_disc.mesh = warning_mesh
 	warning_disc.material_override = telegraph_material
 	add_child(warning_disc)
+
+	ring_mesh = MeshInstance3D.new()
+	var ring_shape := CylinderMesh.new()
+	ring_shape.top_radius = radius * 0.9
+	ring_shape.bottom_radius = radius * 0.9
+	ring_shape.height = 0.025
+	ring_mesh.mesh = ring_shape
+	ring_mesh.position = Vector3(0.0, 0.02, 0.0)
+	ring_mesh.material_override = active_material
+	add_child(ring_mesh)
 
 	active_mesh = MeshInstance3D.new()
 	var active_shape := CylinderMesh.new()
@@ -101,10 +124,34 @@ func _build_visuals() -> void:
 	active_mesh.visible = false
 	add_child(active_mesh)
 
+	glow_mesh = MeshInstance3D.new()
+	var glow_shape := CylinderMesh.new()
+	glow_shape.top_radius = radius * 1.06
+	glow_shape.bottom_radius = radius * 1.06
+	glow_shape.height = 0.02
+	glow_mesh.mesh = glow_shape
+	glow_mesh.position = Vector3(0.0, 0.01, 0.0)
+	glow_mesh.material_override = telegraph_material
+	add_child(glow_mesh)
+
+	shard_root = Node3D.new()
+	add_child(shard_root)
+	for index in range(4):
+		var shard := MeshInstance3D.new()
+		var shard_mesh := BoxMesh.new()
+		shard_mesh.size = Vector3(0.18, 0.03, 0.42)
+		shard.mesh = shard_mesh
+		var angle: float = TAU * float(index) / 4.0
+		shard.position = Vector3(cos(angle) * radius * 0.56, 0.03, sin(angle) * radius * 0.56)
+		shard.rotation_degrees.y = rad_to_deg(angle)
+		shard.material_override = active_material
+		shard_root.add_child(shard)
+
 	label_node = Label3D.new()
 	label_node.text = label
 	label_node.font = CJKFont.get_font()
 	label_node.font_size = 34
 	label_node.position = Vector3(0.0, 0.12, 0.0)
 	label_node.modulate = Color(1.0, 0.92, 0.98, 0.96)
+	label_node.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	add_child(label_node)
