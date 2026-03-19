@@ -48,6 +48,7 @@ var wave_timer: float = 0.0
 var stealth_time: float = 0.0
 var bush_lock_time: float = 0.0
 var slash_anim_time: float = 0.0
+var stun_time: float = 0.0
 var is_dead: bool = false
 
 var look_direction: Vector3 = Vector3(0.0, 0.0, -1.0)
@@ -97,6 +98,8 @@ func _physics_process(delta: float) -> void:
 
 	var input_vector: Vector2 = Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 	var move_vector := Vector3(input_vector.x, 0.0, input_vector.y)
+	if stun_time > 0.0:
+		move_vector = Vector3.ZERO
 	if move_vector.length_squared() > 1.0:
 		move_vector = move_vector.normalized()
 	if move_vector.length_squared() > 0.001:
@@ -111,9 +114,11 @@ func _physics_process(delta: float) -> void:
 	stealth_time = max(stealth_time - delta, 0.0)
 	bush_lock_time = max(bush_lock_time - delta, 0.0)
 	slash_anim_time = max(slash_anim_time - delta, 0.0)
+	stun_time = max(stun_time - delta, 0.0)
 
 	_handle_passives(delta)
-	_try_attack()
+	if stun_time <= 0.0:
+		_try_attack()
 	_update_visual_state()
 
 
@@ -165,6 +170,17 @@ func receive_damage(amount: float) -> void:
 	if health <= 0.0:
 		is_dead = true
 		defeated.emit()
+
+
+func apply_stun(duration: float) -> void:
+	if is_dead:
+		return
+	stun_time = max(stun_time, duration)
+	_update_visual_state()
+
+
+func is_stunned() -> bool:
+	return stun_time > 0.0
 
 
 func heal(amount: float) -> void:
@@ -338,6 +354,9 @@ func _update_visual_state() -> void:
 	var current_accent: Color = accent_color
 	if invulnerability_time > 0.0:
 		current_body = Color(1.0, 0.82, 0.74, 1.0)
+	if stun_time > 0.0:
+		current_body = Color(0.72, 0.76, 0.94, 1.0)
+		current_accent = Color(0.48, 0.58, 0.9, 1.0)
 	if stealth_time > 0.0:
 		current_body = Color(0.44, 0.6, 0.52, 1.0)
 		current_accent = Color(0.6, 0.84, 0.7, 1.0)

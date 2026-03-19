@@ -6,6 +6,8 @@ const INK_BOLT_SCENE := preload("res://scenes/entities/ink_bolt.tscn")
 const XP_ORB_SCENE := preload("res://scenes/entities/xp_orb.tscn")
 const BUSH_ZONE_SCENE := preload("res://scenes/entities/bush_zone.tscn")
 const GROUND_HAZARD_SCENE := preload("res://scenes/entities/ground_hazard.tscn")
+const LINE_HAZARD_SCENE := preload("res://scenes/entities/line_hazard.tscn")
+const ENEMY_BOLT_SCENE := preload("res://scenes/entities/enemy_bolt.tscn")
 const INKSTONE_SCENE := preload("res://scenes/entities/inkstone_altar.tscn")
 const BATTLE_HUD_SCENE := preload("res://scenes/ui/battle_hud.tscn")
 const CJKFont := preload("res://scripts/core/cjk_font.gd")
@@ -168,31 +170,70 @@ func _spawn_enemy() -> void:
 	var distance: float = rng.randf_range(18.0, 26.0)
 	var offset := Vector3(cos(angle), 0.0, sin(angle)) * distance
 	enemy.position = player.global_position + offset
-	enemy.configure(_pick_enemy_type(), 1.0 + elapsed_time / 75.0, player)
+	var enemy_type: String = _pick_enemy_type()
+	enemy.configure(enemy_type, 1.0 + elapsed_time / 75.0, player)
 	enemy.defeated.connect(_on_enemy_defeated)
 	enemy.request_hazard.connect(_on_enemy_request_hazard)
+	enemy.request_line_hazard.connect(_on_enemy_request_line_hazard)
+	enemy.request_projectile.connect(_on_enemy_request_projectile)
 	enemies_root.add_child(enemy)
+	if enemy_type == "elite":
+		hud.show_banner("精英现身", Color(0.94, 0.42, 0.52, 1.0), 2.0)
 
 
 func _pick_enemy_type() -> String:
 	var roll: float = rng.randf()
-	if elapsed_time < 22.0:
+	if elapsed_time < 18.0:
 		return "basic" if roll < 0.72 else "swift"
-	if elapsed_time < 48.0:
-		if roll < 0.45:
+	if elapsed_time < 36.0:
+		if roll < 0.38:
 			return "basic"
-		if roll < 0.72:
+		if roll < 0.62:
 			return "swift"
-		if roll < 0.88:
+		if roll < 0.82:
 			return "tank"
+		return "archer"
+	if elapsed_time < 64.0:
+		if roll < 0.24:
+			return "basic"
+		if roll < 0.42:
+			return "swift"
+		if roll < 0.58:
+			return "tank"
+		if roll < 0.74:
+			return "archer"
+		if roll < 0.89:
+			return "assassin"
 		return "ritualist"
-	if roll < 0.32:
+	if elapsed_time < 95.0:
+		if roll < 0.16:
+			return "basic"
+		if roll < 0.3:
+			return "swift"
+		if roll < 0.44:
+			return "tank"
+		if roll < 0.58:
+			return "archer"
+		if roll < 0.73:
+			return "assassin"
+		if roll < 0.88:
+			return "ritualist"
+		return "cavalry"
+	if roll < 0.12:
 		return "basic"
-	if roll < 0.56:
+	if roll < 0.23:
 		return "swift"
-	if roll < 0.76:
+	if roll < 0.35:
 		return "tank"
-	return "ritualist"
+	if roll < 0.49:
+		return "archer"
+	if roll < 0.64:
+		return "assassin"
+	if roll < 0.78:
+		return "ritualist"
+	if roll < 0.93:
+		return "cavalry"
+	return "elite"
 
 
 func _on_player_fire_projectile(origin: Vector3, direction: Vector3, damage: float, speed: float, glyph: String, tint: Color) -> void:
@@ -244,8 +285,16 @@ func _xp_value_for_enemy(enemy_type: String) -> int:
 			return 2
 		"tank":
 			return 3
+		"archer":
+			return 2
+		"assassin":
+			return 3
+		"cavalry":
+			return 4
 		"ritualist":
 			return 3
+		"elite":
+			return 6
 		_:
 			return 1
 
@@ -508,6 +557,19 @@ func _on_enemy_request_hazard(target_position: Vector3, radius: float, warning_t
 	var hazard = GROUND_HAZARD_SCENE.instantiate()
 	hazard.configure(player, target_position, radius, warning_time, active_time, damage, tint, label)
 	effects_root.add_child(hazard)
+
+
+func _on_enemy_request_line_hazard(origin: Vector3, direction: Vector3, length: float, width: float, warning_time: float, active_time: float, damage: float, tint: Color, label: String, stun_time: float) -> void:
+	var hazard = LINE_HAZARD_SCENE.instantiate()
+	hazard.configure(player, origin, direction, length, width, warning_time, active_time, damage, tint, label, stun_time)
+	effects_root.add_child(hazard)
+
+
+func _on_enemy_request_projectile(origin: Vector3, direction: Vector3, speed: float, damage: float, glyph: String, tint: Color, life_time: float, hit_radius: float, stun_time: float) -> void:
+	var bolt = ENEMY_BOLT_SCENE.instantiate()
+	bolt.configure(player, origin, direction, speed, damage, glyph, tint, life_time, hit_radius, stun_time)
+	bolt.impact.connect(_on_projectile_impact)
+	projectiles_root.add_child(bolt)
 
 
 func _on_projectile_impact(world_position: Vector3, tint: Color, label: String) -> void:
