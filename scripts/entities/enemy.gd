@@ -222,6 +222,16 @@ func _apply_type_stats() -> void:
 			preferred_max_distance = 14.5
 			hit_radius = 1.46
 			tint = Color(0.72, 0.2, 0.34, 1.0)
+		"boss":
+			enemy_name = "卷主"
+			glyph = "卷"
+			move_speed = 3.5 + difficulty_scale * 0.18
+			max_health = 248.0 + difficulty_scale * 36.0
+			contact_damage = 18.0 + difficulty_scale * 2.6
+			preferred_min_distance = 9.0
+			preferred_max_distance = 16.5
+			hit_radius = 1.82
+			tint = Color(0.84, 0.32, 0.22, 1.0)
 
 
 func _compute_motion(direction: Vector3, distance: float) -> Vector3:
@@ -238,6 +248,8 @@ func _compute_motion(direction: Vector3, distance: float) -> Vector3:
 			return _compute_ritualist_motion(direction, distance)
 		"elite":
 			return _compute_elite_motion(direction, distance)
+		"boss":
+			return _compute_boss_motion(direction, distance)
 		"tank":
 			return direction * move_speed
 		_:
@@ -323,6 +335,20 @@ func _compute_elite_motion(direction: Vector3, distance: float) -> Vector3:
 	return motion.normalized() * move_speed
 
 
+func _compute_boss_motion(direction: Vector3, distance: float) -> Vector3:
+	if ability_cooldown <= 0.0 and distance < 24.0:
+		_start_boss_skill(direction)
+		return Vector3.ZERO
+
+	var lateral := Vector3(-direction.z, 0.0, direction.x) * strafe_sign
+	var motion := lateral * 0.55
+	if distance < preferred_min_distance:
+		motion = -direction * 0.76 + lateral * 0.42
+	elif distance > preferred_max_distance:
+		motion = direction * 0.8
+	return motion.normalized() * move_speed
+
+
 func _handle_contact_attack(distance: float) -> void:
 	if attack_cooldown > 0.0:
 		return
@@ -332,7 +358,10 @@ func _handle_contact_attack(distance: float) -> void:
 		return
 	if player.has_method("receive_damage"):
 		player.receive_damage(contact_damage)
-	attack_cooldown = 0.85 if enemy_type == "elite" else 1.0
+	if enemy_type == "boss":
+		attack_cooldown = 0.72
+	else:
+		attack_cooldown = 0.85 if enemy_type == "elite" else 1.0
 
 
 func _handle_dash_collision() -> void:
@@ -403,6 +432,35 @@ func _start_elite_skill(direction: Vector3) -> void:
 	elite_skill_index += 1
 
 
+func _start_boss_skill(direction: Vector3) -> void:
+	match elite_skill_index % 5:
+		0:
+			request_hazard.emit(player.global_position, 5.4, 1.15, 1.35, contact_damage * 0.92 + 8.0, tint, "禁")
+			ability_cooldown = 6.2
+		1:
+			pending_action = "boss_barrage"
+			pending_direction = direction
+			windup_time = 0.82
+			ability_cooldown = 5.8
+		2:
+			pending_action = "boss_fan"
+			pending_direction = direction
+			windup_time = 0.62
+			ability_cooldown = 5.2
+		3:
+			request_line_hazard.emit(global_position, direction, 21.0, 3.1, 1.08, 1.0, 0.0, tint, "卷", 0.0)
+			pending_action = "boss_charge"
+			pending_direction = direction
+			windup_time = 1.12
+			ability_cooldown = 7.6
+		_:
+			pending_action = "boss_cross"
+			pending_direction = direction
+			windup_time = 0.72
+			ability_cooldown = 6.4
+	elite_skill_index += 1
+
+
 func _execute_pending_action() -> void:
 	match pending_action:
 		"archer_shot":
@@ -421,6 +479,21 @@ func _execute_pending_action() -> void:
 				_emit_enemy_projectile(direction, 11.8, contact_damage * 0.68 + 3.2, "梅", tint.lightened(0.16), 2.4, 0.58)
 		"elite_charge":
 			_start_dash(pending_direction, 0.9, 5.6, contact_damage + 8.0, 1.2)
+		"boss_barrage":
+			_emit_projectile_row(pending_direction, 8, 0.96, 15.2, contact_damage * 0.82 + 3.5, "墨", tint.lightened(0.14), 3.0, 0.6)
+		"boss_fan":
+			for index in range(7):
+				var spread: float = -0.48 + float(index) * 0.16
+				var fan_direction := pending_direction.rotated(Vector3.UP, spread)
+				_emit_enemy_projectile(fan_direction, 13.4, contact_damage * 0.76 + 4.0, "卷", tint.lightened(0.2), 2.9, 0.62)
+		"boss_charge":
+			_start_dash(pending_direction, 1.0, 6.0, contact_damage + 10.0, 1.35)
+		"boss_cross":
+			_emit_projectile_row(pending_direction, 6, 1.0, 14.2, contact_damage * 0.72 + 3.0, "裂", tint.lightened(0.18), 2.8, 0.58)
+			var cross_direction := Vector3(-pending_direction.z, 0.0, pending_direction.x)
+			if cross_direction.length_squared() <= 0.001:
+				cross_direction = Vector3.RIGHT
+			_emit_projectile_row(cross_direction.normalized(), 6, 1.0, 14.2, contact_damage * 0.72 + 3.0, "裂", tint.lightened(0.18), 2.8, 0.58)
 
 	pending_action = ""
 	pending_direction = Vector3.ZERO
@@ -496,6 +569,11 @@ func _build_humanoid_visuals() -> void:
 		pelvis_size = Vector3(0.78, 0.24, 0.52)
 		arm_size = Vector3(0.2, 0.8, 0.18)
 		leg_size = Vector3(0.24, 0.86, 0.24)
+	elif enemy_type == "boss":
+		torso_size = Vector3(1.22, 1.42, 0.82)
+		pelvis_size = Vector3(0.98, 0.28, 0.62)
+		arm_size = Vector3(0.24, 0.92, 0.22)
+		leg_size = Vector3(0.28, 0.94, 0.28)
 	elif enemy_type == "ritualist":
 		torso_size = Vector3(0.74, 1.14, 0.5)
 		leg_size = Vector3(0.16, 0.72, 0.18)
@@ -509,10 +587,19 @@ func _build_humanoid_visuals() -> void:
 
 	var head := MeshInstance3D.new()
 	var head_mesh := SphereMesh.new()
-	head_mesh.radius = 0.28 if enemy_type != "elite" else 0.34
+	head_mesh.radius = 0.28
+	if enemy_type == "elite":
+		head_mesh.radius = 0.34
+	elif enemy_type == "boss":
+		head_mesh.radius = 0.42
 	head_mesh.height = head_mesh.radius * 2.0
 	head.mesh = head_mesh
-	head.position = Vector3(0.0, 2.06 if enemy_type != "elite" else 2.18, 0.0)
+	var head_height: float = 2.06
+	if enemy_type == "elite":
+		head_height = 2.18
+	elif enemy_type == "boss":
+		head_height = 2.42
+	head.position = Vector3(0.0, head_height, 0.0)
 	head.material_override = head_material
 	visual_root.add_child(head)
 	head_node = head
@@ -560,6 +647,20 @@ func _build_humanoid_visuals() -> void:
 			_add_box_part(Vector3(0.44, 0.24, 0.34), Vector3(0.5, 1.82, 0.0), accent_material)
 			for index in range(3):
 				_add_box_part(Vector3(0.1, 0.34, 0.1), Vector3(-0.24 + float(index) * 0.24, 2.46, -0.12), accent_material)
+		"boss":
+			_add_box_part(Vector3(0.72, 1.2, 0.1), Vector3(0.0, 1.18, 0.44), accent_material)
+			_add_box_part(Vector3(0.56, 0.24, 0.42), Vector3(-0.64, 1.98, 0.0), accent_material)
+			_add_box_part(Vector3(0.56, 0.24, 0.42), Vector3(0.64, 1.98, 0.0), accent_material)
+			_add_box_part(Vector3(1.12, 0.12, 0.26), Vector3(0.0, 2.06, -0.26), accent_material)
+			for index in range(5):
+				_add_box_part(Vector3(0.1, 0.42, 0.1), Vector3(-0.44 + float(index) * 0.22, 2.88, -0.1), accent_material)
+			var cape := MeshInstance3D.new()
+			var cape_mesh := BoxMesh.new()
+			cape_mesh.size = Vector3(1.08, 1.24, 0.08)
+			cape.mesh = cape_mesh
+			cape.position = Vector3(0.0, 1.18, 0.54)
+			cape.material_override = body_material
+			visual_root.add_child(cape)
 
 
 func _build_cavalry_visuals() -> void:
@@ -577,7 +678,13 @@ func _build_cavalry_visuals() -> void:
 
 
 func _build_glyph_badge() -> void:
-	var badge_height := 2.76 if enemy_type == "cavalry" else (2.72 if enemy_type == "elite" else 2.5)
+	var badge_height := 2.5
+	if enemy_type == "cavalry":
+		badge_height = 2.76
+	elif enemy_type == "elite":
+		badge_height = 2.72
+	elif enemy_type == "boss":
+		badge_height = 3.04
 	var badge_root := Node3D.new()
 	badge_root.position = Vector3(0.0, badge_height, 0.0)
 	visual_root.add_child(badge_root)
@@ -595,7 +702,11 @@ func _build_glyph_badge() -> void:
 
 	var disc := MeshInstance3D.new()
 	var disc_mesh := CylinderMesh.new()
-	disc_mesh.top_radius = 0.42 if enemy_type != "elite" else 0.5
+	disc_mesh.top_radius = 0.42
+	if enemy_type == "elite":
+		disc_mesh.top_radius = 0.5
+	elif enemy_type == "boss":
+		disc_mesh.top_radius = 0.6
 	disc_mesh.bottom_radius = disc_mesh.top_radius
 	disc_mesh.height = 0.08
 	disc.mesh = disc_mesh
@@ -616,7 +727,11 @@ func _build_glyph_badge() -> void:
 	label_node = Label3D.new()
 	label_node.text = glyph
 	label_node.font = CJKFont.get_font()
-	label_node.font_size = 42 if enemy_type != "elite" else 50
+	label_node.font_size = 42
+	if enemy_type == "elite":
+		label_node.font_size = 50
+	elif enemy_type == "boss":
+		label_node.font_size = 58
 	label_node.position = Vector3(0.0, 0.04, 0.0)
 	label_node.modulate = Color(0.98, 0.94, 0.84, 0.98)
 	label_node.billboard = BaseMaterial3D.BILLBOARD_ENABLED
@@ -652,7 +767,14 @@ func _update_visual_state() -> void:
 		visual_root.position.y = sin(bob_phase) * (0.04 + gait_amount * 0.04) + (0.06 if dash_time > 0.0 else 0.0)
 
 	if glyph_root != null:
-		glyph_root.position.y = (2.76 if enemy_type == "cavalry" else (2.72 if enemy_type == "elite" else 2.5)) + sin(drift_time * 1.8 + 0.6) * 0.05
+		var badge_height: float = 2.5
+		if enemy_type == "cavalry":
+			badge_height = 2.76
+		elif enemy_type == "elite":
+			badge_height = 2.72
+		elif enemy_type == "boss":
+			badge_height = 3.04
+		glyph_root.position.y = badge_height + sin(drift_time * 1.8 + 0.6) * 0.05
 	if glyph_ring_node != null:
 		glyph_ring_node.rotation_degrees.y = wrapf(glyph_ring_node.rotation_degrees.y + 1.4 + gait_amount * 2.6, 0.0, 360.0)
 	if label_node != null:
@@ -720,6 +842,16 @@ func _update_visual_state() -> void:
 				left_arm_node.rotation_degrees.z = -10.0 + sin(drift_time * 2.3) * 4.0
 			if right_arm_node != null:
 				right_arm_node.rotation_degrees.z = 10.0 - sin(drift_time * 2.3) * 4.0
+		"boss":
+			if body_node != null:
+				body_node.scale = Vector3.ONE * (1.02 + sin(drift_time * 2.0) * 0.03)
+				body_node.rotation_degrees.x = -6.0 if windup_time > 0.0 or dash_time > 0.0 else 0.0
+			if left_arm_node != null:
+				left_arm_node.rotation_degrees.z = -16.0 + sin(drift_time * 2.1) * 6.0
+				left_arm_node.rotation_degrees.x = -12.0 + windup_time * 14.0
+			if right_arm_node != null:
+				right_arm_node.rotation_degrees.z = 16.0 - sin(drift_time * 2.1) * 6.0
+				right_arm_node.rotation_degrees.x = 12.0 - windup_time * 12.0
 
 
 func _make_material(color: Color) -> StandardMaterial3D:

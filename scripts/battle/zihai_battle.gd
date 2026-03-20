@@ -13,6 +13,7 @@ const INKSTONE_SCENE := preload("res://scenes/entities/inkstone_altar.tscn")
 const BATTLE_HUD_SCENE := preload("res://scenes/ui/battle_hud.tscn")
 const CJKFont := preload("res://scripts/core/cjk_font.gd")
 const DEFAULT_BATTLE_TIP := "击倒字灵收集字力与补给，升级时三选一偏旁。靠近砚台按 E 磨词。"
+const BOSS_SPAWN_TIMES := [65.0, 130.0]
 
 @onready var world_environment: WorldEnvironment = $WorldEnvironment
 @onready var camera_rig: Node3D = $CameraRig
@@ -40,6 +41,8 @@ var word_choice_active: bool = false
 var paused: bool = false
 var opening_time: float = 0.0
 var last_announced_threat_level: int = 1
+var boss_spawn_index: int = 0
+var active_boss = null
 
 var radical_counts: Dictionary = {}
 var skill_levels: Dictionary = {}
@@ -110,6 +113,7 @@ func _process(delta: float) -> void:
 		for advanced_level in range(threat_level + 1, new_threat_level + 1):
 			_on_threat_level_advanced(advanced_level)
 	threat_level = new_threat_level
+	_update_boss_flow()
 
 	spawn_timer -= delta
 	if spawn_timer <= 0.0 and _enemy_count() < 46:
@@ -232,6 +236,31 @@ func _spawn_enemy() -> void:
 		hud.show_banner("精英现身", Color(0.94, 0.42, 0.52, 1.0), 2.0)
 
 
+func _spawn_boss(stage_index: int) -> void:
+	if not is_instance_valid(player):
+		return
+
+	var boss = ENEMY_SCENE.instantiate()
+	var angle: float = rng.randf_range(0.0, TAU)
+	var distance: float = rng.randf_range(16.0, 19.0)
+	boss.position = player.global_position + Vector3(cos(angle), 0.0, sin(angle)) * distance
+	boss.configure("boss", 1.35 + elapsed_time / 68.0 + float(stage_index) * 0.2, player)
+	boss.defeated.connect(_on_enemy_defeated)
+	boss.request_hazard.connect(_on_enemy_request_hazard)
+	boss.request_line_hazard.connect(_on_enemy_request_line_hazard)
+	boss.request_projectile.connect(_on_enemy_request_projectile)
+	enemies_root.add_child(boss)
+	active_boss = boss
+	spawn_timer = max(spawn_timer, 1.4)
+
+	var tint: Color = _boss_banner_color(stage_index)
+	hud.show_banner("卷主现身", tint, 2.4)
+	hud.set_tip(_boss_stage_tip(stage_index))
+	hud.show_boss(String(boss.enemy_name), String(boss.glyph), tint, boss.max_health)
+	_spawn_wave_effect(boss.global_position, 6.2, tint, String(boss.glyph))
+	_spawn_boss_entrance_effect(boss.global_position, String(boss.glyph), tint)
+
+
 func _pick_enemy_type() -> String:
 	var roll: float = rng.randf()
 	if elapsed_time < 18.0:
@@ -287,6 +316,31 @@ func _pick_enemy_type() -> String:
 	return "elite"
 
 
+func _update_boss_flow() -> void:
+	if is_instance_valid(active_boss) and not active_boss.is_queued_for_deletion():
+		hud.set_boss_health(active_boss.health, active_boss.max_health)
+	else:
+		if active_boss != null:
+			active_boss = null
+			hud.hide_boss()
+
+	if boss_spawn_index < BOSS_SPAWN_TIMES.size() and elapsed_time >= float(BOSS_SPAWN_TIMES[boss_spawn_index]) and active_boss == null:
+		_spawn_boss(boss_spawn_index)
+		boss_spawn_index += 1
+
+
+func _boss_banner_color(stage_index: int) -> Color:
+	if stage_index <= 0:
+		return Color(0.9, 0.38, 0.28, 1.0)
+	return Color(0.86, 0.28, 0.42, 1.0)
+
+
+func _boss_stage_tip(stage_index: int) -> String:
+	if stage_index <= 0:
+		return "卷主踏入墨阵。先躲大范围禁阵，再抓它施法后的空档。"
+	return "更深的卷主现身了。它会把弹幕、冲锋和禁阵叠在一起。"
+
+
 func _on_player_fire_projectile(origin: Vector3, direction: Vector3, damage: float, speed: float, glyph: String, tint: Color) -> void:
 	var bolt = INK_BOLT_SCENE.instantiate()
 	bolt.configure(origin, direction, damage, speed, glyph, tint)
@@ -328,6 +382,10 @@ func _on_enemy_defeated(world_position: Vector3, enemy_type: String) -> void:
 	_spawn_enemy_death_effect(world_position, enemy_type)
 	_spawn_xp_orb(world_position, _xp_value_for_enemy(enemy_type))
 	_spawn_supply_drops(world_position, enemy_type)
+	if enemy_type == "boss":
+		active_boss = null
+		hud.hide_boss()
+		_on_boss_defeated(world_position)
 	if kills % 14 == 0:
 		hud.show_banner("字潮再涨", Color(0.95, 0.62, 0.36, 1.0), 1.7)
 
@@ -348,6 +406,8 @@ func _xp_value_for_enemy(enemy_type: String) -> int:
 			return 3
 		"elite":
 			return 6
+		"boss":
+			return 14
 		_:
 			return 1
 
@@ -416,6 +476,10 @@ func _build_supply_drops(enemy_type: String) -> Dictionary:
 			_add_supply_drop(drops, "paper", 6.0)
 			_add_supply_drop(drops, "seal", 1.0)
 			_add_supply_drop(drops, "ink", 22.0)
+		"boss":
+			_add_supply_drop(drops, "paper", 10.0)
+			_add_supply_drop(drops, "seal", 2.0)
+			_add_supply_drop(drops, "ink", 34.0)
 		_:
 			if rng.randf() < 0.1:
 				_add_supply_drop(drops, "paper", 2.0)
@@ -847,6 +911,51 @@ func _spawn_enemy_death_effect(world_position: Vector3, enemy_type: String) -> v
 	tween.tween_callback(effect_root.queue_free)
 
 
+func _spawn_boss_entrance_effect(world_position: Vector3, glyph_text: String, tint: Color) -> void:
+	var effect_root := Node3D.new()
+	effect_root.position = world_position + Vector3(0.0, 0.2, 0.0)
+	effects_root.add_child(effect_root)
+
+	for index in range(6):
+		var symbol_root := Node3D.new()
+		var angle: float = TAU * float(index) / 6.0
+		symbol_root.position = Vector3(cos(angle) * 2.3, 0.0, sin(angle) * 2.3)
+		effect_root.add_child(symbol_root)
+
+		var disc := MeshInstance3D.new()
+		var disc_mesh := CylinderMesh.new()
+		disc_mesh.top_radius = 0.42
+		disc_mesh.bottom_radius = 0.42
+		disc_mesh.height = 0.05
+		disc.mesh = disc_mesh
+		var disc_material := StandardMaterial3D.new()
+		disc_material.albedo_color = Color(0.05, 0.06, 0.08, 0.86)
+		disc_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		disc_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+		disc_material.emission_enabled = true
+		disc_material.emission = tint.darkened(0.18)
+		disc.material_override = disc_material
+		symbol_root.add_child(disc)
+
+		var label := Label3D.new()
+		label.text = glyph_text
+		label.font = CJKFont.get_font()
+		label.font_size = 28
+		label.position = Vector3(0.0, 0.04, 0.0)
+		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		label.modulate = Color(1.0, 0.95, 0.86, 0.96)
+		symbol_root.add_child(label)
+
+		var tween := create_tween()
+		tween.parallel().tween_property(symbol_root, "position:y", 1.4, 0.95)
+		tween.parallel().tween_property(symbol_root, "scale", Vector3(1.28, 1.0, 1.28), 0.95)
+		tween.parallel().tween_property(label, "modulate:a", 0.0, 0.95)
+
+	var cleanup_tween := create_tween()
+	cleanup_tween.tween_interval(0.98)
+	cleanup_tween.tween_callback(effect_root.queue_free)
+
+
 func _enemy_effect_color(enemy_type: String) -> Color:
 	match enemy_type:
 		"swift":
@@ -863,6 +972,8 @@ func _enemy_effect_color(enemy_type: String) -> Color:
 			return Color(0.66, 0.48, 0.96, 1.0)
 		"elite":
 			return Color(0.88, 0.34, 0.48, 1.0)
+		"boss":
+			return Color(0.96, 0.42, 0.28, 1.0)
 		_:
 			return Color(0.82, 0.42, 0.32, 1.0)
 
@@ -883,6 +994,8 @@ func _enemy_effect_glyph(enemy_type: String) -> String:
 			return "阵"
 		"elite":
 			return "魁"
+		"boss":
+			return "卷"
 		_:
 			return "魇"
 
@@ -894,7 +1007,9 @@ func _on_player_health_changed(current: float, maximum: float) -> void:
 func _on_player_defeated() -> void:
 	game_over = true
 	paused = false
+	active_boss = null
 	Engine.time_scale = 0.0
+	hud.hide_boss()
 	hud.show_banner("字海沉没", Color(1.0, 0.76, 0.58, 1.0), 2.0)
 	Session.last_run_summary = {
 		"elapsed": elapsed_time,
@@ -929,6 +1044,13 @@ func _start_opening_sequence() -> void:
 	hud.set_tip("先收第一枚偏旁，尽快合出首个成字。")
 	_spawn_wave_effect(player.global_position, 3.3, accent, String(hero_data["glyph"]))
 	_spawn_intro_symbols(String(hero_data["glyph"]), accent)
+
+
+func _on_boss_defeated(world_position: Vector3) -> void:
+	hud.show_banner("卷主退散", Color(1.0, 0.84, 0.52, 1.0), 2.2)
+	hud.set_tip("卷主崩散，战场短暂回稳。抓紧收补给并继续磨成词技。")
+	_spawn_wave_effect(world_position, 7.2, Color(1.0, 0.74, 0.46, 1.0), "破")
+	_gain_experience(12)
 
 
 func _on_threat_level_advanced(new_threat_level: int) -> void:

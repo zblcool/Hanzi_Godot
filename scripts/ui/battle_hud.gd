@@ -27,6 +27,10 @@ var controls_label: Label
 var skill_cards_box: VBoxContainer
 var hero_tag_row: HBoxContainer
 var radical_chip_container: HFlowContainer
+var boss_panel: PanelContainer
+var boss_name_label: Label
+var boss_detail_label: Label
+var boss_bar: ProgressBar
 
 var choice_overlay: Control
 var choice_title_label: Label
@@ -180,6 +184,32 @@ func show_banner(text: String, color: Color, duration: float = 2.4) -> void:
 	banner_label.modulate = color
 	banner_label.visible = true
 	banner_time = duration
+
+
+func show_boss(name: String, glyph: String, tint: Color, maximum: float) -> void:
+	if boss_panel == null:
+		return
+	boss_panel.visible = true
+	boss_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(tint.r * 0.12, tint.g * 0.12, tint.b * 0.16, 0.96), Color(tint.r, tint.g, tint.b, 0.72), 24))
+	boss_name_label.text = "%s  %s" % [glyph, name]
+	boss_detail_label.text = "卷主降阵"
+	boss_bar.add_theme_stylebox_override("fill", _make_fill_style(tint, 10))
+	boss_bar.max_value = max(1.0, maximum)
+	boss_bar.value = maximum
+
+
+func set_boss_health(current: float, maximum: float) -> void:
+	if boss_panel == null:
+		return
+	boss_panel.visible = true
+	boss_bar.max_value = max(1.0, maximum)
+	boss_bar.value = clamp(current, 0.0, maximum)
+	boss_detail_label.text = "卷主降阵   %d / %d" % [int(ceil(current)), int(ceil(maximum))]
+
+
+func hide_boss() -> void:
+	if boss_panel != null:
+		boss_panel.visible = false
 
 
 func show_radical_choices(level: int, choices: Array[Dictionary], pending_count: int) -> void:
@@ -341,6 +371,18 @@ func _build_ui() -> void:
 	top_pills.add_child(_make_pill("地图"))
 	top_pills.add_child(_make_pill("设置"))
 	top_pills.add_child(_make_pill("EN"))
+
+	boss_panel = _make_panel(Color(0.08, 0.06, 0.06, 0.88), Color(0.84, 0.34, 0.24, 0.72), Vector2(520.0, 92.0))
+	boss_panel.position = Vector2(700.0, 154.0)
+	boss_panel.visible = false
+	root.add_child(boss_panel)
+	var boss_box := _panel_box(boss_panel)
+	boss_name_label = _make_label("卷  卷主", 28, Color(1.0, 0.94, 0.86, 1.0))
+	boss_detail_label = _make_label("卷主降阵", 16, Color(0.92, 0.84, 0.78, 0.92))
+	boss_box.add_child(boss_name_label)
+	boss_box.add_child(boss_detail_label)
+	boss_bar = _make_bar(Color(0.88, 0.36, 0.28, 1.0))
+	boss_box.add_child(boss_bar)
 
 	var objective_panel := _make_panel(Color(0.05, 0.07, 0.09, 0.76), Color(0.94, 0.7, 0.4, 0.6), Vector2(340.0, 150.0))
 	objective_panel.position = Vector2(1540.0, 24.0)
