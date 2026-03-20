@@ -231,3 +231,9 @@
 5. `字海` 的角色差异化，尤其 `侠` 的近战身份
 6. `仓颉` 的“字形组合直接进入卡牌构筑”的核心
 7. 双语 / 学习向定位
+
+## Vercel 预览部署
+- 仓库现在带了 `vercel.json`，把 GitHub 仓库接到 Vercel 之后，每次 push 都会自动触发一次 web 导出和部署。
+- 构建命令是 `./scripts/export_web.sh`，会先导入资源，再导出到 `build/index.html`，所以不需要把 `build/` 产物提交进仓库。
+- 在 Linux / Vercel 环境里，脚本会自动下载 `Godot 4.6.1` 编辑器和 export templates；本地如果已经装了 Godot，则直接复用本机安装。
+- 本地手动验证也可以直接跑同一条命令：`./scripts/export_web.sh`
