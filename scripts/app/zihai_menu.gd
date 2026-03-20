@@ -20,6 +20,8 @@ var detail_preview_core: PanelContainer
 var detail_preview_glyph: Label
 var detail_tags_row: HBoxContainer
 var detail_stat_widgets: Dictionary = {}
+var leaderboard_overlay: Control
+var leaderboard_body_label: Label
 var transition_overlay: Control
 var transition_glyph_label: Label
 var transition_title_label: Label
@@ -104,6 +106,8 @@ func _rebuild_ui() -> void:
 	detail_preview_core = null
 	detail_preview_glyph = null
 	detail_tags_row = null
+	leaderboard_overlay = null
+	leaderboard_body_label = null
 	transition_overlay = null
 	transition_glyph_label = null
 	transition_title_label = null
@@ -168,6 +172,7 @@ func _build_ui() -> void:
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top_bar.add_child(spacer)
 
+	top_bar.add_child(_make_pill_button("查看排行榜", _v(172.0, 54.0), Callable(self, "_on_leaderboard_pressed")))
 	var start_pill := _make_pill_button("直接开始", _v(152.0, 54.0), Callable(self, "_on_start_pressed"))
 	top_bar.add_child(start_pill)
 	top_bar.add_child(_make_static_pill("EN", _v(74.0, 54.0)))
@@ -287,6 +292,7 @@ func _build_ui() -> void:
 	detail_stat_widgets["attack_damage"] = _make_stat_row(stats_box, "伤害")
 	detail_stat_widgets["attack_range"] = _make_stat_row(stats_box, "射程")
 
+	_build_leaderboard_overlay()
 	_build_transition_overlay()
 
 
@@ -620,6 +626,74 @@ func _build_floating_symbols() -> void:
 		})
 
 
+func _build_leaderboard_overlay() -> void:
+	leaderboard_overlay = Control.new()
+	leaderboard_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	leaderboard_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	leaderboard_overlay.visible = false
+	add_child(leaderboard_overlay)
+
+	var scrim := ColorRect.new()
+	scrim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	scrim.color = Color(0.02, 0.03, 0.04, 0.82)
+	leaderboard_overlay.add_child(scrim)
+
+	var panel := PanelContainer.new()
+	panel.set_anchors_preset(Control.PRESET_CENTER)
+	panel.offset_left = -_f(420.0)
+	panel.offset_top = -_f(280.0)
+	panel.offset_right = _f(420.0)
+	panel.offset_bottom = _f(280.0)
+	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.05, 0.08, 0.1, 0.96), Color(0.38, 0.72, 0.82, 0.56)))
+	leaderboard_overlay.add_child(panel)
+
+	var margin := MarginContainer.new()
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left", _i(28))
+	margin.add_theme_constant_override("margin_top", _i(24))
+	margin.add_theme_constant_override("margin_right", _i(28))
+	margin.add_theme_constant_override("margin_bottom", _i(24))
+	panel.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", _i(14))
+	margin.add_child(box)
+
+	box.add_child(_make_label("残卷战绩", 36, Color(1.0, 0.95, 0.86, 1.0)))
+	box.add_child(_make_label("现在可以在二级菜单里直接查看本地排行榜，不必先打到结算页。", 18, Color(0.88, 0.92, 0.96, 0.95)))
+
+	var summary_panel := PanelContainer.new()
+	summary_panel.custom_minimum_size = _v(0.0, 88.0)
+	summary_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.08, 0.12, 0.16, 0.72), Color(0.28, 0.36, 0.42, 0.46)))
+	box.add_child(summary_panel)
+	var summary_margin := MarginContainer.new()
+	summary_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	summary_margin.add_theme_constant_override("margin_left", _i(18))
+	summary_margin.add_theme_constant_override("margin_top", _i(16))
+	summary_margin.add_theme_constant_override("margin_right", _i(18))
+	summary_margin.add_theme_constant_override("margin_bottom", _i(16))
+	summary_panel.add_child(summary_margin)
+	summary_margin.add_child(_make_label("记录仍保存在本地 cache。这里先沿用当前 Godot 迁移阶段已经存在的本地榜单。", 17, Color(0.94, 0.82, 0.56, 0.94)))
+
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	box.add_child(scroll)
+
+	leaderboard_body_label = _make_label("", 18, Color(0.9, 0.92, 0.95, 0.96))
+	leaderboard_body_label.custom_minimum_size = _v(720.0, 0.0)
+	leaderboard_body_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	leaderboard_body_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.add_child(leaderboard_body_label)
+
+	var action_row := HBoxContainer.new()
+	action_row.alignment = BoxContainer.ALIGNMENT_END
+	action_row.add_theme_constant_override("separation", _i(12))
+	box.add_child(action_row)
+	action_row.add_child(_make_pill_button("收起战绩", _v(150.0, 52.0), Callable(self, "_hide_leaderboard_overlay")))
+
+
 func _build_transition_overlay() -> void:
 	transition_overlay = Control.new()
 	transition_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -671,6 +745,47 @@ func _build_transition_overlay() -> void:
 	box.add_child(_make_label("墨线正在收束，字潮即将开启。", 18, Color(0.96, 0.82, 0.54, 0.92)))
 
 
+func _build_local_leaderboard_text() -> String:
+	var entries: Array[Dictionary] = Session.get_local_leaderboard(8)
+	if entries.is_empty():
+		return "当前还没有可展示的本地战绩。下一次残卷沉没后，这里会留下你的记录。"
+
+	var lines: Array[String] = ["按定卷、卷主击破、波次、击破数排序。", ""]
+	for index in range(entries.size()):
+		var entry: Dictionary = entries[index]
+		lines.append(
+			"%d. %s  %s  卷主 %d  波次 %d  击破 %d  存活 %s" % [
+				index + 1,
+				String(entry.get("hero_name", "书生")),
+				"定卷" if bool(entry.get("chapter_complete", false)) else "残卷",
+				int(entry.get("bosses", 0)),
+				int(entry.get("threat", 1)),
+				int(entry.get("kills", 0)),
+				_format_elapsed(float(entry.get("elapsed", 0.0)))
+			]
+		)
+	return "\n".join(lines)
+
+
+func _format_elapsed(seconds: float) -> String:
+	var total_seconds := maxi(0, int(round(seconds)))
+	var minutes := int(total_seconds / 60)
+	var remaining_seconds := total_seconds % 60
+	return "%02d:%02d" % [minutes, remaining_seconds]
+
+
+func _show_leaderboard_overlay() -> void:
+	if leaderboard_overlay == null:
+		return
+	leaderboard_body_label.text = _build_local_leaderboard_text()
+	leaderboard_overlay.visible = true
+
+
+func _hide_leaderboard_overlay() -> void:
+	if leaderboard_overlay != null:
+		leaderboard_overlay.visible = false
+
+
 func _on_select_hero(hero_id: String) -> void:
 	selected_hero = hero_id
 	_refresh_selection()
@@ -719,6 +834,7 @@ func _set_stat_value(stat_id: String, value: float, max_value: float, format_tex
 func _on_start_pressed() -> void:
 	if transition_busy:
 		return
+	_hide_leaderboard_overlay()
 	Session.select_hero(selected_hero)
 	Session.prepare_battle_intro("zihai_menu")
 	_start_battle_transition()
@@ -727,11 +843,19 @@ func _on_start_pressed() -> void:
 func _on_back_pressed() -> void:
 	if transition_busy:
 		return
+	_hide_leaderboard_overlay()
 	get_tree().change_scene_to_file(Session.LAUNCHER_SCENE)
+
+
+func _on_leaderboard_pressed() -> void:
+	if transition_busy:
+		return
+	_show_leaderboard_overlay()
 
 
 func _start_battle_transition() -> void:
 	transition_busy = true
+	_hide_leaderboard_overlay()
 	var hero_data: Dictionary = Session.get_selected_hero()
 	transition_glyph_label.text = String(hero_data["glyph"])
 	transition_title_label.text = "残卷一·入墨"
@@ -746,3 +870,11 @@ func _start_battle_transition() -> void:
 
 func _change_to_battle() -> void:
 	get_tree().change_scene_to_file(Session.ZIHAI_BATTLE_SCENE)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if leaderboard_overlay == null or not leaderboard_overlay.visible:
+		return
+	if event.is_action_pressed("ui_cancel"):
+		_hide_leaderboard_overlay()
+		get_viewport().set_input_as_handled()
