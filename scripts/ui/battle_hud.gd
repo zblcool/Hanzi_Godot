@@ -386,7 +386,7 @@ func _ready() -> void:
 	ui_font = CJKFont.get_font()
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_build_ui()
-	_set_touch_controls_enabled(_should_enable_touch_controls())
+	_set_touch_controls_enabled(_should_enable_touch_controls() or _should_use_compact_layout())
 	set_process(true)
 	set_process_input(true)
 
@@ -711,11 +711,149 @@ func _build_local_leaderboard_text() -> String:
 	return "\n".join(lines)
 
 
+func _should_use_compact_layout() -> bool:
+	var viewport_size := get_viewport().get_visible_rect().size
+	return (
+		viewport_size.x <= 1280.0 or
+		viewport_size.y <= 760.0 or
+		OS.has_feature("mobile") or
+		OS.has_feature("android") or
+		OS.has_feature("ios") or
+		OS.has_feature("web_android") or
+		OS.has_feature("web_ios")
+	)
+
+
+func _build_compact_ui(root: Control) -> void:
+	var shell := MarginContainer.new()
+	shell.set_anchors_preset(Control.PRESET_FULL_RECT)
+	shell.add_theme_constant_override("margin_left", 16)
+	shell.add_theme_constant_override("margin_top", 16)
+	shell.add_theme_constant_override("margin_right", 16)
+	shell.add_theme_constant_override("margin_bottom", 16)
+	root.add_child(shell)
+
+	var layout := VBoxContainer.new()
+	layout.add_theme_constant_override("separation", 12)
+	shell.add_child(layout)
+
+	var top_row := HBoxContainer.new()
+	top_row.add_theme_constant_override("separation", 12)
+	layout.add_child(top_row)
+
+	var info_column := VBoxContainer.new()
+	info_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	info_column.add_theme_constant_override("separation", 12)
+	top_row.add_child(info_column)
+
+	var intro_panel := _make_panel(Color(0.05, 0.08, 0.1, 0.82), Color(0.93, 0.69, 0.38, 0.84), Vector2(0.0, 0.0))
+	intro_panel.custom_minimum_size = Vector2(0.0, 214.0)
+	intro_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	info_column.add_child(intro_panel)
+
+	var intro_box := _panel_box(intro_panel)
+	intro_box.add_child(_make_label("INK-BORN ROGUELITE DEMO", 14, Color(0.96, 0.82, 0.52, 0.86), 3.0))
+	hero_label = _make_label("书生", 34, Color(1.0, 0.95, 0.86, 1.0))
+	intro_box.add_child(hero_label)
+	hero_title_label = _make_label("", 15, Color(0.96, 0.82, 0.54, 0.96))
+	intro_box.add_child(hero_title_label)
+	hero_focus_label = _make_label("", 14, Color(0.86, 0.91, 0.98, 0.92))
+	intro_box.add_child(hero_focus_label)
+
+	hero_tag_row = HBoxContainer.new()
+	hero_tag_row.add_theme_constant_override("separation", 8)
+	intro_box.add_child(hero_tag_row)
+
+	health_label = _make_label("气血  0 / 0", 16, Color(0.96, 0.92, 0.87, 0.98))
+	intro_box.add_child(health_label)
+	health_bar = _make_bar(Color(0.82, 0.38, 0.31, 0.96))
+	intro_box.add_child(health_bar)
+	progress_label = _make_label("字墨  Lv.1   0 / 4", 16, Color(0.98, 0.91, 0.72, 1.0))
+	intro_box.add_child(progress_label)
+	xp_bar = _make_bar(Color(0.56, 0.84, 0.82, 0.96))
+	intro_box.add_child(xp_bar)
+	status_label = _make_label("存活  00:00\n波次  1\n击破  0", 16, Color(0.86, 0.92, 0.98, 0.98))
+	intro_box.add_child(status_label)
+
+	var tip_panel := _make_panel(Color(0.05, 0.07, 0.09, 0.76), Color(0.38, 0.72, 0.78, 0.72), Vector2(0.0, 0.0))
+	tip_panel.custom_minimum_size = Vector2(0.0, 126.0)
+	tip_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	info_column.add_child(tip_panel)
+
+	var tip_box := _panel_box(tip_panel)
+	tip_box.add_child(_make_label("当前目标", 18, Color(0.96, 0.82, 0.56, 0.98)))
+	tip_label = _make_label("尚未收集，或已经全部化字。", 16, Color(0.88, 0.9, 0.93, 0.95))
+	tip_box.add_child(tip_label)
+	controls_label = _make_label("", 14, Color(0.88, 0.9, 0.93, 0.88))
+	tip_box.add_child(controls_label)
+
+	var button_column := VBoxContainer.new()
+	button_column.custom_minimum_size = Vector2(124.0, 0.0)
+	button_column.add_theme_constant_override("separation", 10)
+	top_row.add_child(button_column)
+
+	map_button = _make_pill_button("地图", Callable(self, "_emit_map_toggle"))
+	map_button.custom_minimum_size = Vector2(124.0, 52.0)
+	button_column.add_child(map_button)
+	pause_button = _make_pill_button("暂停", Callable(self, "_emit_pause"))
+	pause_button.custom_minimum_size = Vector2(124.0, 52.0)
+	button_column.add_child(pause_button)
+	var lang_pill := _make_pill("EN")
+	lang_pill.custom_minimum_size = Vector2(124.0, 52.0)
+	button_column.add_child(lang_pill)
+
+	boss_panel = _make_panel(Color(0.08, 0.06, 0.06, 0.88), Color(0.84, 0.34, 0.24, 0.72), Vector2(0.0, 84.0))
+	boss_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	boss_panel.visible = false
+	layout.add_child(boss_panel)
+	var boss_box := _panel_box(boss_panel)
+	boss_name_label = _make_label("卷  卷主", 24, Color(1.0, 0.94, 0.86, 1.0))
+	boss_detail_label = _make_label("卷主降阵", 15, Color(0.92, 0.84, 0.78, 0.92))
+	boss_box.add_child(boss_name_label)
+	boss_box.add_child(boss_detail_label)
+	boss_bar = _make_bar(Color(0.88, 0.36, 0.28, 1.0))
+	boss_box.add_child(boss_bar)
+
+	var filler := Control.new()
+	filler.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	layout.add_child(filler)
+
+
 func _build_ui() -> void:
 	var root := Control.new()
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(root)
+
+	if _should_use_compact_layout():
+		_build_compact_ui(root)
+
+		banner_label = _make_label("", 28, Color(1.0, 0.92, 0.78, 1.0))
+		banner_label.set_anchors_preset(Control.PRESET_TOP_WIDE)
+		banner_label.offset_left = 18.0
+		banner_label.offset_right = -18.0
+		banner_label.offset_top = 264.0
+		banner_label.offset_bottom = 314.0
+		banner_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		banner_label.visible = false
+		root.add_child(banner_label)
+
+		overlay_label = _make_label("", 24, Color(1.0, 0.92, 0.84, 1.0))
+		overlay_label.set_anchors_preset(Control.PRESET_CENTER)
+		overlay_label.offset_left = -220.0
+		overlay_label.offset_top = -52.0
+		overlay_label.offset_right = 220.0
+		overlay_label.offset_bottom = 52.0
+		overlay_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		overlay_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		overlay_label.visible = false
+		root.add_child(overlay_label)
+
+		_build_mobile_controls(root)
+		_build_map_overlay(root)
+		_build_choice_overlay(root)
+		_build_state_overlay(root)
+		return
 
 	var left_column := VBoxContainer.new()
 	left_column.position = Vector2(24.0, 24.0)
