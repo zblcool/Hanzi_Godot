@@ -80,12 +80,12 @@ class VirtualJoystick:
 			_set_stick_vector(Vector2.ZERO)
 			return
 
-		var strength := min(length / BASE_RADIUS, 1.0)
+		var strength: float = minf(length / BASE_RADIUS, 1.0)
 		if strength <= DEADZONE:
 			_set_stick_vector(Vector2.ZERO)
 			return
 
-		var scaled_strength := (strength - DEADZONE) / (1.0 - DEADZONE)
+		var scaled_strength: float = (strength - DEADZONE) / (1.0 - DEADZONE)
 		_set_stick_vector(delta.normalized() * scaled_strength)
 
 	func _set_stick_vector(new_vector: Vector2) -> void:

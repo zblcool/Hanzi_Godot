@@ -1,9 +1,14 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/battle/zihai_battle.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/ui/mobile_landscape_guard.gd" id="2"]
 
 [node name="ZiHaiBattle" type="Node3D"]
 script = ExtResource("1")
+
+[node name="MobileLandscapeGuard" type="CanvasLayer" parent="."]
+script = ExtResource("2")
+pause_engine_while_visible = true
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 
