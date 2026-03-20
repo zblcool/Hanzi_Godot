@@ -4,6 +4,7 @@ const HERO_SCENE := preload("res://scenes/entities/hero.tscn")
 const ENEMY_SCENE := preload("res://scenes/entities/enemy.tscn")
 const INK_BOLT_SCENE := preload("res://scenes/entities/ink_bolt.tscn")
 const XP_ORB_SCENE := preload("res://scenes/entities/xp_orb.tscn")
+const SUPPLY_PICKUP_SCENE := preload("res://scenes/entities/supply_pickup.tscn")
 const BUSH_ZONE_SCENE := preload("res://scenes/entities/bush_zone.tscn")
 const GROUND_HAZARD_SCENE := preload("res://scenes/entities/ground_hazard.tscn")
 const LINE_HAZARD_SCENE := preload("res://scenes/entities/line_hazard.tscn")
@@ -11,7 +12,7 @@ const ENEMY_BOLT_SCENE := preload("res://scenes/entities/enemy_bolt.tscn")
 const INKSTONE_SCENE := preload("res://scenes/entities/inkstone_altar.tscn")
 const BATTLE_HUD_SCENE := preload("res://scenes/ui/battle_hud.tscn")
 const CJKFont := preload("res://scripts/core/cjk_font.gd")
-const DEFAULT_BATTLE_TIP := "击倒字灵收集字力，升级时三选一偏旁。靠近砚台按 E 磨词。"
+const DEFAULT_BATTLE_TIP := "击倒字灵收集字力与补给，升级时三选一偏旁。靠近砚台按 E 磨词。"
 
 @onready var world_environment: WorldEnvironment = $WorldEnvironment
 @onready var camera_rig: Node3D = $CameraRig
@@ -295,6 +296,7 @@ func _on_player_request_slash(origin: Vector3, forward: Vector3, radius: float, 
 func _on_enemy_defeated(world_position: Vector3, enemy_type: String) -> void:
 	kills += 1
 	_spawn_xp_orb(world_position, _xp_value_for_enemy(enemy_type))
+	_spawn_supply_drops(world_position, enemy_type)
 	if kills % 14 == 0:
 		hud.show_banner("字潮再涨", Color(0.95, 0.62, 0.36, 1.0), 1.7)
 
@@ -327,8 +329,107 @@ func _spawn_xp_orb(world_position: Vector3, xp_value: int) -> void:
 	pickups_root.add_child(orb)
 
 
+func _spawn_supply_drops(world_position: Vector3, enemy_type: String) -> void:
+	var drops: Dictionary = _build_supply_drops(enemy_type)
+	var active_supply_ids: Array[String] = []
+	for supply_id_variant in ["paper", "ink", "seal"]:
+		var supply_id := String(supply_id_variant)
+		if float(drops.get(supply_id, 0.0)) > 0.0:
+			active_supply_ids.append(supply_id)
+
+	for index in range(active_supply_ids.size()):
+		var supply_id: String = active_supply_ids[index]
+		var pickup = SUPPLY_PICKUP_SCENE.instantiate()
+		var angle: float = TAU * float(index) / max(1.0, float(active_supply_ids.size()))
+		angle += rng.randf_range(-0.22, 0.22)
+		var radius: float = 0.55 + rng.randf_range(0.0, 0.34)
+		pickup.position = world_position + Vector3(cos(angle) * radius, 0.45, sin(angle) * radius)
+		pickup.configure(player, supply_id, float(drops[supply_id]))
+		pickup.collected.connect(_on_supply_collected)
+		pickups_root.add_child(pickup)
+
+
+func _build_supply_drops(enemy_type: String) -> Dictionary:
+	var drops := {
+		"paper": 0.0,
+		"ink": 0.0,
+		"seal": 0.0
+	}
+
+	match enemy_type:
+		"swift":
+			if rng.randf() < 0.12:
+				_add_supply_drop(drops, "paper", 2.0)
+		"tank":
+			if rng.randf() < 0.28:
+				_add_supply_drop(drops, "ink", 15.0)
+		"archer":
+			if rng.randf() < 0.24:
+				_add_supply_drop(drops, "paper", 3.0)
+		"assassin":
+			if rng.randf() < 0.18:
+				_add_supply_drop(drops, "paper", 3.0)
+			if rng.randf() < 0.12:
+				_add_supply_drop(drops, "seal", 1.0)
+		"cavalry":
+			if rng.randf() < 0.26:
+				_add_supply_drop(drops, "paper", 4.0)
+			if rng.randf() < 0.2:
+				_add_supply_drop(drops, "seal", 1.0)
+		"ritualist":
+			if rng.randf() < 0.24:
+				_add_supply_drop(drops, "paper", 3.0)
+			if rng.randf() < 0.16:
+				_add_supply_drop(drops, "ink", 14.0)
+		"elite":
+			_add_supply_drop(drops, "paper", 6.0)
+			_add_supply_drop(drops, "seal", 1.0)
+			_add_supply_drop(drops, "ink", 22.0)
+		_:
+			if rng.randf() < 0.1:
+				_add_supply_drop(drops, "paper", 2.0)
+
+	if kills > 0 and kills % 12 == 0:
+		_add_supply_drop(drops, "paper", 3.0)
+	if kills > 0 and kills % 21 == 0:
+		_add_supply_drop(drops, "ink", 16.0)
+
+	return drops
+
+
+func _add_supply_drop(drops: Dictionary, supply_id: String, amount: float) -> void:
+	drops[supply_id] = float(drops.get(supply_id, 0.0)) + amount
+
+
 func _on_xp_collected(value: int) -> void:
 	_gain_experience(value)
+
+
+func _on_supply_collected(world_position: Vector3, supply_id: String, amount: float, tint: Color, label: String) -> void:
+	var pulse_radius: float = 1.05
+	match supply_id:
+		"paper":
+			var xp_gain: int = int(round(amount))
+			_gain_experience(xp_gain)
+			hud.show_banner("拾得残纸  +%d 字墨" % xp_gain, tint, 1.45)
+		"ink":
+			if is_instance_valid(player):
+				player.heal(amount)
+				hud.show_banner("拾得墨团  回气 %d" % int(round(amount)), tint, 1.5)
+			pulse_radius = 1.12
+		"seal":
+			if is_instance_valid(player):
+				var blade_gain: int = max(1, int(round(amount)))
+				player.apply_blade_upgrade(blade_gain)
+				hud.show_banner(
+					"拾得战印  %s +%d" % ["剑势" if Session.selected_hero == "xia" else "笔锋", blade_gain],
+					tint,
+					1.7
+				)
+			pulse_radius = 1.22
+
+	_spawn_wave_effect(world_position, pulse_radius, tint, label)
+	_sync_hud()
 
 
 func _gain_experience(value: int) -> void:
