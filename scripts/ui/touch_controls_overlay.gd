@@ -1,6 +1,9 @@
 extends CanvasLayer
 
 const CJKFont := preload("res://scripts/core/cjk_font.gd")
+const JOYSTICK_SIZE := Vector2(224.0, 224.0)
+const JOYSTICK_MARGIN := 28.0
+const MOUSE_POINTER_ID := -2
 
 signal movement_input_changed(input_vector: Vector2)
 signal interact_requested
@@ -32,24 +35,42 @@ class VirtualJoystick:
 			vector_changed.emit(stick_vector)
 		queue_redraw()
 
+	func is_active() -> bool:
+		return drag_pointer != -1
+
+	func is_tracking_pointer(pointer_id: int) -> bool:
+		return drag_pointer == pointer_id
+
+	func begin_input(pointer_id: int, local_position: Vector2) -> void:
+		drag_pointer = pointer_id
+		_update_stick(local_position)
+
+	func update_input(pointer_id: int, local_position: Vector2) -> void:
+		if drag_pointer != pointer_id:
+			return
+		_update_stick(local_position)
+
+	func end_input(pointer_id: int) -> void:
+		if drag_pointer == pointer_id:
+			reset_input()
+
 	func _gui_input(event: InputEvent) -> void:
 		var local_event := make_input_local(event)
 		if local_event is InputEventScreenTouch:
 			var touch := local_event as InputEventScreenTouch
 			if touch.pressed:
 				if drag_pointer == -1 and Rect2(Vector2.ZERO, size).has_point(touch.position):
-					drag_pointer = touch.index
-					_update_stick(touch.position)
+					begin_input(touch.index, touch.position)
 					accept_event()
 			elif touch.index == drag_pointer:
-				reset_input()
+				end_input(touch.index)
 				accept_event()
 			return
 
 		if local_event is InputEventScreenDrag:
 			var drag := local_event as InputEventScreenDrag
 			if drag.index == drag_pointer:
-				_update_stick(drag.position)
+				update_input(drag.index, drag.position)
 				accept_event()
 			return
 
@@ -59,17 +80,16 @@ class VirtualJoystick:
 				return
 			if mouse_button.pressed:
 				if Rect2(Vector2.ZERO, size).has_point(mouse_button.position):
-					drag_pointer = -2
-					_update_stick(mouse_button.position)
+					begin_input(MOUSE_POINTER_ID, mouse_button.position)
 					accept_event()
-			elif drag_pointer == -2:
-				reset_input()
+			elif drag_pointer == MOUSE_POINTER_ID:
+				end_input(MOUSE_POINTER_ID)
 				accept_event()
 			return
 
-		if local_event is InputEventMouseMotion and drag_pointer == -2:
+		if local_event is InputEventMouseMotion and drag_pointer == MOUSE_POINTER_ID:
 			var mouse_motion := local_event as InputEventMouseMotion
-			_update_stick(mouse_motion.position)
+			update_input(MOUSE_POINTER_ID, mouse_motion.position)
 			accept_event()
 
 	func _update_stick(local_position: Vector2) -> void:
@@ -121,25 +141,73 @@ func _ready() -> void:
 	_build_controls()
 	_update_visibility()
 	set_process_input(true)
+	set_process_unhandled_input(true)
 
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventScreenTouch or event is InputEventScreenDrag:
 		visible = true
+	if not visible or joystick == null or not joystick.is_active():
+		return
+
+	if event is InputEventScreenTouch:
+		var touch := event as InputEventScreenTouch
+		if not touch.pressed and joystick.is_tracking_pointer(touch.index):
+			_release_joystick(touch.index)
+			get_viewport().set_input_as_handled()
+		return
+
+	if event is InputEventScreenDrag:
+		var drag := event as InputEventScreenDrag
+		if joystick.is_tracking_pointer(drag.index):
+			joystick.update_input(drag.index, _to_joystick_local(drag.position))
+			get_viewport().set_input_as_handled()
+		return
+
+	if event is InputEventMouseButton:
+		var mouse_button := event as InputEventMouseButton
+		if mouse_button.button_index != MOUSE_BUTTON_LEFT:
+			return
+		if not mouse_button.pressed and joystick.is_tracking_pointer(MOUSE_POINTER_ID):
+			_release_joystick(MOUSE_POINTER_ID)
+			get_viewport().set_input_as_handled()
+		return
+
+	if event is InputEventMouseMotion and joystick.is_tracking_pointer(MOUSE_POINTER_ID):
+		var mouse_motion := event as InputEventMouseMotion
+		joystick.update_input(MOUSE_POINTER_ID, _to_joystick_local(mouse_motion.position))
+		get_viewport().set_input_as_handled()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not visible or joystick == null or joystick.is_active():
+		return
+
+	if event is InputEventScreenTouch:
+		var touch := event as InputEventScreenTouch
+		if touch.pressed:
+			_try_start_joystick(touch.index, touch.position)
+		return
+
+	if event is InputEventMouseButton:
+		var mouse_button := event as InputEventMouseButton
+		if mouse_button.button_index == MOUSE_BUTTON_LEFT and mouse_button.pressed:
+			_try_start_joystick(MOUSE_POINTER_ID, mouse_button.position)
 
 
 func reset_input() -> void:
 	if joystick != null:
 		joystick.reset_input()
+		joystick.visible = false
 
 
 func _build_controls() -> void:
 	joystick = VirtualJoystick.new()
-	joystick.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
-	joystick.offset_left = 28.0
-	joystick.offset_top = -248.0
-	joystick.offset_right = 252.0
-	joystick.offset_bottom = -24.0
+	joystick.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	joystick.position = Vector2(JOYSTICK_MARGIN, JOYSTICK_MARGIN)
+	joystick.size = JOYSTICK_SIZE
+	joystick.custom_minimum_size = JOYSTICK_SIZE
+	joystick.visible = false
 	joystick.vector_changed.connect(_on_joystick_vector_changed)
 	root.add_child(joystick)
 
@@ -175,6 +243,38 @@ func _update_visibility() -> void:
 		OS.has_feature("web_android") or
 		OS.has_feature("web_ios")
 	)
+
+
+func _try_start_joystick(pointer_id: int, screen_position: Vector2) -> void:
+	if _is_over_interact_button(screen_position):
+		return
+	_place_joystick(screen_position)
+	joystick.visible = true
+	joystick.begin_input(pointer_id, _to_joystick_local(screen_position))
+	get_viewport().set_input_as_handled()
+
+
+func _release_joystick(pointer_id: int) -> void:
+	joystick.end_input(pointer_id)
+	joystick.visible = false
+
+
+func _place_joystick(screen_position: Vector2) -> void:
+	var desired_position := screen_position - JOYSTICK_SIZE * 0.5
+	var viewport_size := get_viewport().get_visible_rect().size
+	var max_position := viewport_size - JOYSTICK_SIZE - Vector2(JOYSTICK_MARGIN, JOYSTICK_MARGIN)
+	joystick.position = Vector2(
+		clamp(desired_position.x, JOYSTICK_MARGIN, max(JOYSTICK_MARGIN, max_position.x)),
+		clamp(desired_position.y, JOYSTICK_MARGIN, max(JOYSTICK_MARGIN, max_position.y))
+	)
+
+
+func _to_joystick_local(screen_position: Vector2) -> Vector2:
+	return screen_position - joystick.position
+
+
+func _is_over_interact_button(screen_position: Vector2) -> bool:
+	return interact_button != null and interact_button.get_global_rect().has_point(screen_position)
 
 
 func _on_joystick_vector_changed(input_vector: Vector2) -> void:
