@@ -12,6 +12,7 @@ const ENEMY_BOLT_SCENE := preload("res://scenes/entities/enemy_bolt.tscn")
 const INKSTONE_SCENE := preload("res://scenes/entities/inkstone_altar.tscn")
 const TREASURE_CHEST_SCENE := preload("res://scenes/entities/treasure_chest.tscn")
 const BATTLE_HUD_SCENE := preload("res://scenes/ui/battle_hud.tscn")
+const TOUCH_CONTROLS_OVERLAY := preload("res://scripts/ui/touch_controls_overlay.gd")
 const CJKFont := preload("res://scripts/core/cjk_font.gd")
 const DEFAULT_BATTLE_TIP := "击倒字灵收集字力与补给，升级时三选一偏旁。靠近砚台按 E 磨词。"
 const BOSS_SPAWN_TIMES := [65.0, 130.0]
@@ -31,6 +32,7 @@ var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 
 var player = null
 var hud = null
+var touch_controls = null
 
 var elapsed_time: float = 0.0
 var spawn_timer: float = 0.0
@@ -164,13 +166,19 @@ func _spawn_hud() -> void:
 	hud.configure(Session.get_selected_hero())
 	hud.radical_choice_selected.connect(_on_radical_choice_selected)
 	hud.word_choice_selected.connect(_on_word_choice_selected)
-	hud.movement_input_changed.connect(_on_hud_movement_input_changed)
-	hud.interact_requested.connect(_on_hud_interact_requested)
 	hud.pause_requested.connect(_on_hud_pause_requested)
 	hud.pause_resume_requested.connect(_on_hud_pause_resume_requested)
 	hud.restart_requested.connect(_on_hud_restart_requested)
 	hud.return_menu_requested.connect(_on_hud_return_menu_requested)
 	hud.map_toggle_requested.connect(_on_hud_map_toggle_requested)
+	_spawn_touch_controls()
+
+
+func _spawn_touch_controls() -> void:
+	touch_controls = TOUCH_CONTROLS_OVERLAY.new()
+	add_child(touch_controls)
+	touch_controls.movement_input_changed.connect(_on_hud_movement_input_changed)
+	touch_controls.interact_requested.connect(_on_hud_interact_requested)
 
 
 func _spawn_props() -> void:
