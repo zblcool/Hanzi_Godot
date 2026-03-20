@@ -21,6 +21,9 @@ const BIG_WAVE_INTERVAL := 5
 const BASE_ENEMY_CAP := 28
 const MAX_REGULAR_ENEMY_CAP := 38
 const BIG_WAVE_ENEMY_CAP := 46
+const TREE_FADE_RADIUS := 2.65
+const TREE_FADE_ALPHA := 0.28
+const TREE_FADE_SPEED := 4.8
 
 @onready var world_environment: WorldEnvironment = $WorldEnvironment
 @onready var camera_rig: Node3D = $CameraRig
@@ -58,6 +61,7 @@ var skill_levels: Dictionary = {}
 var word_skill_levels: Dictionary = {}
 var word_progress: Dictionary = {}
 var inkstones: Array[Node3D] = []
+var tree_fade_entries: Array[Dictionary] = []
 var active_inkstone: Node3D = null
 var battle_intro: Dictionary = {}
 
@@ -87,6 +91,7 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	_update_camera(delta)
+	_update_tree_fade(delta)
 
 	if game_over:
 		if Input.is_action_just_pressed("restart_run"):
@@ -1632,6 +1637,7 @@ func _create_tree(position: Vector3) -> void:
 	trunk.position = Vector3(0.0, 1.3, 0.0)
 	var trunk_material := StandardMaterial3D.new()
 	trunk_material.albedo_color = Color(0.26, 0.17, 0.1, 1.0)
+	_prepare_tree_material_for_fade(trunk_material)
 	trunk.material_override = trunk_material
 	tree_root.add_child(trunk)
 
@@ -1641,6 +1647,7 @@ func _create_tree(position: Vector3) -> void:
 	canopy_material.emission_enabled = true
 	canopy_material.emission = Color(0.08, 0.16, 0.1, 1.0)
 	canopy_material.emission_energy_multiplier = 0.2
+	_prepare_tree_material_for_fade(canopy_material)
 
 	var canopy_offsets := [
 		Vector3(0.0, 3.08, 0.0),
@@ -1670,8 +1677,72 @@ func _create_tree(position: Vector3) -> void:
 	lantern_material.emission_enabled = true
 	lantern_material.emission = Color(0.96, 0.84, 0.46, 1.0)
 	lantern_material.emission_energy_multiplier = 0.5
+	_prepare_tree_material_for_fade(lantern_material)
 	lantern.material_override = lantern_material
 	tree_root.add_child(lantern)
+
+	tree_fade_entries.append({
+		"root": tree_root,
+		"materials": [trunk_material, canopy_material, lantern_material],
+		"base_colors": [
+			trunk_material.albedo_color,
+			canopy_material.albedo_color,
+			lantern_material.albedo_color
+		],
+		"base_emission_energy": [
+			trunk_material.emission_energy_multiplier,
+			canopy_material.emission_energy_multiplier,
+			lantern_material.emission_energy_multiplier
+		],
+		"alpha": 1.0
+	})
+
+
+func _update_tree_fade(delta: float) -> void:
+	if not is_instance_valid(player):
+		return
+
+	var player_position := player.global_position
+	player_position.y = 0.0
+	for index in range(tree_fade_entries.size()):
+		var entry: Dictionary = tree_fade_entries[index]
+		var tree_root = entry.get("root", null)
+		if not is_instance_valid(tree_root):
+			continue
+
+		var tree_position := tree_root.global_position
+		tree_position.y = 0.0
+		var distance_ratio: float = clamp(player_position.distance_to(tree_position) / TREE_FADE_RADIUS, 0.0, 1.0)
+		var target_alpha: float = lerpf(TREE_FADE_ALPHA, 1.0, distance_ratio)
+		var current_alpha: float = float(entry.get("alpha", 1.0))
+		var next_alpha: float = move_toward(current_alpha, target_alpha, delta * TREE_FADE_SPEED)
+		if is_equal_approx(next_alpha, current_alpha):
+			continue
+
+		entry["alpha"] = next_alpha
+		tree_fade_entries[index] = entry
+		_apply_tree_alpha(entry, next_alpha)
+
+
+func _prepare_tree_material_for_fade(material: StandardMaterial3D) -> void:
+	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	material.cull_mode = BaseMaterial3D.CULL_DISABLED
+
+
+func _apply_tree_alpha(entry: Dictionary, alpha: float) -> void:
+	var materials: Array = entry.get("materials", [])
+	var base_colors: Array = entry.get("base_colors", [])
+	var base_emission_energy: Array = entry.get("base_emission_energy", [])
+	for material_index in range(materials.size()):
+		var material: StandardMaterial3D = materials[material_index]
+		if material == null:
+			continue
+
+		var base_color: Color = base_colors[material_index]
+		material.albedo_color = Color(base_color.r, base_color.g, base_color.b, alpha)
+		if material.emission_enabled:
+			var base_energy: float = float(base_emission_energy[material_index])
+			material.emission_energy_multiplier = max(base_energy * alpha, 0.08)
 
 
 func _create_stela(position: Vector3, glyph: String, tint: Color) -> void:
