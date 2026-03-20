@@ -7,6 +7,7 @@ const MOUSE_POINTER_ID := -2
 
 signal movement_input_changed(input_vector: Vector2)
 signal interact_requested
+signal pause_requested
 
 class VirtualJoystick:
 	extends Control
@@ -130,6 +131,7 @@ var ui_font: Font
 var root: Control
 var joystick: VirtualJoystick
 var interact_button: Button
+var pause_button: Button
 
 
 func _ready() -> void:
@@ -232,6 +234,24 @@ func _build_controls() -> void:
 	interact_button.pressed.connect(_on_interact_pressed)
 	root.add_child(interact_button)
 
+	pause_button = Button.new()
+	pause_button.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	pause_button.offset_left = -140.0
+	pause_button.offset_top = 28.0
+	pause_button.offset_right = -28.0
+	pause_button.offset_bottom = 92.0
+	pause_button.custom_minimum_size = Vector2(112.0, 64.0)
+	pause_button.text = "暂停"
+	pause_button.add_theme_font_override("font", ui_font)
+	pause_button.add_theme_font_size_override("font_size", 20)
+	pause_button.add_theme_color_override("font_color", Color(0.96, 0.9, 0.8, 0.98))
+	pause_button.add_theme_stylebox_override("normal", normal_style)
+	pause_button.add_theme_stylebox_override("hover", hover_style)
+	pause_button.add_theme_stylebox_override("pressed", pressed_style)
+	pause_button.add_theme_stylebox_override("focus", hover_style)
+	pause_button.pressed.connect(_on_pause_pressed)
+	root.add_child(pause_button)
+
 
 func _update_visibility() -> void:
 	visible = (
@@ -274,7 +294,11 @@ func _to_joystick_local(screen_position: Vector2) -> Vector2:
 
 
 func _is_over_interact_button(screen_position: Vector2) -> bool:
-	return interact_button != null and interact_button.get_global_rect().has_point(screen_position)
+	return (
+		interact_button != null and interact_button.get_global_rect().has_point(screen_position)
+	) or (
+		pause_button != null and pause_button.get_global_rect().has_point(screen_position)
+	)
 
 
 func _on_joystick_vector_changed(input_vector: Vector2) -> void:
@@ -283,6 +307,10 @@ func _on_joystick_vector_changed(input_vector: Vector2) -> void:
 
 func _on_interact_pressed() -> void:
 	interact_requested.emit()
+
+
+func _on_pause_pressed() -> void:
+	pause_requested.emit()
 
 
 func _make_panel_style(fill_color: Color, border_color: Color, corner_radius: int) -> StyleBoxFlat:

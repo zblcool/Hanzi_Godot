@@ -182,6 +182,7 @@ func _spawn_touch_controls() -> void:
 	add_child(touch_controls)
 	touch_controls.movement_input_changed.connect(_on_hud_movement_input_changed)
 	touch_controls.interact_requested.connect(_on_hud_interact_requested)
+	touch_controls.pause_requested.connect(_on_hud_pause_requested)
 
 
 func _spawn_props() -> void:
