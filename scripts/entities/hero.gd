@@ -52,6 +52,7 @@ var stun_time: float = 0.0
 var is_dead: bool = false
 
 var look_direction: Vector3 = Vector3(0.0, 0.0, -1.0)
+var external_move_input: Vector2 = Vector2.ZERO
 
 var body_mesh: MeshInstance3D
 var head_mesh: MeshInstance3D
@@ -112,7 +113,7 @@ func _physics_process(delta: float) -> void:
 	if is_dead:
 		return
 
-	var input_vector: Vector2 = Input.get_vector("move_left", "move_right", "move_forward", "move_back")
+	var input_vector: Vector2 = Input.get_vector("move_left", "move_right", "move_forward", "move_back") + external_move_input
 	var move_vector := Vector3(input_vector.x, 0.0, input_vector.y)
 	if stun_time > 0.0:
 		move_vector = Vector3.ZERO
@@ -138,6 +139,10 @@ func _physics_process(delta: float) -> void:
 	if stun_time <= 0.0:
 		_try_attack()
 	_update_visual_state()
+
+
+func set_external_move_input(input_vector: Vector2) -> void:
+	external_move_input = input_vector.limit_length(1.0)
 
 
 func set_skill_level(recipe_id: String, level: int) -> void:

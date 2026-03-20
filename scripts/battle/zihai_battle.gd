@@ -164,6 +164,8 @@ func _spawn_hud() -> void:
 	hud.configure(Session.get_selected_hero())
 	hud.radical_choice_selected.connect(_on_radical_choice_selected)
 	hud.word_choice_selected.connect(_on_word_choice_selected)
+	hud.movement_input_changed.connect(_on_hud_movement_input_changed)
+	hud.interact_requested.connect(_on_hud_interact_requested)
 	hud.pause_requested.connect(_on_hud_pause_requested)
 	hud.pause_resume_requested.connect(_on_hud_pause_resume_requested)
 	hud.restart_requested.connect(_on_hud_restart_requested)
@@ -1330,6 +1332,21 @@ func _on_hud_map_toggle_requested() -> void:
 	_set_map_overlay(not map_overlay_active)
 
 
+func _on_hud_movement_input_changed(input_vector: Vector2) -> void:
+	if is_instance_valid(player):
+		player.set_external_move_input(input_vector)
+
+
+func _on_hud_interact_requested() -> void:
+	if game_over or map_overlay_active or levelup_active or word_choice_active:
+		return
+	if paused:
+		_set_paused(false)
+		return
+	if active_inkstone != null:
+		_handle_inkstone_interact()
+
+
 func _on_hud_restart_requested() -> void:
 	Engine.time_scale = 1.0
 	get_tree().reload_current_scene()
@@ -1351,11 +1368,20 @@ func _update_inkstone_interaction() -> void:
 	if _has_grindable_words():
 		hud.set_tip("靠近砚台，按 E 磨词。词技只会在这里成型。")
 		if Input.is_action_just_pressed("interact"):
-			_present_word_choices()
+			_handle_inkstone_interact()
 	else:
 		hud.set_tip("砚台静候。先把合字升满，再带着相关偏旁来磨词。")
 		if Input.is_action_just_pressed("interact"):
-			hud.show_banner("砚上无字可磨", Color(0.7, 0.84, 1.0, 1.0), 1.5)
+			_handle_inkstone_interact()
+
+
+func _handle_inkstone_interact() -> void:
+	if active_inkstone == null:
+		return
+	if _has_grindable_words():
+		_present_word_choices()
+	else:
+		hud.show_banner("砚上无字可磨", Color(0.7, 0.84, 1.0, 1.0), 1.5)
 
 
 func _find_nearby_inkstone() -> Node3D:
