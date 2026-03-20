@@ -142,6 +142,27 @@ func _build_ui() -> void:
 	header_box.add_child(_make_label("汉字游戏启动器", 72, Color(1.0, 0.95, 0.86, 1.0)))
 	header_box.add_child(_make_label("从字形、部件到战斗系统，把汉字本身做成游戏的核心机制。", 18, Color(0.9, 0.92, 0.96, 0.94)))
 
+	var mobile_row := HBoxContainer.new()
+	mobile_row.add_theme_constant_override("separation", 18)
+	layout.add_child(mobile_row)
+
+	mobile_row.add_child(_make_info_panel(
+		"微信内打开",
+		[
+			"如果是微信内置浏览器，尽量切到系统浏览器再进入。",
+			"这样更容易拿到稳定的全屏、音频和触控体验。"
+		],
+		Color(0.5, 0.88, 0.66, 1.0)
+	))
+	mobile_row.add_child(_make_info_panel(
+		"iPhone / iPad",
+		[
+			"可以用“分享 -> 添加到主屏幕”把启动器放到桌面。",
+			"主屏幕入口会更接近独立应用的打开方式。"
+		],
+		Color(0.52, 0.8, 1.0, 1.0)
+	))
+
 	var main_row := HBoxContainer.new()
 	main_row.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	main_row.add_theme_constant_override("separation", 20)
