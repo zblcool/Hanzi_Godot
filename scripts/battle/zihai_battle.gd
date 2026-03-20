@@ -14,6 +14,7 @@ const BATTLE_HUD_SCENE := preload("res://scenes/ui/battle_hud.tscn")
 const CJKFont := preload("res://scripts/core/cjk_font.gd")
 const DEFAULT_BATTLE_TIP := "击倒字灵收集字力与补给，升级时三选一偏旁。靠近砚台按 E 磨词。"
 const BOSS_SPAWN_TIMES := [65.0, 130.0]
+const MAP_WORLD_RADIUS := 28.0
 
 @onready var world_environment: WorldEnvironment = $WorldEnvironment
 @onready var camera_rig: Node3D = $CameraRig
@@ -39,6 +40,7 @@ var game_over: bool = false
 var levelup_active: bool = false
 var word_choice_active: bool = false
 var paused: bool = false
+var map_overlay_active: bool = false
 var opening_time: float = 0.0
 var last_announced_threat_level: int = 1
 var boss_spawn_index: int = 0
@@ -88,6 +90,11 @@ func _process(delta: float) -> void:
 			get_tree().change_scene_to_file(Session.ZIHAI_MENU_SCENE)
 		return
 
+	if map_overlay_active:
+		if Input.is_action_just_pressed("return_menu") or Input.is_action_just_pressed("toggle_map"):
+			_set_map_overlay(false)
+		return
+
 	if paused:
 		if Input.is_action_just_pressed("return_menu") or Input.is_action_just_pressed("interact"):
 			_set_paused(false)
@@ -97,6 +104,10 @@ func _process(delta: float) -> void:
 		return
 
 	if levelup_active or word_choice_active:
+		return
+
+	if Input.is_action_just_pressed("toggle_map"):
+		_set_map_overlay(true)
 		return
 
 	if Input.is_action_just_pressed("return_menu"):
@@ -156,6 +167,7 @@ func _spawn_hud() -> void:
 	hud.pause_resume_requested.connect(_on_hud_pause_resume_requested)
 	hud.restart_requested.connect(_on_hud_restart_requested)
 	hud.return_menu_requested.connect(_on_hud_return_menu_requested)
+	hud.map_toggle_requested.connect(_on_hud_map_toggle_requested)
 
 
 func _spawn_props() -> void:
@@ -181,6 +193,7 @@ func _spawn_props() -> void:
 		bush.position = bush_position_variant
 		bush.configure(player, 2.25)
 		bush.activated.connect(_on_bush_activated)
+		bush.add_to_group("map_bush")
 		props_root.add_child(bush)
 
 	var inkstone_positions := [
@@ -190,6 +203,7 @@ func _spawn_props() -> void:
 	for inkstone_position in inkstone_positions:
 		var inkstone = INKSTONE_SCENE.instantiate()
 		inkstone.position = inkstone_position
+		inkstone.add_to_group("map_inkstone")
 		props_root.add_child(inkstone)
 		inkstones.append(inkstone)
 
@@ -1010,8 +1024,10 @@ func _on_player_health_changed(current: float, maximum: float) -> void:
 func _on_player_defeated() -> void:
 	game_over = true
 	paused = false
+	map_overlay_active = false
 	active_boss = null
 	Engine.time_scale = 0.0
+	hud.hide_map_overlay()
 	hud.hide_boss()
 	hud.show_banner("字海沉没", Color(1.0, 0.76, 0.58, 1.0), 2.0)
 	Session.last_run_summary = {
@@ -1165,6 +1181,8 @@ func _spawn_intro_symbols(glyph: String, tint: Color) -> void:
 func _set_paused(should_pause: bool) -> void:
 	if game_over:
 		return
+	if should_pause and map_overlay_active:
+		_set_map_overlay(false)
 	paused = should_pause
 	Engine.time_scale = 0.0 if paused else 1.0
 	if paused:
@@ -1173,12 +1191,113 @@ func _set_paused(should_pause: bool) -> void:
 		hud.hide_state_overlay()
 
 
+func _set_map_overlay(should_show: bool) -> void:
+	if game_over:
+		return
+	if should_show:
+		if paused or levelup_active or word_choice_active:
+			return
+		map_overlay_active = true
+		Engine.time_scale = 0.0
+		hud.show_map_overlay(_build_map_snapshot())
+		return
+
+	map_overlay_active = false
+	Engine.time_scale = 1.0
+	hud.hide_map_overlay()
+
+
+func _build_map_snapshot() -> Dictionary:
+	var markers: Array[Dictionary] = []
+	_append_map_group(markers, "map_tree", "tree", Color(0.44, 0.7, 0.48, 1.0))
+	_append_map_group(markers, "map_bush", "bush", Color(0.58, 0.88, 0.64, 1.0))
+	_append_map_group(markers, "map_inkstone", "inkstone", Color(0.96, 0.78, 0.46, 1.0))
+	_append_map_group(markers, "map_stela", "stela", Color(0.64, 0.86, 1.0, 1.0))
+	_append_map_group(markers, "map_scroll_rack", "scroll_rack", Color(0.94, 0.86, 0.66, 1.0))
+	_append_map_group(markers, "map_ink_pool", "ink_pool", Color(0.7, 0.5, 0.98, 1.0))
+
+	var enemies: Array[Dictionary] = []
+	for enemy in get_tree().get_nodes_in_group("enemy"):
+		if not is_instance_valid(enemy) or enemy.is_queued_for_deletion():
+			continue
+		var enemy_type: String = String(enemy.get("enemy_type"))
+		enemies.append({
+			"position": _map_point(enemy.global_position),
+			"kind": "boss" if enemy_type == "boss" else "enemy",
+			"color": _map_enemy_color(enemy_type)
+		})
+
+	var inkstone_count: int = get_tree().get_nodes_in_group("map_inkstone").size()
+	var bush_count: int = get_tree().get_nodes_in_group("map_bush").size()
+	var landmark_count: int = (
+		get_tree().get_nodes_in_group("map_tree").size() +
+		get_tree().get_nodes_in_group("map_stela").size() +
+		get_tree().get_nodes_in_group("map_scroll_rack").size() +
+		get_tree().get_nodes_in_group("map_ink_pool").size()
+	)
+
+	return {
+		"world_radius": MAP_WORLD_RADIUS,
+		"player": _map_point(player.global_position if is_instance_valid(player) else Vector3.ZERO),
+		"player_heading": _map_direction(player.look_direction if is_instance_valid(player) else Vector3(0.0, 0.0, -1.0)),
+		"markers": markers,
+		"enemies": enemies,
+		"summary": "敌群 %d  ·  砚台 %d  ·  草丛 %d  ·  地标 %d" % [enemies.size(), inkstone_count, bush_count, landmark_count]
+	}
+
+
+func _append_map_group(markers: Array[Dictionary], group_name: String, kind: String, color: Color) -> void:
+	for node in get_tree().get_nodes_in_group(group_name):
+		if not is_instance_valid(node) or node.is_queued_for_deletion():
+			continue
+		markers.append({
+			"position": _map_point(node.global_position),
+			"kind": kind,
+			"color": color
+		})
+
+
+func _map_point(world_position: Vector3) -> Vector2:
+	return Vector2(world_position.x, world_position.z)
+
+
+func _map_direction(world_direction: Vector3) -> Vector2:
+	var flat := Vector2(world_direction.x, world_direction.z)
+	if flat.length_squared() < 0.001:
+		return Vector2(0.0, -1.0)
+	return flat.normalized()
+
+
+func _map_enemy_color(enemy_type: String) -> Color:
+	match enemy_type:
+		"boss":
+			return Color(0.98, 0.78, 0.48, 1.0)
+		"elite":
+			return Color(0.92, 0.34, 0.46, 1.0)
+		"ritualist":
+			return Color(0.7, 0.52, 1.0, 1.0)
+		"assassin":
+			return Color(0.92, 0.48, 0.66, 1.0)
+		"cavalry":
+			return Color(0.98, 0.5, 0.34, 1.0)
+		"tank":
+			return Color(0.68, 0.76, 0.88, 1.0)
+		"archer":
+			return Color(0.96, 0.72, 0.4, 1.0)
+		_:
+			return Color(0.92, 0.42, 0.34, 1.0)
+
+
 func _on_hud_pause_resume_requested() -> void:
 	_set_paused(false)
 
 
 func _on_hud_pause_requested() -> void:
 	_set_paused(true)
+
+
+func _on_hud_map_toggle_requested() -> void:
+	_set_map_overlay(not map_overlay_active)
 
 
 func _on_hud_restart_requested() -> void:
@@ -1390,6 +1509,7 @@ func _build_ground() -> void:
 func _create_tree(position: Vector3) -> void:
 	var tree_root := Node3D.new()
 	tree_root.position = position
+	tree_root.add_to_group("map_tree")
 	props_root.add_child(tree_root)
 
 	var trunk := MeshInstance3D.new()
@@ -1446,6 +1566,7 @@ func _create_tree(position: Vector3) -> void:
 func _create_stela(position: Vector3, glyph: String, tint: Color) -> void:
 	var stela_root := Node3D.new()
 	stela_root.position = position
+	stela_root.add_to_group("map_stela")
 	props_root.add_child(stela_root)
 
 	var stone_material := StandardMaterial3D.new()
@@ -1547,6 +1668,7 @@ func _create_scroll_rack(position: Vector3, yaw: float) -> void:
 	var rack_root := Node3D.new()
 	rack_root.position = position
 	rack_root.rotation_degrees.y = yaw
+	rack_root.add_to_group("map_scroll_rack")
 	props_root.add_child(rack_root)
 
 	var wood_material := StandardMaterial3D.new()
@@ -1613,6 +1735,7 @@ func _create_scroll_rack(position: Vector3, yaw: float) -> void:
 func _create_ink_pool(position: Vector3, radius: float, tint: Color) -> void:
 	var pool_root := Node3D.new()
 	pool_root.position = position
+	pool_root.add_to_group("map_ink_pool")
 	props_root.add_child(pool_root)
 
 	var pool := MeshInstance3D.new()
@@ -1683,6 +1806,7 @@ func _setup_input_map() -> void:
 	_ensure_action("move_left", [KEY_A, KEY_LEFT])
 	_ensure_action("move_right", [KEY_D, KEY_RIGHT])
 	_ensure_action("interact", [KEY_E])
+	_ensure_action("toggle_map", [KEY_M, KEY_TAB])
 	_ensure_action("restart_run", [KEY_R])
 	_ensure_action("return_menu", [KEY_ESCAPE])
 
