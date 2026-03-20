@@ -3,6 +3,8 @@ extends Node
 const LAUNCHER_SCENE := "res://scenes/app/launcher.tscn"
 const ZIHAI_MENU_SCENE := "res://scenes/app/zihai_menu.tscn"
 const ZIHAI_BATTLE_SCENE := "res://scenes/battle/zihai_battle.tscn"
+const LOCAL_LEADERBOARD_PATH := "user://local_leaderboard.json"
+const LOCAL_LEADERBOARD_LIMIT := 12
 
 const HERO_ORDER := ["scholar", "xia"]
 const HEROES := {
@@ -177,6 +179,12 @@ var selected_hero := "scholar"
 var last_run_summary: Dictionary = {}
 var pending_battle_intro: Dictionary = {}
 var chapter_progress: Dictionary = {}
+var local_leaderboard: Array[Dictionary] = []
+var local_leaderboard_loaded: bool = false
+
+
+func _ready() -> void:
+	_load_local_leaderboard()
 
 
 func select_hero(hero_id: String) -> void:
@@ -274,3 +282,133 @@ func build_empty_word_progress() -> Dictionary:
 		var word_id := String(word_id_variant)
 		data[word_id] = 0
 	return data
+
+
+func record_local_run(summary: Dictionary, hero_id: String = selected_hero) -> void:
+	_ensure_local_leaderboard_loaded()
+
+	var normalized_entry := _normalize_leaderboard_entry({
+		"hero_id": hero_id,
+		"hero_name": String(get_hero_data(hero_id).get("name", "书生")),
+		"elapsed": float(summary.get("elapsed", 0.0)),
+		"kills": int(summary.get("kills", 0)),
+		"threat": int(summary.get("threat", 1)),
+		"level": int(summary.get("level", 1)),
+		"bosses": int(summary.get("bosses", 0)),
+		"chapter_complete": bool(summary.get("chapter_complete", false)),
+		"recorded_at": int(Time.get_unix_time_from_system())
+	})
+	if normalized_entry.is_empty():
+		return
+
+	local_leaderboard.append(normalized_entry)
+	_sort_local_leaderboard()
+	while local_leaderboard.size() > LOCAL_LEADERBOARD_LIMIT:
+		local_leaderboard.pop_back()
+	_save_local_leaderboard()
+
+
+func get_local_leaderboard(limit: int = 5) -> Array[Dictionary]:
+	_ensure_local_leaderboard_loaded()
+
+	var entries: Array[Dictionary] = []
+	var safe_limit := mini(limit, local_leaderboard.size())
+	for index in range(safe_limit):
+		entries.append(local_leaderboard[index].duplicate(true))
+	return entries
+
+
+func _ensure_local_leaderboard_loaded() -> void:
+	if not local_leaderboard_loaded:
+		_load_local_leaderboard()
+
+
+func _load_local_leaderboard() -> void:
+	local_leaderboard.clear()
+	local_leaderboard_loaded = true
+
+	if not FileAccess.file_exists(LOCAL_LEADERBOARD_PATH):
+		return
+
+	var file := FileAccess.open(LOCAL_LEADERBOARD_PATH, FileAccess.READ)
+	if file == null:
+		return
+
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	var raw_entries: Variant = []
+	if parsed is Dictionary:
+		raw_entries = parsed.get("entries", [])
+	elif parsed is Array:
+		raw_entries = parsed
+
+	if raw_entries is Array:
+		for raw_entry in raw_entries:
+			var normalized_entry := _normalize_leaderboard_entry(raw_entry)
+			if not normalized_entry.is_empty():
+				local_leaderboard.append(normalized_entry)
+	_sort_local_leaderboard()
+
+
+func _save_local_leaderboard() -> void:
+	var file := FileAccess.open(LOCAL_LEADERBOARD_PATH, FileAccess.WRITE)
+	if file == null:
+		return
+
+	var payload: Array[Dictionary] = []
+	for entry in local_leaderboard:
+		payload.append(entry.duplicate(true))
+	file.store_string(JSON.stringify({"entries": payload}))
+
+
+func _normalize_leaderboard_entry(raw_entry: Variant) -> Dictionary:
+	if not (raw_entry is Dictionary):
+		return {}
+
+	var data := raw_entry as Dictionary
+	var hero_id := String(data.get("hero_id", selected_hero))
+	var hero_data: Dictionary = get_hero_data(hero_id)
+	var entry: Dictionary = {
+		"hero_id": hero_id,
+		"hero_name": String(data.get("hero_name", hero_data.get("name", "书生"))),
+		"elapsed": maxf(0.0, float(data.get("elapsed", 0.0))),
+		"kills": maxi(0, int(data.get("kills", 0))),
+		"threat": maxi(1, int(data.get("threat", 1))),
+		"level": maxi(1, int(data.get("level", 1))),
+		"bosses": maxi(0, int(data.get("bosses", 0))),
+		"chapter_complete": bool(data.get("chapter_complete", false)),
+		"recorded_at": maxi(0, int(data.get("recorded_at", 0)))
+	}
+	return entry
+
+
+func _sort_local_leaderboard() -> void:
+	local_leaderboard.sort_custom(Callable(self, "_sort_leaderboard_entries"))
+
+
+func _sort_leaderboard_entries(left: Dictionary, right: Dictionary) -> bool:
+	var left_complete: bool = bool(left.get("chapter_complete", false))
+	var right_complete: bool = bool(right.get("chapter_complete", false))
+	if left_complete != right_complete:
+		return left_complete and not right_complete
+
+	var left_bosses: int = int(left.get("bosses", 0))
+	var right_bosses: int = int(right.get("bosses", 0))
+	if left_bosses != right_bosses:
+		return left_bosses > right_bosses
+
+	var left_threat: int = int(left.get("threat", 1))
+	var right_threat: int = int(right.get("threat", 1))
+	if left_threat != right_threat:
+		return left_threat > right_threat
+
+	var left_kills: int = int(left.get("kills", 0))
+	var right_kills: int = int(right.get("kills", 0))
+	if left_kills != right_kills:
+		return left_kills > right_kills
+
+	var left_elapsed: float = float(left.get("elapsed", 0.0))
+	var right_elapsed: float = float(right.get("elapsed", 0.0))
+	if not is_equal_approx(left_elapsed, right_elapsed):
+		return left_elapsed > right_elapsed
+
+	return int(left.get("recorded_at", 0)) > int(right.get("recorded_at", 0))

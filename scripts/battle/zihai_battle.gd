@@ -1059,6 +1059,7 @@ func _on_player_defeated() -> void:
 		"bosses": int(Session.chapter_progress.get("completed_bosses", 0)),
 		"chapter_complete": bool(Session.chapter_progress.get("chapter_complete", false))
 	}
+	Session.record_local_run(Session.last_run_summary, Session.selected_hero)
 	hud.set_game_over("墨潮吞没了你。按 R 立即重开，或按 Esc 返回二级菜单。", elapsed_time, kills, threat_level, level)
 
 

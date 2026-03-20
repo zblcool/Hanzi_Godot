@@ -265,6 +265,7 @@ var state_primary_button: Button
 var state_secondary_button: Button
 var state_tertiary_button: Button
 var state_mode: String = ""
+var last_game_over_data: Dictionary = {}
 var map_overlay: Control
 var map_canvas: BattleMapCanvas
 var map_summary_label: Label
@@ -520,6 +521,13 @@ func set_game_over(summary: String, elapsed: float = 0.0, kills: int = 0, threat
 	hide_choice_overlay()
 	hide_map_overlay()
 	state_mode = "game_over"
+	last_game_over_data = {
+		"summary": summary,
+		"elapsed": elapsed,
+		"kills": kills,
+		"threat": threat,
+		"level": level
+	}
 	state_title_label.text = "字海沉没"
 	state_body_label.text = "%s\n\n本轮残卷\n存活 %s\n波次 %d   击破 %d   等级 Lv.%d" % [
 		summary,
@@ -530,9 +538,54 @@ func set_game_over(summary: String, elapsed: float = 0.0, kills: int = 0, threat
 	]
 	_configure_state_button(state_primary_button, "重新开始", Callable(self, "_emit_restart"))
 	_configure_state_button(state_secondary_button, "返回菜单", Callable(self, "_emit_return_menu"))
-	state_tertiary_button.visible = false
+	_configure_state_button(state_tertiary_button, "查看排行榜", Callable(self, "_show_local_leaderboard"))
 	overlay_label.visible = false
 	state_overlay.visible = true
+
+
+func _show_game_over_summary() -> void:
+	if last_game_over_data.is_empty():
+		return
+	set_game_over(
+		String(last_game_over_data.get("summary", "")),
+		float(last_game_over_data.get("elapsed", 0.0)),
+		int(last_game_over_data.get("kills", 0)),
+		int(last_game_over_data.get("threat", 1)),
+		int(last_game_over_data.get("level", 1))
+	)
+
+
+func _show_local_leaderboard() -> void:
+	state_mode = "leaderboard"
+	state_title_label.text = "本地排行榜"
+	state_body_label.text = _build_local_leaderboard_text()
+	_configure_state_button(state_primary_button, "返回结算", Callable(self, "_show_game_over_summary"))
+	_configure_state_button(state_secondary_button, "重新开始", Callable(self, "_emit_restart"))
+	_configure_state_button(state_tertiary_button, "返回菜单", Callable(self, "_emit_return_menu"))
+	overlay_label.visible = false
+	state_overlay.visible = true
+
+
+func _build_local_leaderboard_text() -> String:
+	var entries: Array[Dictionary] = Session.get_local_leaderboard(5)
+	if entries.is_empty():
+		return "当前还没有可展示的本地战绩。下一次倒下后，这里会留下你的残卷记录。"
+
+	var lines: Array[String] = ["按定卷、卷主击破、波次、击破数排序。", ""]
+	for index in range(entries.size()):
+		var entry: Dictionary = entries[index]
+		lines.append(
+			"%d. %s  %s  卷主 %d  波次 %d  击破 %d  存活 %s" % [
+				index + 1,
+				String(entry.get("hero_name", "书生")),
+				"定卷" if bool(entry.get("chapter_complete", false)) else "残卷",
+				int(entry.get("bosses", 0)),
+				int(entry.get("threat", 1)),
+				int(entry.get("kills", 0)),
+				_format_time(float(entry.get("elapsed", 0.0)))
+			]
+		)
+	return "\n".join(lines)
 
 
 func _build_ui() -> void:
@@ -958,12 +1011,18 @@ func _configure_state_button(button: Button, text: String, callback: Callable) -
 	var resume_callable := Callable(self, "_emit_pause_resume")
 	var restart_callable := Callable(self, "_emit_restart")
 	var menu_callable := Callable(self, "_emit_return_menu")
+	var leaderboard_callable := Callable(self, "_show_local_leaderboard")
+	var game_over_callable := Callable(self, "_show_game_over_summary")
 	if button.pressed.is_connected(resume_callable):
 		button.pressed.disconnect(resume_callable)
 	if button.pressed.is_connected(restart_callable):
 		button.pressed.disconnect(restart_callable)
 	if button.pressed.is_connected(menu_callable):
 		button.pressed.disconnect(menu_callable)
+	if button.pressed.is_connected(leaderboard_callable):
+		button.pressed.disconnect(leaderboard_callable)
+	if button.pressed.is_connected(game_over_callable):
+		button.pressed.disconnect(game_over_callable)
 	button.add_theme_stylebox_override("normal", _make_button_style(Color(0.92, 0.62, 0.28, 1.0), 18))
 	button.add_theme_stylebox_override("hover", _make_button_style(Color(0.98, 0.7, 0.34, 1.0), 18))
 	button.add_theme_stylebox_override("pressed", _make_button_style(Color(0.84, 0.54, 0.22, 1.0), 18))
