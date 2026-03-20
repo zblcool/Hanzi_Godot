@@ -712,10 +712,8 @@ func _build_local_leaderboard_text() -> String:
 
 
 func _should_use_compact_layout() -> bool:
-	var viewport_size := get_viewport().get_visible_rect().size
 	return (
-		viewport_size.x <= 1280.0 or
-		viewport_size.y <= 760.0 or
+		DisplayServer.is_touchscreen_available() or
 		OS.has_feature("mobile") or
 		OS.has_feature("android") or
 		OS.has_feature("ios") or
@@ -1475,6 +1473,7 @@ func _make_pill_button(text: String, callback: Callable) -> Button:
 func _should_enable_touch_controls() -> bool:
 	return (
 		DisplayServer.is_touchscreen_available() or
+		OS.has_feature("web") or
 		OS.has_feature("mobile") or
 		OS.has_feature("android") or
 		OS.has_feature("ios") or
