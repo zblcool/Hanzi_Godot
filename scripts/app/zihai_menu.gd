@@ -20,6 +20,8 @@ var detail_preview_core: PanelContainer
 var detail_preview_glyph: Label
 var detail_tags_row: HBoxContainer
 var detail_stat_widgets: Dictionary = {}
+var recipe_atlas_overlay: Control
+var recipe_atlas_body_label: Label
 var leaderboard_overlay: Control
 var leaderboard_body_label: Label
 var transition_overlay: Control
@@ -106,6 +108,8 @@ func _rebuild_ui() -> void:
 	detail_preview_core = null
 	detail_preview_glyph = null
 	detail_tags_row = null
+	recipe_atlas_overlay = null
+	recipe_atlas_body_label = null
 	leaderboard_overlay = null
 	leaderboard_body_label = null
 	transition_overlay = null
@@ -172,6 +176,7 @@ func _build_ui() -> void:
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top_bar.add_child(spacer)
 
+	top_bar.add_child(_make_pill_button("合字图谱", _v(164.0, 54.0), Callable(self, "_on_recipe_atlas_pressed")))
 	top_bar.add_child(_make_pill_button("查看排行榜", _v(172.0, 54.0), Callable(self, "_on_leaderboard_pressed")))
 	var start_pill := _make_pill_button("直接开始", _v(152.0, 54.0), Callable(self, "_on_start_pressed"))
 	top_bar.add_child(start_pill)
@@ -292,6 +297,7 @@ func _build_ui() -> void:
 	detail_stat_widgets["attack_damage"] = _make_stat_row(stats_box, "伤害")
 	detail_stat_widgets["attack_range"] = _make_stat_row(stats_box, "射程")
 
+	_build_recipe_atlas_overlay()
 	_build_leaderboard_overlay()
 	_build_transition_overlay()
 
@@ -626,6 +632,74 @@ func _build_floating_symbols() -> void:
 		})
 
 
+func _build_recipe_atlas_overlay() -> void:
+	recipe_atlas_overlay = Control.new()
+	recipe_atlas_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	recipe_atlas_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	recipe_atlas_overlay.visible = false
+	add_child(recipe_atlas_overlay)
+
+	var scrim := ColorRect.new()
+	scrim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	scrim.color = Color(0.02, 0.03, 0.04, 0.82)
+	recipe_atlas_overlay.add_child(scrim)
+
+	var panel := PanelContainer.new()
+	panel.set_anchors_preset(Control.PRESET_CENTER)
+	panel.offset_left = -_f(430.0)
+	panel.offset_top = -_f(290.0)
+	panel.offset_right = _f(430.0)
+	panel.offset_bottom = _f(290.0)
+	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.05, 0.08, 0.1, 0.96), Color(0.92, 0.68, 0.42, 0.56)))
+	recipe_atlas_overlay.add_child(panel)
+
+	var margin := MarginContainer.new()
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left", _i(28))
+	margin.add_theme_constant_override("margin_top", _i(24))
+	margin.add_theme_constant_override("margin_right", _i(28))
+	margin.add_theme_constant_override("margin_bottom", _i(24))
+	panel.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", _i(14))
+	margin.add_child(box)
+
+	box.add_child(_make_label("合字图谱", 36, Color(1.0, 0.95, 0.86, 1.0)))
+	box.add_child(_make_label("把偏旁、成字与砚台磨词路线收进二级菜单，开局前就能快速确认成长链。", 18, Color(0.88, 0.92, 0.96, 0.95)))
+
+	var summary_panel := PanelContainer.new()
+	summary_panel.custom_minimum_size = _v(0.0, 92.0)
+	summary_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.08, 0.12, 0.16, 0.72), Color(0.28, 0.36, 0.42, 0.46)))
+	box.add_child(summary_panel)
+	var summary_margin := MarginContainer.new()
+	summary_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	summary_margin.add_theme_constant_override("margin_left", _i(18))
+	summary_margin.add_theme_constant_override("margin_top", _i(16))
+	summary_margin.add_theme_constant_override("margin_right", _i(18))
+	summary_margin.add_theme_constant_override("margin_bottom", _i(16))
+	summary_panel.add_child(summary_margin)
+	summary_margin.add_child(_make_label("当前先集中展示已经接入的偏旁、合字等级、词技等级与独立武器偏旁。真正的磨词仍然发生在战场砚台旁。", 17, Color(0.94, 0.82, 0.56, 0.94)))
+
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	box.add_child(scroll)
+
+	recipe_atlas_body_label = _make_label("", 18, Color(0.9, 0.92, 0.95, 0.96))
+	recipe_atlas_body_label.custom_minimum_size = _v(730.0, 0.0)
+	recipe_atlas_body_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	recipe_atlas_body_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.add_child(recipe_atlas_body_label)
+
+	var action_row := HBoxContainer.new()
+	action_row.alignment = BoxContainer.ALIGNMENT_END
+	action_row.add_theme_constant_override("separation", _i(12))
+	box.add_child(action_row)
+	action_row.add_child(_make_pill_button("收起图谱", _v(150.0, 52.0), Callable(self, "_hide_recipe_atlas_overlay")))
+
+
 func _build_leaderboard_overlay() -> void:
 	leaderboard_overlay = Control.new()
 	leaderboard_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -745,6 +819,42 @@ func _build_transition_overlay() -> void:
 	box.add_child(_make_label("墨线正在收束，字潮即将开启。", 18, Color(0.96, 0.82, 0.54, 0.92)))
 
 
+func _build_recipe_atlas_text() -> String:
+	var lines: Array[String] = [
+		"偏旁先补齐成字，成字满级后再去砚台磨成词技。",
+		"进入残卷前先看一眼路线，升级三选一时会更容易判断当前该补哪一笔。",
+		""
+	]
+	for recipe_id_variant in Session.RECIPE_ORDER:
+		var recipe_id := String(recipe_id_variant)
+		var recipe: Dictionary = Session.get_recipe_data(recipe_id)
+		var radicals: Array = recipe.get("radicals", [])
+		var radical_texts: Array[String] = []
+		for radical_variant in radicals:
+			var radical := String(radical_variant)
+			var radical_data: Dictionary = Session.get_radical_data(radical)
+			radical_texts.append("%s %s" % [radical, String(radical_data.get("name", ""))])
+
+		var word_id := String(recipe.get("word_id", ""))
+		var word: Dictionary = {}
+		if word_id != "":
+			word = Session.get_word_data(word_id)
+
+		lines.append("%s  %s" % [String(recipe.get("display", "")), " + ".join(radical_texts)])
+		lines.append("成字：%s  Lv.%d" % [String(recipe.get("title", "")), int(recipe.get("max_level", 1))])
+		lines.append("  %s" % String(recipe.get("description", "")))
+		if not word.is_empty():
+			lines.append("磨词：%s  Lv.%d  砚台消耗 %d" % [String(word.get("title", "")), int(word.get("max_level", 1)), int(word.get("unlock_cost", 0))])
+			lines.append("  %s" % String(word.get("description", "")))
+		lines.append("")
+
+	var blade_data: Dictionary = Session.get_radical_data("刂")
+	lines.append("独立偏旁")
+	lines.append("刂  %s" % String(blade_data.get("name", "")))
+	lines.append("  %s" % String(blade_data.get("description", "")))
+	return "\n".join(lines)
+
+
 func _build_local_leaderboard_text() -> String:
 	var entries: Array[Dictionary] = Session.get_local_leaderboard(8)
 	if entries.is_empty():
@@ -774,9 +884,23 @@ func _format_elapsed(seconds: float) -> String:
 	return "%02d:%02d" % [minutes, remaining_seconds]
 
 
+func _show_recipe_atlas_overlay() -> void:
+	if recipe_atlas_overlay == null:
+		return
+	_hide_leaderboard_overlay()
+	recipe_atlas_body_label.text = _build_recipe_atlas_text()
+	recipe_atlas_overlay.visible = true
+
+
+func _hide_recipe_atlas_overlay() -> void:
+	if recipe_atlas_overlay != null:
+		recipe_atlas_overlay.visible = false
+
+
 func _show_leaderboard_overlay() -> void:
 	if leaderboard_overlay == null:
 		return
+	_hide_recipe_atlas_overlay()
 	leaderboard_body_label.text = _build_local_leaderboard_text()
 	leaderboard_overlay.visible = true
 
@@ -784,6 +908,19 @@ func _show_leaderboard_overlay() -> void:
 func _hide_leaderboard_overlay() -> void:
 	if leaderboard_overlay != null:
 		leaderboard_overlay.visible = false
+
+
+func _hide_secondary_overlays() -> void:
+	_hide_recipe_atlas_overlay()
+	_hide_leaderboard_overlay()
+
+
+func _is_secondary_overlay_visible() -> bool:
+	return (
+		recipe_atlas_overlay != null and recipe_atlas_overlay.visible
+	) or (
+		leaderboard_overlay != null and leaderboard_overlay.visible
+	)
 
 
 func _on_select_hero(hero_id: String) -> void:
@@ -834,7 +971,7 @@ func _set_stat_value(stat_id: String, value: float, max_value: float, format_tex
 func _on_start_pressed() -> void:
 	if transition_busy:
 		return
-	_hide_leaderboard_overlay()
+	_hide_secondary_overlays()
 	Session.select_hero(selected_hero)
 	Session.prepare_battle_intro("zihai_menu")
 	_start_battle_transition()
@@ -843,8 +980,14 @@ func _on_start_pressed() -> void:
 func _on_back_pressed() -> void:
 	if transition_busy:
 		return
-	_hide_leaderboard_overlay()
+	_hide_secondary_overlays()
 	get_tree().change_scene_to_file(Session.LAUNCHER_SCENE)
+
+
+func _on_recipe_atlas_pressed() -> void:
+	if transition_busy:
+		return
+	_show_recipe_atlas_overlay()
 
 
 func _on_leaderboard_pressed() -> void:
@@ -855,7 +998,7 @@ func _on_leaderboard_pressed() -> void:
 
 func _start_battle_transition() -> void:
 	transition_busy = true
-	_hide_leaderboard_overlay()
+	_hide_secondary_overlays()
 	var hero_data: Dictionary = Session.get_selected_hero()
 	transition_glyph_label.text = String(hero_data["glyph"])
 	transition_title_label.text = "残卷一·入墨"
@@ -873,8 +1016,8 @@ func _change_to_battle() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if leaderboard_overlay == null or not leaderboard_overlay.visible:
+	if not _is_secondary_overlay_visible():
 		return
 	if event.is_action_pressed("ui_cancel"):
-		_hide_leaderboard_overlay()
+		_hide_secondary_overlays()
 		get_viewport().set_input_as_handled()
