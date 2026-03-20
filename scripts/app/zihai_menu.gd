@@ -22,6 +22,8 @@ var detail_tags_row: HBoxContainer
 var detail_stat_widgets: Dictionary = {}
 var recipe_atlas_overlay: Control
 var recipe_atlas_body_label: Label
+var enemy_archive_overlay: Control
+var enemy_archive_body_label: Label
 var leaderboard_overlay: Control
 var leaderboard_body_label: Label
 var transition_overlay: Control
@@ -110,6 +112,8 @@ func _rebuild_ui() -> void:
 	detail_tags_row = null
 	recipe_atlas_overlay = null
 	recipe_atlas_body_label = null
+	enemy_archive_overlay = null
+	enemy_archive_body_label = null
 	leaderboard_overlay = null
 	leaderboard_body_label = null
 	transition_overlay = null
@@ -177,6 +181,7 @@ func _build_ui() -> void:
 	top_bar.add_child(spacer)
 
 	top_bar.add_child(_make_pill_button("合字图谱", _v(164.0, 54.0), Callable(self, "_on_recipe_atlas_pressed")))
+	top_bar.add_child(_make_pill_button("怪物图鉴", _v(164.0, 54.0), Callable(self, "_on_enemy_archive_pressed")))
 	top_bar.add_child(_make_pill_button("查看排行榜", _v(172.0, 54.0), Callable(self, "_on_leaderboard_pressed")))
 	var start_pill := _make_pill_button("直接开始", _v(152.0, 54.0), Callable(self, "_on_start_pressed"))
 	top_bar.add_child(start_pill)
@@ -298,6 +303,7 @@ func _build_ui() -> void:
 	detail_stat_widgets["attack_range"] = _make_stat_row(stats_box, "射程")
 
 	_build_recipe_atlas_overlay()
+	_build_enemy_archive_overlay()
 	_build_leaderboard_overlay()
 	_build_transition_overlay()
 
@@ -768,6 +774,74 @@ func _build_leaderboard_overlay() -> void:
 	action_row.add_child(_make_pill_button("收起战绩", _v(150.0, 52.0), Callable(self, "_hide_leaderboard_overlay")))
 
 
+func _build_enemy_archive_overlay() -> void:
+	enemy_archive_overlay = Control.new()
+	enemy_archive_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	enemy_archive_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	enemy_archive_overlay.visible = false
+	add_child(enemy_archive_overlay)
+
+	var scrim := ColorRect.new()
+	scrim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	scrim.color = Color(0.02, 0.03, 0.04, 0.82)
+	enemy_archive_overlay.add_child(scrim)
+
+	var panel := PanelContainer.new()
+	panel.set_anchors_preset(Control.PRESET_CENTER)
+	panel.offset_left = -_f(440.0)
+	panel.offset_top = -_f(300.0)
+	panel.offset_right = _f(440.0)
+	panel.offset_bottom = _f(300.0)
+	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.05, 0.08, 0.1, 0.96), Color(0.82, 0.44, 0.38, 0.58)))
+	enemy_archive_overlay.add_child(panel)
+
+	var margin := MarginContainer.new()
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left", _i(28))
+	margin.add_theme_constant_override("margin_top", _i(24))
+	margin.add_theme_constant_override("margin_right", _i(28))
+	margin.add_theme_constant_override("margin_bottom", _i(24))
+	panel.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", _i(14))
+	margin.add_child(box)
+
+	box.add_child(_make_label("怪物图鉴", 36, Color(1.0, 0.95, 0.86, 1.0)))
+	box.add_child(_make_label("把已经接入的敌人谱系收进二级菜单，开局前先记住预警和应对重点。", 18, Color(0.88, 0.92, 0.96, 0.95)))
+
+	var summary_panel := PanelContainer.new()
+	summary_panel.custom_minimum_size = _v(0.0, 92.0)
+	summary_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.08, 0.12, 0.16, 0.72), Color(0.28, 0.36, 0.42, 0.46)))
+	box.add_child(summary_panel)
+	var summary_margin := MarginContainer.new()
+	summary_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	summary_margin.add_theme_constant_override("margin_left", _i(18))
+	summary_margin.add_theme_constant_override("margin_top", _i(16))
+	summary_margin.add_theme_constant_override("margin_right", _i(18))
+	summary_margin.add_theme_constant_override("margin_bottom", _i(16))
+	summary_panel.add_child(summary_margin)
+	summary_margin.add_child(_make_label("图鉴文本直接对应当前 Godot 迁移版已经写进战斗脚本的敌人行为，不额外虚构未接入兵种。", 17, Color(0.94, 0.82, 0.56, 0.94)))
+
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	box.add_child(scroll)
+
+	enemy_archive_body_label = _make_label("", 18, Color(0.9, 0.92, 0.95, 0.96))
+	enemy_archive_body_label.custom_minimum_size = _v(760.0, 0.0)
+	enemy_archive_body_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	enemy_archive_body_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.add_child(enemy_archive_body_label)
+
+	var action_row := HBoxContainer.new()
+	action_row.alignment = BoxContainer.ALIGNMENT_END
+	action_row.add_theme_constant_override("separation", _i(12))
+	box.add_child(action_row)
+	action_row.add_child(_make_pill_button("收起图鉴", _v(150.0, 52.0), Callable(self, "_hide_enemy_archive_overlay")))
+
+
 func _build_transition_overlay() -> void:
 	transition_overlay = Control.new()
 	transition_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -877,6 +951,26 @@ func _build_local_leaderboard_text() -> String:
 	return "\n".join(lines)
 
 
+func _build_enemy_archive_text() -> String:
+	var lines: Array[String] = [
+		"以下条目对应当前残卷里已经接入的敌人谱系、预警方式与最实用的临场处理思路。",
+		""
+	]
+	for enemy_id_variant in Session.ENEMY_ORDER:
+		var enemy_id := String(enemy_id_variant)
+		var enemy: Dictionary = Session.get_enemy_data(enemy_id)
+		lines.append("%s  %s  ·  %s" % [
+			String(enemy.get("glyph", "")),
+			String(enemy.get("name", "")),
+			String(enemy.get("title", ""))
+		])
+		lines.append("  %s" % String(enemy.get("summary", "")))
+		lines.append("  预警：%s" % String(enemy.get("warning", "")))
+		lines.append("  应对：%s" % String(enemy.get("counter", "")))
+		lines.append("")
+	return "\n".join(lines)
+
+
 func _format_elapsed(seconds: float) -> String:
 	var total_seconds := maxi(0, int(round(seconds)))
 	var minutes := int(total_seconds / 60)
@@ -887,6 +981,7 @@ func _format_elapsed(seconds: float) -> String:
 func _show_recipe_atlas_overlay() -> void:
 	if recipe_atlas_overlay == null:
 		return
+	_hide_enemy_archive_overlay()
 	_hide_leaderboard_overlay()
 	recipe_atlas_body_label.text = _build_recipe_atlas_text()
 	recipe_atlas_overlay.visible = true
@@ -901,6 +996,7 @@ func _show_leaderboard_overlay() -> void:
 	if leaderboard_overlay == null:
 		return
 	_hide_recipe_atlas_overlay()
+	_hide_enemy_archive_overlay()
 	leaderboard_body_label.text = _build_local_leaderboard_text()
 	leaderboard_overlay.visible = true
 
@@ -910,14 +1006,31 @@ func _hide_leaderboard_overlay() -> void:
 		leaderboard_overlay.visible = false
 
 
+func _show_enemy_archive_overlay() -> void:
+	if enemy_archive_overlay == null:
+		return
+	_hide_recipe_atlas_overlay()
+	_hide_leaderboard_overlay()
+	enemy_archive_body_label.text = _build_enemy_archive_text()
+	enemy_archive_overlay.visible = true
+
+
+func _hide_enemy_archive_overlay() -> void:
+	if enemy_archive_overlay != null:
+		enemy_archive_overlay.visible = false
+
+
 func _hide_secondary_overlays() -> void:
 	_hide_recipe_atlas_overlay()
+	_hide_enemy_archive_overlay()
 	_hide_leaderboard_overlay()
 
 
 func _is_secondary_overlay_visible() -> bool:
 	return (
 		recipe_atlas_overlay != null and recipe_atlas_overlay.visible
+	) or (
+		enemy_archive_overlay != null and enemy_archive_overlay.visible
 	) or (
 		leaderboard_overlay != null and leaderboard_overlay.visible
 	)
@@ -988,6 +1101,12 @@ func _on_recipe_atlas_pressed() -> void:
 	if transition_busy:
 		return
 	_show_recipe_atlas_overlay()
+
+
+func _on_enemy_archive_pressed() -> void:
+	if transition_busy:
+		return
+	_show_enemy_archive_overlay()
 
 
 func _on_leaderboard_pressed() -> void:

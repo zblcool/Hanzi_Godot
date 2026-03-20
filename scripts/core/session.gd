@@ -120,6 +120,91 @@ const WORDS := {
 	}
 }
 
+const ENEMY_ORDER := ["basic", "swift", "tank", "archer", "assassin", "cavalry", "ritualist", "elite", "boss"]
+const ENEMIES := {
+	"basic": {
+		"id": "basic",
+		"name": "魇卒",
+		"glyph": "魇",
+		"title": "正面追击",
+		"summary": "最基础的近身字灵，直接压进来逼你持续走位。",
+		"warning": "没有额外预警，危险来自数量和贴身碰撞。",
+		"counter": "优先在开场用来积累偏旁，不要让它们把撤退路线堵死。"
+	},
+	"swift": {
+		"id": "swift",
+		"name": "疾卒",
+		"glyph": "迅",
+		"title": "高速侧切",
+		"summary": "速度更快，会带着横移幅度切进你的侧翼。",
+		"warning": "没有明显起手，但移动轨迹更飘、更容易补位。",
+		"counter": "横向拉扯时别停步，优先清掉它避免被包夹。"
+	},
+	"tank": {
+		"id": "tank",
+		"name": "墨甲",
+		"glyph": "甲",
+		"title": "重装顶线",
+		"summary": "血厚、体型大，专门拖慢清场节奏并替后排争时间。",
+		"warning": "主要靠高耐久压近，没有单独技能预警。",
+		"counter": "别被它黏住路线，用范围技能顺手磨血，再先拆后排。"
+	},
+	"archer": {
+		"id": "archer",
+		"name": "弓手",
+		"glyph": "弓",
+		"title": "远程牵制",
+		"summary": "会保持距离横移，并在中远距离持续发射投射物。",
+		"warning": "进入射程后会短暂起手，再打出一发直线字矢。",
+		"counter": "优先切断它的站位空间，不要在远处和它长时间对线。"
+	},
+	"assassin": {
+		"id": "assassin",
+		"name": "忍",
+		"glyph": "忍",
+		"title": "突刺游走",
+		"summary": "会在中距离侧移找角度，然后沿直线突然突刺。",
+		"warning": "突刺前地面会出现偏紫色短线预警。",
+		"counter": "看见线就斜切离开，不要沿着预警方向后退。"
+	},
+	"cavalry": {
+		"id": "cavalry",
+		"name": "墨骑",
+		"glyph": "骑",
+		"title": "重骑冲锋",
+		"summary": "体格更大，会用长距离直线冲锋直接切穿战场。",
+		"warning": "冲锋前会铺出更长更宽的路线预警，命中还会造成短暂晕眩。",
+		"counter": "先横向离开冲锋线，再利用它冲过头后的空档反打。"
+	},
+	"ritualist": {
+		"id": "ritualist",
+		"name": "阵师",
+		"glyph": "阵",
+		"title": "地阵施压",
+		"summary": "保持距离布置地面字阵，把安全区域一点点切碎。",
+		"warning": "会在脚下或附近生成圆形预警，随后变成持续危险区域。",
+		"counter": "不要贪输出，先把脚下净空，再考虑继续拉怪。"
+	},
+	"elite": {
+		"id": "elite",
+		"name": "魁首",
+		"glyph": "魁",
+		"title": "技能轮替",
+		"summary": "会轮换爆圈、横排弹幕、梅花散射与大型冲锋，是混编战的节奏点。",
+		"warning": "不同技能有不同预警，其中爆圈和冲锋会先把地面标出来。",
+		"counter": "看到精英先留心技能轮次，别在处理杂兵时被第二段技能吃满。"
+	},
+	"boss": {
+		"id": "boss",
+		"name": "卷主",
+		"glyph": "卷",
+		"title": "残卷首领",
+		"summary": "卷主会把禁阵、扇形弹幕、直线冲锋与十字裂阵叠在一起。",
+		"warning": "大范围禁阵和冲锋都有明确预警，其他弹幕则会在短起手后同时压来。",
+		"counter": "先保命躲掉大范围技能，再在卷主技能收束后的空档追回输出。"
+	}
+}
+
 const RADICAL_ORDER := ["亻", "木", "日", "月", "氵", "每", "刂"]
 const RADICAL_COLORS := {
 	"亻": Color(0.88, 0.71, 0.55, 1.0),
@@ -236,6 +321,13 @@ func get_word_data(word_id: String) -> Dictionary:
 	var fallback: Dictionary = WORDS["ming_guang"]
 	if WORDS.has(word_id):
 		return WORDS[word_id].duplicate(true)
+	return fallback.duplicate(true)
+
+
+func get_enemy_data(enemy_id: String) -> Dictionary:
+	var fallback: Dictionary = ENEMIES["basic"]
+	if ENEMIES.has(enemy_id):
+		return ENEMIES[enemy_id].duplicate(true)
 	return fallback.duplicate(true)
 
 
