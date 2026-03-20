@@ -20,6 +20,8 @@ var detail_preview_core: PanelContainer
 var detail_preview_glyph: Label
 var detail_tags_row: HBoxContainer
 var detail_stat_widgets: Dictionary = {}
+var character_archive_overlay: Control
+var character_archive_body_label: Label
 var recipe_atlas_overlay: Control
 var recipe_atlas_body_label: Label
 var enemy_archive_overlay: Control
@@ -110,6 +112,8 @@ func _rebuild_ui() -> void:
 	detail_preview_core = null
 	detail_preview_glyph = null
 	detail_tags_row = null
+	character_archive_overlay = null
+	character_archive_body_label = null
 	recipe_atlas_overlay = null
 	recipe_atlas_body_label = null
 	enemy_archive_overlay = null
@@ -180,6 +184,7 @@ func _build_ui() -> void:
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top_bar.add_child(spacer)
 
+	top_bar.add_child(_make_pill_button("人物志", _v(148.0, 54.0), Callable(self, "_on_character_archive_pressed")))
 	top_bar.add_child(_make_pill_button("合字图谱", _v(164.0, 54.0), Callable(self, "_on_recipe_atlas_pressed")))
 	top_bar.add_child(_make_pill_button("怪物图鉴", _v(164.0, 54.0), Callable(self, "_on_enemy_archive_pressed")))
 	top_bar.add_child(_make_pill_button("查看排行榜", _v(172.0, 54.0), Callable(self, "_on_leaderboard_pressed")))
@@ -302,6 +307,7 @@ func _build_ui() -> void:
 	detail_stat_widgets["attack_damage"] = _make_stat_row(stats_box, "伤害")
 	detail_stat_widgets["attack_range"] = _make_stat_row(stats_box, "射程")
 
+	_build_character_archive_overlay()
 	_build_recipe_atlas_overlay()
 	_build_enemy_archive_overlay()
 	_build_leaderboard_overlay()
@@ -706,6 +712,74 @@ func _build_recipe_atlas_overlay() -> void:
 	action_row.add_child(_make_pill_button("收起图谱", _v(150.0, 52.0), Callable(self, "_hide_recipe_atlas_overlay")))
 
 
+func _build_character_archive_overlay() -> void:
+	character_archive_overlay = Control.new()
+	character_archive_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	character_archive_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	character_archive_overlay.visible = false
+	add_child(character_archive_overlay)
+
+	var scrim := ColorRect.new()
+	scrim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	scrim.color = Color(0.02, 0.03, 0.04, 0.82)
+	character_archive_overlay.add_child(scrim)
+
+	var panel := PanelContainer.new()
+	panel.set_anchors_preset(Control.PRESET_CENTER)
+	panel.offset_left = -_f(430.0)
+	panel.offset_top = -_f(290.0)
+	panel.offset_right = _f(430.0)
+	panel.offset_bottom = _f(290.0)
+	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.05, 0.08, 0.1, 0.96), Color(0.86, 0.62, 0.36, 0.56)))
+	character_archive_overlay.add_child(panel)
+
+	var margin := MarginContainer.new()
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left", _i(28))
+	margin.add_theme_constant_override("margin_top", _i(24))
+	margin.add_theme_constant_override("margin_right", _i(28))
+	margin.add_theme_constant_override("margin_bottom", _i(24))
+	panel.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", _i(14))
+	margin.add_child(box)
+
+	box.add_child(_make_label("人物志", 36, Color(1.0, 0.95, 0.86, 1.0)))
+	box.add_child(_make_label("把已经接入的执笔者档案收进二级菜单，进入残卷前先确认每名角色的身份与战斗轮廓。", 18, Color(0.88, 0.92, 0.96, 0.95)))
+
+	var summary_panel := PanelContainer.new()
+	summary_panel.custom_minimum_size = _v(0.0, 92.0)
+	summary_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.08, 0.12, 0.16, 0.72), Color(0.28, 0.36, 0.42, 0.46)))
+	box.add_child(summary_panel)
+	var summary_margin := MarginContainer.new()
+	summary_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	summary_margin.add_theme_constant_override("margin_left", _i(18))
+	summary_margin.add_theme_constant_override("margin_top", _i(16))
+	summary_margin.add_theme_constant_override("margin_right", _i(18))
+	summary_margin.add_theme_constant_override("margin_bottom", _i(16))
+	summary_panel.add_child(summary_margin)
+	summary_margin.add_child(_make_label("文本直接取自当前 Godot 迁移版的角色数据，不额外编造尚未落地的职业或成长线。", 17, Color(0.94, 0.82, 0.56, 0.94)))
+
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	box.add_child(scroll)
+
+	character_archive_body_label = _make_label("", 18, Color(0.9, 0.92, 0.95, 0.96))
+	character_archive_body_label.custom_minimum_size = _v(740.0, 0.0)
+	character_archive_body_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	character_archive_body_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.add_child(character_archive_body_label)
+
+	var action_row := HBoxContainer.new()
+	action_row.alignment = BoxContainer.ALIGNMENT_END
+	action_row.add_theme_constant_override("separation", _i(12))
+	box.add_child(action_row)
+	action_row.add_child(_make_pill_button("收起人物志", _v(170.0, 52.0), Callable(self, "_hide_character_archive_overlay")))
+
+
 func _build_leaderboard_overlay() -> void:
 	leaderboard_overlay = Control.new()
 	leaderboard_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -929,6 +1003,37 @@ func _build_recipe_atlas_text() -> String:
 	return "\n".join(lines)
 
 
+func _build_character_archive_text() -> String:
+	var lines: Array[String] = [
+		"当前人物志对应已经接入的两名执笔者，方便在真正落字进战场前先确认谁更适合这一轮的打法。",
+		""
+	]
+	for hero_id_variant in Session.HERO_ORDER:
+		var hero_id := String(hero_id_variant)
+		var hero: Dictionary = Session.get_hero_data(hero_id)
+		var tag_texts: Array[String] = []
+		for tag_variant in hero.get("tags", []):
+			tag_texts.append(String(tag_variant))
+		lines.append("%s  %s  ·  %s" % [
+			String(hero.get("glyph", "")),
+			String(hero.get("name", "")),
+			String(hero.get("title", ""))
+		])
+		lines.append("  身份：%s" % String(hero.get("role_label", "")))
+		lines.append("  武器：%s" % String(hero.get("weapon", "")))
+		lines.append("  战斗轮廓：%s" % String(hero.get("description", "")))
+		lines.append("  执笔焦点：%s" % String(hero.get("focus", "")))
+		lines.append("  标签：%s" % " / ".join(tag_texts))
+		lines.append("  面板：机动 %.1f  气血 %.0f  伤害 %.0f  射程 %.1f" % [
+			float(hero.get("move_speed", 0.0)),
+			float(hero.get("max_health", 0.0)),
+			float(hero.get("attack_damage", 0.0)),
+			float(hero.get("attack_range", 0.0))
+		])
+		lines.append("")
+	return "\n".join(lines)
+
+
 func _build_local_leaderboard_text() -> String:
 	var entries: Array[Dictionary] = Session.get_local_leaderboard(8)
 	if entries.is_empty():
@@ -981,6 +1086,7 @@ func _format_elapsed(seconds: float) -> String:
 func _show_recipe_atlas_overlay() -> void:
 	if recipe_atlas_overlay == null:
 		return
+	_hide_character_archive_overlay()
 	_hide_enemy_archive_overlay()
 	_hide_leaderboard_overlay()
 	recipe_atlas_body_label.text = _build_recipe_atlas_text()
@@ -992,9 +1098,25 @@ func _hide_recipe_atlas_overlay() -> void:
 		recipe_atlas_overlay.visible = false
 
 
+func _show_character_archive_overlay() -> void:
+	if character_archive_overlay == null:
+		return
+	_hide_recipe_atlas_overlay()
+	_hide_enemy_archive_overlay()
+	_hide_leaderboard_overlay()
+	character_archive_body_label.text = _build_character_archive_text()
+	character_archive_overlay.visible = true
+
+
+func _hide_character_archive_overlay() -> void:
+	if character_archive_overlay != null:
+		character_archive_overlay.visible = false
+
+
 func _show_leaderboard_overlay() -> void:
 	if leaderboard_overlay == null:
 		return
+	_hide_character_archive_overlay()
 	_hide_recipe_atlas_overlay()
 	_hide_enemy_archive_overlay()
 	leaderboard_body_label.text = _build_local_leaderboard_text()
@@ -1009,6 +1131,7 @@ func _hide_leaderboard_overlay() -> void:
 func _show_enemy_archive_overlay() -> void:
 	if enemy_archive_overlay == null:
 		return
+	_hide_character_archive_overlay()
 	_hide_recipe_atlas_overlay()
 	_hide_leaderboard_overlay()
 	enemy_archive_body_label.text = _build_enemy_archive_text()
@@ -1021,6 +1144,7 @@ func _hide_enemy_archive_overlay() -> void:
 
 
 func _hide_secondary_overlays() -> void:
+	_hide_character_archive_overlay()
 	_hide_recipe_atlas_overlay()
 	_hide_enemy_archive_overlay()
 	_hide_leaderboard_overlay()
@@ -1028,6 +1152,8 @@ func _hide_secondary_overlays() -> void:
 
 func _is_secondary_overlay_visible() -> bool:
 	return (
+		character_archive_overlay != null and character_archive_overlay.visible
+	) or (
 		recipe_atlas_overlay != null and recipe_atlas_overlay.visible
 	) or (
 		enemy_archive_overlay != null and enemy_archive_overlay.visible
@@ -1036,9 +1162,44 @@ func _is_secondary_overlay_visible() -> bool:
 	)
 
 
-func _on_select_hero(hero_id: String) -> void:
-	selected_hero = hero_id
-	_refresh_selection()
+func _on_character_archive_pressed() -> void:
+	if transition_busy:
+		return
+	_show_character_archive_overlay()
+
+
+func _on_recipe_atlas_pressed() -> void:
+	if transition_busy:
+		return
+	_show_recipe_atlas_overlay()
+
+
+func _on_enemy_archive_pressed() -> void:
+	if transition_busy:
+		return
+	_show_enemy_archive_overlay()
+
+
+func _on_leaderboard_pressed() -> void:
+	if transition_busy:
+		return
+	_show_leaderboard_overlay()
+
+
+func _on_start_pressed() -> void:
+	if transition_busy:
+		return
+	_hide_secondary_overlays()
+	Session.select_hero(selected_hero)
+	Session.prepare_battle_intro("zihai_menu")
+	_start_battle_transition()
+
+
+func _on_back_pressed() -> void:
+	if transition_busy:
+		return
+	_hide_secondary_overlays()
+	get_tree().change_scene_to_file(Session.LAUNCHER_SCENE)
 
 
 func _refresh_selection() -> void:
@@ -1081,40 +1242,6 @@ func _set_stat_value(stat_id: String, value: float, max_value: float, format_tex
 	bar.value = clamp(value / max_value * 100.0, 0.0, 100.0)
 
 
-func _on_start_pressed() -> void:
-	if transition_busy:
-		return
-	_hide_secondary_overlays()
-	Session.select_hero(selected_hero)
-	Session.prepare_battle_intro("zihai_menu")
-	_start_battle_transition()
-
-
-func _on_back_pressed() -> void:
-	if transition_busy:
-		return
-	_hide_secondary_overlays()
-	get_tree().change_scene_to_file(Session.LAUNCHER_SCENE)
-
-
-func _on_recipe_atlas_pressed() -> void:
-	if transition_busy:
-		return
-	_show_recipe_atlas_overlay()
-
-
-func _on_enemy_archive_pressed() -> void:
-	if transition_busy:
-		return
-	_show_enemy_archive_overlay()
-
-
-func _on_leaderboard_pressed() -> void:
-	if transition_busy:
-		return
-	_show_leaderboard_overlay()
-
-
 func _start_battle_transition() -> void:
 	transition_busy = true
 	_hide_secondary_overlays()
@@ -1128,6 +1255,11 @@ func _start_battle_transition() -> void:
 	tween.tween_property(transition_overlay, "modulate:a", 1.0, 0.35)
 	tween.tween_interval(0.3)
 	tween.tween_callback(Callable(self, "_change_to_battle"))
+
+
+func _on_select_hero(hero_id: String) -> void:
+	selected_hero = hero_id
+	_refresh_selection()
 
 
 func _change_to_battle() -> void:
