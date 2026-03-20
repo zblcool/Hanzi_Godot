@@ -50,6 +50,7 @@ var word_skill_levels: Dictionary = {}
 var word_progress: Dictionary = {}
 var inkstones: Array[Node3D] = []
 var active_inkstone: Node3D = null
+var battle_intro: Dictionary = {}
 
 var level: int = 1
 var experience: int = 0
@@ -59,6 +60,7 @@ var pending_level_choices: int = 0
 
 func _ready() -> void:
 	rng.randomize()
+	battle_intro = Session.consume_battle_intro()
 	radical_counts = Session.build_empty_radicals()
 	skill_levels = Session.build_empty_recipe_levels()
 	word_skill_levels = Session.build_empty_word_levels()
@@ -1015,7 +1017,9 @@ func _on_player_defeated() -> void:
 		"elapsed": elapsed_time,
 		"kills": kills,
 		"threat": threat_level,
-		"level": level
+		"level": level,
+		"bosses": int(Session.chapter_progress.get("completed_bosses", 0)),
+		"chapter_complete": bool(Session.chapter_progress.get("chapter_complete", false))
 	}
 	hud.set_game_over("墨潮吞没了你。按 R 立即重开，或按 Esc 返回二级菜单。", elapsed_time, kills, threat_level, level)
 
@@ -1040,15 +1044,27 @@ func _start_opening_sequence() -> void:
 	spawn_timer = 1.2
 	var hero_data: Dictionary = Session.get_selected_hero()
 	var accent: Color = hero_data["accent"]
-	hud.show_banner("%s 入卷" % String(hero_data["name"]), accent, 2.3)
-	hud.set_tip("先收第一枚偏旁，尽快合出首个成字。")
+	var intro_title: String = "残卷一·入墨"
+	var intro_tip: String = "先收第一枚偏旁，尽快合出首个成字。"
+	if not battle_intro.is_empty():
+		intro_title = String(battle_intro.get("title", intro_title))
+		intro_tip = "%s 先收第一枚偏旁，尽快合出首个成字。" % String(battle_intro.get("subtitle", "执笔者已入卷。"))
+	hud.show_banner("%s  ·  %s 入卷" % [intro_title, String(hero_data["name"])], accent, 2.6)
+	hud.set_tip(intro_tip)
 	_spawn_wave_effect(player.global_position, 3.3, accent, String(hero_data["glyph"]))
 	_spawn_intro_symbols(String(hero_data["glyph"]), accent)
 
 
 func _on_boss_defeated(world_position: Vector3) -> void:
-	hud.show_banner("卷主退散", Color(1.0, 0.84, 0.52, 1.0), 2.2)
-	hud.set_tip("卷主崩散，战场短暂回稳。抓紧收补给并继续磨成词技。")
+	var completed_bosses: int = int(Session.chapter_progress.get("completed_bosses", 0)) + 1
+	Session.chapter_progress["completed_bosses"] = completed_bosses
+	if completed_bosses >= BOSS_SPAWN_TIMES.size():
+		Session.chapter_progress["chapter_complete"] = true
+		hud.show_banner("残卷一暂定", Color(1.0, 0.88, 0.58, 1.0), 2.6)
+		hud.set_tip("本卷两位卷主都已崩散，章节目标完成。继续战斗可测试成长上限。")
+	else:
+		hud.show_banner("卷主退散", Color(1.0, 0.84, 0.52, 1.0), 2.2)
+		hud.set_tip("卷主崩散，残卷继续翻开。抓紧收补给并准备迎接更深的一层。")
 	_spawn_wave_effect(world_position, 7.2, Color(1.0, 0.74, 0.46, 1.0), "破")
 	_gain_experience(12)
 

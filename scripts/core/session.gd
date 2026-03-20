@@ -175,11 +175,35 @@ const RADICALS := {
 
 var selected_hero := "scholar"
 var last_run_summary: Dictionary = {}
+var pending_battle_intro: Dictionary = {}
+var chapter_progress: Dictionary = {}
 
 
 func select_hero(hero_id: String) -> void:
 	if HEROES.has(hero_id):
 		selected_hero = hero_id
+
+
+func prepare_battle_intro(entry_source: String = "menu") -> void:
+	var hero_data: Dictionary = get_selected_hero()
+	pending_battle_intro = {
+		"entry": entry_source,
+		"title": "残卷一·入墨",
+		"subtitle": "%s 执笔，落字入卷。" % String(hero_data["name"]),
+		"glyph": String(hero_data["glyph"]),
+		"hero_id": String(hero_data["id"])
+	}
+	chapter_progress = {
+		"title": "残卷一·入墨",
+		"completed_bosses": 0,
+		"chapter_complete": false
+	}
+
+
+func consume_battle_intro() -> Dictionary:
+	var data: Dictionary = pending_battle_intro.duplicate(true)
+	pending_battle_intro = {}
+	return data
 
 
 func get_selected_hero() -> Dictionary:

@@ -17,6 +17,11 @@ var detail_preview_core: PanelContainer
 var detail_preview_glyph: Label
 var detail_tags_row: HBoxContainer
 var detail_stat_widgets: Dictionary = {}
+var transition_overlay: Control
+var transition_glyph_label: Label
+var transition_title_label: Label
+var transition_subtitle_label: Label
+var transition_busy: bool = false
 
 
 func _ready() -> void:
@@ -226,6 +231,8 @@ func _build_ui() -> void:
 	detail_stat_widgets["max_health"] = _make_stat_row(stats_box, "气血")
 	detail_stat_widgets["attack_damage"] = _make_stat_row(stats_box, "伤害")
 	detail_stat_widgets["attack_range"] = _make_stat_row(stats_box, "射程")
+
+	_build_transition_overlay()
 
 
 func _make_hero_card(hero_id: String, hero_data: Dictionary) -> PanelContainer:
@@ -558,6 +565,57 @@ func _build_floating_symbols() -> void:
 		})
 
 
+func _build_transition_overlay() -> void:
+	transition_overlay = Control.new()
+	transition_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	transition_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	transition_overlay.visible = false
+	transition_overlay.modulate = Color(1.0, 1.0, 1.0, 0.0)
+	add_child(transition_overlay)
+
+	var scrim := ColorRect.new()
+	scrim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	scrim.color = Color(0.02, 0.03, 0.04, 0.88)
+	transition_overlay.add_child(scrim)
+
+	var panel := PanelContainer.new()
+	panel.set_anchors_preset(Control.PRESET_CENTER)
+	panel.offset_left = -340.0
+	panel.offset_top = -170.0
+	panel.offset_right = 340.0
+	panel.offset_bottom = 170.0
+	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.06, 0.08, 0.1, 0.96), Color(0.92, 0.68, 0.42, 0.72)))
+	transition_overlay.add_child(panel)
+
+	var margin := MarginContainer.new()
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left", 30)
+	margin.add_theme_constant_override("margin_top", 24)
+	margin.add_theme_constant_override("margin_right", 30)
+	margin.add_theme_constant_override("margin_bottom", 24)
+	panel.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 14)
+	margin.add_child(box)
+
+	var glyph_shell := PanelContainer.new()
+	glyph_shell.custom_minimum_size = Vector2(0.0, 116.0)
+	glyph_shell.add_theme_stylebox_override("panel", _make_panel_style(Color(0.14, 0.1, 0.08, 0.92), Color(0.92, 0.68, 0.42, 0.34)))
+	box.add_child(glyph_shell)
+	transition_glyph_label = _make_label("书", 62, Color(1.0, 0.95, 0.86, 1.0))
+	transition_glyph_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	transition_glyph_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	transition_glyph_label.set_anchors_preset(Control.PRESET_FULL_RECT)
+	glyph_shell.add_child(transition_glyph_label)
+
+	transition_title_label = _make_label("残卷一·入墨", 38, Color(1.0, 0.95, 0.86, 1.0))
+	transition_subtitle_label = _make_label("执笔者正落字入卷。", 20, Color(0.9, 0.92, 0.96, 0.96))
+	box.add_child(transition_title_label)
+	box.add_child(transition_subtitle_label)
+	box.add_child(_make_label("墨线正在收束，字潮即将开启。", 18, Color(0.96, 0.82, 0.54, 0.92)))
+
+
 func _on_select_hero(hero_id: String) -> void:
 	selected_hero = hero_id
 	_refresh_selection()
@@ -604,9 +662,32 @@ func _set_stat_value(stat_id: String, value: float, max_value: float, format_tex
 
 
 func _on_start_pressed() -> void:
+	if transition_busy:
+		return
 	Session.select_hero(selected_hero)
-	get_tree().change_scene_to_file(Session.ZIHAI_BATTLE_SCENE)
+	Session.prepare_battle_intro("zihai_menu")
+	_start_battle_transition()
 
 
 func _on_back_pressed() -> void:
+	if transition_busy:
+		return
 	get_tree().change_scene_to_file(Session.LAUNCHER_SCENE)
+
+
+func _start_battle_transition() -> void:
+	transition_busy = true
+	var hero_data: Dictionary = Session.get_selected_hero()
+	transition_glyph_label.text = String(hero_data["glyph"])
+	transition_title_label.text = "残卷一·入墨"
+	transition_subtitle_label.text = "%s 执笔，落字入卷。" % String(hero_data["name"])
+	transition_overlay.visible = true
+	transition_overlay.modulate = Color(1.0, 1.0, 1.0, 0.0)
+	var tween := create_tween()
+	tween.tween_property(transition_overlay, "modulate:a", 1.0, 0.35)
+	tween.tween_interval(0.3)
+	tween.tween_callback(Callable(self, "_change_to_battle"))
+
+
+func _change_to_battle() -> void:
+	get_tree().change_scene_to_file(Session.ZIHAI_BATTLE_SCENE)
