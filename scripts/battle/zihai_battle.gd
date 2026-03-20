@@ -10,6 +10,7 @@ const GROUND_HAZARD_SCENE := preload("res://scenes/entities/ground_hazard.tscn")
 const LINE_HAZARD_SCENE := preload("res://scenes/entities/line_hazard.tscn")
 const ENEMY_BOLT_SCENE := preload("res://scenes/entities/enemy_bolt.tscn")
 const INKSTONE_SCENE := preload("res://scenes/entities/inkstone_altar.tscn")
+const TREASURE_CHEST_SCENE := preload("res://scenes/entities/treasure_chest.tscn")
 const BATTLE_HUD_SCENE := preload("res://scenes/ui/battle_hud.tscn")
 const CJKFont := preload("res://scripts/core/cjk_font.gd")
 const DEFAULT_BATTLE_TIP := "击倒字灵收集字力与补给，升级时三选一偏旁。靠近砚台按 E 磨词。"
@@ -206,6 +207,23 @@ func _spawn_props() -> void:
 		inkstone.add_to_group("map_inkstone")
 		props_root.add_child(inkstone)
 		inkstones.append(inkstone)
+
+	var chest_data := [
+		{
+			"position": Vector3(-5.0, 0.0, 15.0),
+			"drops": {"paper": 5.0, "ink": 14.0}
+		},
+		{
+			"position": Vector3(13.5, 0.0, -9.5),
+			"drops": {"paper": 4.0, "seal": 1.0}
+		}
+	]
+	for chest_variant in chest_data:
+		var chest = TREASURE_CHEST_SCENE.instantiate()
+		chest.position = chest_variant["position"]
+		chest.configure(player, chest_variant["drops"])
+		chest.opened.connect(_on_treasure_chest_opened)
+		props_root.add_child(chest)
 
 	var stela_data := [
 		{"position": Vector3(-18.0, 0.0, -12.0), "glyph": "海", "tint": Color(0.56, 0.84, 1.0, 1.0)},
@@ -438,7 +456,10 @@ func _spawn_xp_orb(world_position: Vector3, xp_value: int) -> void:
 
 
 func _spawn_supply_drops(world_position: Vector3, enemy_type: String) -> void:
-	var drops: Dictionary = _build_supply_drops(enemy_type)
+	_spawn_supply_bundle(world_position, _build_supply_drops(enemy_type))
+
+
+func _spawn_supply_bundle(world_position: Vector3, drops: Dictionary) -> void:
 	var active_supply_ids: Array[String] = []
 	for supply_id_variant in ["paper", "ink", "seal"]:
 		var supply_id := String(supply_id_variant)
@@ -1045,6 +1066,12 @@ func _on_bush_activated(message: String) -> void:
 	hud.set_tip(message)
 
 
+func _on_treasure_chest_opened(world_position: Vector3, drops: Dictionary) -> void:
+	_spawn_supply_bundle(world_position, drops)
+	hud.show_banner("宝箱开启", Color(1.0, 0.84, 0.52, 1.0), 1.7)
+	hud.set_tip("宝箱散出补给。先收残纸与墨团，再决定是压等级还是补状态。")
+
+
 func _sync_hud() -> void:
 	var blade_level: int = 0
 	if is_instance_valid(player):
@@ -1212,6 +1239,7 @@ func _build_map_snapshot() -> Dictionary:
 	_append_map_group(markers, "map_tree", "tree", Color(0.44, 0.7, 0.48, 1.0))
 	_append_map_group(markers, "map_bush", "bush", Color(0.58, 0.88, 0.64, 1.0))
 	_append_map_group(markers, "map_inkstone", "inkstone", Color(0.96, 0.78, 0.46, 1.0))
+	_append_map_group(markers, "map_chest", "chest", Color(0.98, 0.76, 0.46, 1.0))
 	_append_map_group(markers, "map_stela", "stela", Color(0.64, 0.86, 1.0, 1.0))
 	_append_map_group(markers, "map_scroll_rack", "scroll_rack", Color(0.94, 0.86, 0.66, 1.0))
 	_append_map_group(markers, "map_ink_pool", "ink_pool", Color(0.7, 0.5, 0.98, 1.0))
@@ -1231,6 +1259,7 @@ func _build_map_snapshot() -> Dictionary:
 	var bush_count: int = get_tree().get_nodes_in_group("map_bush").size()
 	var landmark_count: int = (
 		get_tree().get_nodes_in_group("map_tree").size() +
+		get_tree().get_nodes_in_group("map_chest").size() +
 		get_tree().get_nodes_in_group("map_stela").size() +
 		get_tree().get_nodes_in_group("map_scroll_rack").size() +
 		get_tree().get_nodes_in_group("map_ink_pool").size()

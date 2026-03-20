@@ -146,6 +146,9 @@ class BattleMapCanvas:
 				draw_circle(point, 4.6, color)
 			"bush":
 				draw_arc(point, 6.2, 0.0, TAU, 20, color, 2.0)
+			"chest":
+				draw_rect(Rect2(point - Vector2(6.0, 4.6), Vector2(12.0, 9.2)), color, true)
+				draw_line(point + Vector2(-6.0, -0.4), point + Vector2(6.0, -0.4), Color(0.12, 0.08, 0.04, 0.72), 1.4)
 			"inkstone":
 				draw_rect(Rect2(point - Vector2(5.0, 5.0), Vector2(10.0, 10.0)), color, true)
 			"stela":
@@ -771,7 +774,7 @@ func _build_map_overlay(root: Control) -> void:
 	side_box.add_child(_make_label("图例", 24, Color(1.0, 0.92, 0.8, 1.0)))
 	side_box.add_child(_make_map_legend_row("▲", "执笔者", "当前角色朝向与位置。", Color(0.98, 0.78, 0.42, 1.0)))
 	side_box.add_child(_make_map_legend_row("●", "敌群", "常规敌人正在逼近的位置。", Color(0.92, 0.42, 0.34, 1.0)))
-	side_box.add_child(_make_map_legend_row("■", "卷主 / 砚台", "方块标出卷主与磨词砚台。", Color(0.98, 0.76, 0.54, 1.0)))
+	side_box.add_child(_make_map_legend_row("■", "卷主 / 砚台 / 宝箱", "方块标出卷主、磨词砚台与可开启宝箱。", Color(0.98, 0.76, 0.54, 1.0)))
 	side_box.add_child(_make_map_legend_row("○", "树丛 / 墨池", "圆形轮廓对应草丛与墨池。", Color(0.56, 0.84, 0.66, 1.0)))
 	side_box.add_child(_make_map_legend_row("◆", "碑刻 / 卷架", "静态地标，便于定方位。", Color(0.62, 0.84, 1.0, 1.0)))
 
