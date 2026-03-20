@@ -1,8 +1,11 @@
 extends Control
 
 const CJKFont := preload("res://scripts/core/cjk_font.gd")
+const BASE_VIEWPORT := Vector2(2100.0, 1200.0)
+const MIN_UI_SCALE := 0.6
 
 var ui_font: Font
+var ui_scale := 1.0
 var floating_symbols: Array[Dictionary] = []
 var preview_motifs: Array[Dictionary] = []
 var selected_hero := "scholar"
@@ -28,8 +31,8 @@ func _ready() -> void:
 	ui_font = CJKFont.get_font()
 	selected_hero = Session.selected_hero
 	_build_floating_symbols()
-	_build_ui()
-	_refresh_selection()
+	get_viewport().size_changed.connect(_on_viewport_size_changed)
+	_rebuild_ui()
 	set_process(true)
 	queue_redraw()
 
@@ -56,10 +59,10 @@ func _process(delta: float) -> void:
 
 		ring_a.rotation = phase * 0.42
 		ring_b.rotation = -phase * 0.28
-		core.position.y = float(motif["base_y"]) + sin(phase * 1.5) * 5.0
+		core.position.y = float(motif["base_y"]) + sin(phase * 1.5) * _f(5.0)
 		for index in range(shards.size()):
 			var shard: Control = shards[index]
-			shard.position.y = float(shard.get_meta("base_y")) + sin(phase * 1.8 + float(index) * 1.2) * 6.0
+			shard.position.y = float(shard.get_meta("base_y")) + sin(phase * 1.8 + float(index) * 1.2) * _f(6.0)
 	queue_redraw()
 
 
@@ -88,34 +91,86 @@ func _draw() -> void:
 		)
 
 
+func _rebuild_ui() -> void:
+	ui_scale = _compute_ui_scale()
+	preview_motifs.clear()
+	hero_panels.clear()
+	detail_stat_widgets.clear()
+	detail_name_label = null
+	detail_desc_label = null
+	detail_weapon_label = null
+	detail_focus_label = null
+	detail_role_label = null
+	detail_preview_core = null
+	detail_preview_glyph = null
+	detail_tags_row = null
+	transition_overlay = null
+	transition_glyph_label = null
+	transition_title_label = null
+	transition_subtitle_label = null
+	for child in get_children():
+		remove_child(child)
+		child.queue_free()
+	_build_ui()
+	_refresh_selection()
+
+
+func _on_viewport_size_changed() -> void:
+	var new_scale := _compute_ui_scale()
+	if absf(new_scale - ui_scale) > 0.02:
+		_rebuild_ui()
+
+
+func _compute_ui_scale() -> float:
+	var viewport_size := get_viewport_rect().size
+	return clamp(min(viewport_size.x / BASE_VIEWPORT.x, viewport_size.y / BASE_VIEWPORT.y), MIN_UI_SCALE, 1.0)
+
+
+func _f(value: float) -> float:
+	return value * ui_scale
+
+
+func _i(value: float) -> int:
+	return maxi(1, int(round(value * ui_scale)))
+
+
+func _v(x: float, y: float) -> Vector2:
+	return Vector2(_f(x), _f(y))
+
+
 func _build_ui() -> void:
 	var root := MarginContainer.new()
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
-	root.add_theme_constant_override("margin_left", 40)
-	root.add_theme_constant_override("margin_top", 30)
-	root.add_theme_constant_override("margin_right", 40)
-	root.add_theme_constant_override("margin_bottom", 28)
+	root.add_theme_constant_override("margin_left", _i(40))
+	root.add_theme_constant_override("margin_top", _i(30))
+	root.add_theme_constant_override("margin_right", _i(40))
+	root.add_theme_constant_override("margin_bottom", _i(28))
 	add_child(root)
 
+	var scroll := ScrollContainer.new()
+	scroll.set_anchors_preset(Control.PRESET_FULL_RECT)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	root.add_child(scroll)
+
 	var layout := VBoxContainer.new()
-	layout.set_anchors_preset(Control.PRESET_FULL_RECT)
-	layout.add_theme_constant_override("separation", 18)
-	root.add_child(layout)
+	layout.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	layout.add_theme_constant_override("separation", _i(18))
+	scroll.add_child(layout)
 
 	var top_bar := HBoxContainer.new()
-	top_bar.add_theme_constant_override("separation", 12)
+	top_bar.add_theme_constant_override("separation", _i(12))
 	layout.add_child(top_bar)
 
-	var back_button := _make_pill_button("返回启动器", Vector2(168.0, 54.0), Callable(self, "_on_back_pressed"))
+	var back_button := _make_pill_button("返回启动器", _v(168.0, 54.0), Callable(self, "_on_back_pressed"))
 	top_bar.add_child(back_button)
 
 	var spacer := Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top_bar.add_child(spacer)
 
-	var start_pill := _make_pill_button("直接开始", Vector2(152.0, 54.0), Callable(self, "_on_start_pressed"))
+	var start_pill := _make_pill_button("直接开始", _v(152.0, 54.0), Callable(self, "_on_start_pressed"))
 	top_bar.add_child(start_pill)
-	top_bar.add_child(_make_static_pill("EN", Vector2(74.0, 54.0)))
+	top_bar.add_child(_make_static_pill("EN", _v(74.0, 54.0)))
 
 	var shell_panel := PanelContainer.new()
 	shell_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -124,29 +179,29 @@ func _build_ui() -> void:
 
 	var shell_margin := MarginContainer.new()
 	shell_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-	shell_margin.add_theme_constant_override("margin_left", 28)
-	shell_margin.add_theme_constant_override("margin_top", 24)
-	shell_margin.add_theme_constant_override("margin_right", 28)
-	shell_margin.add_theme_constant_override("margin_bottom", 24)
+	shell_margin.add_theme_constant_override("margin_left", _i(28))
+	shell_margin.add_theme_constant_override("margin_top", _i(24))
+	shell_margin.add_theme_constant_override("margin_right", _i(28))
+	shell_margin.add_theme_constant_override("margin_bottom", _i(24))
 	shell_panel.add_child(shell_margin)
 
 	var shell_box := VBoxContainer.new()
-	shell_box.add_theme_constant_override("separation", 18)
+	shell_box.add_theme_constant_override("separation", _i(18))
 	shell_margin.add_child(shell_box)
 
 	var header_panel := PanelContainer.new()
-	header_panel.custom_minimum_size = Vector2(0.0, 174.0)
+	header_panel.custom_minimum_size = _v(0.0, 174.0)
 	header_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.04, 0.07, 0.09, 0.9), Color(0.2, 0.26, 0.32, 0.42)))
 	shell_box.add_child(header_panel)
 	var header_margin := MarginContainer.new()
 	header_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-	header_margin.add_theme_constant_override("margin_left", 30)
-	header_margin.add_theme_constant_override("margin_top", 24)
-	header_margin.add_theme_constant_override("margin_right", 30)
-	header_margin.add_theme_constant_override("margin_bottom", 24)
+	header_margin.add_theme_constant_override("margin_left", _i(30))
+	header_margin.add_theme_constant_override("margin_top", _i(24))
+	header_margin.add_theme_constant_override("margin_right", _i(30))
+	header_margin.add_theme_constant_override("margin_bottom", _i(24))
 	header_panel.add_child(header_margin)
 	var header_box := VBoxContainer.new()
-	header_box.add_theme_constant_override("separation", 8)
+	header_box.add_theme_constant_override("separation", _i(8))
 	header_margin.add_child(header_box)
 	header_box.add_child(_make_label("INK-BORN ROGUELITE", 18, Color(0.96, 0.82, 0.54, 0.86)))
 	header_box.add_child(_make_label("字海残卷", 70, Color(1.0, 0.95, 0.86, 1.0)))
@@ -154,12 +209,12 @@ func _build_ui() -> void:
 
 	var content_row := HBoxContainer.new()
 	content_row.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	content_row.add_theme_constant_override("separation", 18)
+	content_row.add_theme_constant_override("separation", _i(18))
 	shell_box.add_child(content_row)
 
 	var cards_column := VBoxContainer.new()
 	cards_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	cards_column.add_theme_constant_override("separation", 14)
+	cards_column.add_theme_constant_override("separation", _i(14))
 	content_row.add_child(cards_column)
 
 	var section_label := _make_label("可选执笔者", 28, Color(1.0, 0.92, 0.8, 1.0))
@@ -173,24 +228,24 @@ func _build_ui() -> void:
 		cards_column.add_child(hero_card)
 
 	var detail_panel := PanelContainer.new()
-	detail_panel.custom_minimum_size = Vector2(468.0, 0.0)
+	detail_panel.custom_minimum_size = _v(468.0, 0.0)
 	detail_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.07, 0.09, 0.11, 0.9), Color(0.36, 0.72, 0.82, 0.56)))
 	content_row.add_child(detail_panel)
 
 	var detail_margin := MarginContainer.new()
-	detail_margin.add_theme_constant_override("margin_left", 20)
-	detail_margin.add_theme_constant_override("margin_top", 18)
-	detail_margin.add_theme_constant_override("margin_right", 20)
-	detail_margin.add_theme_constant_override("margin_bottom", 18)
+	detail_margin.add_theme_constant_override("margin_left", _i(20))
+	detail_margin.add_theme_constant_override("margin_top", _i(18))
+	detail_margin.add_theme_constant_override("margin_right", _i(20))
+	detail_margin.add_theme_constant_override("margin_bottom", _i(18))
 	detail_panel.add_child(detail_margin)
 
 	var detail_box := VBoxContainer.new()
-	detail_box.add_theme_constant_override("separation", 12)
+	detail_box.add_theme_constant_override("separation", _i(12))
 	detail_margin.add_child(detail_box)
 	detail_box.add_child(_make_label("执笔者档案", 26, Color(1.0, 0.92, 0.8, 1.0)))
 
 	var preview_panel := PanelContainer.new()
-	preview_panel.custom_minimum_size = Vector2(0.0, 220.0)
+	preview_panel.custom_minimum_size = _v(0.0, 220.0)
 	preview_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.1, 0.14, 0.18, 0.7), Color(0.44, 0.76, 0.84, 0.24)))
 	detail_box.add_child(preview_panel)
 	_build_detail_preview(preview_panel)
@@ -207,24 +262,24 @@ func _build_ui() -> void:
 	detail_box.add_child(detail_focus_label)
 
 	detail_tags_row = HBoxContainer.new()
-	detail_tags_row.add_theme_constant_override("separation", 10)
+	detail_tags_row.add_theme_constant_override("separation", _i(10))
 	detail_box.add_child(detail_tags_row)
 
 	var stats_panel := PanelContainer.new()
-	stats_panel.custom_minimum_size = Vector2(0.0, 232.0)
+	stats_panel.custom_minimum_size = _v(0.0, 232.0)
 	stats_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.08, 0.12, 0.16, 0.72), Color(0.28, 0.36, 0.42, 0.46)))
 	detail_box.add_child(stats_panel)
 
 	var stats_margin := MarginContainer.new()
 	stats_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-	stats_margin.add_theme_constant_override("margin_left", 16)
-	stats_margin.add_theme_constant_override("margin_top", 16)
-	stats_margin.add_theme_constant_override("margin_right", 16)
-	stats_margin.add_theme_constant_override("margin_bottom", 16)
+	stats_margin.add_theme_constant_override("margin_left", _i(16))
+	stats_margin.add_theme_constant_override("margin_top", _i(16))
+	stats_margin.add_theme_constant_override("margin_right", _i(16))
+	stats_margin.add_theme_constant_override("margin_bottom", _i(16))
 	stats_panel.add_child(stats_margin)
 
 	var stats_box := VBoxContainer.new()
-	stats_box.add_theme_constant_override("separation", 10)
+	stats_box.add_theme_constant_override("separation", _i(10))
 	stats_margin.add_child(stats_box)
 	stats_box.add_child(_make_label("战斗轮廓", 22, Color(1.0, 0.92, 0.8, 1.0)))
 	detail_stat_widgets["move_speed"] = _make_stat_row(stats_box, "机动")
@@ -238,30 +293,30 @@ func _build_ui() -> void:
 func _make_hero_card(hero_id: String, hero_data: Dictionary) -> PanelContainer:
 	var accent: Color = hero_data["accent"]
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(0.0, 230.0)
+	panel.custom_minimum_size = _v(0.0, 230.0)
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	panel.add_theme_stylebox_override("panel", _make_card_style(false, accent))
 
 	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 18)
-	margin.add_theme_constant_override("margin_top", 18)
-	margin.add_theme_constant_override("margin_right", 18)
-	margin.add_theme_constant_override("margin_bottom", 18)
+	margin.add_theme_constant_override("margin_left", _i(18))
+	margin.add_theme_constant_override("margin_top", _i(18))
+	margin.add_theme_constant_override("margin_right", _i(18))
+	margin.add_theme_constant_override("margin_bottom", _i(18))
 	panel.add_child(margin)
 
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 16)
+	row.add_theme_constant_override("separation", _i(16))
 	margin.add_child(row)
 
 	var preview := PanelContainer.new()
-	preview.custom_minimum_size = Vector2(176.0, 0.0)
+	preview.custom_minimum_size = _v(176.0, 0.0)
 	preview.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.14, accent.g * 0.14, accent.b * 0.16, 0.58), Color(accent.r, accent.g, accent.b, 0.24)))
 	row.add_child(preview)
 	_build_card_preview(preview, hero_data)
 
 	var text_col := VBoxContainer.new()
 	text_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	text_col.add_theme_constant_override("separation", 8)
+	text_col.add_theme_constant_override("separation", _i(8))
 	row.add_child(text_col)
 
 	text_col.add_child(_make_label("%s  ·  %s" % [String(hero_data["name"]), String(hero_data["title"])], 30, Color(1.0, 0.95, 0.86, 1.0)))
@@ -295,20 +350,20 @@ func _build_card_preview(panel: PanelContainer, hero_data: Dictionary) -> void:
 	panel.add_child(stage)
 
 	var ring_a := PanelContainer.new()
-	ring_a.size = Vector2(108.0, 108.0)
-	ring_a.position = Vector2(34.0, 24.0)
+	ring_a.size = _v(108.0, 108.0)
+	ring_a.position = _v(34.0, 24.0)
 	ring_a.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.12, accent.g * 0.12, accent.b * 0.16, 0.12), Color(accent.r, accent.g, accent.b, 0.24)))
 	stage.add_child(ring_a)
 
 	var ring_b := PanelContainer.new()
-	ring_b.size = Vector2(72.0, 72.0)
-	ring_b.position = Vector2(52.0, 42.0)
+	ring_b.size = _v(72.0, 72.0)
+	ring_b.position = _v(52.0, 42.0)
 	ring_b.add_theme_stylebox_override("panel", _make_panel_style(Color(0.12, 0.16, 0.2, 0.0), Color(accent.r, accent.g, accent.b, 0.18)))
 	stage.add_child(ring_b)
 
 	var core := PanelContainer.new()
-	core.size = Vector2(84.0, 84.0)
-	core.position = Vector2(46.0, 50.0)
+	core.size = _v(84.0, 84.0)
+	core.position = _v(46.0, 50.0)
 	core.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.24, accent.g * 0.2, accent.b * 0.16, 0.94), Color(accent.r, accent.g, accent.b, 0.24)))
 	stage.add_child(core)
 
@@ -322,8 +377,8 @@ func _build_card_preview(panel: PanelContainer, hero_data: Dictionary) -> void:
 	for index in range(2):
 		var shard := ColorRect.new()
 		shard.color = Color(accent.r, accent.g, accent.b, 0.86)
-		shard.size = Vector2(28.0, 7.0)
-		shard.position = Vector2(18.0 + float(index) * 92.0, 118.0 - float(index) * 24.0)
+		shard.size = _v(28.0, 7.0)
+		shard.position = _v(18.0 + float(index) * 92.0, 118.0 - float(index) * 24.0)
 		shard.rotation = -0.48 + float(index) * 0.86
 		shard.set_meta("base_y", shard.position.y)
 		stage.add_child(shard)
@@ -347,20 +402,20 @@ func _build_detail_preview(panel: PanelContainer) -> void:
 	panel.add_child(stage)
 
 	var ring_a := PanelContainer.new()
-	ring_a.size = Vector2(168.0, 168.0)
-	ring_a.position = Vector2(84.0, 16.0)
+	ring_a.size = _v(168.0, 168.0)
+	ring_a.position = _v(84.0, 16.0)
 	ring_a.add_theme_stylebox_override("panel", _make_panel_style(Color(0.14, 0.16, 0.18, 0.12), Color(0.86, 0.64, 0.34, 0.22)))
 	stage.add_child(ring_a)
 
 	var ring_b := PanelContainer.new()
-	ring_b.size = Vector2(118.0, 118.0)
-	ring_b.position = Vector2(109.0, 41.0)
+	ring_b.size = _v(118.0, 118.0)
+	ring_b.position = _v(109.0, 41.0)
 	ring_b.add_theme_stylebox_override("panel", _make_panel_style(Color(0.12, 0.14, 0.16, 0.0), Color(0.34, 0.72, 0.82, 0.22)))
 	stage.add_child(ring_b)
 
 	detail_preview_core = PanelContainer.new()
-	detail_preview_core.size = Vector2(110.0, 110.0)
-	detail_preview_core.position = Vector2(114.0, 58.0)
+	detail_preview_core.size = _v(110.0, 110.0)
+	detail_preview_core.position = _v(114.0, 58.0)
 	detail_preview_core.add_theme_stylebox_override("panel", _make_panel_style(Color(0.26, 0.2, 0.16, 0.94), Color(0.88, 0.64, 0.34, 0.26)))
 	stage.add_child(detail_preview_core)
 
@@ -374,8 +429,8 @@ func _build_detail_preview(panel: PanelContainer) -> void:
 	for index in range(3):
 		var shard := ColorRect.new()
 		shard.color = Color(0.92, 0.68, 0.42, 0.86)
-		shard.size = Vector2(48.0, 8.0)
-		shard.position = Vector2(58.0 + float(index) * 74.0, 66.0 + float(index % 2) * 58.0)
+		shard.size = _v(48.0, 8.0)
+		shard.position = _v(58.0 + float(index) * 74.0, 66.0 + float(index % 2) * 58.0)
 		shard.rotation = -0.4 + float(index) * 0.36
 		shard.set_meta("base_y", shard.position.y)
 		stage.add_child(shard)
@@ -394,11 +449,11 @@ func _build_detail_preview(panel: PanelContainer) -> void:
 
 func _make_stat_row(parent: VBoxContainer, title: String) -> Dictionary:
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 6)
+	box.add_theme_constant_override("separation", _i(6))
 	parent.add_child(box)
 
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 8)
+	row.add_theme_constant_override("separation", _i(8))
 	box.add_child(row)
 
 	var title_label := _make_label(title, 18, Color(0.98, 0.93, 0.84, 0.98))
@@ -416,7 +471,7 @@ func _make_stat_row(parent: VBoxContainer, title: String) -> Dictionary:
 	bar.max_value = 100.0
 	bar.value = 0.0
 	bar.show_percentage = false
-	bar.custom_minimum_size = Vector2(0.0, 12.0)
+	bar.custom_minimum_size = _v(0.0, 12.0)
 	bar.add_theme_stylebox_override("background", _make_fill_style(Color(0.15, 0.18, 0.22, 0.82), 10))
 	bar.add_theme_stylebox_override("fill", _make_fill_style(Color(0.9, 0.66, 0.36, 0.96), 10))
 	box.add_child(bar)
@@ -430,9 +485,9 @@ func _make_stat_row(parent: VBoxContainer, title: String) -> Dictionary:
 func _make_action_button(text: String, accent: Color) -> Button:
 	var button := Button.new()
 	button.text = text
-	button.custom_minimum_size = Vector2(0.0, 52.0)
+	button.custom_minimum_size = _v(0.0, 52.0)
 	button.add_theme_font_override("font", ui_font)
-	button.add_theme_font_size_override("font_size", 21)
+	button.add_theme_font_size_override("font_size", _i(21))
 	button.add_theme_color_override("font_color", Color(0.08, 0.07, 0.07, 1.0))
 	button.add_theme_stylebox_override("normal", _make_button_style(accent))
 	button.add_theme_stylebox_override("hover", _make_button_style(accent.lightened(0.1)))
@@ -446,7 +501,7 @@ func _make_label(text: String, font_size: int, color: Color) -> Label:
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	var settings := LabelSettings.new()
 	settings.font = ui_font
-	settings.font_size = font_size
+	settings.font_size = _i(font_size)
 	settings.font_color = color
 	settings.outline_size = 1
 	settings.outline_color = Color(0.02, 0.03, 0.04, 0.28)
@@ -457,17 +512,17 @@ func _make_label(text: String, font_size: int, color: Color) -> Label:
 func _make_panel_style(fill_color: Color, border_color: Color) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	style.bg_color = fill_color
-	style.border_width_left = 2
-	style.border_width_top = 2
-	style.border_width_right = 2
-	style.border_width_bottom = 2
+	style.border_width_left = maxi(1, _i(2))
+	style.border_width_top = maxi(1, _i(2))
+	style.border_width_right = maxi(1, _i(2))
+	style.border_width_bottom = maxi(1, _i(2))
 	style.border_color = border_color
-	style.corner_radius_top_left = 28
-	style.corner_radius_top_right = 28
-	style.corner_radius_bottom_left = 28
-	style.corner_radius_bottom_right = 28
+	style.corner_radius_top_left = _i(28)
+	style.corner_radius_top_right = _i(28)
+	style.corner_radius_bottom_left = _i(28)
+	style.corner_radius_bottom_right = _i(28)
 	style.shadow_color = Color(0.0, 0.0, 0.0, 0.18)
-	style.shadow_size = 12
+	style.shadow_size = _i(12)
 	return style
 
 
@@ -479,32 +534,32 @@ func _make_card_style(selected: bool, accent: Color) -> StyleBoxFlat:
 	style.border_width_right = 3 if selected else 2
 	style.border_width_bottom = 3 if selected else 2
 	style.border_color = accent if selected else Color(accent.r, accent.g, accent.b, 0.65)
-	style.corner_radius_top_left = 28
-	style.corner_radius_top_right = 28
-	style.corner_radius_bottom_left = 28
-	style.corner_radius_bottom_right = 28
+	style.corner_radius_top_left = _i(28)
+	style.corner_radius_top_right = _i(28)
+	style.corner_radius_bottom_left = _i(28)
+	style.corner_radius_bottom_right = _i(28)
 	style.shadow_color = Color(0.0, 0.0, 0.0, 0.2)
-	style.shadow_size = 12
+	style.shadow_size = _i(12)
 	return style
 
 
 func _make_button_style(accent: Color) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	style.bg_color = accent
-	style.corner_radius_top_left = 14
-	style.corner_radius_top_right = 14
-	style.corner_radius_bottom_left = 14
-	style.corner_radius_bottom_right = 14
+	style.corner_radius_top_left = _i(14)
+	style.corner_radius_top_right = _i(14)
+	style.corner_radius_bottom_left = _i(14)
+	style.corner_radius_bottom_right = _i(14)
 	return style
 
 
 func _make_fill_style(fill_color: Color, radius: int) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	style.bg_color = fill_color
-	style.corner_radius_top_left = radius
-	style.corner_radius_top_right = radius
-	style.corner_radius_bottom_left = radius
-	style.corner_radius_bottom_right = radius
+	style.corner_radius_top_left = _i(radius)
+	style.corner_radius_top_right = _i(radius)
+	style.corner_radius_bottom_left = _i(radius)
+	style.corner_radius_bottom_right = _i(radius)
 	return style
 
 
@@ -513,7 +568,7 @@ func _make_pill_button(text: String, size: Vector2, callback: Callable) -> Butto
 	button.text = text
 	button.custom_minimum_size = size
 	button.add_theme_font_override("font", ui_font)
-	button.add_theme_font_size_override("font_size", 19)
+	button.add_theme_font_size_override("font_size", _i(19))
 	button.add_theme_color_override("font_color", Color(0.98, 0.92, 0.82, 0.98))
 	button.add_theme_stylebox_override("normal", _make_panel_style(Color(0.04, 0.06, 0.08, 0.78), Color(0.2, 0.26, 0.32, 0.54)))
 	button.add_theme_stylebox_override("hover", _make_panel_style(Color(0.08, 0.1, 0.12, 0.84), Color(0.92, 0.68, 0.42, 0.44)))
@@ -538,10 +593,10 @@ func _make_tag(text: String, fill_color: Color, text_color: Color) -> PanelConta
 	var tag := PanelContainer.new()
 	tag.add_theme_stylebox_override("panel", _make_panel_style(fill_color, Color(text_color.r, text_color.g, text_color.b, 0.12)))
 	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 12)
-	margin.add_theme_constant_override("margin_top", 8)
-	margin.add_theme_constant_override("margin_right", 12)
-	margin.add_theme_constant_override("margin_bottom", 8)
+	margin.add_theme_constant_override("margin_left", _i(12))
+	margin.add_theme_constant_override("margin_top", _i(8))
+	margin.add_theme_constant_override("margin_right", _i(12))
+	margin.add_theme_constant_override("margin_bottom", _i(8))
 	tag.add_child(margin)
 	var label := _make_label(text, 15, text_color)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -580,27 +635,27 @@ func _build_transition_overlay() -> void:
 
 	var panel := PanelContainer.new()
 	panel.set_anchors_preset(Control.PRESET_CENTER)
-	panel.offset_left = -340.0
-	panel.offset_top = -170.0
-	panel.offset_right = 340.0
-	panel.offset_bottom = 170.0
+	panel.offset_left = -_f(340.0)
+	panel.offset_top = -_f(170.0)
+	panel.offset_right = _f(340.0)
+	panel.offset_bottom = _f(170.0)
 	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.06, 0.08, 0.1, 0.96), Color(0.92, 0.68, 0.42, 0.72)))
 	transition_overlay.add_child(panel)
 
 	var margin := MarginContainer.new()
 	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-	margin.add_theme_constant_override("margin_left", 30)
-	margin.add_theme_constant_override("margin_top", 24)
-	margin.add_theme_constant_override("margin_right", 30)
-	margin.add_theme_constant_override("margin_bottom", 24)
+	margin.add_theme_constant_override("margin_left", _i(30))
+	margin.add_theme_constant_override("margin_top", _i(24))
+	margin.add_theme_constant_override("margin_right", _i(30))
+	margin.add_theme_constant_override("margin_bottom", _i(24))
 	panel.add_child(margin)
 
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 14)
+	box.add_theme_constant_override("separation", _i(14))
 	margin.add_child(box)
 
 	var glyph_shell := PanelContainer.new()
-	glyph_shell.custom_minimum_size = Vector2(0.0, 116.0)
+	glyph_shell.custom_minimum_size = _v(0.0, 116.0)
 	glyph_shell.add_theme_stylebox_override("panel", _make_panel_style(Color(0.14, 0.1, 0.08, 0.92), Color(0.92, 0.68, 0.42, 0.34)))
 	box.add_child(glyph_shell)
 	transition_glyph_label = _make_label("书", 62, Color(1.0, 0.95, 0.86, 1.0))
