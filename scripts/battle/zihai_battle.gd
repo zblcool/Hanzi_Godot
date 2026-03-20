@@ -152,6 +152,7 @@ func _spawn_hud() -> void:
 	hud.configure(Session.get_selected_hero())
 	hud.radical_choice_selected.connect(_on_radical_choice_selected)
 	hud.word_choice_selected.connect(_on_word_choice_selected)
+	hud.pause_requested.connect(_on_hud_pause_requested)
 	hud.pause_resume_requested.connect(_on_hud_pause_resume_requested)
 	hud.restart_requested.connect(_on_hud_restart_requested)
 	hud.return_menu_requested.connect(_on_hud_return_menu_requested)
@@ -1174,6 +1175,10 @@ func _set_paused(should_pause: bool) -> void:
 
 func _on_hud_pause_resume_requested() -> void:
 	_set_paused(false)
+
+
+func _on_hud_pause_requested() -> void:
+	_set_paused(true)
 
 
 func _on_hud_restart_requested() -> void:

@@ -4,6 +4,7 @@ const CJKFont := preload("res://scripts/core/cjk_font.gd")
 
 signal radical_choice_selected(radical: String)
 signal word_choice_selected(word_id: String)
+signal pause_requested
 signal pause_resume_requested
 signal restart_requested
 signal return_menu_requested
@@ -31,6 +32,7 @@ var boss_panel: PanelContainer
 var boss_name_label: Label
 var boss_detail_label: Label
 var boss_bar: ProgressBar
+var pause_button: Button
 
 var choice_overlay: Control
 var choice_title_label: Label
@@ -369,7 +371,8 @@ func _build_ui() -> void:
 	top_pills.add_theme_constant_override("separation", 12)
 	root.add_child(top_pills)
 	top_pills.add_child(_make_pill("地图"))
-	top_pills.add_child(_make_pill("设置"))
+	pause_button = _make_pill_button("暂停", Callable(self, "_emit_pause"))
+	top_pills.add_child(pause_button)
 	top_pills.add_child(_make_pill("EN"))
 
 	boss_panel = _make_panel(Color(0.08, 0.06, 0.06, 0.88), Color(0.84, 0.34, 0.24, 0.72), Vector2(520.0, 92.0))
@@ -611,6 +614,14 @@ func _emit_pause_resume() -> void:
 	pause_resume_requested.emit()
 
 
+func _emit_pause() -> void:
+	if choice_overlay != null and choice_overlay.visible:
+		return
+	if state_overlay != null and state_overlay.visible:
+		return
+	pause_requested.emit()
+
+
 func _emit_restart() -> void:
 	restart_requested.emit()
 
@@ -658,6 +669,24 @@ func _make_pill(text: String) -> PanelContainer:
 	label.set_anchors_preset(Control.PRESET_FULL_RECT)
 	pill.add_child(label)
 	return pill
+
+
+func _make_pill_button(text: String, callback: Callable) -> Button:
+	var button := Button.new()
+	button.custom_minimum_size = Vector2(94.0, 52.0)
+	button.add_theme_font_override("font", ui_font)
+	button.add_theme_font_size_override("font_size", 17)
+	button.add_theme_color_override("font_color", Color(0.96, 0.9, 0.8, 0.98))
+	var normal_style := _make_panel_style(Color(0.04, 0.06, 0.08, 0.8), Color(0.28, 0.34, 0.4, 0.6), 26)
+	var hover_style := _make_panel_style(Color(0.08, 0.11, 0.14, 0.88), Color(0.92, 0.69, 0.38, 0.72), 26)
+	var pressed_style := _make_panel_style(Color(0.1, 0.12, 0.16, 0.92), Color(0.94, 0.7, 0.4, 0.86), 26)
+	button.add_theme_stylebox_override("normal", normal_style)
+	button.add_theme_stylebox_override("hover", hover_style)
+	button.add_theme_stylebox_override("pressed", pressed_style)
+	button.add_theme_stylebox_override("focus", hover_style)
+	button.text = text
+	button.pressed.connect(callback)
+	return button
 
 
 func _make_bar(fill_color: Color) -> ProgressBar:
