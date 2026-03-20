@@ -39,6 +39,7 @@ var levelup_active: bool = false
 var word_choice_active: bool = false
 var paused: bool = false
 var opening_time: float = 0.0
+var last_announced_threat_level: int = 1
 
 var radical_counts: Dictionary = {}
 var skill_levels: Dictionary = {}
@@ -104,7 +105,11 @@ func _process(delta: float) -> void:
 	_update_inkstone_interaction()
 
 	elapsed_time += delta
-	threat_level = 1 + int(elapsed_time / 30.0)
+	var new_threat_level: int = 1 + int(elapsed_time / 30.0)
+	if new_threat_level > threat_level:
+		for advanced_level in range(threat_level + 1, new_threat_level + 1):
+			_on_threat_level_advanced(advanced_level)
+	threat_level = new_threat_level
 
 	spawn_timer -= delta
 	if spawn_timer <= 0.0 and _enemy_count() < 46:
@@ -180,6 +185,31 @@ func _spawn_props() -> void:
 		inkstone.position = inkstone_position
 		props_root.add_child(inkstone)
 		inkstones.append(inkstone)
+
+	var stela_data := [
+		{"position": Vector3(-18.0, 0.0, -12.0), "glyph": "海", "tint": Color(0.56, 0.84, 1.0, 1.0)},
+		{"position": Vector3(18.0, 0.0, -6.0), "glyph": "明", "tint": Color(1.0, 0.86, 0.48, 1.0)},
+		{"position": Vector3(-16.0, 0.0, 14.0), "glyph": "休", "tint": Color(0.64, 0.92, 0.72, 1.0)},
+		{"position": Vector3(15.0, 0.0, 15.0), "glyph": "卷", "tint": Color(0.9, 0.68, 0.42, 1.0)}
+	]
+	for stela_variant in stela_data:
+		_create_stela(stela_variant["position"], String(stela_variant["glyph"]), Color(stela_variant["tint"]))
+
+	var scroll_racks := [
+		{"position": Vector3(-8.0, 0.0, -16.0), "yaw": 18.0},
+		{"position": Vector3(12.0, 0.0, -14.0), "yaw": -28.0},
+		{"position": Vector3(16.0, 0.0, 2.0), "yaw": 42.0}
+	]
+	for rack_variant in scroll_racks:
+		_create_scroll_rack(rack_variant["position"], float(rack_variant["yaw"]))
+
+	var ink_pools := [
+		{"position": Vector3(-15.0, 0.0, 3.0), "radius": 1.6, "tint": Color(0.28, 0.7, 0.82, 1.0)},
+		{"position": Vector3(13.0, 0.0, 12.0), "radius": 1.2, "tint": Color(0.76, 0.44, 0.94, 1.0)},
+		{"position": Vector3(4.0, 0.0, -17.0), "radius": 1.45, "tint": Color(0.98, 0.72, 0.4, 1.0)}
+	]
+	for pool_variant in ink_pools:
+		_create_ink_pool(pool_variant["position"], float(pool_variant["radius"]), Color(pool_variant["tint"]))
 
 
 func _spawn_enemy() -> void:
@@ -295,6 +325,7 @@ func _on_player_request_slash(origin: Vector3, forward: Vector3, radius: float, 
 
 func _on_enemy_defeated(world_position: Vector3, enemy_type: String) -> void:
 	kills += 1
+	_spawn_enemy_death_effect(world_position, enemy_type)
 	_spawn_xp_orb(world_position, _xp_value_for_enemy(enemy_type))
 	_spawn_supply_drops(world_position, enemy_type)
 	if kills % 14 == 0:
@@ -763,6 +794,99 @@ func _spawn_wave_effect(origin: Vector3, radius: float, tint: Color, label: Stri
 	tween.tween_callback(effect_root.queue_free)
 
 
+func _spawn_enemy_death_effect(world_position: Vector3, enemy_type: String) -> void:
+	var tint: Color = _enemy_effect_color(enemy_type)
+	var glyph_text: String = _enemy_effect_glyph(enemy_type)
+	var effect_root := Node3D.new()
+	effect_root.position = world_position + Vector3(0.0, 0.16, 0.0)
+	effects_root.add_child(effect_root)
+
+	var ring := MeshInstance3D.new()
+	var ring_mesh := CylinderMesh.new()
+	ring_mesh.top_radius = 0.64
+	ring_mesh.bottom_radius = 0.64
+	ring_mesh.height = 0.04
+	ring.mesh = ring_mesh
+	var ring_material := StandardMaterial3D.new()
+	ring_material.albedo_color = Color(tint.r, tint.g, tint.b, 0.34)
+	ring_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	ring_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	ring_material.emission_enabled = true
+	ring_material.emission = tint
+	ring.material_override = ring_material
+	effect_root.add_child(ring)
+
+	var shard_root := Node3D.new()
+	effect_root.add_child(shard_root)
+	for index in range(5):
+		var shard := MeshInstance3D.new()
+		var shard_mesh := BoxMesh.new()
+		shard_mesh.size = Vector3(0.12, 0.04, 0.26)
+		shard.mesh = shard_mesh
+		var angle: float = TAU * float(index) / 5.0
+		shard.position = Vector3(cos(angle) * 0.32, 0.08, sin(angle) * 0.32)
+		shard.rotation_degrees = Vector3(18.0, rad_to_deg(angle), 22.0)
+		shard.material_override = ring_material
+		shard_root.add_child(shard)
+
+	var glyph := Label3D.new()
+	glyph.text = glyph_text
+	glyph.font = CJKFont.get_font()
+	glyph.font_size = 28
+	glyph.position = Vector3(0.0, 0.12, 0.0)
+	glyph.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	glyph.modulate = Color(1.0, 0.95, 0.88, 0.94)
+	effect_root.add_child(glyph)
+
+	var tween := create_tween()
+	tween.parallel().tween_property(effect_root, "scale", Vector3(1.28, 1.0, 1.28), 0.32)
+	tween.parallel().tween_property(effect_root, "position:y", effect_root.position.y + 0.26, 0.32)
+	tween.parallel().tween_property(ring, "rotation_degrees:y", 34.0, 0.32)
+	tween.parallel().tween_property(shard_root, "rotation_degrees:y", -54.0, 0.32)
+	tween.parallel().tween_property(glyph, "modulate:a", 0.0, 0.32)
+	tween.tween_callback(effect_root.queue_free)
+
+
+func _enemy_effect_color(enemy_type: String) -> Color:
+	match enemy_type:
+		"swift":
+			return Color(0.98, 0.54, 0.32, 1.0)
+		"tank":
+			return Color(0.58, 0.66, 0.78, 1.0)
+		"archer":
+			return Color(0.9, 0.68, 0.34, 1.0)
+		"assassin":
+			return Color(0.88, 0.42, 0.58, 1.0)
+		"cavalry":
+			return Color(0.9, 0.34, 0.26, 1.0)
+		"ritualist":
+			return Color(0.66, 0.48, 0.96, 1.0)
+		"elite":
+			return Color(0.88, 0.34, 0.48, 1.0)
+		_:
+			return Color(0.82, 0.42, 0.32, 1.0)
+
+
+func _enemy_effect_glyph(enemy_type: String) -> String:
+	match enemy_type:
+		"swift":
+			return "迅"
+		"tank":
+			return "甲"
+		"archer":
+			return "弓"
+		"assassin":
+			return "忍"
+		"cavalry":
+			return "骑"
+		"ritualist":
+			return "阵"
+		"elite":
+			return "魁"
+		_:
+			return "魇"
+
+
 func _on_player_health_changed(current: float, maximum: float) -> void:
 	hud.set_health(current, maximum)
 
@@ -805,6 +929,54 @@ func _start_opening_sequence() -> void:
 	hud.set_tip("先收第一枚偏旁，尽快合出首个成字。")
 	_spawn_wave_effect(player.global_position, 3.3, accent, String(hero_data["glyph"]))
 	_spawn_intro_symbols(String(hero_data["glyph"]), accent)
+
+
+func _on_threat_level_advanced(new_threat_level: int) -> void:
+	last_announced_threat_level = new_threat_level
+	if not is_instance_valid(player):
+		return
+
+	var tint: Color = _threat_level_color(new_threat_level)
+	hud.show_banner("字潮第 %d 波" % new_threat_level, tint, 1.85)
+	hud.set_tip(_threat_level_tip(new_threat_level))
+	_spawn_wave_effect(player.global_position, 4.6 + float(new_threat_level) * 0.45, tint, _threat_level_glyph(new_threat_level))
+	_spawn_intro_symbols(_threat_level_glyph(new_threat_level), tint)
+
+
+func _threat_level_color(new_threat_level: int) -> Color:
+	match new_threat_level:
+		2:
+			return Color(0.96, 0.74, 0.42, 1.0)
+		3:
+			return Color(0.68, 0.6, 0.98, 1.0)
+		4:
+			return Color(0.92, 0.4, 0.3, 1.0)
+		_:
+			return Color(0.94, 0.42, 0.52, 1.0)
+
+
+func _threat_level_glyph(new_threat_level: int) -> String:
+	match new_threat_level:
+		2:
+			return "弓"
+		3:
+			return "阵"
+		4:
+			return "骑"
+		_:
+			return "魁"
+
+
+func _threat_level_tip(new_threat_level: int) -> String:
+	match new_threat_level:
+		2:
+			return "字潮抬升。弓手开始混入阵线，注意被远程拉扯。"
+		3:
+			return "字潮再涨。忍与阵师入场，突刺和地阵会一起施压。"
+		4:
+			return "墨骑踏阵。保持走位，不要在冲锋预警线里停太久。"
+		_:
+			return "魁首开始现身，补给和成词节奏都要提前准备。"
 
 
 func _spawn_intro_symbols(glyph: String, tint: Color) -> void:
@@ -1126,6 +1298,236 @@ func _create_tree(position: Vector3) -> void:
 	lantern_material.emission_energy_multiplier = 0.5
 	lantern.material_override = lantern_material
 	tree_root.add_child(lantern)
+
+
+func _create_stela(position: Vector3, glyph: String, tint: Color) -> void:
+	var stela_root := Node3D.new()
+	stela_root.position = position
+	props_root.add_child(stela_root)
+
+	var stone_material := StandardMaterial3D.new()
+	stone_material.albedo_color = Color(0.22, 0.24, 0.28, 1.0)
+	stone_material.roughness = 0.96
+
+	var accent_material := StandardMaterial3D.new()
+	accent_material.albedo_color = Color(0.3, 0.34, 0.4, 1.0)
+	accent_material.roughness = 0.92
+	accent_material.emission_enabled = true
+	accent_material.emission = tint.darkened(0.34)
+
+	var base := MeshInstance3D.new()
+	var base_mesh := BoxMesh.new()
+	base_mesh.size = Vector3(1.82, 0.28, 1.26)
+	base.mesh = base_mesh
+	base.position = Vector3(0.0, 0.14, 0.0)
+	base.material_override = accent_material
+	stela_root.add_child(base)
+
+	var slab := MeshInstance3D.new()
+	var slab_mesh := BoxMesh.new()
+	slab_mesh.size = Vector3(1.08, 2.54, 0.34)
+	slab.mesh = slab_mesh
+	slab.position = Vector3(0.0, 1.5, 0.0)
+	slab.material_override = stone_material
+	stela_root.add_child(slab)
+
+	var cap := MeshInstance3D.new()
+	var cap_mesh := BoxMesh.new()
+	cap_mesh.size = Vector3(1.34, 0.18, 0.5)
+	cap.mesh = cap_mesh
+	cap.position = Vector3(0.0, 2.86, 0.0)
+	cap.material_override = accent_material
+	stela_root.add_child(cap)
+
+	var glyph_root := Node3D.new()
+	glyph_root.position = Vector3(0.0, 2.38, 0.0)
+	stela_root.add_child(glyph_root)
+
+	var disc := MeshInstance3D.new()
+	var disc_mesh := CylinderMesh.new()
+	disc_mesh.top_radius = 0.42
+	disc_mesh.bottom_radius = 0.42
+	disc_mesh.height = 0.05
+	disc.mesh = disc_mesh
+	var disc_material := StandardMaterial3D.new()
+	disc_material.albedo_color = Color(0.04, 0.06, 0.08, 0.86)
+	disc_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	disc_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	disc_material.emission_enabled = true
+	disc_material.emission = tint.darkened(0.28)
+	disc.material_override = disc_material
+	glyph_root.add_child(disc)
+
+	var ring := MeshInstance3D.new()
+	var ring_mesh := CylinderMesh.new()
+	ring_mesh.top_radius = 0.5
+	ring_mesh.bottom_radius = 0.5
+	ring_mesh.height = 0.02
+	ring.mesh = ring_mesh
+	ring.position = Vector3(0.0, 0.03, 0.0)
+	var ring_material := StandardMaterial3D.new()
+	ring_material.albedo_color = Color(tint.r, tint.g, tint.b, 0.3)
+	ring_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	ring_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	ring_material.emission_enabled = true
+	ring_material.emission = tint
+	ring.material_override = ring_material
+	glyph_root.add_child(ring)
+
+	var glyph_label := Label3D.new()
+	glyph_label.text = glyph
+	glyph_label.font = CJKFont.get_font()
+	glyph_label.font_size = 30
+	glyph_label.position = Vector3(0.0, 0.03, 0.0)
+	glyph_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	glyph_label.modulate = Color(1.0, 0.95, 0.86, 0.96)
+	glyph_root.add_child(glyph_label)
+
+	for index in range(2):
+		var strip := MeshInstance3D.new()
+		var strip_mesh := BoxMesh.new()
+		strip_mesh.size = Vector3(0.28, 0.04, 0.64)
+		strip.mesh = strip_mesh
+		strip.position = Vector3(-0.26 + float(index) * 0.52, 0.24, 0.36)
+		strip.rotation_degrees = Vector3(18.0, -12.0 + float(index) * 18.0, 0.0)
+		strip.material_override = ring_material
+		stela_root.add_child(strip)
+
+	var glyph_tween := create_tween().set_loops()
+	glyph_tween.tween_property(glyph_root, "position:y", 2.52, 1.8).from(2.38)
+	glyph_tween.tween_property(glyph_root, "position:y", 2.38, 1.8)
+	var spin_tween := create_tween().set_loops()
+	spin_tween.tween_property(glyph_root, "rotation_degrees:y", 360.0, 8.0).from(0.0)
+
+
+func _create_scroll_rack(position: Vector3, yaw: float) -> void:
+	var rack_root := Node3D.new()
+	rack_root.position = position
+	rack_root.rotation_degrees.y = yaw
+	props_root.add_child(rack_root)
+
+	var wood_material := StandardMaterial3D.new()
+	wood_material.albedo_color = Color(0.34, 0.22, 0.14, 1.0)
+	wood_material.roughness = 0.92
+
+	var paper_material := StandardMaterial3D.new()
+	paper_material.albedo_color = Color(0.96, 0.92, 0.82, 1.0)
+	paper_material.roughness = 0.8
+	paper_material.emission_enabled = true
+	paper_material.emission = Color(0.18, 0.18, 0.12, 1.0)
+
+	for side in [-0.48, 0.48]:
+		var post := MeshInstance3D.new()
+		var post_mesh := BoxMesh.new()
+		post_mesh.size = Vector3(0.12, 1.66, 0.12)
+		post.mesh = post_mesh
+		post.position = Vector3(side, 0.83, 0.0)
+		post.material_override = wood_material
+		rack_root.add_child(post)
+
+	var beam := MeshInstance3D.new()
+	var beam_mesh := BoxMesh.new()
+	beam_mesh.size = Vector3(1.18, 0.1, 0.14)
+	beam.mesh = beam_mesh
+	beam.position = Vector3(0.0, 1.58, 0.0)
+	beam.material_override = wood_material
+	rack_root.add_child(beam)
+
+	for index in range(3):
+		var scroll := MeshInstance3D.new()
+		var scroll_mesh := BoxMesh.new()
+		scroll_mesh.size = Vector3(0.86, 0.06, 0.32)
+		scroll.mesh = scroll_mesh
+		scroll.position = Vector3(0.0, 1.3 - float(index) * 0.34, 0.0)
+		scroll.rotation_degrees = Vector3(0.0, 0.0, 6.0 - float(index) * 5.0)
+		scroll.material_override = paper_material
+		rack_root.add_child(scroll)
+
+	var tag_root := Node3D.new()
+	tag_root.position = Vector3(0.0, 1.18, 0.28)
+	rack_root.add_child(tag_root)
+	var tag := MeshInstance3D.new()
+	var tag_mesh := BoxMesh.new()
+	tag_mesh.size = Vector3(0.26, 0.42, 0.04)
+	tag.mesh = tag_mesh
+	tag.material_override = paper_material
+	tag_root.add_child(tag)
+
+	var tag_label := Label3D.new()
+	tag_label.text = "卷"
+	tag_label.font = CJKFont.get_font()
+	tag_label.font_size = 20
+	tag_label.position = Vector3(0.0, 0.0, 0.04)
+	tag_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	tag_label.modulate = Color(0.2, 0.16, 0.12, 0.94)
+	tag_root.add_child(tag_label)
+
+	var sway_tween := create_tween().set_loops()
+	sway_tween.tween_property(tag_root, "rotation_degrees:z", 8.0, 1.4).from(-8.0)
+	sway_tween.tween_property(tag_root, "rotation_degrees:z", -8.0, 1.4)
+
+
+func _create_ink_pool(position: Vector3, radius: float, tint: Color) -> void:
+	var pool_root := Node3D.new()
+	pool_root.position = position
+	props_root.add_child(pool_root)
+
+	var pool := MeshInstance3D.new()
+	var pool_mesh := CylinderMesh.new()
+	pool_mesh.top_radius = radius
+	pool_mesh.bottom_radius = radius * 0.96
+	pool_mesh.height = 0.04
+	pool.mesh = pool_mesh
+	pool.position = Vector3(0.0, 0.02, 0.0)
+	var pool_material := StandardMaterial3D.new()
+	pool_material.albedo_color = Color(tint.r * 0.18, tint.g * 0.18, tint.b * 0.22, 0.78)
+	pool_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	pool_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	pool_material.roughness = 0.18
+	pool_material.emission_enabled = true
+	pool_material.emission = tint.darkened(0.18)
+	pool.material_override = pool_material
+	pool_root.add_child(pool)
+
+	var ring := MeshInstance3D.new()
+	var ring_mesh := CylinderMesh.new()
+	ring_mesh.top_radius = radius * 0.72
+	ring_mesh.bottom_radius = radius * 0.72
+	ring_mesh.height = 0.02
+	ring.mesh = ring_mesh
+	ring.position = Vector3(0.0, 0.04, 0.0)
+	var ring_material := StandardMaterial3D.new()
+	ring_material.albedo_color = Color(tint.r, tint.g, tint.b, 0.24)
+	ring_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	ring_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	ring_material.emission_enabled = true
+	ring_material.emission = tint
+	ring.material_override = ring_material
+	pool_root.add_child(ring)
+
+	for index in range(3):
+		var shard := MeshInstance3D.new()
+		var shard_mesh := BoxMesh.new()
+		shard_mesh.size = Vector3(0.22, 0.04, 0.48)
+		shard.mesh = shard_mesh
+		var angle: float = TAU * float(index) / 3.0
+		shard.position = Vector3(cos(angle) * radius * 0.56, 0.05, sin(angle) * radius * 0.56)
+		shard.rotation_degrees = Vector3(12.0, rad_to_deg(angle) + 18.0, 0.0)
+		shard.material_override = ring_material
+		pool_root.add_child(shard)
+
+	var glyph := Label3D.new()
+	glyph.text = "墨"
+	glyph.font = CJKFont.get_font()
+	glyph.font_size = 22
+	glyph.position = Vector3(0.0, 0.12, 0.0)
+	glyph.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	glyph.modulate = Color(1.0, 0.94, 0.86, 0.86)
+	pool_root.add_child(glyph)
+
+	var pulse_tween := create_tween().set_loops()
+	pulse_tween.tween_property(ring, "scale", Vector3(1.1, 1.0, 1.1), 2.2).from(Vector3(0.94, 1.0, 0.94))
+	pulse_tween.tween_property(ring, "scale", Vector3(0.94, 1.0, 0.94), 2.2)
 
 
 func _enemy_count() -> int:
