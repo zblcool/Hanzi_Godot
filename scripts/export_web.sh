@@ -61,6 +61,33 @@ PY
 	fail "Need unzip or python3 to extract Godot artifacts."
 }
 
+normalize_template_dir() {
+	local template_dir="$1"
+
+	if [ -f "${template_dir}/web_release.zip" ]; then
+		return
+	fi
+
+	local nested_web_release
+	nested_web_release="$(find "$template_dir" -mindepth 2 -maxdepth 3 -type f -name web_release.zip -print -quit 2>/dev/null || true)"
+	if [ -z "$nested_web_release" ]; then
+		return
+	fi
+
+	local nested_dir
+	nested_dir="$(dirname "$nested_web_release")"
+	log "Normalizing export templates from ${nested_dir}."
+
+	shopt -s dotglob nullglob
+	local nested_entries=("${nested_dir}"/*)
+	if [ ${#nested_entries[@]} -gt 0 ]; then
+		mv "${nested_entries[@]}" "${template_dir}/"
+	fi
+	shopt -u dotglob nullglob
+
+	rmdir "$nested_dir" 2>/dev/null || true
+}
+
 find_godot_bin() {
 	for candidate in \
 		"${GODOT_BIN:-}" \
@@ -100,6 +127,7 @@ prepare_linux_godot() {
 		log "Downloading Godot ${GODOT_VERSION} export templates."
 		download_file "$template_url" "$template_tpz"
 		extract_zip "$template_tpz" "$GODOT_TEMPLATE_DIR"
+		normalize_template_dir "$GODOT_TEMPLATE_DIR"
 	fi
 }
 
