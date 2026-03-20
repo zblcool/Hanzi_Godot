@@ -17,6 +17,10 @@ const CJKFont := preload("res://scripts/core/cjk_font.gd")
 const DEFAULT_BATTLE_TIP := "击倒字灵收集字力与补给，升级时三选一偏旁。靠近砚台按 E 磨词。"
 const BOSS_SPAWN_TIMES := [65.0, 130.0]
 const MAP_WORLD_RADIUS := 28.0
+const BIG_WAVE_INTERVAL := 5
+const BASE_ENEMY_CAP := 28
+const MAX_REGULAR_ENEMY_CAP := 38
+const BIG_WAVE_ENEMY_CAP := 46
 
 @onready var world_environment: WorldEnvironment = $WorldEnvironment
 @onready var camera_rig: Node3D = $CameraRig
@@ -132,13 +136,12 @@ func _process(delta: float) -> void:
 	_update_boss_flow()
 
 	spawn_timer -= delta
-	if spawn_timer <= 0.0 and _enemy_count() < 46:
-		var spawn_batch: int = 1
-		if elapsed_time > 55.0:
-			spawn_batch = 2
-		for _index in range(spawn_batch):
+	var enemy_cap := _enemy_cap()
+	if spawn_timer <= 0.0 and _enemy_count() < enemy_cap:
+		var available_slots: int = max(enemy_cap - _enemy_count(), 0)
+		for _index in range(min(_spawn_batch_size(), available_slots)):
 			_spawn_enemy()
-		spawn_interval = max(0.42, 1.35 - elapsed_time * 0.012)
+		spawn_interval = _current_spawn_interval()
 		spawn_timer = spawn_interval
 
 	hud.set_status(elapsed_time, kills, threat_level)
@@ -304,6 +307,38 @@ func _spawn_boss(stage_index: int) -> void:
 	hud.show_boss(String(boss.enemy_name), String(boss.glyph), tint, boss.max_health)
 	_spawn_wave_effect(boss.global_position, 6.2, tint, String(boss.glyph))
 	_spawn_boss_entrance_effect(boss.global_position, String(boss.glyph), tint)
+
+
+func _is_big_wave(wave_index: int = threat_level) -> bool:
+	return wave_index > 0 and wave_index % BIG_WAVE_INTERVAL == 0
+
+
+func _enemy_cap() -> int:
+	var cap := BASE_ENEMY_CAP + maxi(threat_level - 1, 0) * 2
+	cap = min(cap, BIG_WAVE_ENEMY_CAP if _is_big_wave() else MAX_REGULAR_ENEMY_CAP)
+	if is_instance_valid(active_boss) and not active_boss.is_queued_for_deletion():
+		cap = min(cap, 24)
+	return cap
+
+
+func _spawn_batch_size() -> int:
+	var batch := 1
+	if threat_level >= 3:
+		batch += 1
+	if elapsed_time > 90.0:
+		batch += 1
+	if _is_big_wave():
+		batch += 2
+	return batch
+
+
+func _current_spawn_interval() -> float:
+	var interval: float = max(0.46, 1.35 - elapsed_time * 0.012)
+	if _is_big_wave():
+		interval *= 0.72
+	if is_instance_valid(active_boss) and not active_boss.is_queued_for_deletion():
+		interval *= 1.12
+	return max(interval, 0.3)
 
 
 func _pick_enemy_type() -> String:
@@ -1130,13 +1165,20 @@ func _on_threat_level_advanced(new_threat_level: int) -> void:
 		return
 
 	var tint: Color = _threat_level_color(new_threat_level)
-	hud.show_banner("字潮第 %d 波" % new_threat_level, tint, 1.85)
+	var wave_glyph := _threat_level_glyph(new_threat_level)
+	if _is_big_wave(new_threat_level):
+		hud.show_banner("字潮第 %d 波 · 大潮" % new_threat_level, tint, 2.35)
+		spawn_timer = min(spawn_timer, 0.16)
+	else:
+		hud.show_banner("字潮第 %d 波" % new_threat_level, tint, 1.85)
 	hud.set_tip(_threat_level_tip(new_threat_level))
-	_spawn_wave_effect(player.global_position, 4.6 + float(new_threat_level) * 0.45, tint, _threat_level_glyph(new_threat_level))
-	_spawn_intro_symbols(_threat_level_glyph(new_threat_level), tint)
+	_spawn_wave_effect(player.global_position, (6.4 if _is_big_wave(new_threat_level) else 4.6) + float(new_threat_level) * 0.45, tint, wave_glyph)
+	_spawn_intro_symbols(wave_glyph, tint)
 
 
 func _threat_level_color(new_threat_level: int) -> Color:
+	if _is_big_wave(new_threat_level):
+		return Color(0.98, 0.56, 0.3, 1.0)
 	match new_threat_level:
 		2:
 			return Color(0.96, 0.74, 0.42, 1.0)
@@ -1149,6 +1191,8 @@ func _threat_level_color(new_threat_level: int) -> Color:
 
 
 func _threat_level_glyph(new_threat_level: int) -> String:
+	if _is_big_wave(new_threat_level):
+		return "潮"
 	match new_threat_level:
 		2:
 			return "弓"
@@ -1161,6 +1205,8 @@ func _threat_level_glyph(new_threat_level: int) -> String:
 
 
 func _threat_level_tip(new_threat_level: int) -> String:
+	if _is_big_wave(new_threat_level):
+		return "大潮压境。刷怪频率和场上敌量上限同时抬高，先清外围远程，再留技能处理中心重压。"
 	match new_threat_level:
 		2:
 			return "字潮抬升。弓手开始混入阵线，注意被远程拉扯。"

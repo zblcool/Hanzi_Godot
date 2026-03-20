@@ -17,6 +17,7 @@ var ground_height: float = 0.56
 var move_speed: float = 3.6
 var max_health: float = 24.0
 var health: float = 24.0
+var display_health: float = 24.0
 var contact_damage: float = 8.0
 var preferred_min_distance: float = 7.5
 var preferred_max_distance: float = 11.0
@@ -43,12 +44,16 @@ var is_dead: bool = false
 
 var body_material: StandardMaterial3D
 var accent_material: StandardMaterial3D
+var health_bar_back_material: StandardMaterial3D
+var health_bar_fill_material: StandardMaterial3D
 var label_node: Label3D
 var body_node: MeshInstance3D
 var head_node: MeshInstance3D
 var visual_root: Node3D
 var glyph_root: Node3D
 var glyph_ring_node: MeshInstance3D
+var health_bar_root: Node3D
+var health_bar_fill_node: MeshInstance3D
 var left_arm_node: MeshInstance3D
 var right_arm_node: MeshInstance3D
 var left_leg_node: MeshInstance3D
@@ -56,6 +61,7 @@ var right_leg_node: MeshInstance3D
 var rear_left_leg_node: MeshInstance3D
 var rear_right_leg_node: MeshInstance3D
 var gait_amount: float = 0.0
+var health_bar_width: float = 1.08
 
 
 func configure(kind: String, difficulty: float, player_ref) -> void:
@@ -65,11 +71,13 @@ func configure(kind: String, difficulty: float, player_ref) -> void:
 	strafe_sign = -1.0 if int(get_instance_id()) % 2 == 0 else 1.0
 	_apply_type_stats()
 	health = max_health
+	display_health = health
 
 
 func _ready() -> void:
 	add_to_group("enemy")
 	_build_visuals()
+	_update_health_bar(0.0)
 	set_physics_process(true)
 
 
@@ -127,12 +135,13 @@ func _physics_process(delta: float) -> void:
 	gait_amount = clamp(motion.length() / max(motion_reference, 0.001), 0.0, 1.8)
 
 	_update_visual_state()
+	_update_health_bar(delta)
 
 
 func take_damage(amount: float) -> void:
 	if is_dead:
 		return
-	health -= amount
+	health = max(0.0, health - amount)
 	hit_flash_time = 0.14
 	if health <= 0.0:
 		is_dead = true
@@ -550,6 +559,7 @@ func _build_visuals() -> void:
 		_build_humanoid_visuals()
 
 	_build_glyph_badge()
+	_build_health_bar()
 
 
 func _build_humanoid_visuals() -> void:
@@ -678,13 +688,7 @@ func _build_cavalry_visuals() -> void:
 
 
 func _build_glyph_badge() -> void:
-	var badge_height := 2.5
-	if enemy_type == "cavalry":
-		badge_height = 2.76
-	elif enemy_type == "elite":
-		badge_height = 2.72
-	elif enemy_type == "boss":
-		badge_height = 3.04
+	var badge_height := _glyph_badge_height()
 	var badge_root := Node3D.new()
 	badge_root.position = Vector3(0.0, badge_height, 0.0)
 	visual_root.add_child(badge_root)
@@ -861,4 +865,98 @@ func _make_material(color: Color) -> StandardMaterial3D:
 	material.metallic = 0.05
 	material.emission_enabled = true
 	material.emission = Color(color.r * 0.12, color.g * 0.12, color.b * 0.12, 1.0)
+	return material
+
+
+func _build_health_bar() -> void:
+	health_bar_width = 1.08
+	if enemy_type == "tank" or enemy_type == "cavalry":
+		health_bar_width = 1.24
+	elif enemy_type == "elite":
+		health_bar_width = 1.5
+	elif enemy_type == "boss":
+		health_bar_width = 1.96
+
+	health_bar_root = Node3D.new()
+	health_bar_root.position = Vector3(0.0, _health_bar_height(), 0.0)
+	health_bar_root.rotation_degrees.x = -58.0
+	visual_root.add_child(health_bar_root)
+
+	health_bar_back_material = _make_bar_material(Color(0.04, 0.05, 0.07, 0.72))
+	health_bar_fill_material = _make_bar_material(Color(0.32, 0.86, 0.42, 0.96))
+
+	var back := MeshInstance3D.new()
+	var back_mesh := BoxMesh.new()
+	back_mesh.size = Vector3(health_bar_width + 0.12, 0.14, 0.04)
+	back.mesh = back_mesh
+	back.material_override = health_bar_back_material
+	health_bar_root.add_child(back)
+
+	health_bar_fill_node = MeshInstance3D.new()
+	var fill_mesh := BoxMesh.new()
+	fill_mesh.size = Vector3(health_bar_width, 0.09, 0.05)
+	health_bar_fill_node.mesh = fill_mesh
+	health_bar_fill_node.position = Vector3(0.0, 0.0, -0.01)
+	health_bar_fill_node.material_override = health_bar_fill_material
+	health_bar_root.add_child(health_bar_fill_node)
+
+
+func _update_health_bar(delta: float) -> void:
+	if health_bar_root == null or health_bar_fill_node == null or health_bar_fill_material == null or health_bar_back_material == null:
+		return
+
+	if delta <= 0.0:
+		display_health = health
+	else:
+		display_health = move_toward(display_health, health, max(42.0, max_health * 3.4) * delta)
+
+	var ratio: float = 0.0
+	if max_health > 0.0:
+		ratio = clamp(display_health / max_health, 0.0, 1.0)
+
+	health_bar_root.position.y = _health_bar_height() + sin(drift_time * 1.8 + 0.35) * 0.03
+	health_bar_root.rotation_degrees = Vector3(-58.0, -rotation_degrees.y, 0.0)
+	health_bar_root.scale = Vector3.ONE * (1.0 + clamp(hit_flash_time / 0.14, 0.0, 1.0) * 0.18)
+
+	health_bar_fill_node.visible = ratio > 0.001
+	health_bar_fill_node.scale.x = max(ratio, 0.001)
+	health_bar_fill_node.position.x = -health_bar_width * (1.0 - ratio) * 0.5
+
+	var low_health: float = 1.0 - ratio
+	var flash_mix: float = clamp(hit_flash_time / 0.14, 0.0, 1.0)
+	var base_fill: Color = Color(0.28 + low_health * 0.54, 0.84 - low_health * 0.46, 0.34 - low_health * 0.16, 0.98)
+	var fill_color: Color = base_fill.lerp(Color(1.0, 0.82, 0.54, 0.98), flash_mix * 0.68)
+	health_bar_fill_material.albedo_color = fill_color
+	health_bar_fill_material.emission = Color(fill_color.r * 0.28, fill_color.g * 0.28, fill_color.b * 0.28, 1.0)
+	health_bar_back_material.albedo_color = Color(0.04, 0.05, 0.07, 0.7 if ratio < 0.999 else 0.54)
+
+
+func _glyph_badge_height() -> float:
+	var badge_height := 2.5
+	if enemy_type == "cavalry":
+		badge_height = 2.76
+	elif enemy_type == "elite":
+		badge_height = 2.72
+	elif enemy_type == "boss":
+		badge_height = 3.04
+	return badge_height
+
+
+func _health_bar_height() -> float:
+	var offset := 0.5
+	if enemy_type == "elite":
+		offset = 0.56
+	elif enemy_type == "boss":
+		offset = 0.68
+	return _glyph_badge_height() - offset
+
+
+func _make_bar_material(color: Color) -> StandardMaterial3D:
+	var material := StandardMaterial3D.new()
+	material.albedo_color = color
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	material.emission_enabled = true
+	material.emission = Color(color.r * 0.18, color.g * 0.18, color.b * 0.18, 1.0)
 	return material
