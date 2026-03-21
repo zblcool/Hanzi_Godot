@@ -1805,7 +1805,7 @@ func _update_tree_fade(delta: float) -> void:
 	if not is_instance_valid(player):
 		return
 
-	var player_position := player.global_position
+	var player_position: Vector3 = player.global_position
 	player_position.y = 0.0
 	for index in range(tree_fade_entries.size()):
 		var entry: Dictionary = tree_fade_entries[index]
@@ -1813,7 +1813,7 @@ func _update_tree_fade(delta: float) -> void:
 		if not is_instance_valid(tree_root):
 			continue
 
-		var tree_position := tree_root.global_position
+		var tree_position: Vector3 = tree_root.global_position
 		tree_position.y = 0.0
 		var distance_ratio: float = clamp(player_position.distance_to(tree_position) / TREE_FADE_RADIUS, 0.0, 1.0)
 		var target_alpha: float = lerpf(TREE_FADE_ALPHA, 1.0, distance_ratio)
