@@ -32,6 +32,13 @@ var enemy_archive_overlay: Control
 var enemy_archive_body_label: Label
 var leaderboard_overlay: Control
 var leaderboard_body_label: Label
+var profile_overlay: Control
+var profile_name_input: LineEdit
+var profile_status_label: Label
+var profile_hint_label: Label
+var profile_preview_name_label: Label
+var profile_preview_glyph_label: Label
+var profile_preview_copy_label: Label
 var transition_overlay: Control
 var transition_glyph_label: Label
 var transition_title_label: Label
@@ -133,6 +140,13 @@ func _rebuild_ui() -> void:
 	enemy_archive_body_label = null
 	leaderboard_overlay = null
 	leaderboard_body_label = null
+	profile_overlay = null
+	profile_name_input = null
+	profile_status_label = null
+	profile_hint_label = null
+	profile_preview_name_label = null
+	profile_preview_glyph_label = null
+	profile_preview_copy_label = null
 	transition_overlay = null
 	transition_glyph_label = null
 	transition_title_label = null
@@ -200,6 +214,7 @@ func _build_ui() -> void:
 	top_bar.add_child(_make_pill_button("人物志", _v(148.0, 54.0), Callable(self, "_on_character_archive_pressed")))
 	top_bar.add_child(_make_pill_button("合字图谱", _v(164.0, 54.0), Callable(self, "_on_recipe_atlas_pressed")))
 	top_bar.add_child(_make_pill_button("怪物图鉴", _v(164.0, 54.0), Callable(self, "_on_enemy_archive_pressed")))
+	top_bar.add_child(_make_pill_button("玩家名帖", _v(156.0, 54.0), Callable(self, "_on_profile_pressed")))
 	top_bar.add_child(_make_pill_button("查看排行榜", _v(172.0, 54.0), Callable(self, "_on_leaderboard_pressed")))
 	var start_pill := _make_pill_button("直接开始", _v(152.0, 54.0), Callable(self, "_on_start_pressed"))
 	top_bar.add_child(start_pill)
@@ -370,6 +385,7 @@ func _build_ui() -> void:
 	_build_recipe_atlas_overlay()
 	_build_enemy_archive_overlay()
 	_build_leaderboard_overlay()
+	_build_profile_overlay()
 	_build_transition_overlay()
 
 
@@ -599,6 +615,22 @@ func _make_label(text: String, font_size: int, color: Color) -> Label:
 	settings.outline_color = Color(0.02, 0.03, 0.04, 0.28)
 	label.label_settings = settings
 	return label
+
+
+func _make_text_input(placeholder_text: String) -> LineEdit:
+	var input := LineEdit.new()
+	input.custom_minimum_size = _v(0.0, 50.0)
+	input.placeholder_text = placeholder_text
+	input.clear_button_enabled = true
+	input.add_theme_font_override("font", ui_font)
+	input.add_theme_font_size_override("font_size", _i(19))
+	input.add_theme_color_override("font_color", Color(0.96, 0.95, 0.9, 0.98))
+	input.add_theme_color_override("caret_color", Color(0.96, 0.82, 0.56, 0.94))
+	input.add_theme_color_override("font_placeholder_color", Color(0.68, 0.76, 0.84, 0.8))
+	input.add_theme_stylebox_override("normal", _make_panel_style(Color(0.06, 0.08, 0.1, 0.9), Color(0.28, 0.36, 0.42, 0.56)))
+	input.add_theme_stylebox_override("focus", _make_panel_style(Color(0.08, 0.11, 0.14, 0.94), Color(0.92, 0.68, 0.42, 0.58)))
+	input.add_theme_stylebox_override("read_only", _make_panel_style(Color(0.06, 0.08, 0.1, 0.72), Color(0.28, 0.36, 0.42, 0.4)))
+	return input
 
 
 func _make_panel_style(fill_color: Color, border_color: Color) -> StyleBoxFlat:
@@ -916,6 +948,147 @@ func _build_leaderboard_overlay() -> void:
 	action_row.add_child(_make_pill_button("收起战绩", _v(150.0, 52.0), Callable(self, "_hide_leaderboard_overlay")))
 
 
+func _build_profile_overlay() -> void:
+	profile_overlay = Control.new()
+	profile_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	profile_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	profile_overlay.visible = false
+	add_child(profile_overlay)
+
+	var scrim := ColorRect.new()
+	scrim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	scrim.color = Color(0.02, 0.03, 0.04, 0.82)
+	profile_overlay.add_child(scrim)
+
+	var panel := PanelContainer.new()
+	panel.set_anchors_preset(Control.PRESET_CENTER)
+	panel.offset_left = -_f(380.0)
+	panel.offset_top = -_f(250.0)
+	panel.offset_right = _f(380.0)
+	panel.offset_bottom = _f(250.0)
+	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.05, 0.08, 0.1, 0.96), Color(0.52, 0.8, 1.0, 0.58)))
+	profile_overlay.add_child(panel)
+
+	var margin := MarginContainer.new()
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left", _i(28))
+	margin.add_theme_constant_override("margin_top", _i(24))
+	margin.add_theme_constant_override("margin_right", _i(28))
+	margin.add_theme_constant_override("margin_bottom", _i(24))
+	panel.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", _i(14))
+	margin.add_child(box)
+
+	box.add_child(_make_label("玩家名帖", 36, Color(1.0, 0.95, 0.86, 1.0)))
+	box.add_child(_make_label("像 source web 原型一样，先在菜单里维护这台设备的默认排行榜署名。结算页留空时，会自动复用这里的名字。", 18, Color(0.88, 0.92, 0.96, 0.95)))
+
+	var content_row := HBoxContainer.new()
+	content_row.add_theme_constant_override("separation", _i(16))
+	box.add_child(content_row)
+
+	var preview_card := PanelContainer.new()
+	preview_card.custom_minimum_size = _v(220.0, 0.0)
+	preview_card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	preview_card.add_theme_stylebox_override("panel", _make_panel_style(Color(0.08, 0.12, 0.16, 0.72), Color(0.38, 0.72, 0.82, 0.34)))
+	content_row.add_child(preview_card)
+
+	var preview_margin := MarginContainer.new()
+	preview_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	preview_margin.add_theme_constant_override("margin_left", _i(18))
+	preview_margin.add_theme_constant_override("margin_top", _i(18))
+	preview_margin.add_theme_constant_override("margin_right", _i(18))
+	preview_margin.add_theme_constant_override("margin_bottom", _i(18))
+	preview_card.add_child(preview_margin)
+
+	var preview_box := VBoxContainer.new()
+	preview_box.add_theme_constant_override("separation", _i(10))
+	preview_margin.add_child(preview_box)
+	preview_box.add_child(_make_label("当前署名", 18, Color(0.96, 0.82, 0.54, 0.94)))
+
+	var avatar_panel := PanelContainer.new()
+	avatar_panel.custom_minimum_size = _v(0.0, 108.0)
+	avatar_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.1, 0.14, 0.18, 0.86), Color(0.52, 0.8, 1.0, 0.28)))
+	preview_box.add_child(avatar_panel)
+
+	profile_preview_glyph_label = _make_label("侠", 46, Color(1.0, 0.95, 0.86, 1.0))
+	profile_preview_glyph_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	profile_preview_glyph_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	profile_preview_glyph_label.set_anchors_preset(Control.PRESET_FULL_RECT)
+	avatar_panel.add_child(profile_preview_glyph_label)
+
+	profile_preview_name_label = _make_label("", 26, Color(1.0, 0.95, 0.86, 1.0))
+	profile_preview_name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	preview_box.add_child(profile_preview_name_label)
+
+	profile_preview_copy_label = _make_label("", 16, Color(0.86, 0.9, 0.94, 0.92))
+	preview_box.add_child(profile_preview_copy_label)
+
+	var editor_card := PanelContainer.new()
+	editor_card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	editor_card.add_theme_stylebox_override("panel", _make_panel_style(Color(0.08, 0.12, 0.16, 0.72), Color(0.92, 0.68, 0.42, 0.32)))
+	content_row.add_child(editor_card)
+
+	var editor_margin := MarginContainer.new()
+	editor_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	editor_margin.add_theme_constant_override("margin_left", _i(18))
+	editor_margin.add_theme_constant_override("margin_top", _i(18))
+	editor_margin.add_theme_constant_override("margin_right", _i(18))
+	editor_margin.add_theme_constant_override("margin_bottom", _i(18))
+	editor_card.add_child(editor_margin)
+
+	var editor_box := VBoxContainer.new()
+	editor_box.add_theme_constant_override("separation", _i(10))
+	editor_margin.add_child(editor_box)
+	editor_box.add_child(_make_label("默认排行榜署名", 22, Color(1.0, 0.92, 0.8, 1.0)))
+
+	profile_status_label = _make_label("", 15, Color(0.82, 0.9, 1.0, 0.92))
+	profile_status_label.visible = false
+	editor_box.add_child(profile_status_label)
+
+	profile_name_input = _make_text_input("输入想显示的名字")
+	profile_name_input.text_changed.connect(func(_text: String) -> void:
+		_refresh_profile_preview_from_input()
+	)
+	profile_name_input.text_submitted.connect(func(_text: String) -> void:
+		_on_profile_save_pressed()
+	)
+	editor_box.add_child(profile_name_input)
+
+	profile_hint_label = _make_label("", 16, Color(0.88, 0.92, 0.96, 0.92))
+	editor_box.add_child(profile_hint_label)
+
+	var action_row := HBoxContainer.new()
+	action_row.add_theme_constant_override("separation", _i(10))
+	editor_box.add_child(action_row)
+
+	var random_button := _make_pill_button("随机侠名", _v(0.0, 48.0), Callable(self, "_on_profile_random_pressed"))
+	random_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	action_row.add_child(random_button)
+
+	var save_button := _make_action_button("保存署名", Color(0.92, 0.62, 0.28, 1.0))
+	save_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	save_button.custom_minimum_size = _v(0.0, 48.0)
+	save_button.add_theme_font_size_override("font_size", _i(19))
+	save_button.pressed.connect(_on_profile_save_pressed)
+	action_row.add_child(save_button)
+
+	var footer_row := HBoxContainer.new()
+	footer_row.add_theme_constant_override("separation", _i(10))
+	box.add_child(footer_row)
+
+	var reset_button := _make_pill_button("恢复默认", _v(0.0, 50.0), Callable(self, "_on_profile_reset_pressed"))
+	reset_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	footer_row.add_child(reset_button)
+
+	var close_button := _make_pill_button("返回菜单", _v(0.0, 50.0), Callable(self, "_hide_profile_overlay"))
+	close_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	footer_row.add_child(close_button)
+
+	_refresh_profile_overlay()
+
+
 func _build_enemy_archive_overlay() -> void:
 	enemy_archive_overlay = Control.new()
 	enemy_archive_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -1206,6 +1379,86 @@ func _hide_leaderboard_overlay() -> void:
 		leaderboard_overlay.visible = false
 
 
+func _show_profile_overlay() -> void:
+	if profile_overlay == null or profile_name_input == null:
+		return
+	_hide_character_archive_overlay()
+	_hide_recipe_atlas_overlay()
+	_hide_enemy_archive_overlay()
+	_hide_leaderboard_overlay()
+	var identity: Dictionary = Session.get_leaderboard_identity()
+	profile_name_input.text = String(identity.get("custom_name", ""))
+	_refresh_profile_overlay()
+	profile_overlay.visible = true
+
+
+func _hide_profile_overlay() -> void:
+	if profile_overlay != null:
+		profile_overlay.visible = false
+
+
+func _refresh_profile_overlay(status_text: String = "") -> void:
+	if profile_status_label == null:
+		return
+	profile_status_label.visible = not status_text.is_empty()
+	profile_status_label.text = status_text
+	_refresh_profile_preview_from_input()
+
+
+func _refresh_profile_preview_from_input() -> void:
+	if profile_name_input == null or profile_preview_name_label == null or profile_preview_glyph_label == null or profile_preview_copy_label == null or profile_hint_label == null:
+		return
+	var draft_name := Session.sanitize_leaderboard_name(profile_name_input.text)
+	if profile_name_input.text != draft_name:
+		profile_name_input.text = draft_name
+		profile_name_input.caret_column = draft_name.length()
+	var identity: Dictionary = Session.get_leaderboard_identity()
+	var custom_name := String(identity.get("custom_name", ""))
+	var device_alias := Session.get_leaderboard_device_alias()
+	var preview_name := draft_name if not draft_name.is_empty() else (custom_name if not custom_name.is_empty() else device_alias)
+	profile_preview_name_label.text = preview_name
+	profile_preview_glyph_label.text = _get_profile_monogram(preview_name)
+	if custom_name.is_empty():
+		profile_preview_copy_label.text = "当前仍使用设备默认侠名；保存自定义署名后，之后的战绩会直接切到这个名字。"
+		profile_hint_label.text = "如果不另外保存自定义署名，系统会继续沿用本机默认侠名：%s" % device_alias
+	else:
+		profile_preview_copy_label.text = "当前默认署名会自动复用到之后的本地排行榜记录里。"
+		profile_hint_label.text = "清空或恢复默认后，会重新回退到本机默认侠名：%s" % device_alias
+
+
+func _on_profile_random_pressed() -> void:
+	if profile_name_input == null:
+		return
+	profile_name_input.text = Session.generate_random_wuxia_name()
+	_refresh_profile_overlay()
+
+
+func _on_profile_save_pressed() -> void:
+	if profile_name_input == null:
+		return
+	var resolved_name := Session.set_preferred_leaderboard_name(profile_name_input.text)
+	var identity: Dictionary = Session.get_leaderboard_identity()
+	profile_name_input.text = String(identity.get("custom_name", ""))
+	var status_text := "已保存默认署名：%s" % resolved_name
+	if String(identity.get("custom_name", "")).is_empty():
+		status_text = "已恢复设备默认侠名：%s" % resolved_name
+	_refresh_profile_overlay(status_text)
+
+
+func _on_profile_reset_pressed() -> void:
+	if profile_name_input != null:
+		profile_name_input.text = ""
+	var resolved_name := Session.clear_preferred_leaderboard_name()
+	_refresh_profile_overlay("已恢复设备默认侠名：%s" % resolved_name)
+
+
+func _get_profile_monogram(name: String) -> String:
+	var trimmed_name := name.strip_edges()
+	if trimmed_name.is_empty():
+		return "侠"
+	return trimmed_name.substr(0, 1)
+
+
 func _show_enemy_archive_overlay() -> void:
 	if enemy_archive_overlay == null:
 		return
@@ -1226,6 +1479,7 @@ func _hide_secondary_overlays() -> void:
 	_hide_recipe_atlas_overlay()
 	_hide_enemy_archive_overlay()
 	_hide_leaderboard_overlay()
+	_hide_profile_overlay()
 
 
 func _is_secondary_overlay_visible() -> bool:
@@ -1237,6 +1491,8 @@ func _is_secondary_overlay_visible() -> bool:
 		enemy_archive_overlay != null and enemy_archive_overlay.visible
 	) or (
 		leaderboard_overlay != null and leaderboard_overlay.visible
+	) or (
+		profile_overlay != null and profile_overlay.visible
 	)
 
 
@@ -1262,6 +1518,12 @@ func _on_leaderboard_pressed() -> void:
 	if transition_busy:
 		return
 	_show_leaderboard_overlay()
+
+
+func _on_profile_pressed() -> void:
+	if transition_busy:
+		return
+	_show_profile_overlay()
 
 
 func _on_start_pressed() -> void:

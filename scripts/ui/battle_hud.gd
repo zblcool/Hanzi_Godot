@@ -662,7 +662,7 @@ func set_game_over(summary: String, elapsed: float = 0.0, kills: int = 0, threat
 	]
 	_show_state_name_editor(
 		"战绩署名",
-		"本轮记录已经写入本地排行榜。你可以直接改成想显示的名字；留空则保留系统生成的武侠名。"
+		"本轮记录已经写入本地排行榜。你可以直接改成想显示的名字；留空则保留玩家名帖里的默认署名。"
 	)
 	_configure_state_button(state_primary_button, "重新开始", Callable(self, "_emit_restart"))
 	_configure_state_button(state_secondary_button, "返回菜单", Callable(self, "_emit_return_menu"))
@@ -1305,7 +1305,7 @@ func _build_state_overlay(root: Control) -> void:
 	state_name_input = LineEdit.new()
 	state_name_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	state_name_input.custom_minimum_size = Vector2(0.0, 48.0)
-	state_name_input.placeholder_text = "留空则保留随机侠名"
+	state_name_input.placeholder_text = "留空则保留玩家名帖署名"
 	state_name_input.clear_button_enabled = true
 	state_name_input.add_theme_font_override("font", ui_font)
 	state_name_input.add_theme_font_size_override("font_size", 20)

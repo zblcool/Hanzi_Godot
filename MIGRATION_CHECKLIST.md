@@ -22,6 +22,7 @@ Status legend:
 - `[done]` Character selection flow with scholar / xia split and direct battle entry. Notes: source menu moved to "start -> choose hero -> battle"; Godot keeps that same hierarchy.
 - `[done]` Quick-start wave shortcuts for menu-side test entry. Notes: hanziHero keeps dedicated test starts for wave 10 / 20; Godot now exposes equivalent menu buttons and treats those shortcut runs as non-ranked checks.
 - `[done]` Character reaction flavor on selection. Notes: hanziHero role cards trigger short personality lines; Godot now rotates short in-character response quotes in the detail panel whenever a hero is picked.
+- `[done]` Player Sigil default-name flow in launcher and menu. Notes: hanziHero lets the launcher / portal maintain a device signature reused by leaderboard entries; Godot now mirrors that with a persistent `玩家名帖` overlay backed by `user://leaderboard_identity.json`.
 - `[pending]` Theme / language parity inside the menu layer. Notes: source launcher/menu surfaces share theme and language toggles; Godot menu copy is still single-language.
 - `[pending]` More menu-side build and progression surfacing. Notes: source menu surfaces richer descriptive cards and front-end polish; Godot menu remains more utilitarian.
 

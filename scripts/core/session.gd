@@ -4,8 +4,10 @@ const LAUNCHER_SCENE := "res://scenes/app/launcher.tscn"
 const ZIHAI_MENU_SCENE := "res://scenes/app/zihai_menu.tscn"
 const ZIHAI_BATTLE_SCENE := "res://scenes/battle/zihai_battle.tscn"
 const LOCAL_LEADERBOARD_PATH := "user://local_leaderboard.json"
+const LEADERBOARD_IDENTITY_PATH := "user://leaderboard_identity.json"
 const BATTLE_SETTINGS_PATH := "user://battle_settings.json"
 const LOCAL_LEADERBOARD_LIMIT := 12
+const LEADERBOARD_NAME_LIMIT := 18
 const FALLBACK_RUN_NAME_SURNAMES := ["沈", "陆", "谢", "顾", "裴", "苏", "闻", "叶", "秦", "燕", "柳", "程"]
 const FALLBACK_RUN_NAME_GIVENS := ["孤舟", "青崖", "听雨", "照夜", "长风", "归云", "惊鸿", "秋水", "横雪", "寻梅", "渡川", "鸣泉"]
 const BATTLE_PERFORMANCE_MODES := ["performance", "balanced", "quality"]
@@ -368,6 +370,7 @@ var selected_hero := "scholar"
 var last_run_summary: Dictionary = {}
 var pending_battle_intro: Dictionary = {}
 var chapter_progress: Dictionary = {}
+var leaderboard_identity: Dictionary = {}
 var local_leaderboard: Array[Dictionary] = []
 var local_leaderboard_loaded: bool = false
 var last_recorded_leaderboard_run: Dictionary = {}
@@ -375,6 +378,7 @@ var battle_settings: Dictionary = DEFAULT_BATTLE_SETTINGS.duplicate(true)
 
 
 func _ready() -> void:
+	_load_leaderboard_identity()
 	_load_local_leaderboard()
 	_load_battle_settings()
 
@@ -558,6 +562,51 @@ func get_last_recorded_leaderboard_run() -> Dictionary:
 	return last_recorded_leaderboard_run.duplicate(true)
 
 
+func get_leaderboard_identity() -> Dictionary:
+	_ensure_leaderboard_identity_loaded()
+	return leaderboard_identity.duplicate(true)
+
+
+func get_leaderboard_device_alias() -> String:
+	_ensure_leaderboard_identity_loaded()
+	var device_alias := String(leaderboard_identity.get("device_alias", "")).strip_edges()
+	if not device_alias.is_empty():
+		return device_alias
+	return _build_random_wuxia_name()
+
+
+func get_preferred_leaderboard_name() -> String:
+	_ensure_leaderboard_identity_loaded()
+	var custom_name := String(leaderboard_identity.get("custom_name", "")).strip_edges()
+	if not custom_name.is_empty():
+		return custom_name
+	return get_leaderboard_device_alias()
+
+
+func sanitize_leaderboard_name(raw_name: String) -> String:
+	return _sanitize_leaderboard_name(raw_name)
+
+
+func set_preferred_leaderboard_name(raw_name: String) -> String:
+	_ensure_leaderboard_identity_loaded()
+	leaderboard_identity["custom_name"] = _sanitize_leaderboard_name(raw_name)
+	if String(leaderboard_identity.get("device_alias", "")).strip_edges().is_empty():
+		leaderboard_identity["device_alias"] = _build_random_wuxia_name()
+	_save_leaderboard_identity()
+	return get_preferred_leaderboard_name()
+
+
+func clear_preferred_leaderboard_name() -> String:
+	_ensure_leaderboard_identity_loaded()
+	leaderboard_identity["custom_name"] = ""
+	_save_leaderboard_identity()
+	return get_preferred_leaderboard_name()
+
+
+func generate_random_wuxia_name() -> String:
+	return _build_random_wuxia_name()
+
+
 func get_battle_settings() -> Dictionary:
 	return battle_settings.duplicate(true)
 
@@ -599,6 +648,45 @@ func update_last_recorded_run_player_name(raw_name: String) -> String:
 func _ensure_local_leaderboard_loaded() -> void:
 	if not local_leaderboard_loaded:
 		_load_local_leaderboard()
+
+
+func _ensure_leaderboard_identity_loaded() -> void:
+	if leaderboard_identity.is_empty():
+		_load_leaderboard_identity()
+
+
+func _load_leaderboard_identity() -> void:
+	var should_save := not FileAccess.file_exists(LEADERBOARD_IDENTITY_PATH)
+	var raw_identity: Variant = {}
+
+	if FileAccess.file_exists(LEADERBOARD_IDENTITY_PATH):
+		var file := FileAccess.open(LEADERBOARD_IDENTITY_PATH, FileAccess.READ)
+		if file != null:
+			var parsed: Variant = JSON.parse_string(file.get_as_text())
+			if parsed is Dictionary:
+				raw_identity = parsed
+			else:
+				should_save = true
+		else:
+			should_save = true
+
+	var raw_dictionary: Dictionary = raw_identity if raw_identity is Dictionary else {}
+	leaderboard_identity = {
+		"device_alias": _sanitize_leaderboard_name(String(raw_dictionary.get("device_alias", ""))),
+		"custom_name": _sanitize_leaderboard_name(String(raw_dictionary.get("custom_name", "")))
+	}
+	if String(leaderboard_identity.get("device_alias", "")).strip_edges().is_empty():
+		leaderboard_identity["device_alias"] = _build_random_wuxia_name()
+		should_save = true
+	if should_save:
+		_save_leaderboard_identity()
+
+
+func _save_leaderboard_identity() -> void:
+	var file := FileAccess.open(LEADERBOARD_IDENTITY_PATH, FileAccess.WRITE)
+	if file == null:
+		return
+	file.store_string(JSON.stringify(leaderboard_identity))
 
 
 func _load_local_leaderboard() -> void:
@@ -690,7 +778,10 @@ func _normalize_leaderboard_entry(raw_entry: Variant) -> Dictionary:
 func _resolve_run_player_name(raw_name: String, hero_id: String, recorded_at: int) -> String:
 	var trimmed_name := raw_name.strip_edges()
 	if not trimmed_name.is_empty():
-		return trimmed_name
+		return _sanitize_leaderboard_name(trimmed_name)
+	var preferred_name := get_preferred_leaderboard_name()
+	if not preferred_name.is_empty():
+		return preferred_name
 	return _build_fallback_player_name(hero_id, recorded_at)
 
 
@@ -702,6 +793,26 @@ func _build_fallback_player_name(hero_id: String, recorded_at: int) -> String:
 		FALLBACK_RUN_NAME_SURNAMES[surname_index],
 		FALLBACK_RUN_NAME_GIVENS[given_index]
 	]
+
+
+func _build_random_wuxia_name() -> String:
+	var timestamp := Time.get_unix_time_from_system()
+	var tick_seed := Time.get_ticks_usec()
+	var surname_index: int = abs(hash("%d:%d:surname" % [timestamp, tick_seed])) % FALLBACK_RUN_NAME_SURNAMES.size()
+	var given_index: int = abs(hash("%d:%d:given" % [tick_seed, timestamp])) % FALLBACK_RUN_NAME_GIVENS.size()
+	return "%s%s" % [
+		FALLBACK_RUN_NAME_SURNAMES[surname_index],
+		FALLBACK_RUN_NAME_GIVENS[given_index]
+	]
+
+
+func _sanitize_leaderboard_name(raw_name: String) -> String:
+	var compact := raw_name.strip_edges().replace("\r", " ").replace("\n", " ").replace("\t", " ")
+	while compact.find("  ") != -1:
+		compact = compact.replace("  ", " ")
+	if compact.length() > LEADERBOARD_NAME_LIMIT:
+		compact = compact.substr(0, LEADERBOARD_NAME_LIMIT)
+	return compact
 
 
 func _normalize_run_counts(raw_counts: Variant, order: Array) -> Dictionary:
