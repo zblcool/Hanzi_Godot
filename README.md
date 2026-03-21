@@ -249,5 +249,6 @@
 - 仓库现在带了 `vercel.json`，把 GitHub 仓库接到 Vercel 之后，每次 push 都会自动触发一次 web 导出和部署。
 - 构建命令是 `./scripts/export_web.sh`；实际使用的 Web 导出预设保存在仓库根目录的 `export_presets.cfg` 中。脚本会先导入资源，再导出到 `build/index.html`，所以不需要把 `build/` 产物提交进仓库。
 - 在 Linux / Vercel 环境里，脚本会自动下载 `Godot 4.6.1` 编辑器和 export templates；本地如果已经装了 Godot，则直接复用本机安装。
+- 如果需要临时切到别的 Godot 发布号，也可以覆盖脚本内置默认值，例如 `GODOT_VERSION=4.6.1-stable` 与 `GODOT_TEMPLATE_VERSION=4.6.1.stable`；这两个变量需要保持同一版本系。
 - 如果本地 Godot 不在默认路径，也可以直接这样跑：`GODOT_BIN=/path/to/Godot ./scripts/export_web.sh`。如需改导出目录，则可以用 `HANZI_EXPORT_DIR` 或 `HANZI_EXPORT_HTML` 覆盖默认输出位置。
 - 本地手动验证也可以直接跑同一条命令：`./scripts/export_web.sh`
