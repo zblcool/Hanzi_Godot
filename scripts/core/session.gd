@@ -262,6 +262,90 @@ const RADICALS := {
 	}
 }
 
+const QUICK_START_PRESETS := {
+	1: {
+		"start_wave": 1,
+		"title": "残卷一·入墨",
+		"subtitle_template": "%s 执笔，落字入卷。",
+		"tip": "先收第一枚偏旁，尽快合出首个成字。",
+		"recordable": true,
+		"elapsed_time": 0.0,
+		"level": 1,
+		"experience": 0,
+		"experience_target": 4,
+		"radicals": {},
+		"recipes": {},
+		"words": {},
+		"word_progress": {},
+		"blade_level": 0
+	},
+	10: {
+		"start_wave": 10,
+		"title": "残卷十·试阵",
+		"subtitle_template": "%s 直接切入第 10 波试阵。",
+		"tip": "带着一套中盘成长直接入卷，重点检查混编敌潮与地面预警节奏。",
+		"recordable": false,
+		"elapsed_time": 270.0,
+		"level": 7,
+		"experience": 0,
+		"experience_target": 22,
+		"radicals": {
+			"亻": 1,
+			"木": 1,
+			"日": 1,
+			"月": 1,
+			"氵": 1,
+			"每": 0,
+			"刂": 1
+		},
+		"recipes": {
+			"ming": 2,
+			"xiu": 1,
+			"hai": 1
+		},
+		"words": {
+			"ming_guang": 1
+		},
+		"word_progress": {
+			"xiu_yang": 1,
+			"hai_xiao": 1
+		},
+		"blade_level": 1
+	},
+	20: {
+		"start_wave": 20,
+		"title": "残卷二十·压测",
+		"subtitle_template": "%s 直接切入第 20 波压测。",
+		"tip": "带着更完整的中后期 build 进入高压波次，用来检查精英、大潮与 HUD 节奏。",
+		"recordable": false,
+		"elapsed_time": 570.0,
+		"level": 11,
+		"experience": 0,
+		"experience_target": 36,
+		"radicals": {
+			"亻": 1,
+			"木": 1,
+			"日": 1,
+			"月": 1,
+			"氵": 1,
+			"每": 1,
+			"刂": 2
+		},
+		"recipes": {
+			"ming": 3,
+			"xiu": 2,
+			"hai": 2
+		},
+		"words": {
+			"ming_guang": 2,
+			"xiu_yang": 1,
+			"hai_xiao": 1
+		},
+		"word_progress": {},
+		"blade_level": 2
+	}
+}
+
 var selected_hero := "scholar"
 var last_run_summary: Dictionary = {}
 var pending_battle_intro: Dictionary = {}
@@ -280,17 +364,30 @@ func select_hero(hero_id: String) -> void:
 		selected_hero = hero_id
 
 
-func prepare_battle_intro(entry_source: String = "menu") -> void:
+func get_quick_start_preset(start_wave: int = 1) -> Dictionary:
+	if QUICK_START_PRESETS.has(start_wave):
+		return QUICK_START_PRESETS[start_wave].duplicate(true)
+	return QUICK_START_PRESETS[1].duplicate(true)
+
+
+func prepare_battle_intro(entry_source: String = "menu", start_wave: int = 1) -> void:
 	var hero_data: Dictionary = get_selected_hero()
+	var preset: Dictionary = get_quick_start_preset(start_wave)
+	var intro_title := String(preset.get("title", "残卷一·入墨"))
+	var subtitle_template := String(preset.get("subtitle_template", "%s 执笔，落字入卷。"))
 	pending_battle_intro = {
 		"entry": entry_source,
-		"title": "残卷一·入墨",
-		"subtitle": "%s 执笔，落字入卷。" % String(hero_data["name"]),
+		"title": intro_title,
+		"subtitle": subtitle_template % String(hero_data["name"]),
+		"tip": String(preset.get("tip", "先收第一枚偏旁，尽快合出首个成字。")),
 		"glyph": String(hero_data["glyph"]),
-		"hero_id": String(hero_data["id"])
+		"hero_id": String(hero_data["id"]),
+		"start_wave": int(preset.get("start_wave", 1)),
+		"recordable": bool(preset.get("recordable", true)),
+		"start_preset": preset
 	}
 	chapter_progress = {
-		"title": "残卷一·入墨",
+		"title": intro_title,
 		"completed_bosses": 0,
 		"chapter_complete": false
 	}

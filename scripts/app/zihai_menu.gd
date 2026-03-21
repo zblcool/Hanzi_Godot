@@ -307,6 +307,32 @@ func _build_ui() -> void:
 	detail_stat_widgets["attack_damage"] = _make_stat_row(stats_box, "伤害")
 	detail_stat_widgets["attack_range"] = _make_stat_row(stats_box, "射程")
 
+	var quick_start_panel := PanelContainer.new()
+	quick_start_panel.custom_minimum_size = _v(0.0, 164.0)
+	quick_start_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.08, 0.12, 0.16, 0.72), Color(0.28, 0.36, 0.42, 0.46)))
+	detail_box.add_child(quick_start_panel)
+
+	var quick_start_margin := MarginContainer.new()
+	quick_start_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	quick_start_margin.add_theme_constant_override("margin_left", _i(16))
+	quick_start_margin.add_theme_constant_override("margin_top", _i(16))
+	quick_start_margin.add_theme_constant_override("margin_right", _i(16))
+	quick_start_margin.add_theme_constant_override("margin_bottom", _i(16))
+	quick_start_panel.add_child(quick_start_margin)
+
+	var quick_start_box := VBoxContainer.new()
+	quick_start_box.add_theme_constant_override("separation", _i(10))
+	quick_start_margin.add_child(quick_start_box)
+	quick_start_box.add_child(_make_label("快速试阵", 22, Color(1.0, 0.92, 0.8, 1.0)))
+	quick_start_box.add_child(_make_label("对照 web 原型保留第 10 / 20 波捷径，便于快速检查 HUD、混编敌潮与角色 build。试阵入口不会写入本地排行榜。", 16, Color(0.88, 0.92, 0.96, 0.94)))
+
+	var quick_start_row := HBoxContainer.new()
+	quick_start_row.add_theme_constant_override("separation", _i(10))
+	quick_start_box.add_child(quick_start_row)
+	quick_start_row.add_child(_make_quick_start_button("标准入卷", Color(0.92, 0.68, 0.42, 1.0), Callable(self, "_on_start_pressed")))
+	quick_start_row.add_child(_make_quick_start_button("试阵 · 第10波", Color(0.56, 0.84, 1.0, 1.0), Callable(self, "_on_start_wave_10_pressed")))
+	quick_start_row.add_child(_make_quick_start_button("压测 · 第20波", Color(0.78, 0.52, 1.0, 1.0), Callable(self, "_on_start_wave_20_pressed")))
+
 	_build_character_archive_overlay()
 	_build_recipe_atlas_overlay()
 	_build_enemy_archive_overlay()
@@ -516,6 +542,15 @@ func _make_action_button(text: String, accent: Color) -> Button:
 	button.add_theme_stylebox_override("normal", _make_button_style(accent))
 	button.add_theme_stylebox_override("hover", _make_button_style(accent.lightened(0.1)))
 	button.add_theme_stylebox_override("pressed", _make_button_style(accent.darkened(0.08)))
+	return button
+
+
+func _make_quick_start_button(text: String, accent: Color, callback: Callable) -> Button:
+	var button := _make_action_button(text, accent)
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.custom_minimum_size = _v(0.0, 48.0)
+	button.add_theme_font_size_override("font_size", _i(18))
+	button.pressed.connect(callback)
 	return button
 
 
@@ -1197,11 +1232,23 @@ func _on_leaderboard_pressed() -> void:
 
 
 func _on_start_pressed() -> void:
+	_start_with_wave(1)
+
+
+func _on_start_wave_10_pressed() -> void:
+	_start_with_wave(10)
+
+
+func _on_start_wave_20_pressed() -> void:
+	_start_with_wave(20)
+
+
+func _start_with_wave(start_wave: int) -> void:
 	if transition_busy:
 		return
 	_hide_secondary_overlays()
 	Session.select_hero(selected_hero)
-	Session.prepare_battle_intro("zihai_menu")
+	Session.prepare_battle_intro("zihai_menu", start_wave)
 	_start_battle_transition()
 
 

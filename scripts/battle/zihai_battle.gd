@@ -90,6 +90,7 @@ func _ready() -> void:
 	_reveal_map_around_position(player.global_position)
 	_spawn_props()
 	_spawn_hud()
+	_apply_intro_preset()
 	_sync_hud()
 	_start_opening_sequence()
 	set_process(true)
@@ -1133,8 +1134,11 @@ func _on_player_defeated() -> void:
 	hud.hide_boss()
 	hud.show_banner("字海沉没", Color(1.0, 0.76, 0.58, 1.0), 2.0)
 	Session.last_run_summary = _build_run_summary()
-	Session.record_local_run(Session.last_run_summary, Session.selected_hero)
-	hud.set_game_over("墨潮吞没了你。按 R 立即重开，或按 Esc 返回二级菜单。", elapsed_time, kills, threat_level, level)
+	if bool(Session.last_run_summary.get("recordable", true)):
+		Session.record_local_run(Session.last_run_summary, Session.selected_hero)
+		hud.set_game_over("墨潮吞没了你。按 R 立即重开，或按 Esc 返回二级菜单。", elapsed_time, kills, threat_level, level)
+	else:
+		hud.set_game_over("试阵捷径不会写入排行榜。按 R 立即重开，或按 Esc 返回二级菜单。", elapsed_time, kills, threat_level, level)
 
 
 func _build_run_summary() -> Dictionary:
@@ -1147,6 +1151,8 @@ func _build_run_summary() -> Dictionary:
 		"kills": kills,
 		"threat": threat_level,
 		"level": level,
+		"start_wave": int(battle_intro.get("start_wave", 1)),
+		"recordable": bool(battle_intro.get("recordable", true)),
 		"bosses": int(Session.chapter_progress.get("completed_bosses", 0)),
 		"chapter_complete": bool(Session.chapter_progress.get("chapter_complete", false)),
 		"radicals": radical_counts.duplicate(true),
@@ -1178,6 +1184,74 @@ func _sync_hud() -> void:
 	hud.set_skills(skill_levels, word_skill_levels, word_progress, blade_level, Session.selected_hero)
 
 
+func _apply_intro_preset() -> void:
+	if battle_intro.is_empty() or not battle_intro.has("start_preset") or not is_instance_valid(player):
+		return
+
+	var preset_variant: Variant = battle_intro.get("start_preset", {})
+	if not (preset_variant is Dictionary):
+		return
+
+	var preset := preset_variant as Dictionary
+	var preset_elapsed: float = max(0.0, float(preset.get("elapsed_time", 0.0)))
+	elapsed_time = preset_elapsed
+	level = maxi(1, int(preset.get("level", level)))
+	experience = maxi(0, int(preset.get("experience", experience)))
+	experience_target = maxi(1, int(preset.get("experience_target", experience_target)))
+	threat_level = maxi(1, int(preset.get("start_wave", 1)))
+	last_announced_threat_level = threat_level
+	boss_spawn_index = _boss_spawn_index_for_elapsed(preset_elapsed)
+	var skipped_bosses := mini(boss_spawn_index, BOSS_SPAWN_TIMES.size())
+	Session.chapter_progress["completed_bosses"] = skipped_bosses
+	Session.chapter_progress["chapter_complete"] = skipped_bosses >= BOSS_SPAWN_TIMES.size()
+
+	for radical in radical_counts.keys():
+		radical_counts[radical] = 0
+	var preset_radicals: Dictionary = preset.get("radicals", {})
+	for radical_variant in preset_radicals.keys():
+		var radical := String(radical_variant)
+		radical_counts[radical] = maxi(0, int(preset_radicals[radical_variant]))
+
+	for recipe_id in skill_levels.keys():
+		skill_levels[recipe_id] = 0
+	var preset_recipes: Dictionary = preset.get("recipes", {})
+	for recipe_id_variant in preset_recipes.keys():
+		var recipe_id := String(recipe_id_variant)
+		var recipe_level := maxi(0, int(preset_recipes[recipe_id_variant]))
+		skill_levels[recipe_id] = recipe_level
+		player.set_skill_level(recipe_id, recipe_level)
+
+	for word_id in word_skill_levels.keys():
+		word_skill_levels[word_id] = 0
+	var preset_words: Dictionary = preset.get("words", {})
+	for word_id_variant in preset_words.keys():
+		var word_id := String(word_id_variant)
+		var word_level := maxi(0, int(preset_words[word_id_variant]))
+		word_skill_levels[word_id] = word_level
+		player.set_word_skill_level(word_id, word_level)
+
+	for word_id in word_progress.keys():
+		word_progress[word_id] = 0
+	var preset_word_progress: Dictionary = preset.get("word_progress", {})
+	for word_id_variant in preset_word_progress.keys():
+		word_progress[String(word_id_variant)] = maxi(0, int(preset_word_progress[word_id_variant]))
+
+	var blade_target := maxi(0, int(preset.get("blade_level", 0)))
+	for _blade_index in range(blade_target):
+		player.apply_blade_upgrade()
+
+	player.health = player.max_health
+	player.health_changed.emit(player.health, player.max_health)
+
+
+func _boss_spawn_index_for_elapsed(time_value: float) -> int:
+	var next_index := 0
+	for spawn_time in BOSS_SPAWN_TIMES:
+		if time_value >= float(spawn_time):
+			next_index += 1
+	return next_index
+
+
 func _start_opening_sequence() -> void:
 	opening_time = 1.65
 	spawn_timer = 1.2
@@ -1187,7 +1261,7 @@ func _start_opening_sequence() -> void:
 	var intro_tip: String = "先收第一枚偏旁，尽快合出首个成字。"
 	if not battle_intro.is_empty():
 		intro_title = String(battle_intro.get("title", intro_title))
-		intro_tip = "%s 先收第一枚偏旁，尽快合出首个成字。" % String(battle_intro.get("subtitle", "执笔者已入卷。"))
+		intro_tip = String(battle_intro.get("tip", intro_tip))
 	hud.show_banner("%s  ·  %s 入卷" % [intro_title, String(hero_data["name"])], accent, 2.6)
 	hud.set_tip(intro_tip)
 	_spawn_wave_effect(player.global_position, 3.3, accent, String(hero_data["glyph"]))
