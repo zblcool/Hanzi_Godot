@@ -9,23 +9,25 @@
 - 类 Slay the Spire 的卡牌爬塔 / deckbuilder
 - 核心是“偏旁、汉字、语义组合”直接进入战斗和构筑
 
+说明：下面保留了迁移前 web 原型的玩法与内容记录，方便继续对照设计目标；但仓库当前实现已经切到 Godot，工程入口、目录结构与导出方式请以本 README 的“当前整体结构”“启动器 / 首页现状”“工程结构”“Vercel 预览部署”为准。
+
 ## 当前整体结构
-- 技术上目前是 `HTML/CSS/JS`
-- 启动页有一个 `Three.js` 抽象漂浮背景：汉字 sprite + 半透明几何体在空间中漂浮碰撞
-- `字海残卷` 和 `仓颉之路` 目前战斗层都还是网页原型，其中 `仓颉之路` 明确走 Babylon.js 主线
-- `README.md` 和 `CHANGELOG.md` 一直在持续更新
+- 技术上当前是 `Godot 4.6.1` 项目，运行入口是 `project.godot -> res://scenes/app/launcher.tscn`
+- 当前仓库主线已经落地 `字海残卷` 的 Godot 迁移链路：`启动器 -> 字海二级菜单 -> 3D 战斗`
+- `仓颉之路` 目前仍保留为启动器里的方向卡片，还没有在这个仓库里落成独立可玩的 Godot 场景
+- Web 导出通过 `./scripts/export_web.sh` 生成到 `build/index.html`，`vercel.json` 负责部署入口
+- `README.md`、`CHANGELOG.md`、`CONTRIBUTING.md` 持续同步当前迁移状态
 
 ## 启动器 / 首页现状
-- 首页标题已经改成 `汉字游戏启动器`
-- 视觉上是类似主机首页 / PS5 选游戏的感觉
-- 只有两个游戏入口卡片，信息非常精简，每个游戏只留一句 tagline 和一个抽象图标
-- 较长说明被收进二级 `关于游戏` 面板
+- 首页当前由 Godot `Control` 场景实现，视觉方向仍然是主机首页 / 选游戏入口
+- 标题仍是 `汉字游戏启动器`，并保留两个游戏入口卡片与 `关于字海` 信息面板
+- 背景不再依赖旧的 `Three.js` 页面，而是在 Godot 内直接绘制漂浮汉字与几何氛围层
 - 有微信 / iOS 的视觉引导：
   - 微信里提示尽量用系统浏览器打开
   - iOS 提示 `分享 -> 添加到主屏幕`
-- 最新改动：点击 `字海残卷` 后，不是直接进 Babylon 战斗页，而是先进入一个真正的二级菜单层
-- 这个 `字海` 二级菜单保留和首页一样的漂浮 `Three.js` 背景
-- 只有在选完角色并确认开始后，才真正进入 `字海` 的 Babylon 战场
+- 点击 `字海残卷` 后，会先进入真正的二级菜单 `scenes/app/zihai_menu.tscn`
+- 角色选择确认后，才进入 `scenes/battle/zihai_battle.tscn`
+- `仓颉之路` 目前仍是启动器中的占位入口，等待后续迁移接入
 
 ## 字海残卷（目前已经是较完整可玩原型）
 ### 核心玩法
@@ -197,32 +199,38 @@
 - 英文 / 中文双语 UI 骨架已经开始接入
 
 ## 工程结构
-`字海残卷`
-- 主要页面：`hanzi-hero.html`
-- 主逻辑：`src/game.js`
-- 已部分模块化到：
-  - `src/hanzi-hero/data.js`
-  - `src/hanzi-hero/dom.js`
-  - `src/hanzi-hero/utils.js`
-  - `src/hanzi-hero/audio.js`
-  - `src/hanzi-hero/rendering.js`
+`项目入口`
+- `project.godot`
+- `run/main_scene = res://scenes/app/launcher.tscn`
 
-`仓颉之路`
-- 主要页面：`cangjie-road.html`
-- 主逻辑：`src/cangjie-road.js`
+`启动器 / 二级菜单`
+- 场景：`scenes/app/launcher.tscn`
+- 脚本：`scripts/app/launcher.gd`
+- 字海菜单场景：`scenes/app/zihai_menu.tscn`
+- 字海菜单脚本：`scripts/app/zihai_menu.gd`
 
-启动器
-- `index.html`
-- `launcher.css`
-- `src/launcher.js`
-- `src/launcher-background.js`
+`字海残卷战斗`
+- 主战斗场景：`scenes/battle/zihai_battle.tscn`
+- 主战斗脚本：`scripts/battle/zihai_battle.gd`
+- 实体场景：`scenes/entities/`
+- 实体脚本：`scripts/entities/`
+- HUD 场景：`scenes/ui/battle_hud.tscn`
+- UI / 触控脚本：`scripts/ui/`
+
+`共享状态 / 基础能力`
+- 角色与运行时状态：`scripts/core/session.gd`
+- CJK 字体加载：`scripts/core/cjk_font.gd`
+
+`Web 导出`
+- 导出脚本：`scripts/export_web.sh`
+- 导出目录：`build/`
 
 ## 当前整体判断
 - `字海残卷` 已经是一个“核心循环、敌人谱系、世界物件、进度系统、移动端适配、在线排行榜都存在”的完整动作原型
 - `仓颉之路` 也已经不是 barebones，而是有自己汉字 identity 的 deckbuilder 原型
 - 整个项目现在最重要的价值，不只是“会显示汉字”，而是“汉字结构和语义已经变成玩法系统”
 
-## 如果迁移到 Godot，最值得保留的核心
+## 当前 Godot 迁移最值得继续保留的核心
 优先保留这几条设计主轴：
 1. 首页启动器 -> 游戏二级菜单 -> 真正进入战斗 的层级体验
 2. `字海` 的偏旁 -> 合字 -> 词技 成长链
