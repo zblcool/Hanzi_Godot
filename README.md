@@ -227,6 +227,7 @@
 
 `Web 导出`
 - 导出脚本：`scripts/export_web.sh`
+- Godot 导出预设：`export_presets.cfg`
 - 导出目录：`build/`
 
 ## 当前整体判断
@@ -246,6 +247,6 @@
 
 ## Vercel 预览部署
 - 仓库现在带了 `vercel.json`，把 GitHub 仓库接到 Vercel 之后，每次 push 都会自动触发一次 web 导出和部署。
-- 构建命令是 `./scripts/export_web.sh`，会先导入资源，再导出到 `build/index.html`，所以不需要把 `build/` 产物提交进仓库。
+- 构建命令是 `./scripts/export_web.sh`；实际使用的 Web 导出预设保存在仓库根目录的 `export_presets.cfg` 中。脚本会先导入资源，再导出到 `build/index.html`，所以不需要把 `build/` 产物提交进仓库。
 - 在 Linux / Vercel 环境里，脚本会自动下载 `Godot 4.6.1` 编辑器和 export templates；本地如果已经装了 Godot，则直接复用本机安装。
 - 本地手动验证也可以直接跑同一条命令：`./scripts/export_web.sh`
