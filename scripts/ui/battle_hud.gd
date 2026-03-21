@@ -296,6 +296,11 @@ var choice_mode: String = ""
 var state_overlay: Control
 var state_title_label: Label
 var state_body_label: Label
+var state_name_hint_label: Label
+var state_name_row: HBoxContainer
+var state_name_status_label: Label
+var state_name_input: LineEdit
+var state_name_button: Button
 var state_primary_button: Button
 var state_secondary_button: Button
 var state_tertiary_button: Button
@@ -532,6 +537,7 @@ func show_pause_menu(elapsed: float, kills: int, threat: int, level: int) -> voi
 	hide_choice_overlay()
 	hide_map_overlay()
 	overlay_label.visible = false
+	_hide_state_name_editor()
 	state_mode = "pause"
 	state_title_label.text = "墨阵暂歇"
 	state_body_label.text = "当前进度\n存活 %s\n波次 %d   击破 %d   等级 Lv.%d\n\n按 E 或 Esc 继续，按 R 立即重开。" % [
@@ -571,6 +577,10 @@ func set_game_over(summary: String, elapsed: float = 0.0, kills: int = 0, threat
 		kills,
 		level
 	]
+	_show_state_name_editor(
+		"战绩署名",
+		"本轮记录已经写入本地排行榜。你可以直接改成想显示的名字；留空则保留系统生成的武侠名。"
+	)
 	_configure_state_button(state_primary_button, "重新开始", Callable(self, "_emit_restart"))
 	_configure_state_button(state_secondary_button, "返回菜单", Callable(self, "_emit_return_menu"))
 	_configure_state_button(state_tertiary_button, "查看排行榜", Callable(self, "_show_local_leaderboard"))
@@ -594,6 +604,10 @@ func _show_local_leaderboard() -> void:
 	state_mode = "leaderboard"
 	state_title_label.text = "本地排行榜"
 	state_body_label.text = _build_local_leaderboard_text()
+	_show_state_name_editor(
+		"最近一条战绩署名",
+		"如果刚刚结束这一轮，可以继续修改最近保存到排行榜的那条名字。"
+	)
 	_configure_state_button(state_primary_button, "返回结算", Callable(self, "_show_game_over_summary"))
 	_configure_state_button(state_secondary_button, "重新开始", Callable(self, "_emit_restart"))
 	_configure_state_button(state_tertiary_button, "返回菜单", Callable(self, "_emit_return_menu"))
@@ -1071,9 +1085,9 @@ func _build_state_overlay(root: Control) -> void:
 	var panel := PanelContainer.new()
 	panel.set_anchors_preset(Control.PRESET_CENTER)
 	panel.offset_left = -360.0
-	panel.offset_top = -220.0
+	panel.offset_top = -270.0
 	panel.offset_right = 360.0
-	panel.offset_bottom = 220.0
+	panel.offset_bottom = 270.0
 	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.06, 0.08, 0.1, 0.96), Color(0.94, 0.7, 0.4, 0.92), 24))
 	state_overlay.add_child(panel)
 
@@ -1093,6 +1107,35 @@ func _build_state_overlay(root: Control) -> void:
 	state_body_label = _make_label("", 20, Color(0.88, 0.92, 0.96, 0.96), 2.0)
 	box.add_child(state_title_label)
 	box.add_child(state_body_label)
+
+	state_name_hint_label = _make_label("", 16, Color(0.96, 0.82, 0.56, 0.96))
+	box.add_child(state_name_hint_label)
+
+	state_name_row = HBoxContainer.new()
+	state_name_row.add_theme_constant_override("separation", 10)
+	box.add_child(state_name_row)
+
+	state_name_input = LineEdit.new()
+	state_name_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	state_name_input.custom_minimum_size = Vector2(0.0, 48.0)
+	state_name_input.placeholder_text = "留空则保留随机侠名"
+	state_name_input.clear_button_enabled = true
+	state_name_input.add_theme_font_override("font", ui_font)
+	state_name_input.add_theme_font_size_override("font_size", 20)
+	state_name_input.text_submitted.connect(_on_state_name_submitted)
+	state_name_row.add_child(state_name_input)
+
+	state_name_button = _make_state_button()
+	state_name_button.custom_minimum_size = Vector2(160.0, 48.0)
+	state_name_button.text = "保存署名"
+	state_name_button.add_theme_stylebox_override("normal", _make_button_style(Color(0.92, 0.62, 0.28, 1.0), 18))
+	state_name_button.add_theme_stylebox_override("hover", _make_button_style(Color(0.98, 0.7, 0.34, 1.0), 18))
+	state_name_button.add_theme_stylebox_override("pressed", _make_button_style(Color(0.84, 0.54, 0.22, 1.0), 18))
+	state_name_button.pressed.connect(_on_state_name_save_pressed)
+	state_name_row.add_child(state_name_button)
+
+	state_name_status_label = _make_label("", 15, Color(0.82, 0.9, 1.0, 0.92))
+	box.add_child(state_name_status_label)
 
 	var spacer := Control.new()
 	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -1220,6 +1263,65 @@ func _update_map_zoom_label() -> void:
 	if map_zoom_label == null or map_canvas == null:
 		return
 	map_zoom_label.text = "缩放  %.2fx" % map_canvas.zoom
+
+
+func _show_state_name_editor(title_text: String, detail_text: String) -> void:
+	if state_name_hint_label == null or state_name_row == null or state_name_input == null or state_name_button == null or state_name_status_label == null:
+		return
+
+	var last_entry: Dictionary = Session.get_last_recorded_leaderboard_run()
+	if last_entry.is_empty():
+		_hide_state_name_editor()
+		return
+
+	state_name_hint_label.visible = true
+	state_name_hint_label.text = "%s\n%s" % [title_text, detail_text]
+	state_name_row.visible = true
+	state_name_input.visible = true
+	state_name_input.text = String(last_entry.get("player_name", ""))
+	state_name_button.visible = true
+	state_name_button.disabled = false
+	state_name_status_label.visible = true
+	state_name_status_label.text = "当前署名：%s" % String(last_entry.get("player_name", ""))
+
+
+func _hide_state_name_editor() -> void:
+	if state_name_hint_label != null:
+		state_name_hint_label.visible = false
+		state_name_hint_label.text = ""
+	if state_name_row != null:
+		state_name_row.visible = false
+	if state_name_input != null:
+		state_name_input.visible = false
+		state_name_input.text = ""
+	if state_name_button != null:
+		state_name_button.visible = false
+		state_name_button.disabled = true
+	if state_name_status_label != null:
+		state_name_status_label.visible = false
+		state_name_status_label.text = ""
+
+
+func _on_state_name_submitted(_text: String) -> void:
+	_save_state_name()
+
+
+func _on_state_name_save_pressed() -> void:
+	_save_state_name()
+
+
+func _save_state_name() -> void:
+	if state_name_input == null or state_name_status_label == null:
+		return
+
+	var resolved_name := Session.update_last_recorded_run_player_name(state_name_input.text)
+	if resolved_name.is_empty():
+		return
+
+	state_name_input.text = resolved_name
+	state_name_status_label.text = "当前署名：%s" % resolved_name
+	if state_mode == "leaderboard":
+		state_body_label.text = _build_local_leaderboard_text()
 
 
 func _emit_pause_resume() -> void:

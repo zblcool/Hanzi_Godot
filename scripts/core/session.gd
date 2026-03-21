@@ -268,6 +268,7 @@ var pending_battle_intro: Dictionary = {}
 var chapter_progress: Dictionary = {}
 var local_leaderboard: Array[Dictionary] = []
 var local_leaderboard_loaded: bool = false
+var last_recorded_leaderboard_run: Dictionary = {}
 
 
 func _ready() -> void:
@@ -408,6 +409,7 @@ func record_local_run(summary: Dictionary, hero_id: String = selected_hero) -> v
 		"recorded_at": recorded_at
 	})
 	if normalized_entry.is_empty():
+		last_recorded_leaderboard_run = {}
 		return
 
 	local_leaderboard.append(normalized_entry)
@@ -415,6 +417,14 @@ func record_local_run(summary: Dictionary, hero_id: String = selected_hero) -> v
 	while local_leaderboard.size() > LOCAL_LEADERBOARD_LIMIT:
 		local_leaderboard.pop_back()
 	_save_local_leaderboard()
+	last_recorded_leaderboard_run = {}
+	for entry in local_leaderboard:
+		if int(entry.get("recorded_at", 0)) != recorded_at:
+			continue
+		if String(entry.get("hero_id", selected_hero)) != hero_id:
+			continue
+		last_recorded_leaderboard_run = entry.duplicate(true)
+		break
 
 
 func get_local_leaderboard(limit: int = 5) -> Array[Dictionary]:
@@ -425,6 +435,36 @@ func get_local_leaderboard(limit: int = 5) -> Array[Dictionary]:
 	for index in range(safe_limit):
 		entries.append(local_leaderboard[index].duplicate(true))
 	return entries
+
+
+func get_last_recorded_leaderboard_run() -> Dictionary:
+	return last_recorded_leaderboard_run.duplicate(true)
+
+
+func update_last_recorded_run_player_name(raw_name: String) -> String:
+	if last_recorded_leaderboard_run.is_empty():
+		return ""
+
+	var hero_id := String(last_recorded_leaderboard_run.get("hero_id", selected_hero))
+	var recorded_at: int = int(last_recorded_leaderboard_run.get("recorded_at", 0))
+	var resolved_name := _resolve_run_player_name(raw_name, hero_id, recorded_at)
+	var updated := false
+
+	for index in range(local_leaderboard.size()):
+		var entry: Dictionary = local_leaderboard[index]
+		if int(entry.get("recorded_at", 0)) != recorded_at:
+			continue
+		if String(entry.get("hero_id", selected_hero)) != hero_id:
+			continue
+		entry["player_name"] = resolved_name
+		local_leaderboard[index] = entry
+		updated = true
+		break
+
+	last_recorded_leaderboard_run["player_name"] = resolved_name
+	if updated:
+		_save_local_leaderboard()
+	return resolved_name
 
 
 func _ensure_local_leaderboard_loaded() -> void:
