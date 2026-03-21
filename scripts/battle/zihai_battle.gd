@@ -32,6 +32,18 @@ const PERFORMANCE_GROUND_DETAIL_COUNTS := {"performance": 6, "balanced": 12, "qu
 const PERFORMANCE_WAVE_SHARDS := {"performance": 2, "balanced": 4, "quality": 6}
 const PERFORMANCE_INTRO_SYMBOLS := {"performance": 3, "balanced": 4, "quality": 6}
 const PERFORMANCE_BOSS_SYMBOLS := {"performance": 4, "balanced": 6, "quality": 8}
+const SOUNDTRACK_LIBRARY := {
+	"mosslightCanopy": {
+		"title": "苔月幽林",
+		"mood": "16-bit 静夜丛林",
+		"accent": Color(0.56, 0.84, 0.72, 1.0)
+	},
+	"fireflyFootpath": {
+		"title": "萤火小径",
+		"mood": "16-bit 轻快巡游",
+		"accent": Color(0.98, 0.76, 0.42, 1.0)
+	}
+}
 
 @onready var world_environment: WorldEnvironment = $WorldEnvironment
 @onready var camera_rig: Node3D = $CameraRig
@@ -78,6 +90,8 @@ var battle_settings: Dictionary = {}
 var ambient_glyph_root: Node3D
 var ambient_glyph_entries: Array[Dictionary] = []
 var ground_detail_nodes: Array[Node3D] = []
+var current_soundtrack_id: String = ""
+var current_soundtrack_cue: String = ""
 
 var level: int = 1
 var experience: int = 0
@@ -104,6 +118,7 @@ func _ready() -> void:
 	_apply_intro_preset()
 	_apply_battle_settings()
 	_sync_hud()
+	_prime_soundtrack_ui()
 	_start_opening_sequence()
 	set_process(true)
 
@@ -206,6 +221,30 @@ func _spawn_hud() -> void:
 	hud.map_toggle_requested.connect(_on_hud_map_toggle_requested)
 	hud.battle_setting_changed.connect(_on_hud_battle_setting_changed)
 	_spawn_touch_controls()
+
+
+func _prime_soundtrack_ui() -> void:
+	var track_id := "fireflyFootpath" if threat_level >= 4 or elapsed_time >= 60.0 else "mosslightCanopy"
+	var cue := "试阵预热" if elapsed_time > 0.0 or threat_level > 1 else "待入曲"
+	_set_soundtrack(track_id, cue, false, true)
+
+
+func _set_soundtrack(track_id: String, cue: String, announce: bool = true, force: bool = false) -> void:
+	if hud == null or not SOUNDTRACK_LIBRARY.has(track_id):
+		return
+
+	var should_announce := announce and (force or current_soundtrack_id != track_id or current_soundtrack_cue != cue)
+	current_soundtrack_id = track_id
+	current_soundtrack_cue = cue
+	var track: Dictionary = SOUNDTRACK_LIBRARY[track_id]
+	var accent := Color(track.get("accent", Color(1.0, 1.0, 1.0, 1.0)))
+	hud.set_soundtrack(
+		String(track.get("title", track_id)),
+		String(track.get("mood", "")),
+		cue,
+		accent,
+		should_announce
+	)
 
 
 func _spawn_touch_controls() -> void:
@@ -348,6 +387,7 @@ func _spawn_boss(stage_index: int) -> void:
 	hud.show_banner("卷主现身", tint, 2.4)
 	hud.set_tip(_boss_stage_tip(stage_index))
 	hud.show_boss(String(boss.enemy_name), String(boss.glyph), tint, boss.max_health)
+	_set_soundtrack("fireflyFootpath", "卷主压阵", true, true)
 	_spawn_wave_effect(boss.global_position, 6.2, tint, String(boss.glyph))
 	_spawn_boss_entrance_effect(boss.global_position, String(boss.glyph), tint)
 
@@ -1407,6 +1447,12 @@ func _start_opening_sequence() -> void:
 		intro_tip = String(battle_intro.get("tip", intro_tip))
 	hud.show_banner("%s  ·  %s 入卷" % [intro_title, String(hero_data["name"])], accent, 2.6)
 	hud.set_tip(intro_tip)
+	var soundtrack_track := "mosslightCanopy"
+	var soundtrack_cue := "入卷铺陈"
+	if threat_level >= 4 or elapsed_time >= 60.0:
+		soundtrack_track = "fireflyFootpath"
+		soundtrack_cue = "试阵开卷"
+	_set_soundtrack(soundtrack_track, soundtrack_cue, true, true)
 	_spawn_wave_effect(player.global_position, 3.3, accent, String(hero_data["glyph"]))
 	_spawn_intro_symbols(String(hero_data["glyph"]), accent)
 
@@ -1418,9 +1464,11 @@ func _on_boss_defeated(world_position: Vector3) -> void:
 		Session.chapter_progress["chapter_complete"] = true
 		hud.show_banner("残卷一暂定", Color(1.0, 0.88, 0.58, 1.0), 2.6)
 		hud.set_tip("本卷两位卷主都已崩散，章节目标完成。继续战斗可测试成长上限。")
+		_set_soundtrack("mosslightCanopy", "残卷暂定", true, true)
 	else:
 		hud.show_banner("卷主退散", Color(1.0, 0.84, 0.52, 1.0), 2.2)
 		hud.set_tip("卷主崩散，残卷继续翻开。抓紧收补给并准备迎接更深的一层。")
+		_set_soundtrack("mosslightCanopy", "残卷回气", true, true)
 	_spawn_wave_effect(world_position, 7.2, Color(1.0, 0.74, 0.46, 1.0), "破")
 	_gain_experience(12)
 
@@ -1435,8 +1483,11 @@ func _on_threat_level_advanced(new_threat_level: int) -> void:
 	if _is_big_wave(new_threat_level):
 		hud.show_banner("字潮第 %d 波 · 大潮" % new_threat_level, tint, 2.35)
 		spawn_timer = min(spawn_timer, 0.16)
+		_set_soundtrack("fireflyFootpath", "大潮压境", true, true)
 	else:
 		hud.show_banner("字潮第 %d 波" % new_threat_level, tint, 1.85)
+		if new_threat_level == 2:
+			_set_soundtrack("fireflyFootpath", "字潮提速", true, true)
 	hud.set_tip(_threat_level_tip(new_threat_level))
 	_spawn_wave_effect(player.global_position, (6.4 if _is_big_wave(new_threat_level) else 4.6) + float(new_threat_level) * 0.45, tint, wave_glyph)
 	_spawn_intro_symbols(wave_glyph, tint)

@@ -32,7 +32,7 @@ Status legend:
 - `[done]` Mobile joystick, touch interact, pause button, and landscape guard. Notes: hanziHero mobile battle flow depends on these protections; Godot already has matching control coverage.
 - `[done]` First runtime settings / LOD panel slice. Notes: Godot pause overlay now exposes a low-risk `战场布置` panel with remembered performance preset, enemy health bar toggle, and ambient glyph density controls, covering the first practical slice of hanziHero's settings modal.
 - `[pending]` Runtime settings follow-through for effect/detail parity. Notes: hanziHero still exposes separate visual-effects and far-enemy-detail toggles; Godot currently covers the first preset slice but not the full matrix yet.
-- `[pending]` Music track toast and soundtrack UI. Notes: hanziHero shows the active procedural track name and mood; Godot has no soundtrack or track notification surface yet.
+- `[done]` Music track toast and soundtrack UI. Notes: hanziHero shows the active procedural track name and mood; Godot battle HUD now carries a matching `战场乐题` card plus a top-right `配乐提示` toast that reuses the source track names and mood text on key battle beats.
 - `[pending]` Phrase / event log panel. Notes: hanziHero records discovered sentence events in a dedicated log; Godot battle UI does not yet surface event history.
 - `[pending]` Bilingual HUD copy. Notes: source battle UI can switch zh/en; Godot HUD remains Chinese-only.
 
@@ -67,7 +67,7 @@ Status legend:
 ## Polish
 
 - `[done]` Tree fade-through, bush anti-abuse lockout, banners, and strong telegraph readability. Notes: Godot already carries several of the source combat-polish beats into 3D.
-- `[pending]` Procedural music playback and current-track feedback. Notes: source already rotates multiple tracks and announces them; Godot is still silent on that front.
+- `[pending]` Procedural music playback and current-track feedback. Notes: Godot now has the HUD-side track card and toast, but actual procedural playback / loop rotation is still missing.
 - `[pending]` Higher-end hit/audio differentiation. Notes: hanziHero has more layered weapon/skill sound identity and lingering glyph afterimages; Godot feedback can be pushed further.
 - `[pending]` Themeable launcher/menu presentation. Notes: source supports stronger visual mode switching; Godot keeps one locked art direction so far.
 - `[pending]` More stage spectacle for big unlocks and transitions. Notes: source leans harder into large character/word reveal moments and evolving battlefield mood.

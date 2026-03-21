@@ -274,6 +274,9 @@ var status_label: Label
 var radicals_label: Label
 var skills_label: Label
 var tip_label: Label
+var soundtrack_panel: PanelContainer
+var soundtrack_title_label: Label
+var soundtrack_detail_label: Label
 var banner_label: Label
 var overlay_label: Label
 var xp_bar: ProgressBar
@@ -317,6 +320,10 @@ var map_zoom_label: Label
 
 var banner_time := 0.0
 var banner_color: Color = Color(1.0, 0.95, 0.84, 1.0)
+var soundtrack_toast: PanelContainer
+var soundtrack_toast_title_label: Label
+var soundtrack_toast_detail_label: Label
+var soundtrack_toast_time := 0.0
 
 
 func _ready() -> void:
@@ -337,6 +344,16 @@ func _process(delta: float) -> void:
 		banner_label.modulate = Color(banner_color.r, banner_color.g, banner_color.b, alpha)
 	else:
 		banner_label.visible = false
+
+	if soundtrack_toast_time > 0.0:
+		soundtrack_toast_time -= delta
+		soundtrack_toast.visible = true
+		var toast_alpha := 1.0
+		if soundtrack_toast_time < 0.42:
+			toast_alpha = clamp(soundtrack_toast_time / 0.42, 0.0, 1.0)
+		soundtrack_toast.modulate = Color(1.0, 1.0, 1.0, toast_alpha)
+	else:
+		soundtrack_toast.visible = false
 
 
 func configure(hero_data: Dictionary) -> void:
@@ -469,6 +486,33 @@ func show_banner(text: String, color: Color, duration: float = 2.4) -> void:
 	banner_label.modulate = color
 	banner_label.visible = true
 	banner_time = duration
+
+
+func set_soundtrack(title: String, mood: String, cue: String, accent: Color, announce: bool = false) -> void:
+	var detail_text := mood.strip_edges()
+	if not cue.strip_edges().is_empty():
+		if detail_text.is_empty():
+			detail_text = cue
+		else:
+			detail_text = "%s · %s" % [detail_text, cue]
+
+	_apply_soundtrack_style(soundtrack_panel, accent, 0.92, 0.46)
+	if soundtrack_title_label != null:
+		soundtrack_title_label.text = title
+	if soundtrack_detail_label != null:
+		soundtrack_detail_label.text = detail_text
+
+	if not announce or soundtrack_toast == null:
+		return
+
+	_apply_soundtrack_style(soundtrack_toast, accent, 0.96, 0.72)
+	if soundtrack_toast_title_label != null:
+		soundtrack_toast_title_label.text = title
+	if soundtrack_toast_detail_label != null:
+		soundtrack_toast_detail_label.text = detail_text
+	soundtrack_toast.visible = true
+	soundtrack_toast.modulate = Color(1.0, 1.0, 1.0, 1.0)
+	soundtrack_toast_time = 3.0
 
 
 func show_boss(name: String, glyph: String, tint: Color, maximum: float) -> void:
@@ -865,7 +909,7 @@ func _build_ui() -> void:
 	left_column.add_theme_constant_override("separation", 16)
 	root.add_child(left_column)
 
-	var intro_panel := _make_panel(Color(0.05, 0.08, 0.1, 0.76), Color(0.93, 0.69, 0.38, 0.84), Vector2(410.0, 330.0))
+	var intro_panel := _make_panel(Color(0.05, 0.08, 0.1, 0.76), Color(0.93, 0.69, 0.38, 0.84), Vector2(410.0, 430.0))
 	left_column.add_child(intro_panel)
 	var intro_box := _panel_box(intro_panel)
 	intro_box.add_child(_make_label("INK-BORN ROGUELITE DEMO", 17, Color(0.96, 0.82, 0.52, 0.86), 4.0))
@@ -890,6 +934,18 @@ func _build_ui() -> void:
 	intro_box.add_child(xp_bar)
 	status_label = _make_label("存活  00:00\n波次  1\n击破  0", 20, Color(0.86, 0.92, 0.98, 0.98))
 	intro_box.add_child(status_label)
+
+	soundtrack_panel = _make_panel(Color(0.06, 0.09, 0.1, 0.92), Color(0.42, 0.66, 0.78, 0.44), Vector2(0.0, 100.0))
+	soundtrack_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	intro_box.add_child(soundtrack_panel)
+	var soundtrack_box := _panel_box(soundtrack_panel)
+	soundtrack_box.add_theme_constant_override("separation", 4)
+	soundtrack_box.add_child(_make_label("战场乐题", 14, Color(0.88, 0.94, 0.96, 0.72), 3.0))
+	soundtrack_title_label = _make_label("待入曲", 24, Color(1.0, 0.95, 0.86, 1.0))
+	soundtrack_box.add_child(soundtrack_title_label)
+	soundtrack_detail_label = _make_label("战局开始后会同步当前曲名与气氛提示。", 15, Color(0.84, 0.9, 0.94, 0.92))
+	soundtrack_box.add_child(soundtrack_detail_label)
+	_apply_soundtrack_style(soundtrack_panel, Color(0.42, 0.66, 0.78, 1.0), 0.92, 0.44)
 
 	var radicals_panel := _make_panel(Color(0.05, 0.07, 0.09, 0.72), Color(0.38, 0.72, 0.78, 0.72), Vector2(410.0, 184.0))
 	left_column.add_child(radicals_panel)
@@ -985,6 +1041,23 @@ func _build_ui() -> void:
 	overlay_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	overlay_label.visible = false
 	root.add_child(overlay_label)
+
+	soundtrack_toast = _make_panel(Color(0.08, 0.11, 0.13, 0.96), Color(0.92, 0.69, 0.38, 0.64), Vector2(300.0, 100.0))
+	soundtrack_toast.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	soundtrack_toast.offset_left = -690.0
+	soundtrack_toast.offset_top = 88.0
+	soundtrack_toast.offset_right = -390.0
+	soundtrack_toast.offset_bottom = 188.0
+	soundtrack_toast.visible = false
+	root.add_child(soundtrack_toast)
+	var soundtrack_toast_box := _panel_box(soundtrack_toast)
+	soundtrack_toast_box.add_theme_constant_override("separation", 4)
+	soundtrack_toast_box.add_child(_make_label("配乐提示", 14, Color(0.96, 0.9, 0.82, 0.76), 3.0))
+	soundtrack_toast_title_label = _make_label("苔月幽林", 24, Color(1.0, 0.95, 0.86, 1.0))
+	soundtrack_toast_box.add_child(soundtrack_toast_title_label)
+	soundtrack_toast_detail_label = _make_label("16-bit 静夜丛林 · 入卷铺陈", 15, Color(0.88, 0.92, 0.96, 0.92))
+	soundtrack_toast_box.add_child(soundtrack_toast_detail_label)
+	_apply_soundtrack_style(soundtrack_toast, Color(0.92, 0.69, 0.38, 1.0), 0.96, 0.64)
 
 	_build_map_overlay(root)
 	_build_choice_overlay(root)
@@ -1706,3 +1779,16 @@ func _make_button_style(fill_color: Color, radius: int) -> StyleBoxFlat:
 	style.corner_radius_bottom_left = radius
 	style.corner_radius_bottom_right = radius
 	return style
+
+
+func _apply_soundtrack_style(panel: PanelContainer, accent: Color, fill_alpha: float, border_alpha: float) -> void:
+	if panel == null:
+		return
+	panel.add_theme_stylebox_override(
+		"panel",
+		_make_panel_style(
+			Color(accent.r * 0.14, accent.g * 0.14, accent.b * 0.18, fill_alpha),
+			Color(accent.r, accent.g, accent.b, border_alpha),
+			22
+		)
+	)
