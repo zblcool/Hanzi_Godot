@@ -26,6 +26,12 @@ const TREE_FADE_ALPHA := 0.28
 const TREE_FADE_SPEED := 4.8
 const MAP_FOG_CELL_SIZE := 2.0
 const MAP_FOG_REVEAL_RADIUS := 5.2
+const AMBIENT_GLYPH_POOL := ["字", "海", "卷", "墨", "山", "月", "火", "木", "风", "雷", "隐", "锋"]
+const PERFORMANCE_FOG_DENSITY := {"performance": 0.009, "balanced": 0.012, "quality": 0.014}
+const PERFORMANCE_GROUND_DETAIL_COUNTS := {"performance": 6, "balanced": 12, "quality": 18}
+const PERFORMANCE_WAVE_SHARDS := {"performance": 2, "balanced": 4, "quality": 6}
+const PERFORMANCE_INTRO_SYMBOLS := {"performance": 3, "balanced": 4, "quality": 6}
+const PERFORMANCE_BOSS_SYMBOLS := {"performance": 4, "balanced": 6, "quality": 8}
 
 @onready var world_environment: WorldEnvironment = $WorldEnvironment
 @onready var camera_rig: Node3D = $CameraRig
@@ -68,6 +74,10 @@ var active_inkstone: Node3D = null
 var battle_intro: Dictionary = {}
 var explored_map_cells: Dictionary = {}
 var enemy_kills_by_type: Dictionary = {}
+var battle_settings: Dictionary = {}
+var ambient_glyph_root: Node3D
+var ambient_glyph_entries: Array[Dictionary] = []
+var ground_detail_nodes: Array[Node3D] = []
 
 var level: int = 1
 var experience: int = 0
@@ -78,6 +88,7 @@ var pending_level_choices: int = 0
 func _ready() -> void:
 	rng.randomize()
 	battle_intro = Session.consume_battle_intro()
+	battle_settings = Session.get_battle_settings()
 	radical_counts = Session.build_empty_radicals()
 	skill_levels = Session.build_empty_recipe_levels()
 	word_skill_levels = Session.build_empty_word_levels()
@@ -91,6 +102,7 @@ func _ready() -> void:
 	_spawn_props()
 	_spawn_hud()
 	_apply_intro_preset()
+	_apply_battle_settings()
 	_sync_hud()
 	_start_opening_sequence()
 	set_process(true)
@@ -99,6 +111,7 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	_update_camera(delta)
 	_update_tree_fade(delta)
+	_update_ambient_glyphs(delta)
 
 	if game_over:
 		if Input.is_action_just_pressed("restart_run"):
@@ -116,7 +129,10 @@ func _process(delta: float) -> void:
 
 	if paused:
 		if Input.is_action_just_pressed("return_menu") or Input.is_action_just_pressed("interact"):
-			_set_paused(false)
+			if hud != null and hud.has_method("is_settings_menu_open") and hud.is_settings_menu_open():
+				hud.return_to_pause_menu()
+			else:
+				_set_paused(false)
 		elif Input.is_action_just_pressed("restart_run"):
 			Engine.time_scale = 1.0
 			get_tree().reload_current_scene()
@@ -180,6 +196,7 @@ func _spawn_hud() -> void:
 	hud = BATTLE_HUD_SCENE.instantiate()
 	add_child(hud)
 	hud.configure(Session.get_selected_hero())
+	hud.set_battle_settings(battle_settings)
 	hud.radical_choice_selected.connect(_on_radical_choice_selected)
 	hud.word_choice_selected.connect(_on_word_choice_selected)
 	hud.pause_requested.connect(_on_hud_pause_requested)
@@ -187,6 +204,7 @@ func _spawn_hud() -> void:
 	hud.restart_requested.connect(_on_hud_restart_requested)
 	hud.return_menu_requested.connect(_on_hud_return_menu_requested)
 	hud.map_toggle_requested.connect(_on_hud_map_toggle_requested)
+	hud.battle_setting_changed.connect(_on_hud_battle_setting_changed)
 	_spawn_touch_controls()
 
 
@@ -296,6 +314,8 @@ func _spawn_enemy() -> void:
 	enemy.position = player.global_position + offset
 	var enemy_type: String = _pick_enemy_type()
 	enemy.configure(enemy_type, 1.0 + elapsed_time / 75.0, player)
+	if enemy.has_method("set_health_bar_visible"):
+		enemy.set_health_bar_visible(bool(battle_settings.get("enemy_health_bars", true)))
 	enemy.defeated.connect(_on_enemy_defeated)
 	enemy.request_hazard.connect(_on_enemy_request_hazard)
 	enemy.request_line_hazard.connect(_on_enemy_request_line_hazard)
@@ -314,6 +334,8 @@ func _spawn_boss(stage_index: int) -> void:
 	var distance: float = rng.randf_range(16.0, 19.0)
 	boss.position = player.global_position + Vector3(cos(angle), 0.0, sin(angle)) * distance
 	boss.configure("boss", 1.35 + elapsed_time / 68.0 + float(stage_index) * 0.2, player)
+	if boss.has_method("set_health_bar_visible"):
+		boss.set_health_bar_visible(bool(battle_settings.get("enemy_health_bars", true)))
 	boss.defeated.connect(_on_enemy_defeated)
 	boss.request_hazard.connect(_on_enemy_request_hazard)
 	boss.request_line_hazard.connect(_on_enemy_request_line_hazard)
@@ -328,6 +350,121 @@ func _spawn_boss(stage_index: int) -> void:
 	hud.show_boss(String(boss.enemy_name), String(boss.glyph), tint, boss.max_health)
 	_spawn_wave_effect(boss.global_position, 6.2, tint, String(boss.glyph))
 	_spawn_boss_entrance_effect(boss.global_position, String(boss.glyph), tint)
+
+
+func _apply_battle_settings() -> void:
+	if hud != null:
+		hud.set_battle_settings(battle_settings)
+	_apply_performance_mode_visuals()
+	_apply_enemy_health_bar_setting()
+	_rebuild_ambient_glyphs()
+
+
+func _apply_performance_mode_visuals() -> void:
+	var performance_mode := _performance_mode()
+	if world_environment.environment != null:
+		world_environment.environment.fog_density = float(PERFORMANCE_FOG_DENSITY.get(performance_mode, PERFORMANCE_FOG_DENSITY["balanced"]))
+
+	var detail_count: int = int(PERFORMANCE_GROUND_DETAIL_COUNTS.get(performance_mode, PERFORMANCE_GROUND_DETAIL_COUNTS["balanced"]))
+	for index in range(ground_detail_nodes.size()):
+		var detail_node := ground_detail_nodes[index]
+		if is_instance_valid(detail_node):
+			detail_node.visible = index < detail_count
+
+
+func _apply_enemy_health_bar_setting() -> void:
+	var should_show: bool = bool(battle_settings.get("enemy_health_bars", true))
+	for enemy in get_tree().get_nodes_in_group("enemy"):
+		if is_instance_valid(enemy) and enemy.has_method("set_health_bar_visible"):
+			enemy.set_health_bar_visible(should_show)
+
+
+func _rebuild_ambient_glyphs() -> void:
+	if ambient_glyph_root == null:
+		ambient_glyph_root = Node3D.new()
+		ambient_glyph_root.name = "AmbientGlyphs"
+		ground_root.add_child(ambient_glyph_root)
+
+	for entry in ambient_glyph_entries:
+		var root_node = entry.get("root", null)
+		if root_node is Node3D and is_instance_valid(root_node):
+			(root_node as Node3D).queue_free()
+	ambient_glyph_entries.clear()
+
+	var target_count: int = _ambient_glyph_target_count()
+	for _index in range(target_count):
+		var glyph_root := Node3D.new()
+		var base_position := Vector3(
+			rng.randf_range(-34.0, 34.0),
+			rng.randf_range(1.8, 3.7),
+			rng.randf_range(-34.0, 34.0)
+		)
+		glyph_root.position = base_position
+		ambient_glyph_root.add_child(glyph_root)
+
+		var glyph_label := Label3D.new()
+		glyph_label.text = String(AMBIENT_GLYPH_POOL[rng.randi_range(0, AMBIENT_GLYPH_POOL.size() - 1)])
+		glyph_label.font = CJKFont.get_font()
+		glyph_label.font_size = rng.randi_range(18, 30)
+		glyph_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		glyph_label.modulate = Color(0.72, 0.82, 0.92, rng.randf_range(0.16, 0.32))
+		glyph_root.add_child(glyph_label)
+
+		ambient_glyph_entries.append({
+			"root": glyph_root,
+			"label": glyph_label,
+			"base_position": base_position,
+			"drift_speed": rng.randf_range(0.3, 0.8),
+			"drift_phase": rng.randf_range(0.0, TAU),
+			"yaw_speed": rng.randf_range(8.0, 18.0)
+		})
+
+
+func _update_ambient_glyphs(_delta: float) -> void:
+	if ambient_glyph_entries.is_empty():
+		return
+
+	for entry in ambient_glyph_entries:
+		var glyph_root = entry.get("root", null)
+		var glyph_label = entry.get("label", null)
+		if not (glyph_root is Node3D) or not is_instance_valid(glyph_root):
+			continue
+		var base_position: Vector3 = entry.get("base_position", Vector3.ZERO)
+		var drift_speed: float = float(entry.get("drift_speed", 0.5))
+		var drift_phase: float = float(entry.get("drift_phase", 0.0))
+		var yaw_speed: float = float(entry.get("yaw_speed", 10.0))
+		var bob := sin(elapsed_time * drift_speed + drift_phase)
+		(glyph_root as Node3D).position = base_position + Vector3(0.0, bob * 0.28, 0.0)
+		(glyph_root as Node3D).rotation_degrees.y = fmod(elapsed_time * yaw_speed + drift_phase * 30.0, 360.0)
+		if glyph_label is Label3D and is_instance_valid(glyph_label):
+			var alpha := 0.14 + (bob * 0.5 + 0.5) * 0.16
+			(glyph_label as Label3D).modulate.a = alpha
+
+
+func _ambient_glyph_target_count() -> int:
+	var base_count: int = 0
+	match String(battle_settings.get("ambient_glyph_density", "medium")):
+		"off":
+			base_count = 0
+		"high":
+			base_count = 12
+		_:
+			base_count = 7
+
+	match _performance_mode():
+		"performance":
+			return maxi(0, int(round(float(base_count) * 0.72)))
+		"quality":
+			return int(round(float(base_count) * 1.35))
+		_:
+			return base_count
+
+
+func _performance_mode() -> String:
+	var mode := String(battle_settings.get("performance_mode", "balanced"))
+	if Session.BATTLE_PERFORMANCE_MODES.has(mode):
+		return mode
+	return "balanced"
 
 
 func _is_big_wave(wave_index: int = threat_level) -> bool:
@@ -916,6 +1053,7 @@ func _spawn_wave_effect(origin: Vector3, radius: float, tint: Color, label: Stri
 	var effect_root := Node3D.new()
 	effect_root.position = Vector3(origin.x, 0.05, origin.z)
 	effects_root.add_child(effect_root)
+	var performance_mode := _performance_mode()
 
 	var outer_ring := MeshInstance3D.new()
 	var outer_mesh := CylinderMesh.new()
@@ -932,30 +1070,33 @@ func _spawn_wave_effect(origin: Vector3, radius: float, tint: Color, label: Stri
 	outer_ring.material_override = outer_material
 	effect_root.add_child(outer_ring)
 
-	var inner_ring := MeshInstance3D.new()
-	var inner_mesh := CylinderMesh.new()
-	inner_mesh.top_radius = radius * 0.78
-	inner_mesh.bottom_radius = radius * 0.78
-	inner_mesh.height = 0.06
-	inner_ring.mesh = inner_mesh
+	var inner_ring: MeshInstance3D = null
 	var inner_material := StandardMaterial3D.new()
 	inner_material.albedo_color = Color(tint.r, tint.g, tint.b, 0.5)
 	inner_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	inner_material.cull_mode = BaseMaterial3D.CULL_DISABLED
 	inner_material.emission_enabled = true
 	inner_material.emission = tint
-	inner_ring.material_override = inner_material
-	inner_ring.position = Vector3(0.0, 0.01, 0.0)
-	effect_root.add_child(inner_ring)
+	if performance_mode != "performance":
+		inner_ring = MeshInstance3D.new()
+		var inner_mesh := CylinderMesh.new()
+		inner_mesh.top_radius = radius * 0.78
+		inner_mesh.bottom_radius = radius * 0.78
+		inner_mesh.height = 0.06
+		inner_ring.mesh = inner_mesh
+		inner_ring.material_override = inner_material
+		inner_ring.position = Vector3(0.0, 0.01, 0.0)
+		effect_root.add_child(inner_ring)
 
 	var shard_root := Node3D.new()
 	effect_root.add_child(shard_root)
-	for index in range(4):
+	var shard_count: int = int(PERFORMANCE_WAVE_SHARDS.get(performance_mode, PERFORMANCE_WAVE_SHARDS["balanced"]))
+	for index in range(shard_count):
 		var shard := MeshInstance3D.new()
 		var shard_mesh := BoxMesh.new()
 		shard_mesh.size = Vector3(max(0.12, radius * 0.12), 0.04, max(0.28, radius * 0.22))
 		shard.mesh = shard_mesh
-		var angle: float = TAU * float(index) / 4.0
+		var angle: float = TAU * float(index) / float(shard_count)
 		shard.position = Vector3(cos(angle) * radius * 0.34, 0.03, sin(angle) * radius * 0.34)
 		shard.rotation_degrees.y = rad_to_deg(angle)
 		shard.material_override = inner_material
@@ -973,7 +1114,8 @@ func _spawn_wave_effect(origin: Vector3, radius: float, tint: Color, label: Stri
 	var tween := create_tween()
 	tween.parallel().tween_property(effect_root, "scale", Vector3(1.18, 1.0, 1.18), 0.28)
 	tween.parallel().tween_property(outer_ring, "rotation_degrees:y", 28.0, 0.28)
-	tween.parallel().tween_property(inner_ring, "rotation_degrees:y", -36.0, 0.28)
+	if inner_ring != null:
+		tween.parallel().tween_property(inner_ring, "rotation_degrees:y", -36.0, 0.28)
 	tween.parallel().tween_property(shard_root, "rotation_degrees:y", 42.0, 0.28)
 	tween.tween_callback(effect_root.queue_free)
 
@@ -1035,10 +1177,11 @@ func _spawn_boss_entrance_effect(world_position: Vector3, glyph_text: String, ti
 	var effect_root := Node3D.new()
 	effect_root.position = world_position + Vector3(0.0, 0.2, 0.0)
 	effects_root.add_child(effect_root)
+	var symbol_count: int = int(PERFORMANCE_BOSS_SYMBOLS.get(_performance_mode(), PERFORMANCE_BOSS_SYMBOLS["balanced"]))
 
-	for index in range(6):
+	for index in range(symbol_count):
 		var symbol_root := Node3D.new()
-		var angle: float = TAU * float(index) / 6.0
+		var angle: float = TAU * float(index) / float(symbol_count)
 		symbol_root.position = Vector3(cos(angle) * 2.3, 0.0, sin(angle) * 2.3)
 		effect_root.add_child(symbol_root)
 
@@ -1345,10 +1488,11 @@ func _spawn_intro_symbols(glyph: String, tint: Color) -> void:
 	var root := Node3D.new()
 	root.position = player.global_position + Vector3(0.0, 0.4, 0.0)
 	effects_root.add_child(root)
+	var symbol_count: int = int(PERFORMANCE_INTRO_SYMBOLS.get(_performance_mode(), PERFORMANCE_INTRO_SYMBOLS["balanced"]))
 
-	for index in range(4):
+	for index in range(symbol_count):
 		var symbol_root := Node3D.new()
-		var angle: float = TAU * float(index) / 4.0
+		var angle: float = TAU * float(index) / float(symbol_count)
 		symbol_root.position = Vector3(cos(angle) * 1.7, 0.0, sin(angle) * 1.7)
 		root.add_child(symbol_root)
 
@@ -1544,6 +1688,11 @@ func _on_hud_pause_requested() -> void:
 
 func _on_hud_map_toggle_requested() -> void:
 	_set_map_overlay(not map_overlay_active)
+
+
+func _on_hud_battle_setting_changed(_setting_key: String, _value: Variant) -> void:
+	battle_settings = Session.get_battle_settings()
+	_apply_battle_settings()
 
 
 func _on_hud_movement_input_changed(input_vector: Vector2) -> void:
@@ -1747,6 +1896,7 @@ func _setup_environment() -> void:
 
 
 func _build_ground() -> void:
+	ground_detail_nodes.clear()
 	var floor := MeshInstance3D.new()
 	var plane := PlaneMesh.new()
 	plane.size = Vector2(180.0, 180.0)
@@ -1774,6 +1924,11 @@ func _build_ground() -> void:
 		mound_material.roughness = 1.0
 		mound.material_override = mound_material
 		ground_root.add_child(mound)
+		ground_detail_nodes.append(mound)
+
+	ambient_glyph_root = Node3D.new()
+	ambient_glyph_root.name = "AmbientGlyphs"
+	ground_root.add_child(ambient_glyph_root)
 
 
 func _create_tree(position: Vector3) -> void:

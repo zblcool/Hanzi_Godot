@@ -62,6 +62,7 @@ var rear_left_leg_node: MeshInstance3D
 var rear_right_leg_node: MeshInstance3D
 var gait_amount: float = 0.0
 var health_bar_width: float = 1.08
+var health_bars_enabled: bool = true
 
 
 func configure(kind: String, difficulty: float, player_ref) -> void:
@@ -151,6 +152,12 @@ func take_damage(amount: float) -> void:
 
 func get_hit_radius() -> float:
 	return hit_radius
+
+
+func set_health_bar_visible(should_show: bool) -> void:
+	health_bars_enabled = should_show
+	if health_bar_root != null:
+		health_bar_root.visible = should_show
 
 
 func _apply_type_stats() -> void:
@@ -899,11 +906,18 @@ func _build_health_bar() -> void:
 	health_bar_fill_node.position = Vector3(0.0, 0.0, -0.01)
 	health_bar_fill_node.material_override = health_bar_fill_material
 	health_bar_root.add_child(health_bar_fill_node)
+	health_bar_root.visible = health_bars_enabled
 
 
 func _update_health_bar(delta: float) -> void:
 	if health_bar_root == null or health_bar_fill_node == null or health_bar_fill_material == null or health_bar_back_material == null:
 		return
+
+	if not health_bars_enabled:
+		health_bar_root.visible = false
+		return
+
+	health_bar_root.visible = true
 
 	if delta <= 0.0:
 		display_health = health

@@ -261,6 +261,7 @@ signal pause_resume_requested
 signal restart_requested
 signal return_menu_requested
 signal map_toggle_requested
+signal battle_setting_changed(setting_key: String, value: Variant)
 
 var ui_font: Font
 
@@ -304,8 +305,11 @@ var state_name_button: Button
 var state_primary_button: Button
 var state_secondary_button: Button
 var state_tertiary_button: Button
+var state_quaternary_button: Button
 var state_mode: String = ""
 var last_game_over_data: Dictionary = {}
+var last_pause_summary: Dictionary = {}
+var battle_settings: Dictionary = {}
 var map_overlay: Control
 var map_canvas: BattleMapCanvas
 var map_summary_label: Label
@@ -317,6 +321,7 @@ var banner_color: Color = Color(1.0, 0.95, 0.84, 1.0)
 
 func _ready() -> void:
 	ui_font = CJKFont.get_font()
+	battle_settings = Session.get_battle_settings()
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_build_ui()
 	set_process(true)
@@ -340,6 +345,20 @@ func configure(hero_data: Dictionary) -> void:
 	hero_focus_label.text = String(hero_data["focus"])
 	_refresh_hero_tags(hero_data)
 	controls_label.text = "WASD / 方向键移动\n自动朝最近敌人出手\n升级时三选一偏旁\n靠近砚台按 E 磨词\nM / Tab 地图，R 重开，Esc 返回菜单"
+
+
+func set_battle_settings(settings: Dictionary) -> void:
+	battle_settings = settings.duplicate(true)
+	if state_mode == "settings" and state_overlay != null and state_overlay.visible:
+		_show_settings_menu()
+
+
+func is_settings_menu_open() -> bool:
+	return state_mode == "settings" and state_overlay != null and state_overlay.visible
+
+
+func return_to_pause_menu() -> void:
+	_return_to_pause_menu()
 
 
 func set_health(current: float, maximum: float) -> void:
@@ -538,6 +557,12 @@ func show_pause_menu(elapsed: float, kills: int, threat: int, level: int) -> voi
 	hide_map_overlay()
 	overlay_label.visible = false
 	_hide_state_name_editor()
+	last_pause_summary = {
+		"elapsed": elapsed,
+		"kills": kills,
+		"threat": threat,
+		"level": level
+	}
 	state_mode = "pause"
 	state_title_label.text = "墨阵暂歇"
 	state_body_label.text = "当前进度\n存活 %s\n波次 %d   击破 %d   等级 Lv.%d\n\n按 E 或 Esc 继续，按 R 立即重开。" % [
@@ -547,8 +572,9 @@ func show_pause_menu(elapsed: float, kills: int, threat: int, level: int) -> voi
 		level
 	]
 	_configure_state_button(state_primary_button, "继续战斗", Callable(self, "_emit_pause_resume"))
-	_configure_state_button(state_secondary_button, "重新开始", Callable(self, "_emit_restart"))
-	_configure_state_button(state_tertiary_button, "返回菜单", Callable(self, "_emit_return_menu"))
+	_configure_state_button(state_secondary_button, "战场布置", Callable(self, "_show_settings_menu"))
+	_configure_state_button(state_tertiary_button, "重新开始", Callable(self, "_emit_restart"))
+	_configure_state_button(state_quaternary_button, "返回菜单", Callable(self, "_emit_return_menu"))
 	state_overlay.visible = true
 
 
@@ -556,6 +582,19 @@ func hide_state_overlay() -> void:
 	state_mode = ""
 	if state_overlay != null:
 		state_overlay.visible = false
+
+
+func _show_settings_menu() -> void:
+	state_mode = "settings"
+	state_title_label.text = "战场布置"
+	state_body_label.text = _build_settings_body()
+	_hide_state_name_editor()
+	overlay_label.visible = false
+	_configure_state_button(state_primary_button, "演出档：%s" % _performance_mode_label(), Callable(self, "_cycle_performance_mode"))
+	_configure_state_button(state_secondary_button, "敌方血条：%s" % _enemy_health_bar_label(), Callable(self, "_toggle_enemy_health_bars"))
+	_configure_state_button(state_tertiary_button, "环境字影：%s" % _ambient_density_label(), Callable(self, "_cycle_ambient_density"))
+	_configure_state_button(state_quaternary_button, "返回暂停", Callable(self, "_return_to_pause_menu"))
+	state_overlay.visible = true
 
 
 func set_game_over(summary: String, elapsed: float = 0.0, kills: int = 0, threat: int = 1, level: int = 1) -> void:
@@ -584,6 +623,7 @@ func set_game_over(summary: String, elapsed: float = 0.0, kills: int = 0, threat
 	_configure_state_button(state_primary_button, "重新开始", Callable(self, "_emit_restart"))
 	_configure_state_button(state_secondary_button, "返回菜单", Callable(self, "_emit_return_menu"))
 	_configure_state_button(state_tertiary_button, "查看排行榜", Callable(self, "_show_local_leaderboard"))
+	_hide_state_button(state_quaternary_button)
 	overlay_label.visible = false
 	state_overlay.visible = true
 
@@ -611,8 +651,82 @@ func _show_local_leaderboard() -> void:
 	_configure_state_button(state_primary_button, "返回结算", Callable(self, "_show_game_over_summary"))
 	_configure_state_button(state_secondary_button, "重新开始", Callable(self, "_emit_restart"))
 	_configure_state_button(state_tertiary_button, "返回菜单", Callable(self, "_emit_return_menu"))
+	_hide_state_button(state_quaternary_button)
 	overlay_label.visible = false
 	state_overlay.visible = true
+
+
+func _return_to_pause_menu() -> void:
+	if last_pause_summary.is_empty():
+		hide_state_overlay()
+		return
+	show_pause_menu(
+		float(last_pause_summary.get("elapsed", 0.0)),
+		int(last_pause_summary.get("kills", 0)),
+		int(last_pause_summary.get("threat", 1)),
+		int(last_pause_summary.get("level", 1))
+	)
+
+
+func _build_settings_body() -> String:
+	return "对照 hanziHero 的 Performance / LOD 面板，当前先接入一组低风险战场选项。改动会立即生效，并写入本地运行设置。\n\n当前\n演出档：%s\n敌方血条：%s\n环境字影：%s" % [
+		_performance_mode_label(),
+		_enemy_health_bar_label(),
+		_ambient_density_label()
+	]
+
+
+func _performance_mode_label() -> String:
+	match String(battle_settings.get("performance_mode", "balanced")):
+		"performance":
+			return "轻量"
+		"quality":
+			return "质感"
+		_:
+			return "平衡"
+
+
+func _enemy_health_bar_label() -> String:
+	return "显示" if bool(battle_settings.get("enemy_health_bars", true)) else "隐藏"
+
+
+func _ambient_density_label() -> String:
+	match String(battle_settings.get("ambient_glyph_density", "medium")):
+		"off":
+			return "关闭"
+		"high":
+			return "浓"
+		_:
+			return "疏"
+
+
+func _cycle_performance_mode() -> void:
+	var current_mode := String(battle_settings.get("performance_mode", "balanced"))
+	var current_index: int = Session.BATTLE_PERFORMANCE_MODES.find(current_mode)
+	if current_index < 0:
+		current_index = 0
+	var next_mode := String(Session.BATTLE_PERFORMANCE_MODES[(current_index + 1) % Session.BATTLE_PERFORMANCE_MODES.size()])
+	battle_settings = Session.set_battle_setting("performance_mode", next_mode)
+	battle_setting_changed.emit("performance_mode", next_mode)
+	_show_settings_menu()
+
+
+func _toggle_enemy_health_bars() -> void:
+	var next_visible := not bool(battle_settings.get("enemy_health_bars", true))
+	battle_settings = Session.set_battle_setting("enemy_health_bars", next_visible)
+	battle_setting_changed.emit("enemy_health_bars", next_visible)
+	_show_settings_menu()
+
+
+func _cycle_ambient_density() -> void:
+	var current_density := String(battle_settings.get("ambient_glyph_density", "medium"))
+	var current_index: int = Session.BATTLE_AMBIENT_DENSITIES.find(current_density)
+	if current_index < 0:
+		current_index = 0
+	var next_density := String(Session.BATTLE_AMBIENT_DENSITIES[(current_index + 1) % Session.BATTLE_AMBIENT_DENSITIES.size()])
+	battle_settings = Session.set_battle_setting("ambient_glyph_density", next_density)
+	battle_setting_changed.emit("ambient_glyph_density", next_density)
+	_show_settings_menu()
 
 
 func _build_local_leaderboard_text() -> String:
@@ -1148,9 +1262,11 @@ func _build_state_overlay(root: Control) -> void:
 	state_primary_button = _make_state_button()
 	state_secondary_button = _make_state_button()
 	state_tertiary_button = _make_state_button()
+	state_quaternary_button = _make_state_button()
 	buttons_box.add_child(state_primary_button)
 	buttons_box.add_child(state_secondary_button)
 	buttons_box.add_child(state_tertiary_button)
+	buttons_box.add_child(state_quaternary_button)
 
 
 func _on_choice_button_pressed(index: int) -> void:
@@ -1187,27 +1303,31 @@ func _make_state_button() -> Button:
 
 
 func _configure_state_button(button: Button, text: String, callback: Callable) -> void:
+	if button == null:
+		return
 	button.visible = true
 	button.text = text
-	var resume_callable := Callable(self, "_emit_pause_resume")
-	var restart_callable := Callable(self, "_emit_restart")
-	var menu_callable := Callable(self, "_emit_return_menu")
-	var leaderboard_callable := Callable(self, "_show_local_leaderboard")
-	var game_over_callable := Callable(self, "_show_game_over_summary")
-	if button.pressed.is_connected(resume_callable):
-		button.pressed.disconnect(resume_callable)
-	if button.pressed.is_connected(restart_callable):
-		button.pressed.disconnect(restart_callable)
-	if button.pressed.is_connected(menu_callable):
-		button.pressed.disconnect(menu_callable)
-	if button.pressed.is_connected(leaderboard_callable):
-		button.pressed.disconnect(leaderboard_callable)
-	if button.pressed.is_connected(game_over_callable):
-		button.pressed.disconnect(game_over_callable)
+	_clear_state_button_connections(button)
 	button.add_theme_stylebox_override("normal", _make_button_style(Color(0.92, 0.62, 0.28, 1.0), 18))
 	button.add_theme_stylebox_override("hover", _make_button_style(Color(0.98, 0.7, 0.34, 1.0), 18))
 	button.add_theme_stylebox_override("pressed", _make_button_style(Color(0.84, 0.54, 0.22, 1.0), 18))
-	button.pressed.connect(callback, CONNECT_ONE_SHOT)
+	if callback.is_valid():
+		button.pressed.connect(callback)
+
+
+func _hide_state_button(button: Button) -> void:
+	if button == null:
+		return
+	button.visible = false
+	_clear_state_button_connections(button)
+
+
+func _clear_state_button_connections(button: Button) -> void:
+	for connection_variant in button.pressed.get_connections():
+		var connection: Dictionary = connection_variant as Dictionary
+		var callable: Callable = connection.get("callable", Callable())
+		if button.pressed.is_connected(callable):
+			button.pressed.disconnect(callable)
 
 
 func _make_map_legend_row(symbol_text: String, title: String, detail: String, color: Color) -> Control:

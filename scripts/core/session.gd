@@ -4,9 +4,17 @@ const LAUNCHER_SCENE := "res://scenes/app/launcher.tscn"
 const ZIHAI_MENU_SCENE := "res://scenes/app/zihai_menu.tscn"
 const ZIHAI_BATTLE_SCENE := "res://scenes/battle/zihai_battle.tscn"
 const LOCAL_LEADERBOARD_PATH := "user://local_leaderboard.json"
+const BATTLE_SETTINGS_PATH := "user://battle_settings.json"
 const LOCAL_LEADERBOARD_LIMIT := 12
 const FALLBACK_RUN_NAME_SURNAMES := ["沈", "陆", "谢", "顾", "裴", "苏", "闻", "叶", "秦", "燕", "柳", "程"]
 const FALLBACK_RUN_NAME_GIVENS := ["孤舟", "青崖", "听雨", "照夜", "长风", "归云", "惊鸿", "秋水", "横雪", "寻梅", "渡川", "鸣泉"]
+const BATTLE_PERFORMANCE_MODES := ["performance", "balanced", "quality"]
+const BATTLE_AMBIENT_DENSITIES := ["off", "medium", "high"]
+const DEFAULT_BATTLE_SETTINGS := {
+	"performance_mode": "balanced",
+	"enemy_health_bars": true,
+	"ambient_glyph_density": "medium"
+}
 
 const HERO_ORDER := ["scholar", "xia"]
 const HEROES := {
@@ -363,10 +371,12 @@ var chapter_progress: Dictionary = {}
 var local_leaderboard: Array[Dictionary] = []
 var local_leaderboard_loaded: bool = false
 var last_recorded_leaderboard_run: Dictionary = {}
+var battle_settings: Dictionary = DEFAULT_BATTLE_SETTINGS.duplicate(true)
 
 
 func _ready() -> void:
 	_load_local_leaderboard()
+	_load_battle_settings()
 
 
 func select_hero(hero_id: String) -> void:
@@ -548,6 +558,18 @@ func get_last_recorded_leaderboard_run() -> Dictionary:
 	return last_recorded_leaderboard_run.duplicate(true)
 
 
+func get_battle_settings() -> Dictionary:
+	return battle_settings.duplicate(true)
+
+
+func set_battle_setting(key: String, value: Variant) -> Dictionary:
+	var next_settings := battle_settings.duplicate(true)
+	next_settings[key] = value
+	battle_settings = _sanitize_battle_settings(next_settings)
+	_save_battle_settings()
+	return battle_settings.duplicate(true)
+
+
 func update_last_recorded_run_player_name(raw_name: String) -> String:
 	if last_recorded_leaderboard_run.is_empty():
 		return ""
@@ -616,6 +638,27 @@ func _save_local_leaderboard() -> void:
 	file.store_string(JSON.stringify({"entries": payload}))
 
 
+func _load_battle_settings() -> void:
+	battle_settings = DEFAULT_BATTLE_SETTINGS.duplicate(true)
+
+	if not FileAccess.file_exists(BATTLE_SETTINGS_PATH):
+		return
+
+	var file := FileAccess.open(BATTLE_SETTINGS_PATH, FileAccess.READ)
+	if file == null:
+		return
+
+	battle_settings = _sanitize_battle_settings(JSON.parse_string(file.get_as_text()))
+
+
+func _save_battle_settings() -> void:
+	var file := FileAccess.open(BATTLE_SETTINGS_PATH, FileAccess.WRITE)
+	if file == null:
+		return
+
+	file.store_string(JSON.stringify(battle_settings))
+
+
 func _normalize_leaderboard_entry(raw_entry: Variant) -> Dictionary:
 	if not (raw_entry is Dictionary):
 		return {}
@@ -674,6 +717,26 @@ func _normalize_run_counts(raw_counts: Variant, order: Array) -> Dictionary:
 			counts[key] = maxi(0, int(raw_dictionary.get(key, 0)))
 
 	return counts
+
+
+func _sanitize_battle_settings(raw_settings: Variant) -> Dictionary:
+	var sanitized: Dictionary = DEFAULT_BATTLE_SETTINGS.duplicate(true)
+	if not (raw_settings is Dictionary):
+		return sanitized
+
+	var data := raw_settings as Dictionary
+	var performance_mode := String(data.get("performance_mode", sanitized["performance_mode"]))
+	if not BATTLE_PERFORMANCE_MODES.has(performance_mode):
+		performance_mode = String(sanitized["performance_mode"])
+
+	var ambient_density := String(data.get("ambient_glyph_density", sanitized["ambient_glyph_density"]))
+	if not BATTLE_AMBIENT_DENSITIES.has(ambient_density):
+		ambient_density = String(sanitized["ambient_glyph_density"])
+
+	sanitized["performance_mode"] = performance_mode
+	sanitized["enemy_health_bars"] = bool(data.get("enemy_health_bars", sanitized["enemy_health_bars"]))
+	sanitized["ambient_glyph_density"] = ambient_density
+	return sanitized
 
 
 func _sort_local_leaderboard() -> void:
