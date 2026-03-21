@@ -6,7 +6,7 @@ const ZIHAI_BATTLE_SCENE := "res://scenes/battle/zihai_battle.tscn"
 const LOCAL_LEADERBOARD_PATH := "user://local_leaderboard.json"
 const LEADERBOARD_IDENTITY_PATH := "user://leaderboard_identity.json"
 const BATTLE_SETTINGS_PATH := "user://battle_settings.json"
-const LOCAL_LEADERBOARD_LIMIT := 12
+const LOCAL_LEADERBOARD_LIMIT := 20
 const LEADERBOARD_NAME_LIMIT := 18
 const FALLBACK_RUN_NAME_SURNAMES := ["沈", "陆", "谢", "顾", "裴", "苏", "闻", "叶", "秦", "燕", "柳", "程"]
 const FALLBACK_RUN_NAME_GIVENS := ["孤舟", "青崖", "听雨", "照夜", "长风", "归云", "惊鸿", "秋水", "横雪", "寻梅", "渡川", "鸣泉"]
@@ -512,6 +512,12 @@ func record_local_run(summary: Dictionary, hero_id: String = selected_hero) -> v
 	_ensure_local_leaderboard_loaded()
 
 	var recorded_at: int = int(Time.get_unix_time_from_system())
+	var start_wave := maxi(1, int(summary.get("start_wave", 1)))
+	var leaderboard_view := _normalize_leaderboard_view(
+		String(summary.get("leaderboard_view", "")),
+		start_wave,
+		bool(summary.get("recordable", true))
+	)
 	var normalized_entry := _normalize_leaderboard_entry({
 		"hero_id": hero_id,
 		"hero_name": String(get_hero_data(hero_id).get("name", "书生")),
@@ -527,6 +533,8 @@ func record_local_run(summary: Dictionary, hero_id: String = selected_hero) -> v
 		"words": summary.get("words", {}),
 		"blade_level": int(summary.get("blade_level", 0)),
 		"enemy_kills": summary.get("enemy_kills", {}),
+		"start_wave": start_wave,
+		"leaderboard_view": leaderboard_view,
 		"recorded_at": recorded_at
 	})
 	if normalized_entry.is_empty():
@@ -544,18 +552,48 @@ func record_local_run(summary: Dictionary, hero_id: String = selected_hero) -> v
 			continue
 		if String(entry.get("hero_id", selected_hero)) != hero_id:
 			continue
+		if int(entry.get("start_wave", 1)) != start_wave:
+			continue
+		if get_local_leaderboard_view(entry) != leaderboard_view:
+			continue
 		last_recorded_leaderboard_run = entry.duplicate(true)
 		break
 
 
-func get_local_leaderboard(limit: int = 5) -> Array[Dictionary]:
+func get_local_leaderboard(limit: int = 5, view: String = "all") -> Array[Dictionary]:
 	_ensure_local_leaderboard_loaded()
 
 	var entries: Array[Dictionary] = []
-	var safe_limit := mini(limit, local_leaderboard.size())
-	for index in range(safe_limit):
-		entries.append(local_leaderboard[index].duplicate(true))
+	var normalized_view := _normalize_leaderboard_filter(view)
+	for entry in local_leaderboard:
+		if normalized_view != "all" and get_local_leaderboard_view(entry) != normalized_view:
+			continue
+		entries.append(entry.duplicate(true))
+		if limit > 0 and entries.size() >= limit:
+			break
 	return entries
+
+
+func get_local_leaderboard_count(view: String = "all") -> int:
+	_ensure_local_leaderboard_loaded()
+
+	var normalized_view := _normalize_leaderboard_filter(view)
+	if normalized_view == "all":
+		return local_leaderboard.size()
+
+	var count := 0
+	for entry in local_leaderboard:
+		if get_local_leaderboard_view(entry) == normalized_view:
+			count += 1
+	return count
+
+
+func get_local_leaderboard_view(entry: Dictionary) -> String:
+	return _normalize_leaderboard_view(
+		String(entry.get("leaderboard_view", "")),
+		int(entry.get("start_wave", 1)),
+		bool(entry.get("recordable", true))
+	)
 
 
 func get_last_recorded_leaderboard_run() -> Dictionary:
@@ -625,6 +663,8 @@ func update_last_recorded_run_player_name(raw_name: String) -> String:
 
 	var hero_id := String(last_recorded_leaderboard_run.get("hero_id", selected_hero))
 	var recorded_at: int = int(last_recorded_leaderboard_run.get("recorded_at", 0))
+	var start_wave := int(last_recorded_leaderboard_run.get("start_wave", 1))
+	var leaderboard_view := get_local_leaderboard_view(last_recorded_leaderboard_run)
 	var resolved_name := _resolve_run_player_name(raw_name, hero_id, recorded_at)
 	var updated := false
 
@@ -633,6 +673,10 @@ func update_last_recorded_run_player_name(raw_name: String) -> String:
 		if int(entry.get("recorded_at", 0)) != recorded_at:
 			continue
 		if String(entry.get("hero_id", selected_hero)) != hero_id:
+			continue
+		if int(entry.get("start_wave", 1)) != start_wave:
+			continue
+		if get_local_leaderboard_view(entry) != leaderboard_view:
 			continue
 		entry["player_name"] = resolved_name
 		local_leaderboard[index] = entry
@@ -755,6 +799,12 @@ func _normalize_leaderboard_entry(raw_entry: Variant) -> Dictionary:
 	var hero_id := String(data.get("hero_id", selected_hero))
 	var hero_data: Dictionary = get_hero_data(hero_id)
 	var recorded_at: int = maxi(0, int(data.get("recorded_at", 0)))
+	var start_wave := maxi(1, int(data.get("start_wave", 1)))
+	var leaderboard_view := _normalize_leaderboard_view(
+		String(data.get("leaderboard_view", "")),
+		start_wave,
+		bool(data.get("recordable", true))
+	)
 	var entry: Dictionary = {
 		"hero_id": hero_id,
 		"hero_name": String(data.get("hero_name", hero_data.get("name", "书生"))),
@@ -770,9 +820,27 @@ func _normalize_leaderboard_entry(raw_entry: Variant) -> Dictionary:
 		"words": _normalize_run_counts(data.get("words", {}), WORD_ORDER),
 		"blade_level": maxi(0, int(data.get("blade_level", 0))),
 		"enemy_kills": _normalize_run_counts(data.get("enemy_kills", {}), ENEMY_ORDER),
+		"start_wave": start_wave,
+		"leaderboard_view": leaderboard_view,
 		"recorded_at": recorded_at
 	}
 	return entry
+
+
+func _normalize_leaderboard_filter(view: String) -> String:
+	if view == "manual" or view == "test":
+		return view
+	return "all"
+
+
+func _normalize_leaderboard_view(raw_view: String, start_wave: int = 1, main_board_eligible: bool = true) -> String:
+	if raw_view == "test":
+		return "test"
+	if raw_view == "manual":
+		return "manual"
+	if start_wave > 1 or not main_board_eligible:
+		return "test"
+	return "manual"
 
 
 func _resolve_run_player_name(raw_name: String, hero_id: String, recorded_at: int) -> String:

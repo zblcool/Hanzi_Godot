@@ -312,6 +312,7 @@ var state_quaternary_button: Button
 var state_mode: String = ""
 var last_game_over_data: Dictionary = {}
 var last_pause_summary: Dictionary = {}
+var local_leaderboard_view: String = "manual"
 var battle_settings: Dictionary = {}
 var map_overlay: Control
 var map_canvas: BattleMapCanvas
@@ -641,32 +642,50 @@ func _show_settings_menu() -> void:
 	state_overlay.visible = true
 
 
-func set_game_over(summary: String, elapsed: float = 0.0, kills: int = 0, threat: int = 1, level: int = 1) -> void:
+func set_game_over(
+	summary: String,
+	elapsed: float = 0.0,
+	kills: int = 0,
+	threat: int = 1,
+	level: int = 1,
+	leaderboard_view: String = "manual"
+) -> void:
 	hide_choice_overlay()
 	hide_map_overlay()
+	var normalized_view := _normalize_local_leaderboard_view(leaderboard_view)
 	state_mode = "game_over"
 	last_game_over_data = {
 		"summary": summary,
 		"elapsed": elapsed,
 		"kills": kills,
 		"threat": threat,
-		"level": level
+		"level": level,
+		"leaderboard_view": normalized_view
 	}
 	state_title_label.text = "字海沉没"
-	state_body_label.text = "%s\n\n本轮残卷\n存活 %s\n波次 %d   击破 %d   等级 Lv.%d" % [
+	var run_header := "本轮试阵" if normalized_view == "test" else "本轮残卷"
+	state_body_label.text = "%s\n\n%s\n存活 %s\n波次 %d   击破 %d   等级 Lv.%d" % [
 		summary,
+		run_header,
 		_format_time(elapsed),
 		threat,
 		kills,
 		level
 	]
+	var leaderboard_detail := "本轮记录已经写入主卷榜。你可以直接改成想显示的名字；留空则保留玩家名帖里的默认署名。"
+	if normalized_view == "test":
+		leaderboard_detail = "本轮试阵记录已经写入试阵榜，不会影响主卷榜排序。你可以直接改成想显示的名字；留空则保留玩家名帖里的默认署名。"
 	_show_state_name_editor(
 		"战绩署名",
-		"本轮记录已经写入本地排行榜。你可以直接改成想显示的名字；留空则保留玩家名帖里的默认署名。"
+		leaderboard_detail
 	)
 	_configure_state_button(state_primary_button, "重新开始", Callable(self, "_emit_restart"))
 	_configure_state_button(state_secondary_button, "返回菜单", Callable(self, "_emit_return_menu"))
-	_configure_state_button(state_tertiary_button, "查看排行榜", Callable(self, "_show_local_leaderboard"))
+	_configure_state_button(
+		state_tertiary_button,
+		"查看%s" % ("试阵榜" if normalized_view == "test" else "主卷榜"),
+		Callable(self, "_show_local_leaderboard")
+	)
 	_hide_state_button(state_quaternary_button)
 	overlay_label.visible = false
 	state_overlay.visible = true
@@ -680,22 +699,51 @@ func _show_game_over_summary() -> void:
 		float(last_game_over_data.get("elapsed", 0.0)),
 		int(last_game_over_data.get("kills", 0)),
 		int(last_game_over_data.get("threat", 1)),
-		int(last_game_over_data.get("level", 1))
+		int(last_game_over_data.get("level", 1)),
+		String(last_game_over_data.get("leaderboard_view", "manual"))
 	)
 
 
 func _show_local_leaderboard() -> void:
+	var last_entry: Dictionary = Session.get_last_recorded_leaderboard_run()
+	if not last_entry.is_empty():
+		local_leaderboard_view = Session.get_local_leaderboard_view(last_entry)
+	else:
+		local_leaderboard_view = "manual"
+	_refresh_local_leaderboard_overlay()
+
+
+func _show_manual_leaderboard() -> void:
+	local_leaderboard_view = "manual"
+	_refresh_local_leaderboard_overlay()
+
+
+func _show_test_leaderboard() -> void:
+	local_leaderboard_view = "test"
+	_refresh_local_leaderboard_overlay()
+
+
+func _refresh_local_leaderboard_overlay() -> void:
 	state_mode = "leaderboard"
-	state_title_label.text = "本地排行榜"
-	state_body_label.text = _build_local_leaderboard_text()
+	local_leaderboard_view = _normalize_local_leaderboard_view(local_leaderboard_view)
+	var manual_count := Session.get_local_leaderboard_count("manual")
+	var test_count := Session.get_local_leaderboard_count("test")
+	state_title_label.text = "本地主卷榜" if local_leaderboard_view == "manual" else "本地试阵榜"
+	state_body_label.text = _build_local_leaderboard_text(local_leaderboard_view)
+	var leaderboard_detail := "这里显示最近写入主卷榜的那条战绩；如果刚结束的是试阵捷径，可以先切到试阵榜再改名。"
+	if local_leaderboard_view == "test":
+		leaderboard_detail = "这里显示最近写入试阵榜的那条战绩；试阵记录会和主卷榜分开保留。"
 	_show_state_name_editor(
 		"最近一条战绩署名",
-		"如果刚刚结束这一轮，可以继续修改最近保存到排行榜的那条名字。"
+		leaderboard_detail
 	)
-	_configure_state_button(state_primary_button, "返回结算", Callable(self, "_show_game_over_summary"))
-	_configure_state_button(state_secondary_button, "重新开始", Callable(self, "_emit_restart"))
-	_configure_state_button(state_tertiary_button, "返回菜单", Callable(self, "_emit_return_menu"))
-	_hide_state_button(state_quaternary_button)
+	if local_leaderboard_view == "manual":
+		_configure_state_button(state_primary_button, "切到试阵榜 · %d" % test_count, Callable(self, "_show_test_leaderboard"))
+	else:
+		_configure_state_button(state_primary_button, "切到主卷榜 · %d" % manual_count, Callable(self, "_show_manual_leaderboard"))
+	_configure_state_button(state_secondary_button, "返回结算", Callable(self, "_show_game_over_summary"))
+	_configure_state_button(state_tertiary_button, "重新开始", Callable(self, "_emit_restart"))
+	_configure_state_button(state_quaternary_button, "返回菜单", Callable(self, "_emit_return_menu"))
 	overlay_label.visible = false
 	state_overlay.visible = true
 
@@ -773,19 +821,30 @@ func _cycle_ambient_density() -> void:
 	_show_settings_menu()
 
 
-func _build_local_leaderboard_text() -> String:
-	var entries: Array[Dictionary] = Session.get_local_leaderboard(5)
+func _build_local_leaderboard_text(view: String = "manual") -> String:
+	var normalized_view := _normalize_local_leaderboard_view(view)
+	var entries: Array[Dictionary] = Session.get_local_leaderboard(5, normalized_view)
 	if entries.is_empty():
-		return "当前还没有可展示的本地战绩。下一次倒下后，这里会留下你的残卷记录。"
+		if normalized_view == "test":
+			return "当前还没有试阵记录。用第 10 / 20 波捷径打一轮后，这里会单独留下试阵榜。"
+		return "当前还没有可展示的主卷战绩。下一次从第 1 波开卷后，这里会留下你的残卷记录。"
 
-	var lines: Array[String] = ["按定卷、卷主击破、波次、击破数排序。", ""]
+	var lines: Array[String] = []
+	if normalized_view == "test":
+		lines.append("试阵榜会单独记录第 10 / 20 波捷径，不与主卷榜混排。")
+	else:
+		lines.append("主卷榜只统计从第 1 波真正开卷的正式战绩。")
+	lines.append("")
 	for index in range(entries.size()):
 		var entry: Dictionary = entries[index]
+		var run_label := "试阵 W%d" % int(entry.get("start_wave", 1))
+		if normalized_view == "manual":
+			run_label = "定卷" if bool(entry.get("chapter_complete", false)) else "残卷"
 		lines.append(
 			"%d. %s  %s  卷主 %d  波次 %d  击破 %d  存活 %s" % [
 				index + 1,
 				_format_leaderboard_identity(entry),
-				"定卷" if bool(entry.get("chapter_complete", false)) else "残卷",
+				run_label,
 				int(entry.get("bosses", 0)),
 				int(entry.get("threat", 1)),
 				int(entry.get("kills", 0)),
@@ -832,6 +891,10 @@ func _format_leaderboard_identity(entry: Dictionary) -> String:
 	if hero_name.is_empty():
 		return player_name
 	return "%s · %s" % [player_name, hero_name]
+
+
+func _normalize_local_leaderboard_view(view: String) -> String:
+	return "test" if view == "test" else "manual"
 
 
 func _summarize_run_counts(raw_counts: Variant, order: Array, category: String) -> String:

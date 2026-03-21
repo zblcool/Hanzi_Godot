@@ -31,7 +31,11 @@ var recipe_atlas_body_label: Label
 var enemy_archive_overlay: Control
 var enemy_archive_body_label: Label
 var leaderboard_overlay: Control
+var leaderboard_summary_label: Label
 var leaderboard_body_label: Label
+var leaderboard_manual_button: Button
+var leaderboard_test_button: Button
+var leaderboard_view: String = "manual"
 var profile_overlay: Control
 var profile_name_input: LineEdit
 var profile_status_label: Label
@@ -139,7 +143,10 @@ func _rebuild_ui() -> void:
 	enemy_archive_overlay = null
 	enemy_archive_body_label = null
 	leaderboard_overlay = null
+	leaderboard_summary_label = null
 	leaderboard_body_label = null
+	leaderboard_manual_button = null
+	leaderboard_test_button = null
 	profile_overlay = null
 	profile_name_input = null
 	profile_status_label = null
@@ -372,7 +379,7 @@ func _build_ui() -> void:
 	quick_start_box.add_theme_constant_override("separation", _i(10))
 	quick_start_margin.add_child(quick_start_box)
 	quick_start_box.add_child(_make_label("快速试阵", 22, Color(1.0, 0.92, 0.8, 1.0)))
-	quick_start_box.add_child(_make_label("对照 web 原型保留第 10 / 20 波捷径，便于快速检查 HUD、混编敌潮与角色 build。试阵入口不会写入本地排行榜。", 16, Color(0.88, 0.92, 0.96, 0.94)))
+	quick_start_box.add_child(_make_label("对照 web 原型保留第 10 / 20 波捷径，便于快速检查 HUD、混编敌潮与角色 build。试阵入口会单独写入试阵榜，不影响主卷榜。", 16, Color(0.88, 0.92, 0.96, 0.94)))
 
 	var quick_start_row := HBoxContainer.new()
 	quick_start_row.add_theme_constant_override("separation", _i(10))
@@ -927,7 +934,20 @@ func _build_leaderboard_overlay() -> void:
 	summary_margin.add_theme_constant_override("margin_right", _i(18))
 	summary_margin.add_theme_constant_override("margin_bottom", _i(16))
 	summary_panel.add_child(summary_margin)
-	summary_margin.add_child(_make_label("记录仍保存在本地 cache。这里先沿用当前 Godot 迁移阶段已经存在的本地榜单。", 17, Color(0.94, 0.82, 0.56, 0.94)))
+	leaderboard_summary_label = _make_label("", 17, Color(0.94, 0.82, 0.56, 0.94))
+	summary_margin.add_child(leaderboard_summary_label)
+
+	var switch_row := HBoxContainer.new()
+	switch_row.add_theme_constant_override("separation", _i(12))
+	box.add_child(switch_row)
+
+	leaderboard_manual_button = _make_pill_button("主卷榜", _v(0.0, 48.0), Callable(self, "_on_leaderboard_manual_pressed"))
+	leaderboard_manual_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	switch_row.add_child(leaderboard_manual_button)
+
+	leaderboard_test_button = _make_pill_button("试阵榜", _v(0.0, 48.0), Callable(self, "_on_leaderboard_test_pressed"))
+	leaderboard_test_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	switch_row.add_child(leaderboard_test_button)
 
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -946,6 +966,7 @@ func _build_leaderboard_overlay() -> void:
 	action_row.add_theme_constant_override("separation", _i(12))
 	box.add_child(action_row)
 	action_row.add_child(_make_pill_button("收起战绩", _v(150.0, 52.0), Callable(self, "_hide_leaderboard_overlay")))
+	_refresh_leaderboard_overlay()
 
 
 func _build_profile_overlay() -> void:
@@ -1275,19 +1296,30 @@ func _build_character_archive_text() -> String:
 	return "\n".join(lines)
 
 
-func _build_local_leaderboard_text() -> String:
-	var entries: Array[Dictionary] = Session.get_local_leaderboard(8)
+func _build_local_leaderboard_text(view: String = "manual", limit: int = 8) -> String:
+	var normalized_view := _normalize_leaderboard_view(view)
+	var entries: Array[Dictionary] = Session.get_local_leaderboard(limit, normalized_view)
 	if entries.is_empty():
-		return "当前还没有可展示的本地战绩。下一次残卷沉没后，这里会留下你的记录。"
+		if normalized_view == "test":
+			return "当前还没有试阵记录。用第 10 / 20 波捷径打一轮后，这里会单独留下试阵榜。"
+		return "当前还没有可展示的主卷战绩。下一次从第 1 波真正开卷后，这里会留下你的记录。"
 
-	var lines: Array[String] = ["按定卷、卷主击破、波次、击破数排序。", ""]
+	var lines: Array[String] = []
+	if normalized_view == "test":
+		lines.append("试阵榜会单独记录第 10 / 20 波捷径，不与主卷榜混排。")
+	else:
+		lines.append("主卷榜只统计从第 1 波真正开卷的正式战绩。")
+	lines.append("")
 	for index in range(entries.size()):
 		var entry: Dictionary = entries[index]
+		var run_label := "试阵 W%d" % int(entry.get("start_wave", 1))
+		if normalized_view == "manual":
+			run_label = "定卷" if bool(entry.get("chapter_complete", false)) else "残卷"
 		lines.append(
 			"%d. %s  %s  卷主 %d  波次 %d  击破 %d  存活 %s" % [
 				index + 1,
 				_format_leaderboard_identity(entry),
-				"定卷" if bool(entry.get("chapter_complete", false)) else "残卷",
+				run_label,
 				int(entry.get("bosses", 0)),
 				int(entry.get("threat", 1)),
 				int(entry.get("kills", 0)),
@@ -1295,6 +1327,46 @@ func _build_local_leaderboard_text() -> String:
 			]
 		)
 	return "\n".join(lines)
+
+
+func _refresh_leaderboard_overlay() -> void:
+	if leaderboard_body_label == null or leaderboard_summary_label == null:
+		return
+
+	var manual_count := Session.get_local_leaderboard_count("manual")
+	var test_count := Session.get_local_leaderboard_count("test")
+	if leaderboard_view == "test" and test_count == 0 and manual_count > 0:
+		leaderboard_view = "manual"
+	elif leaderboard_view == "manual" and manual_count == 0 and test_count > 0:
+		leaderboard_view = "test"
+	else:
+		leaderboard_view = _normalize_leaderboard_view(leaderboard_view)
+
+	if leaderboard_view == "test":
+		leaderboard_summary_label.text = "试阵榜单独收录第 10 / 20 波捷径，方便检查敌潮、build 与 HUD，不会干扰主卷榜。"
+	else:
+		leaderboard_summary_label.text = "主卷榜只收从第 1 波真正开卷的战绩；第 10 / 20 波捷径会单独记入试阵榜。"
+
+	leaderboard_body_label.text = _build_local_leaderboard_text(leaderboard_view, 8)
+	_apply_leaderboard_view_button(leaderboard_manual_button, "主卷榜", manual_count, leaderboard_view == "manual")
+	_apply_leaderboard_view_button(leaderboard_test_button, "试阵榜", test_count, leaderboard_view == "test")
+
+
+func _apply_leaderboard_view_button(button: Button, title: String, count: int, active: bool) -> void:
+	if button == null:
+		return
+
+	button.text = "%s · %d" % [title, count]
+	if active:
+		button.add_theme_color_override("font_color", Color(0.08, 0.07, 0.07, 1.0))
+		button.add_theme_stylebox_override("normal", _make_button_style(Color(0.92, 0.62, 0.28, 1.0)))
+		button.add_theme_stylebox_override("hover", _make_button_style(Color(0.98, 0.7, 0.34, 1.0)))
+		button.add_theme_stylebox_override("pressed", _make_button_style(Color(0.84, 0.54, 0.22, 1.0)))
+	else:
+		button.add_theme_color_override("font_color", Color(0.98, 0.92, 0.82, 0.98))
+		button.add_theme_stylebox_override("normal", _make_panel_style(Color(0.04, 0.06, 0.08, 0.78), Color(0.2, 0.26, 0.32, 0.54)))
+		button.add_theme_stylebox_override("hover", _make_panel_style(Color(0.08, 0.1, 0.12, 0.84), Color(0.92, 0.68, 0.42, 0.44)))
+		button.add_theme_stylebox_override("pressed", _make_panel_style(Color(0.08, 0.1, 0.12, 0.88), Color(0.92, 0.68, 0.42, 0.62)))
 
 
 func _format_leaderboard_identity(entry: Dictionary) -> String:
@@ -1305,6 +1377,10 @@ func _format_leaderboard_identity(entry: Dictionary) -> String:
 	if hero_name.is_empty():
 		return player_name
 	return "%s · %s" % [player_name, hero_name]
+
+
+func _normalize_leaderboard_view(view: String) -> String:
+	return "test" if view == "test" else "manual"
 
 
 func _build_enemy_archive_text() -> String:
@@ -1370,13 +1446,23 @@ func _show_leaderboard_overlay() -> void:
 	_hide_character_archive_overlay()
 	_hide_recipe_atlas_overlay()
 	_hide_enemy_archive_overlay()
-	leaderboard_body_label.text = _build_local_leaderboard_text()
+	_refresh_leaderboard_overlay()
 	leaderboard_overlay.visible = true
 
 
 func _hide_leaderboard_overlay() -> void:
 	if leaderboard_overlay != null:
 		leaderboard_overlay.visible = false
+
+
+func _on_leaderboard_manual_pressed() -> void:
+	leaderboard_view = "manual"
+	_refresh_leaderboard_overlay()
+
+
+func _on_leaderboard_test_pressed() -> void:
+	leaderboard_view = "test"
+	_refresh_leaderboard_overlay()
 
 
 func _show_profile_overlay() -> void:

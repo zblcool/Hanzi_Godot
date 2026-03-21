@@ -1317,11 +1317,38 @@ func _on_player_defeated() -> void:
 	hud.hide_boss()
 	hud.show_banner("字海沉没", Color(1.0, 0.76, 0.58, 1.0), 2.0)
 	Session.last_run_summary = _build_run_summary()
-	if bool(Session.last_run_summary.get("recordable", true)):
+	var start_wave := maxi(1, int(Session.last_run_summary.get("start_wave", 1)))
+	var recordable := bool(Session.last_run_summary.get("recordable", true))
+	var leaderboard_view := "manual" if recordable and start_wave <= 1 else "test"
+	if recordable or start_wave > 1:
 		Session.record_local_run(Session.last_run_summary, Session.selected_hero)
-		hud.set_game_over("墨潮吞没了你。按 R 立即重开，或按 Esc 返回二级菜单。", elapsed_time, kills, threat_level, level)
+		if leaderboard_view == "test":
+			hud.set_game_over(
+				"试阵记录已写入试阵榜，不会影响主卷榜。按 R 立即重开，或按 Esc 返回二级菜单。",
+				elapsed_time,
+				kills,
+				threat_level,
+				level,
+				leaderboard_view
+			)
+		else:
+			hud.set_game_over(
+				"墨潮吞没了你。按 R 立即重开，或按 Esc 返回二级菜单。",
+				elapsed_time,
+				kills,
+				threat_level,
+				level,
+				leaderboard_view
+			)
 	else:
-		hud.set_game_over("试阵捷径不会写入排行榜。按 R 立即重开，或按 Esc 返回二级菜单。", elapsed_time, kills, threat_level, level)
+		hud.set_game_over(
+			"这次捷径不会写入排行榜。按 R 立即重开，或按 Esc 返回二级菜单。",
+			elapsed_time,
+			kills,
+			threat_level,
+			level,
+			leaderboard_view
+		)
 
 
 func _build_run_summary() -> Dictionary:
