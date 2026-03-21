@@ -25,6 +25,13 @@ const SUPPLY_DATA := {
 		"color": Color(0.94, 0.44, 0.34, 1.0),
 		"glow": Color(1.0, 0.76, 0.62, 1.0),
 		"amount": 1.0
+	},
+	"brush": {
+		"glyph": "笔",
+		"title": "文笔",
+		"color": Color(0.98, 0.8, 0.42, 1.0),
+		"glow": Color(0.98, 0.94, 0.8, 1.0),
+		"amount": 12.0
 	}
 }
 
@@ -123,6 +130,8 @@ func _build_visuals() -> void:
 			_build_ink_visuals()
 		"seal":
 			_build_seal_visuals()
+		"brush":
+			_build_brush_visuals()
 		_:
 			_build_paper_visuals()
 
@@ -219,6 +228,56 @@ func _build_seal_visuals() -> void:
 		shard.material_override = cap_material
 		orbit_root.add_child(shard)
 		detail_nodes.append(shard)
+
+
+func _build_brush_visuals() -> void:
+	var shaft_material := _make_solid_material(Color(0.36, 0.24, 0.16, 1.0), tint)
+	var trim_material := _make_solid_material(tint, glow)
+	var bristle_material := _make_solid_material(glow, Color(1.0, 0.96, 0.88, 1.0))
+
+	core_node = MeshInstance3D.new()
+	var shaft_mesh := CylinderMesh.new()
+	shaft_mesh.top_radius = 0.05
+	shaft_mesh.bottom_radius = 0.06
+	shaft_mesh.height = 0.86
+	core_node.mesh = shaft_mesh
+	core_node.rotation_degrees.z = 20.0
+	core_node.material_override = shaft_material
+	visual_root.add_child(core_node)
+
+	var ferrule := MeshInstance3D.new()
+	var ferrule_mesh := CylinderMesh.new()
+	ferrule_mesh.top_radius = 0.07
+	ferrule_mesh.bottom_radius = 0.07
+	ferrule_mesh.height = 0.12
+	ferrule.mesh = ferrule_mesh
+	ferrule.position = Vector3(0.13, -0.16, 0.0)
+	ferrule.rotation_degrees.z = 20.0
+	ferrule.material_override = trim_material
+	visual_root.add_child(ferrule)
+
+	var bristle := MeshInstance3D.new()
+	var bristle_mesh := CylinderMesh.new()
+	bristle_mesh.top_radius = 0.02
+	bristle_mesh.bottom_radius = 0.09
+	bristle_mesh.height = 0.24
+	bristle.mesh = bristle_mesh
+	bristle.position = Vector3(0.2, -0.26, 0.0)
+	bristle.rotation_degrees.z = 20.0
+	bristle.material_override = bristle_material
+	visual_root.add_child(bristle)
+
+	for index in range(3):
+		var ribbon := MeshInstance3D.new()
+		var ribbon_mesh := BoxMesh.new()
+		ribbon_mesh.size = Vector3(0.12, 0.03, 0.28)
+		ribbon.mesh = ribbon_mesh
+		var angle: float = TAU * float(index) / 3.0
+		ribbon.position = Vector3(cos(angle) * 0.22, 0.02, sin(angle) * 0.22)
+		ribbon.rotation_degrees = Vector3(16.0, rad_to_deg(angle) + 24.0, 14.0)
+		ribbon.material_override = trim_material
+		orbit_root.add_child(ribbon)
+		detail_nodes.append(ribbon)
 
 
 func _make_solid_material(base_color: Color, emission_color: Color) -> StandardMaterial3D:

@@ -276,6 +276,13 @@ func _spawn_props() -> void:
 	for pool_variant in ink_pools:
 		_create_ink_pool(pool_variant["position"], float(pool_variant["radius"]), Color(pool_variant["tint"]))
 
+	var brush_pickups := [
+		Vector3(-17.0, 0.0, -4.0),
+		Vector3(9.0, 0.0, 16.5)
+	]
+	for brush_position in brush_pickups:
+		_spawn_world_supply_pickup(brush_position, "brush")
+
 
 func _spawn_enemy() -> void:
 	if not is_instance_valid(player):
@@ -514,6 +521,14 @@ func _spawn_xp_orb(world_position: Vector3, xp_value: int) -> void:
 	pickups_root.add_child(orb)
 
 
+func _spawn_world_supply_pickup(world_position: Vector3, supply_id: String, amount: float = -1.0) -> void:
+	var pickup = SUPPLY_PICKUP_SCENE.instantiate()
+	pickup.position = world_position + Vector3(0.0, 0.45, 0.0)
+	pickup.configure(player, supply_id, amount)
+	pickup.collected.connect(_on_supply_collected)
+	pickups_root.add_child(pickup)
+
+
 func _spawn_supply_drops(world_position: Vector3, enemy_type: String) -> void:
 	_spawn_supply_bundle(world_position, _build_supply_drops(enemy_type))
 
@@ -619,6 +634,13 @@ func _on_supply_collected(world_position: Vector3, supply_id: String, amount: fl
 					1.7
 				)
 			pulse_radius = 1.22
+		"brush":
+			if is_instance_valid(player):
+				var duration: float = max(amount, 6.0)
+				player.apply_brush_haste(duration)
+				hud.show_banner("拾得文笔  机动提升 %d 秒" % int(round(duration)), tint, 1.7)
+				hud.set_tip("文笔加身，短时间内移动更快，适合拉扯敌群和抢补给。")
+			pulse_radius = 1.18
 
 	_spawn_wave_effect(world_position, pulse_radius, tint, label)
 	_sync_hud()

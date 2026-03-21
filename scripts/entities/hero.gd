@@ -1,6 +1,7 @@
 extends Node3D
 
 const CJKFont := preload("res://scripts/core/cjk_font.gd")
+const BRUSH_HASTE_SPEED_BONUS := 1.85
 
 signal health_changed(current: float, maximum: float)
 signal defeated
@@ -47,6 +48,7 @@ var heal_timer: float = 0.0
 var wave_timer: float = 0.0
 var stealth_time: float = 0.0
 var bush_lock_time: float = 0.0
+var brush_haste_time: float = 0.0
 var slash_anim_time: float = 0.0
 var stun_time: float = 0.0
 var is_dead: bool = false
@@ -125,13 +127,15 @@ func _physics_process(delta: float) -> void:
 		rotation.y = lerp_angle(rotation.y, target_yaw, delta * 10.0)
 	move_blend = move_vector.length()
 	motion_time += delta * (1.8 + move_blend * 6.0 + (0.9 if stun_time > 0.0 else 0.0))
-	global_position += move_vector * move_speed * delta
+	var effective_move_speed: float = move_speed + (BRUSH_HASTE_SPEED_BONUS if brush_haste_time > 0.0 else 0.0)
+	global_position += move_vector * effective_move_speed * delta
 	global_position.y = ground_height
 
 	attack_cooldown = max(attack_cooldown - delta, 0.0)
 	invulnerability_time = max(invulnerability_time - delta, 0.0)
 	stealth_time = max(stealth_time - delta, 0.0)
 	bush_lock_time = max(bush_lock_time - delta, 0.0)
+	brush_haste_time = max(brush_haste_time - delta, 0.0)
 	slash_anim_time = max(slash_anim_time - delta, 0.0)
 	stun_time = max(stun_time - delta, 0.0)
 
@@ -166,6 +170,13 @@ func apply_blade_upgrade(amount: int = 1) -> void:
 
 func get_collect_radius() -> float:
 	return collect_radius
+
+
+func apply_brush_haste(duration: float) -> void:
+	if is_dead:
+		return
+	brush_haste_time = max(brush_haste_time, duration)
+	_update_visual_state()
 
 
 func can_hide_in_bush() -> bool:
@@ -428,6 +439,9 @@ func _update_visual_state() -> void:
 		current_body = Color(0.44, 0.6, 0.52, 1.0)
 		current_accent = Color(0.6, 0.84, 0.7, 1.0)
 		current_trim = Color(0.82, 0.96, 0.88, 1.0)
+	elif brush_haste_time > 0.0:
+		current_accent = current_accent.lightened(0.16)
+		current_trim = current_trim.lightened(0.08)
 
 	body_material.albedo_color = current_body
 	accent_material.albedo_color = current_accent
