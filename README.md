@@ -217,7 +217,9 @@
 - 实体场景：`scenes/entities/`
 - 实体脚本：`scripts/entities/`
 - HUD 场景：`scenes/ui/battle_hud.tscn`
-- UI / 触控脚本：`scripts/ui/`
+- HUD 脚本：`scripts/ui/battle_hud.gd`
+- 横屏保护层：`scripts/ui/mobile_landscape_guard.gd`（启动器、字海菜单、战斗场景共用）
+- 战斗触控层：`scripts/ui/touch_controls_overlay.gd`
 
 `共享状态 / 基础能力`
 - 角色与运行时状态：`scripts/core/session.gd`
