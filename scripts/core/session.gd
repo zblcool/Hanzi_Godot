@@ -74,14 +74,14 @@ const HEROES := {
 	}
 }
 
-const RECIPE_ORDER := ["ming", "xiu", "hai"]
+const RECIPE_ORDER := ["ming", "xiu", "hai", "lei", "ren", "yan"]
 const RECIPES := {
 	"ming": {
 		"id": "ming",
 		"display": "明",
 		"radicals": ["日", "月"],
-		"title": "明光成字",
-		"description": "强化主攻节奏。书生会多发字诀，侠会扩大剑势。",
+		"title": "双轮成字",
+		"description": "强化主攻节奏，并周期放出日月追轮切开正面通路。",
 		"color": Color(1.0, 0.84, 0.4, 1.0),
 		"max_level": 3,
 		"word_id": "ming_guang"
@@ -90,8 +90,8 @@ const RECIPES := {
 		"id": "xiu",
 		"display": "休",
 		"radicals": ["亻", "木"],
-		"title": "休息成字",
-		"description": "给角色带来持续回气，拖长生存曲线。",
+		"title": "林息成字",
+		"description": "周期回复气血并震开近身敌人，拖长生存曲线。",
 		"color": Color(0.56, 0.9, 0.68, 1.0),
 		"max_level": 3,
 		"word_id": "xiu_yang"
@@ -105,16 +105,46 @@ const RECIPES := {
 		"color": Color(0.45, 0.83, 1.0, 1.0),
 		"max_level": 3,
 		"word_id": "hai_xiao"
+	},
+	"lei": {
+		"id": "lei",
+		"display": "雷",
+		"radicals": ["雨", "田"],
+		"title": "落雷成字",
+		"description": "周期锁定最近敌群，以落雷重击压住中场。",
+		"color": Color(0.76, 0.9, 1.0, 1.0),
+		"max_level": 3,
+		"word_id": "lei_yu"
+	},
+	"ren": {
+		"id": "ren",
+		"display": "忍",
+		"radicals": ["刂", "心"],
+		"title": "忍意成字",
+		"description": "半血以下进入忍意，攻速、伤害和移速同步提升。",
+		"color": Color(0.96, 0.58, 0.7, 1.0),
+		"max_level": 3,
+		"word_id": "ren_xin"
+	},
+	"yan": {
+		"id": "yan",
+		"display": "炎",
+		"radicals": ["火", "火"],
+		"title": "炎潮成字",
+		"description": "周期向四面八方喷发炎字弹幕，烧开包围圈。",
+		"color": Color(1.0, 0.54, 0.34, 1.0),
+		"max_level": 3,
+		"word_id": "yan_chao"
 	}
 }
 
-const WORD_ORDER := ["ming_guang", "xiu_yang", "hai_xiao"]
+const WORD_ORDER := ["ming_guang", "xiu_yang", "hai_xiao", "lei_yu", "ren_xin", "yan_chao"]
 const WORDS := {
 	"ming_guang": {
 		"id": "ming_guang",
-		"display": "明光",
-		"title": "明光词技",
-		"description": "让主武器真正进入成词阶段。书生追加字诀，侠扩大斩势。",
+		"display": "明月",
+		"title": "明月引",
+		"description": "双轮会追加追月齐射，主武器也会被明字一并抬高。",
 		"recipe_id": "ming",
 		"unlock_cost": 2,
 		"max_level": 2,
@@ -139,6 +169,36 @@ const WORDS := {
 		"unlock_cost": 2,
 		"max_level": 2,
 		"color": Color(0.62, 0.9, 1.0, 1.0)
+	},
+	"lei_yu": {
+		"id": "lei_yu",
+		"display": "雷雨",
+		"title": "雷雨场",
+		"description": "落雷命中后会继续扩散成雨场，把点杀推进成控场。",
+		"recipe_id": "lei",
+		"unlock_cost": 2,
+		"max_level": 2,
+		"color": Color(0.82, 0.94, 1.0, 1.0)
+	},
+	"ren_xin": {
+		"id": "ren_xin",
+		"display": "忍心",
+		"title": "忍心诀",
+		"description": "忍意激活时会回复气血，并周期斩出震心余波。",
+		"recipe_id": "ren",
+		"unlock_cost": 2,
+		"max_level": 2,
+		"color": Color(1.0, 0.76, 0.84, 1.0)
+	},
+	"yan_chao": {
+		"id": "yan_chao",
+		"display": "炎潮",
+		"title": "炎潮卷",
+		"description": "让炎字弹幕更密更急，命中处还会迸出灼浪。",
+		"recipe_id": "yan",
+		"unlock_cost": 2,
+		"max_level": 2,
+		"color": Color(1.0, 0.74, 0.52, 1.0)
 	}
 }
 
@@ -227,7 +287,7 @@ const ENEMIES := {
 	}
 }
 
-const RADICAL_ORDER := ["亻", "木", "日", "月", "氵", "每", "刂"]
+const RADICAL_ORDER := ["亻", "木", "日", "月", "氵", "每", "雨", "田", "心", "火", "刂"]
 const RADICAL_COLORS := {
 	"亻": Color(0.88, 0.71, 0.55, 1.0),
 	"木": Color(0.49, 0.82, 0.56, 1.0),
@@ -235,6 +295,10 @@ const RADICAL_COLORS := {
 	"月": Color(0.68, 0.79, 1.0, 1.0),
 	"氵": Color(0.42, 0.82, 1.0, 1.0),
 	"每": Color(0.86, 0.56, 1.0, 1.0),
+	"雨": Color(0.72, 0.9, 1.0, 1.0),
+	"田": Color(0.74, 0.82, 0.62, 1.0),
+	"心": Color(1.0, 0.58, 0.72, 1.0),
+	"火": Color(1.0, 0.48, 0.28, 1.0),
 	"刂": Color(1.0, 0.45, 0.38, 1.0)
 }
 const RADICALS := {
@@ -274,11 +338,35 @@ const RADICALS := {
 		"description": "补齐「海」字，也能继续磨成更高阶的海潮词技。",
 		"recipe_id": "hai"
 	},
+	"雨": {
+		"display": "雨",
+		"name": "雨字头",
+		"description": "和 `田` 组成「雷」，走锁敌落雷与中场控场路线。",
+		"recipe_id": "lei"
+	},
+	"田": {
+		"display": "田",
+		"name": "田字格",
+		"description": "补齐「雷」的地格，也能继续磨成雷雨场。",
+		"recipe_id": "lei"
+	},
+	"心": {
+		"display": "心",
+		"name": "心字底",
+		"description": "与 `刂` 合成「忍」，把残血换成更凶的压阵节奏。",
+		"recipe_id": "ren"
+	},
+	"火": {
+		"display": "火",
+		"name": "火字旁",
+		"description": "双火成「炎」，会把四周写成一圈炎潮弹幕。",
+		"recipe_id": "yan"
+	},
 	"刂": {
 		"display": "刂",
 		"name": "立刀旁",
-		"description": "独立强化武器锋势。侠会直接长剑，书生会强化笔锋。",
-		"recipe_id": ""
+		"description": "既强化武器锋势，也能和 `心` 合成「忍」。",
+		"recipe_id": "ren"
 	}
 }
 
@@ -316,12 +404,17 @@ const QUICK_START_PRESETS := {
 			"月": 1,
 			"氵": 1,
 			"每": 0,
+			"雨": 1,
+			"田": 0,
+			"心": 0,
+			"火": 1,
 			"刂": 1
 		},
 		"recipes": {
 			"ming": 2,
 			"xiu": 1,
-			"hai": 1
+			"hai": 1,
+			"lei": 1
 		},
 		"words": {
 			"ming_guang": 1
@@ -349,19 +442,30 @@ const QUICK_START_PRESETS := {
 			"月": 1,
 			"氵": 1,
 			"每": 1,
+			"雨": 1,
+			"田": 1,
+			"心": 1,
+			"火": 2,
 			"刂": 2
 		},
 		"recipes": {
 			"ming": 3,
 			"xiu": 2,
-			"hai": 2
+			"hai": 2,
+			"lei": 3,
+			"ren": 3,
+			"yan": 2
 		},
 		"words": {
 			"ming_guang": 2,
 			"xiu_yang": 1,
-			"hai_xiao": 1
+			"hai_xiao": 1,
+			"lei_yu": 1,
+			"ren_xin": 1
 		},
-		"word_progress": {},
+		"word_progress": {
+			"yan_chao": 1
+		},
 		"blade_level": 2
 	}
 }

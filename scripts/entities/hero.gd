@@ -8,6 +8,7 @@ signal defeated
 signal fire_projectile(origin: Vector3, direction: Vector3, damage: float, speed: float, glyph: String, tint: Color)
 signal request_wave(origin: Vector3, radius: float, damage: float, tint: Color, label: String)
 signal request_slash(origin: Vector3, forward: Vector3, radius: float, damage: float, arc_dot: float, tint: Color, label: String)
+signal request_thunder(target_count: int, damage: float, splash_radius: float, splash_damage: float, tint: Color, label: String)
 
 var hero_id: String = "scholar"
 var hero_name: String = "书生"
@@ -18,6 +19,7 @@ var body_color: Color = Color(0.9, 0.88, 0.82, 1.0)
 var accent_color: Color = Color(0.9, 0.54, 0.32, 1.0)
 
 var ground_height: float = 0.62
+var base_move_speed: float = 6.0
 var move_speed: float = 6.0
 var base_max_health: float = 100.0
 var max_health: float = 100.0
@@ -37,6 +39,14 @@ var slash_radius_bonus: float = 0.0
 var blade_level: int = 0
 var heal_level: int = 0
 var wave_level: int = 0
+var bright_volley_level: int = 0
+var bright_word_level: int = 0
+var thunder_level: int = 0
+var thunder_word_level: int = 0
+var resolve_level: int = 0
+var resolve_word_level: int = 0
+var flame_level: int = 0
+var flame_word_level: int = 0
 var skill_levels: Dictionary = {}
 var word_skill_levels: Dictionary = {}
 var max_health_bonus: float = 0.0
@@ -46,11 +56,16 @@ var attack_cooldown: float = 0.0
 var invulnerability_time: float = 0.0
 var heal_timer: float = 0.0
 var wave_timer: float = 0.0
+var bright_timer: float = 0.0
+var thunder_timer: float = 0.0
+var flame_timer: float = 0.0
+var resolve_pulse_timer: float = 0.0
 var stealth_time: float = 0.0
 var bush_lock_time: float = 0.0
 var brush_haste_time: float = 0.0
 var slash_anim_time: float = 0.0
 var stun_time: float = 0.0
+var resolve_active: bool = false
 var is_dead: bool = false
 
 var look_direction: Vector3 = Vector3(0.0, 0.0, -1.0)
@@ -89,7 +104,8 @@ func configure(hero_data: Dictionary) -> void:
 	role = String(hero_data["role"])
 	body_color = hero_data["body"]
 	accent_color = hero_data["accent"]
-	move_speed = float(hero_data["move_speed"])
+	base_move_speed = float(hero_data["move_speed"])
+	move_speed = base_move_speed
 	base_max_health = float(hero_data["max_health"])
 	max_health = base_max_health
 	health = max_health
@@ -200,6 +216,7 @@ func receive_damage(amount: float) -> void:
 	health = max(0.0, health - adjusted_damage)
 	invulnerability_time = 0.42
 	health_changed.emit(health, max_health)
+	_refresh_resolve_state()
 	_update_visual_state()
 	if health <= 0.0:
 		is_dead = true
@@ -222,13 +239,18 @@ func heal(amount: float) -> void:
 		return
 	health = min(max_health, health + amount)
 	health_changed.emit(health, max_health)
+	_refresh_resolve_state()
 
 
 func _handle_passives(delta: float) -> void:
 	if heal_level > 0:
 		heal_timer -= delta
 		if heal_timer <= 0.0:
-			heal(1.5 + float(heal_level) * 1.2)
+			var heal_amount: float = 1.5 + float(heal_level) * 1.2 + float(int(word_skill_levels.get("xiu_yang", 0))) * 1.1
+			heal(heal_amount)
+			var rest_radius: float = 3.6 + float(heal_level) * 0.48
+			var rest_damage: float = 7.0 + heal_amount * 0.75 + float(blade_level) * 0.8
+			request_wave.emit(global_position, rest_radius, rest_damage, Session.RECIPES["xiu"]["color"], "休")
 			heal_timer = max(5.4 - float(heal_level) * 0.45, 2.4)
 
 	if wave_level > 0:
@@ -238,6 +260,112 @@ func _handle_passives(delta: float) -> void:
 			var wave_damage: float = 12.0 + float(wave_level) * 4.5 + float(blade_level)
 			request_wave.emit(global_position, wave_radius, wave_damage, Session.RECIPES["hai"]["color"], "海")
 			wave_timer = max(6.8 - float(wave_level) * 0.55, 2.8)
+
+	if bright_volley_level > 0:
+		bright_timer -= delta
+		if bright_timer <= 0.0:
+			_trigger_bright_volley()
+			bright_timer = max(1.8, 5.0 - float(bright_volley_level) * 0.45 - float(bright_word_level) * 0.6)
+
+	if thunder_level > 0:
+		thunder_timer -= delta
+		if thunder_timer <= 0.0:
+			var thunder_damage: float = 12.0 + current_attack_damage * 0.68 + float(thunder_level) * 2.8 + float(thunder_word_level) * 2.4
+			var splash_radius: float = 0.0 if thunder_word_level <= 0 else 1.9 + float(thunder_word_level) * 0.48
+			var splash_damage: float = 0.0 if splash_radius <= 0.0 else thunder_damage * (0.46 + float(thunder_word_level) * 0.08)
+			request_thunder.emit(2 + thunder_level + thunder_word_level, thunder_damage, splash_radius, splash_damage, Session.RECIPES["lei"]["color"], "雷")
+			thunder_timer = max(2.35, 4.1 - float(thunder_level) * 0.34 - float(thunder_word_level) * 0.38)
+
+	if flame_level > 0:
+		flame_timer -= delta
+		if flame_timer <= 0.0:
+			_trigger_flame_burst()
+			flame_timer = max(2.4, 5.1 - float(flame_level) * 0.36 - float(flame_word_level) * 0.42)
+
+	if resolve_active and resolve_word_level > 0:
+		resolve_pulse_timer -= delta
+		if resolve_pulse_timer <= 0.0:
+			_trigger_resolve_pulse()
+			resolve_pulse_timer = max(1.05, 2.2 - float(resolve_word_level) * 0.22)
+
+
+func _trigger_bright_volley() -> void:
+	var closest_enemy = _find_closest_enemy()
+	if closest_enemy == null:
+		return
+
+	var target_position: Vector3 = closest_enemy.global_position
+	target_position.y = ground_height
+	var base_direction := (target_position - global_position).normalized()
+	var projectile_count: int = 2 + bright_word_level
+	var damage: float = base_attack_damage * 0.52 + float(bright_volley_level) * 3.0 + float(bright_word_level) * 2.4 + float(blade_level)
+	var speed: float = max(12.0, projectile_speed + 2.4 + float(bright_word_level) * 0.8)
+	var tint: Color = Session.RECIPES["ming"]["color"]
+	for index in range(projectile_count):
+		var offset: float = float(index) - float(projectile_count - 1) * 0.5
+		var direction := base_direction.rotated(Vector3.UP, offset * 0.18)
+		var glyph := "月" if index % 2 == 0 else "日"
+		fire_projectile.emit(global_position + Vector3(0.0, 1.0, 0.0) + direction * 1.1, direction, damage, speed, glyph, tint)
+
+
+func _trigger_flame_burst() -> void:
+	var projectile_count: int = 6 + flame_level * 2 + flame_word_level * 2
+	var damage: float = 5.5 + current_attack_damage * 0.42 + float(flame_level) * 2.2 + float(flame_word_level) * 1.6
+	var speed: float = 9.4 + float(flame_word_level) * 0.85
+	var tint: Color = Session.RECIPES["yan"]["color"]
+	for index in range(projectile_count):
+		var angle: float = TAU * float(index) / float(projectile_count)
+		var direction := Vector3(cos(angle), 0.0, sin(angle)).normalized()
+		fire_projectile.emit(global_position + Vector3(0.0, 1.0, 0.0) + direction * 1.0, direction, damage, speed, "炎", tint)
+
+
+func _trigger_resolve_activation() -> void:
+	if resolve_word_level > 0:
+		heal(2.8 + float(resolve_word_level) * 1.8)
+	var pulse_radius: float = 3.2 + float(resolve_level) * 0.28 + float(resolve_word_level) * 0.44
+	var pulse_damage: float = 7.0 + current_attack_damage * 0.34 + float(resolve_level) * 1.8
+	request_wave.emit(global_position, pulse_radius, pulse_damage, Session.RECIPES["ren"]["color"], "忍")
+	resolve_pulse_timer = max(resolve_pulse_timer, 0.82)
+
+
+func _trigger_resolve_pulse() -> void:
+	var pulse_radius: float = 3.4 + float(resolve_level) * 0.32 + float(resolve_word_level) * 0.46
+	var pulse_damage: float = 6.8 + current_attack_damage * 0.38 + float(resolve_word_level) * 2.8
+	var tint: Color = Session.RECIPES["ren"]["color"]
+	if role == "melee":
+		request_slash.emit(global_position, look_direction, pulse_radius, pulse_damage, 0.1, tint, "忍")
+	else:
+		request_wave.emit(global_position, pulse_radius * 0.82, pulse_damage, tint, "忍")
+
+
+func _refresh_resolve_state() -> void:
+	var should_be_active: bool = _should_resolve_be_active()
+	if should_be_active == resolve_active:
+		return
+	resolve_active = should_be_active
+	_apply_skill_levels()
+	if resolve_active:
+		_trigger_resolve_activation()
+	else:
+		resolve_pulse_timer = 0.0
+	_update_visual_state()
+
+
+func _should_resolve_be_active() -> bool:
+	if resolve_level <= 0 or max_health <= 0.0:
+		return false
+	var health_ratio: float = health / max(max_health, 0.001)
+	if resolve_active:
+		return health_ratio <= _resolve_release_threshold()
+	return health_ratio <= _resolve_trigger_threshold()
+
+
+func _resolve_trigger_threshold() -> float:
+	return 0.5
+
+
+func _resolve_release_threshold() -> float:
+	return 0.58 + float(resolve_word_level) * 0.03
 
 
 func _try_attack() -> void:
@@ -290,20 +418,42 @@ func _apply_skill_levels() -> void:
 	var ming_level: int = int(skill_levels.get("ming", 0))
 	var xiu_level: int = int(skill_levels.get("xiu", 0))
 	var hai_level: int = int(skill_levels.get("hai", 0))
+	var lei_level: int = int(skill_levels.get("lei", 0))
+	var ren_level: int = int(skill_levels.get("ren", 0))
+	var yan_level: int = int(skill_levels.get("yan", 0))
 	var ming_word_level: int = int(word_skill_levels.get("ming_guang", 0))
 	var xiu_word_level: int = int(word_skill_levels.get("xiu_yang", 0))
 	var hai_word_level: int = int(word_skill_levels.get("hai_xiao", 0))
+	var lei_word_level: int = int(word_skill_levels.get("lei_yu", 0))
+	var ren_word_level: int = int(word_skill_levels.get("ren_xin", 0))
+	var yan_word_level: int = int(word_skill_levels.get("yan_chao", 0))
 
 	heal_level = xiu_level + xiu_word_level
 	wave_level = hai_level + hai_word_level * 2
+	bright_volley_level = ming_level
+	bright_word_level = ming_word_level
+	thunder_level = lei_level
+	thunder_word_level = lei_word_level
+	resolve_level = ren_level
+	resolve_word_level = ren_word_level
+	flame_level = yan_level
+	flame_word_level = yan_word_level
 
 	max_health_bonus = float(xiu_word_level) * 18.0
 	damage_reduction_ratio = float(xiu_word_level) * 0.12
 	max_health = base_max_health + max_health_bonus
 	health = min(health, max_health)
+	var activated_resolve: bool = false
+	var should_resolve: bool = _should_resolve_be_active()
+	if should_resolve != resolve_active:
+		activated_resolve = should_resolve
+		resolve_active = should_resolve
+	elif not should_resolve:
+		resolve_pulse_timer = 0.0
+	move_speed = base_move_speed
 	projectile_speed = base_projectile_speed + float(blade_level) * 0.8 + float(ming_word_level) * 1.0
 
-	current_attack_damage = base_attack_damage + float(ming_level) * 2.4 + float(wave_level) * 1.2 + float(ming_word_level) * 4.0
+	current_attack_damage = base_attack_damage + float(ming_level) * 2.4 + float(wave_level) * 1.2 + float(ming_word_level) * 4.0 + float(lei_level) * 1.1 + float(yan_level) * 1.0
 	current_attack_interval = max(0.28, base_attack_interval - float(ming_level) * 0.03 - float(ming_word_level) * 0.04)
 
 	if role == "ranged":
@@ -315,12 +465,27 @@ func _apply_skill_levels() -> void:
 		current_attack_damage += float(blade_level) * 2.6 + float(ming_word_level) * 2.0
 		current_attack_interval = max(0.34, current_attack_interval - float(blade_level) * 0.015)
 
+	if resolve_active:
+		move_speed = base_move_speed + 0.55 + float(resolve_level) * 0.34 + float(resolve_word_level) * 0.2
+		current_attack_damage *= 1.0 + float(resolve_level) * 0.16 + float(resolve_word_level) * 0.08
+		current_attack_interval = max(0.22 if role == "ranged" else 0.28, current_attack_interval - float(resolve_level) * 0.045 - float(resolve_word_level) * 0.03)
+
 	if heal_timer <= 0.0:
 		heal_timer = max(5.4 - float(heal_level) * 0.45 - float(xiu_word_level) * 0.22, 1.9)
 	if wave_timer <= 0.0:
 		wave_timer = max(6.8 - float(wave_level) * 0.55 - float(hai_word_level) * 0.45, 2.1)
+	if bright_volley_level > 0 and bright_timer <= 0.0:
+		bright_timer = max(1.8, 5.0 - float(bright_volley_level) * 0.45 - float(bright_word_level) * 0.6)
+	if thunder_level > 0 and thunder_timer <= 0.0:
+		thunder_timer = max(2.35, 4.1 - float(thunder_level) * 0.34 - float(thunder_word_level) * 0.38)
+	if flame_level > 0 and flame_timer <= 0.0:
+		flame_timer = max(2.4, 5.1 - float(flame_level) * 0.36 - float(flame_word_level) * 0.42)
+	if resolve_active and resolve_word_level > 0 and resolve_pulse_timer <= 0.0:
+		resolve_pulse_timer = max(1.05, 2.2 - float(resolve_word_level) * 0.22)
 
 	health_changed.emit(health, max_health)
+	if activated_resolve:
+		_trigger_resolve_activation()
 
 
 func _build_visuals() -> void:
@@ -431,6 +596,10 @@ func _update_visual_state() -> void:
 	var current_trim: Color = Color(0.96, 0.9, 0.8, 1.0)
 	if invulnerability_time > 0.0:
 		current_body = Color(1.0, 0.82, 0.74, 1.0)
+	if resolve_active and stun_time <= 0.0 and stealth_time <= 0.0:
+		current_body = current_body.lerp(Color(1.0, 0.82, 0.82, 1.0), 0.42)
+		current_accent = Color(1.0, 0.42, 0.38, 1.0)
+		current_trim = Color(1.0, 0.92, 0.84, 1.0)
 	if stun_time > 0.0:
 		current_body = Color(0.72, 0.76, 0.94, 1.0)
 		current_accent = Color(0.48, 0.58, 0.9, 1.0)

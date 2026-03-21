@@ -203,6 +203,7 @@ func _spawn_player() -> void:
 	player.fire_projectile.connect(_on_player_fire_projectile)
 	player.request_wave.connect(_on_player_request_wave)
 	player.request_slash.connect(_on_player_request_slash)
+	player.request_thunder.connect(_on_player_request_thunder)
 	player.health_changed.connect(_on_player_health_changed)
 	player.defeated.connect(_on_player_defeated)
 
@@ -655,6 +656,52 @@ func _on_player_request_slash(origin: Vector3, forward: Vector3, radius: float, 
 		node.take_damage(damage)
 
 
+func _on_player_request_thunder(target_count: int, damage: float, splash_radius: float, splash_damage: float, tint: Color, label: String) -> void:
+	var targets: Array = _collect_nearest_enemies(target_count)
+	for target in targets:
+		if not is_instance_valid(target) or target.is_queued_for_deletion():
+			continue
+		_spawn_wave_effect(target.global_position, 1.1 + splash_radius * 0.25, tint, label)
+		target.take_damage(damage)
+		if splash_radius > 0.0 and splash_damage > 0.0:
+			_damage_enemies_in_radius(target.global_position, splash_radius, splash_damage, target)
+
+
+func _collect_nearest_enemies(max_count: int) -> Array:
+	var remaining: Array = []
+	for node in get_tree().get_nodes_in_group("enemy"):
+		if not is_instance_valid(node) or node.is_queued_for_deletion():
+			continue
+		remaining.append(node)
+
+	var picked: Array = []
+	while picked.size() < max_count and not remaining.is_empty():
+		var nearest_index: int = 0
+		var nearest_distance: float = INF
+		for index in range(remaining.size()):
+			var candidate = remaining[index]
+			var distance: float = player.global_position.distance_squared_to(candidate.global_position)
+			if distance < nearest_distance:
+				nearest_distance = distance
+				nearest_index = index
+		picked.append(remaining[nearest_index])
+		remaining.remove_at(nearest_index)
+	return picked
+
+
+func _damage_enemies_in_radius(origin: Vector3, radius: float, damage: float, excluded = null) -> void:
+	if radius <= 0.0 or damage <= 0.0:
+		return
+	for node in get_tree().get_nodes_in_group("enemy"):
+		if node == excluded or not is_instance_valid(node) or node.is_queued_for_deletion():
+			continue
+		var enemy_radius: float = 1.0
+		if node.has_method("get_hit_radius"):
+			enemy_radius = node.get_hit_radius()
+		if origin.distance_to(node.global_position) <= radius + enemy_radius:
+			node.take_damage(damage)
+
+
 func _on_enemy_defeated(world_position: Vector3, enemy_type: String) -> void:
 	kills += 1
 	enemy_kills_by_type[enemy_type] = int(enemy_kills_by_type.get(enemy_type, 0)) + 1
@@ -888,7 +935,6 @@ func _score_radical_choice(radical: String) -> float:
 	if radical == "刂":
 		score += 1.6 if Session.selected_hero == "xia" else 0.95
 		score += min(0.75, float(player.blade_level) * 0.08)
-		return score
 
 	var recipe_id: String = Session.get_recipe_id_for_radical(radical)
 	if recipe_id.is_empty():
@@ -922,37 +968,38 @@ func _build_choice_data(radical: String) -> Dictionary:
 	var radical_data: Dictionary = Session.get_radical_data(radical)
 	var color: Color = Session.RADICAL_COLORS[radical]
 	var headline: String = String(radical_data["description"])
-	if radical == "刂":
-		headline = "直接强化%s。" % ("剑势" if Session.selected_hero == "xia" else "笔锋")
-	else:
+	if radical != "刂" or not Session.get_recipe_id_for_radical(radical).is_empty():
 		var recipe_id: String = Session.get_recipe_id_for_radical(radical)
-		var recipe: Dictionary = Session.get_recipe_data(recipe_id)
-		var level_value: int = int(skill_levels.get(recipe_id, 0))
-		var max_level: int = int(recipe["max_level"])
-		if level_value <= 0:
-			var partner: String = _get_partner_radical(recipe_id, radical)
-			if int(radical_counts.get(partner, 0)) > 0:
-				headline = "补上最后一笔，立成「%s」。" % String(recipe["display"])
+		if not recipe_id.is_empty():
+			var recipe: Dictionary = Session.get_recipe_data(recipe_id)
+			var level_value: int = int(skill_levels.get(recipe_id, 0))
+			var max_level: int = int(recipe["max_level"])
+			if level_value <= 0:
+				var partner: String = _get_partner_radical(recipe_id, radical)
+				if int(radical_counts.get(partner, 0)) > 0:
+					headline = "补上最后一笔，立成「%s」。" % String(recipe["display"])
+				else:
+					headline = "收集成字，通往「%s」。" % String(recipe["display"])
+			elif level_value < max_level:
+				headline = "提升「%s」 Lv.%d -> Lv.%d。" % [String(recipe["display"]), level_value, level_value + 1]
 			else:
-				headline = "收集成字，通往「%s」。" % String(recipe["display"])
-		elif level_value < max_level:
-			headline = "提升「%s」 Lv.%d -> Lv.%d。" % [String(recipe["display"]), level_value, level_value + 1]
-		else:
-			var word: Dictionary = Session.get_word_data(String(recipe["word_id"]))
-			var word_level: int = int(word_skill_levels.get(word["id"], 0))
-			var stock: int = _count_recipe_radicals(recipe["radicals"]) + 1
-			if word_level <= 0:
-				headline = "为「%s」添一枚余材，可去砚台磨词 %d/%d。" % [
-					String(word["display"]),
-					min(int(word_progress.get(word["id"], 0)) + 1, int(word["unlock_cost"])),
-					int(word["unlock_cost"])
-				]
-			else:
-				headline = "补充词材，可在砚台将「%s」升到 Lv.%d。当前余材 %d。" % [
-					String(word["display"]),
-					min(word_level + 1, int(word["max_level"])),
-					stock
-				]
+				var word: Dictionary = Session.get_word_data(String(recipe["word_id"]))
+				var word_level: int = int(word_skill_levels.get(word["id"], 0))
+				var stock: int = _count_recipe_radicals(recipe["radicals"]) + 1
+				if word_level <= 0:
+					headline = "为「%s」添一枚余材，可去砚台磨词 %d/%d。" % [
+						String(word["display"]),
+						min(int(word_progress.get(word["id"], 0)) + 1, int(word["unlock_cost"])),
+						int(word["unlock_cost"])
+					]
+				else:
+					headline = "补充词材，可在砚台将「%s」升到 Lv.%d。当前余材 %d。" % [
+						String(word["display"]),
+						min(word_level + 1, int(word["max_level"])),
+						stock
+					]
+	if radical == "刂":
+		headline += " 并强化%s。" % ("剑势" if Session.selected_hero == "xia" else "笔锋")
 
 	return {
 		"radical": radical,
@@ -982,6 +1029,7 @@ func _apply_radical_choice(radical: String) -> void:
 		radical_counts[radical] = int(radical_counts.get(radical, 0)) + 1
 		player.apply_blade_upgrade()
 		hud.show_banner("%s 入%s" % [radical, "剑势" if Session.selected_hero == "xia" else "笔锋"], Session.RADICAL_COLORS[radical], 1.8)
+		_resolve_growth_chains()
 		_sync_hud()
 		return
 
@@ -1042,9 +1090,10 @@ func _set_word_level(word_id: String, new_level: int) -> void:
 
 
 func _has_recipe_parts(radicals: Array) -> bool:
-	for radical_variant in radicals:
+	var requirements: Dictionary = _build_radical_requirement_counts(radicals)
+	for radical_variant in requirements.keys():
 		var radical := String(radical_variant)
-		if int(radical_counts.get(radical, 0)) <= 0:
+		if int(radical_counts.get(radical, 0)) < int(requirements[radical_variant]):
 			return false
 	return true
 
@@ -1059,11 +1108,24 @@ func _find_available_recipe_radical(radicals: Array) -> String:
 
 func _get_partner_radical(recipe_id: String, radical: String) -> String:
 	var recipe: Dictionary = Session.get_recipe_data(recipe_id)
+	var same_count: int = 0
 	for radical_variant in recipe["radicals"]:
 		var recipe_radical := String(radical_variant)
+		if recipe_radical == radical:
+			same_count += 1
 		if recipe_radical != radical:
 			return recipe_radical
+	if same_count > 1:
+		return radical
 	return ""
+
+
+func _build_radical_requirement_counts(radicals: Array) -> Dictionary:
+	var requirements: Dictionary = {}
+	for radical_variant in radicals:
+		var radical := String(radical_variant)
+		requirements[radical] = int(requirements.get(radical, 0)) + 1
+	return requirements
 
 
 func _on_enemy_request_hazard(target_position: Vector3, radius: float, warning_time: float, active_time: float, damage: float, tint: Color, label: String) -> void:
@@ -1862,9 +1924,13 @@ func _can_grind_word(word_id: String) -> bool:
 
 
 func _count_recipe_radicals(radicals: Array) -> int:
+	var seen: Dictionary = {}
 	var total: int = 0
 	for radical_variant in radicals:
 		var radical := String(radical_variant)
+		if seen.has(radical):
+			continue
+		seen[radical] = true
 		total += max(0, int(radical_counts.get(radical, 0)))
 	return total
 
