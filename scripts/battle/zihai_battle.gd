@@ -67,6 +67,7 @@ var tree_fade_entries: Array[Dictionary] = []
 var active_inkstone: Node3D = null
 var battle_intro: Dictionary = {}
 var explored_map_cells: Dictionary = {}
+var enemy_kills_by_type: Dictionary = {}
 
 var level: int = 1
 var experience: int = 0
@@ -81,6 +82,7 @@ func _ready() -> void:
 	skill_levels = Session.build_empty_recipe_levels()
 	word_skill_levels = Session.build_empty_word_levels()
 	word_progress = Session.build_empty_word_progress()
+	enemy_kills_by_type = Session.build_empty_enemy_counts()
 	_setup_input_map()
 	_setup_environment()
 	_build_ground()
@@ -470,6 +472,7 @@ func _on_player_request_slash(origin: Vector3, forward: Vector3, radius: float, 
 
 func _on_enemy_defeated(world_position: Vector3, enemy_type: String) -> void:
 	kills += 1
+	enemy_kills_by_type[enemy_type] = int(enemy_kills_by_type.get(enemy_type, 0)) + 1
 	_spawn_enemy_death_effect(world_position, enemy_type)
 	_spawn_xp_orb(world_position, _xp_value_for_enemy(enemy_type))
 	_spawn_supply_drops(world_position, enemy_type)
@@ -1107,16 +1110,29 @@ func _on_player_defeated() -> void:
 	hud.hide_map_overlay()
 	hud.hide_boss()
 	hud.show_banner("字海沉没", Color(1.0, 0.76, 0.58, 1.0), 2.0)
-	Session.last_run_summary = {
+	Session.last_run_summary = _build_run_summary()
+	Session.record_local_run(Session.last_run_summary, Session.selected_hero)
+	hud.set_game_over("墨潮吞没了你。按 R 立即重开，或按 Esc 返回二级菜单。", elapsed_time, kills, threat_level, level)
+
+
+func _build_run_summary() -> Dictionary:
+	var blade_level: int = 0
+	if is_instance_valid(player):
+		blade_level = player.blade_level
+
+	return {
 		"elapsed": elapsed_time,
 		"kills": kills,
 		"threat": threat_level,
 		"level": level,
 		"bosses": int(Session.chapter_progress.get("completed_bosses", 0)),
-		"chapter_complete": bool(Session.chapter_progress.get("chapter_complete", false))
+		"chapter_complete": bool(Session.chapter_progress.get("chapter_complete", false)),
+		"radicals": radical_counts.duplicate(true),
+		"recipes": skill_levels.duplicate(true),
+		"words": word_skill_levels.duplicate(true),
+		"blade_level": blade_level,
+		"enemy_kills": enemy_kills_by_type.duplicate(true)
 	}
-	Session.record_local_run(Session.last_run_summary, Session.selected_hero)
-	hud.set_game_over("墨潮吞没了你。按 R 立即重开，或按 Esc 返回二级菜单。", elapsed_time, kills, threat_level, level)
 
 
 func _on_bush_activated(message: String) -> void:

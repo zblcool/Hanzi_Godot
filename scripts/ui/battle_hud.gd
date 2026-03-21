@@ -620,7 +620,99 @@ func _build_local_leaderboard_text() -> String:
 				_format_time(float(entry.get("elapsed", 0.0)))
 			]
 		)
+		var detail_line := _build_local_leaderboard_detail_line(entry)
+		if not detail_line.is_empty():
+			lines.append("   %s" % detail_line)
 	return "\n".join(lines)
+
+
+func _build_local_leaderboard_detail_line(entry: Dictionary) -> String:
+	var segments: Array[String] = []
+
+	var radicals_text := _summarize_run_counts(entry.get("radicals", {}), Session.RADICAL_ORDER, "radical")
+	if not radicals_text.is_empty():
+		segments.append("偏旁 %s" % radicals_text)
+
+	var recipes_text := _summarize_run_counts(entry.get("recipes", {}), Session.RECIPE_ORDER, "recipe")
+	if not recipes_text.is_empty():
+		segments.append("成字 %s" % recipes_text)
+
+	var words_text := _summarize_run_counts(entry.get("words", {}), Session.WORD_ORDER, "word")
+	if not words_text.is_empty():
+		segments.append("词技 %s" % words_text)
+
+	var blade_level: int = int(entry.get("blade_level", 0))
+	if blade_level > 0:
+		segments.append("%s Lv.%d" % ["剑势" if String(entry.get("hero_id", "scholar")) == "xia" else "笔锋", blade_level])
+
+	var enemy_text := _summarize_enemy_kills(entry.get("enemy_kills", {}))
+	if not enemy_text.is_empty():
+		segments.append("击倒 %s" % enemy_text)
+
+	return " | ".join(segments)
+
+
+func _summarize_run_counts(raw_counts: Variant, order: Array, category: String) -> String:
+	if not (raw_counts is Dictionary):
+		return ""
+
+	var counts := raw_counts as Dictionary
+	var parts: Array[String] = []
+	for key_variant in order:
+		var key := String(key_variant)
+		var amount: int = int(counts.get(key, 0))
+		if amount <= 0:
+			continue
+		parts.append("%s%d" % [_run_count_label(key, category), amount])
+		if parts.size() >= 3:
+			break
+	return " ".join(parts)
+
+
+func _run_count_label(key: String, category: String) -> String:
+	match category:
+		"recipe":
+			return String(Session.get_recipe_data(key).get("display", key))
+		"word":
+			return String(Session.get_word_data(key).get("display", key))
+		_:
+			return key
+
+
+func _summarize_enemy_kills(raw_counts: Variant) -> String:
+	if not (raw_counts is Dictionary):
+		return ""
+
+	var counts := raw_counts as Dictionary
+	var ranked_enemies: Array[Dictionary] = []
+	for enemy_id_variant in Session.ENEMY_ORDER:
+		var enemy_id := String(enemy_id_variant)
+		var amount: int = int(counts.get(enemy_id, 0))
+		if amount <= 0:
+			continue
+		ranked_enemies.append({
+			"id": enemy_id,
+			"amount": amount
+		})
+
+	if ranked_enemies.is_empty():
+		return ""
+
+	ranked_enemies.sort_custom(func(left: Dictionary, right: Dictionary) -> bool:
+		var left_amount: int = int(left.get("amount", 0))
+		var right_amount: int = int(right.get("amount", 0))
+		if left_amount != right_amount:
+			return left_amount > right_amount
+		return Session.ENEMY_ORDER.find(String(left.get("id", ""))) < Session.ENEMY_ORDER.find(String(right.get("id", "")))
+	)
+
+	var parts: Array[String] = []
+	var limit: int = mini(3, ranked_enemies.size())
+	for index in range(limit):
+		var item: Dictionary = ranked_enemies[index]
+		var enemy_id := String(item.get("id", "basic"))
+		parts.append("%s%d" % [String(Session.get_enemy_data(enemy_id).get("glyph", enemy_id)), int(item.get("amount", 0))])
+	return " ".join(parts)
 
 
 func _build_ui() -> void:

@@ -376,6 +376,14 @@ func build_empty_word_progress() -> Dictionary:
 	return data
 
 
+func build_empty_enemy_counts() -> Dictionary:
+	var data: Dictionary = {}
+	for enemy_id_variant in ENEMY_ORDER:
+		var enemy_id := String(enemy_id_variant)
+		data[enemy_id] = 0
+	return data
+
+
 func record_local_run(summary: Dictionary, hero_id: String = selected_hero) -> void:
 	_ensure_local_leaderboard_loaded()
 
@@ -388,6 +396,11 @@ func record_local_run(summary: Dictionary, hero_id: String = selected_hero) -> v
 		"level": int(summary.get("level", 1)),
 		"bosses": int(summary.get("bosses", 0)),
 		"chapter_complete": bool(summary.get("chapter_complete", false)),
+		"radicals": summary.get("radicals", {}),
+		"recipes": summary.get("recipes", {}),
+		"words": summary.get("words", {}),
+		"blade_level": int(summary.get("blade_level", 0)),
+		"enemy_kills": summary.get("enemy_kills", {}),
 		"recorded_at": int(Time.get_unix_time_from_system())
 	})
 	if normalized_entry.is_empty():
@@ -468,9 +481,29 @@ func _normalize_leaderboard_entry(raw_entry: Variant) -> Dictionary:
 		"level": maxi(1, int(data.get("level", 1))),
 		"bosses": maxi(0, int(data.get("bosses", 0))),
 		"chapter_complete": bool(data.get("chapter_complete", false)),
+		"radicals": _normalize_run_counts(data.get("radicals", {}), RADICAL_ORDER),
+		"recipes": _normalize_run_counts(data.get("recipes", {}), RECIPE_ORDER),
+		"words": _normalize_run_counts(data.get("words", {}), WORD_ORDER),
+		"blade_level": maxi(0, int(data.get("blade_level", 0))),
+		"enemy_kills": _normalize_run_counts(data.get("enemy_kills", {}), ENEMY_ORDER),
 		"recorded_at": maxi(0, int(data.get("recorded_at", 0)))
 	}
 	return entry
+
+
+func _normalize_run_counts(raw_counts: Variant, order: Array) -> Dictionary:
+	var counts: Dictionary = {}
+	for key_variant in order:
+		var key := String(key_variant)
+		counts[key] = 0
+
+	if raw_counts is Dictionary:
+		var raw_dictionary := raw_counts as Dictionary
+		for key_variant in order:
+			var key := String(key_variant)
+			counts[key] = maxi(0, int(raw_dictionary.get(key, 0)))
+
+	return counts
 
 
 func _sort_local_leaderboard() -> void:
