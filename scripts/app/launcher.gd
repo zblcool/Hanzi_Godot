@@ -414,28 +414,89 @@ func _build_about_overlay() -> void:
 
 	var panel := PanelContainer.new()
 	panel.set_anchors_preset(Control.PRESET_CENTER)
-	panel.offset_left = -_f(420.0)
-	panel.offset_top = -_f(220.0)
-	panel.offset_right = _f(420.0)
-	panel.offset_bottom = _f(220.0)
+	panel.offset_left = -_f(560.0)
+	panel.offset_top = -_f(318.0)
+	panel.offset_right = _f(560.0)
+	panel.offset_bottom = _f(318.0)
 	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.05, 0.08, 0.1, 0.96), Color(0.94, 0.7, 0.42, 0.9)))
 	about_overlay.add_child(panel)
 
 	var margin := MarginContainer.new()
 	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-	margin.add_theme_constant_override("margin_left", _i(26))
-	margin.add_theme_constant_override("margin_top", _i(22))
-	margin.add_theme_constant_override("margin_right", _i(26))
-	margin.add_theme_constant_override("margin_bottom", _i(22))
+	margin.add_theme_constant_override("margin_left", _i(28))
+	margin.add_theme_constant_override("margin_top", _i(24))
+	margin.add_theme_constant_override("margin_right", _i(28))
+	margin.add_theme_constant_override("margin_bottom", _i(24))
 	panel.add_child(margin)
 
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", _i(10))
+	box.add_theme_constant_override("separation", _i(16))
 	margin.add_child(box)
-	box.add_child(_make_label("关于字海残卷", 42, Color(1.0, 0.95, 0.86, 1.0)))
-	box.add_child(_make_label("这是一个把汉字结构本身当成核心成长资源的动作 roguelite。", 20, Color(0.9, 0.92, 0.96, 0.95)))
-	box.add_child(_make_label("你收集的不是传统数值，而是偏旁。它们先合成字，再继续在砚台里磨成词技。", 18, Color(0.9, 0.92, 0.95, 0.94)))
-	box.add_child(_make_label("整个项目正在从 web 端迁移到 Godot，我们现在优先把 3D 战斗、敌人谱系和墨色 UI 一起定下来。", 18, Color(0.9, 0.92, 0.95, 0.94)))
+
+	box.add_child(_make_tag("About The Games", Color(0.14, 0.18, 0.24, 0.88), Color(0.96, 0.82, 0.56, 0.98)))
+	box.add_child(_make_label("关于汉字工坊", 44, Color(1.0, 0.95, 0.86, 1.0)))
+	box.add_child(_make_label("这里先讲清这款游戏为什么会被做出来，再继续介绍当前已经迁进 Godot 的部分，以及还留在 web 原型里的目标。", 18, Color(0.9, 0.92, 0.96, 0.95)))
+
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	box.add_child(scroll)
+
+	var content := VBoxContainer.new()
+	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	content.add_theme_constant_override("separation", _i(18))
+	scroll.add_child(content)
+
+	content.add_child(_make_about_story_panel([
+		"作为生活在海外的中国人，多种文化之间的碰撞与交流，让我重新看见自己的母语。汉字像古老而仍然鲜活的图画，从甲骨文到小篆、从繁体到简体，每一次演变都藏着故事，也延续着几千年的文化脉络。",
+		"一直以来，我都想做一款和中文有关的游戏。直到孩子出生，这个念头变得更具体了。身处英语环境，我开始更认真地想：能不能用游戏去点燃他，也点燃更多孩子，对汉字与中华文化的兴趣？对我来说，这既是一次实验，也是一个父亲的愿望。",
+		"这个项目会持续借助 AI 参与开发，但归根结底，它更像是一封写给汉字、写给中文文化的情书。现在 Godot 主线先把《字海残卷》的启动器、二级菜单和 3D 战斗接牢，再继续把 web 原型里更完整的内容一项项迁回来。"
+	]))
+
+	var game_grid := GridContainer.new()
+	game_grid.columns = 2
+	game_grid.add_theme_constant_override("h_separation", _i(16))
+	game_grid.add_theme_constant_override("v_separation", _i(16))
+	content.add_child(game_grid)
+
+	game_grid.add_child(_make_about_game_card(
+		"Action Roguelite",
+		"字海残卷",
+		"自动攻击、生存走位、偏旁合字、词技磨成与字阵地图。像幸存者类，但核心成长来自汉字结构和语义。",
+		["偏旁收集、合字成技、词技进阶", "波次、关键怪、卷主、地图地标", "移动端横屏保护与战斗适配"],
+		Color(0.92, 0.54, 0.28, 1.0),
+		"zihai"
+	))
+	game_grid.add_child(_make_about_game_card(
+		"Deckbuilder Climb",
+		"仓颉之路",
+		"类杀戮尖塔的卡牌爬塔原型。每张牌同时是战斗动作与汉字学习卡，字形、语义和组合路线都能进入构筑。",
+		["地图节点、卡牌战斗、奖励选牌", "中英双语辅助，更适合非中文母语玩家", "当前仍在 web 原型，等待 Godot 迁入"],
+		Color(0.38, 0.58, 0.9, 1.0),
+		"cangjie"
+	))
+
+	var notes_grid := GridContainer.new()
+	notes_grid.columns = 3
+	notes_grid.add_theme_constant_override("h_separation", _i(14))
+	notes_grid.add_theme_constant_override("v_separation", _i(14))
+	content.add_child(notes_grid)
+
+	notes_grid.add_child(_make_about_note_card(
+		"面向谁",
+		"不仅面向会中文的人，也面向想通过游戏认识汉字结构、字义和词感的玩家。",
+		Color(0.92, 0.68, 0.4, 1.0)
+	))
+	notes_grid.add_child(_make_about_note_card(
+		"迁移重点",
+		"Godot 主线优先补齐启动器、菜单、HUD 和战斗成长链，再追赶 web 端的音乐、设置、双语和仓颉玩法。",
+		Color(0.38, 0.74, 0.84, 1.0)
+	))
+	notes_grid.add_child(_make_about_note_card(
+		"下一步产品化",
+		"先把 Godot 版做成稳定可展示的 vertical slice，再决定哪些内容继续留在网页 demo，哪些进入完整版本。",
+		Color(0.58, 0.84, 0.62, 1.0)
+	))
 
 	var close_button := Button.new()
 	close_button.text = "返回启动器"
@@ -448,6 +509,85 @@ func _build_about_overlay() -> void:
 	close_button.add_theme_stylebox_override("pressed", _make_button_style(Color(0.84, 0.54, 0.22, 1.0), 16))
 	close_button.pressed.connect(_hide_about)
 	box.add_child(close_button)
+
+
+func _make_about_story_panel(paragraphs: Array[String]) -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.08, 0.11, 0.14, 0.84), Color(0.28, 0.36, 0.44, 0.42)))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", _i(22))
+	margin.add_theme_constant_override("margin_top", _i(20))
+	margin.add_theme_constant_override("margin_right", _i(22))
+	margin.add_theme_constant_override("margin_bottom", _i(20))
+	panel.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", _i(12))
+	margin.add_child(box)
+	box.add_child(_make_label("为什么做这两款游戏", 24, Color(1.0, 0.92, 0.8, 1.0)))
+
+	for paragraph in paragraphs:
+		box.add_child(_make_label(paragraph, 18, Color(0.9, 0.92, 0.95, 0.95)))
+
+	return panel
+
+
+func _make_about_game_card(kicker: String, title: String, copy: String, points: Array[String], accent: Color, preview_kind: String) -> PanelContainer:
+	var card := PanelContainer.new()
+	card.custom_minimum_size = _v(0.0, 420.0)
+	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	card.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.1, accent.g * 0.1, accent.b * 0.14, 0.9), Color(accent.r, accent.g, accent.b, 0.52)))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", _i(20))
+	margin.add_theme_constant_override("margin_top", _i(20))
+	margin.add_theme_constant_override("margin_right", _i(20))
+	margin.add_theme_constant_override("margin_bottom", _i(20))
+	card.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", _i(12))
+	margin.add_child(box)
+
+	var preview := PanelContainer.new()
+	preview.custom_minimum_size = _v(0.0, 148.0)
+	preview.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.16, accent.g * 0.15, accent.b * 0.16, 0.38), Color(accent.r, accent.g, accent.b, 0.24)))
+	box.add_child(preview)
+	_build_preview_stage(preview, preview_kind, accent)
+
+	box.add_child(_make_tag(kicker, Color(0.12, 0.18, 0.24, 0.82), Color(0.96, 0.82, 0.56, 0.96)))
+	box.add_child(_make_label(title, 32, Color(1.0, 0.95, 0.86, 1.0)))
+	box.add_child(_make_label(copy, 17, Color(0.9, 0.92, 0.95, 0.94)))
+
+	var points_box := VBoxContainer.new()
+	points_box.add_theme_constant_override("separation", _i(8))
+	box.add_child(points_box)
+	for point in points:
+		points_box.add_child(_make_label("• %s" % point, 16, Color(0.92, 0.94, 0.9, 0.95)))
+
+	return card
+
+
+func _make_about_note_card(title: String, body: String, accent: Color) -> PanelContainer:
+	var card := PanelContainer.new()
+	card.custom_minimum_size = _v(0.0, 152.0)
+	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	card.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.08, accent.g * 0.08, accent.b * 0.1, 0.88), Color(accent.r, accent.g, accent.b, 0.32)))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", _i(18))
+	margin.add_theme_constant_override("margin_top", _i(18))
+	margin.add_theme_constant_override("margin_right", _i(18))
+	margin.add_theme_constant_override("margin_bottom", _i(18))
+	card.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", _i(8))
+	margin.add_child(box)
+	box.add_child(_make_label(title, 22, Color(1.0, 0.92, 0.8, 1.0)))
+	box.add_child(_make_label(body, 16, Color(0.9, 0.92, 0.95, 0.93)))
+	return card
 
 
 func _make_label(text: String, font_size: int, color: Color) -> Label:

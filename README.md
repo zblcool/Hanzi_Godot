@@ -11,6 +11,10 @@
 
 说明：下面保留了迁移前 web 原型的玩法与内容记录，方便继续对照设计目标；但仓库当前实现已经切到 Godot，工程入口、目录结构与导出方式请以本 README 的“当前整体结构”“启动器 / 首页现状”“工程结构”“Vercel 预览部署”为准。
 
+## 迁移追踪
+- 当前仓库的主目标是把原来的 `hanziHero` web 原型逐步迁到 Godot，并保持玩法、UI 层级与内容方向持续对齐。
+- 迁移状态、已完成项和待补项请看 [`MIGRATION_CHECKLIST.md`](./MIGRATION_CHECKLIST.md)。
+
 ## 当前整体结构
 - 技术上当前是 `Godot 4.6.1` 项目，运行入口是 `project.godot -> res://scenes/app/launcher.tscn`
 - 当前仓库主线已经落地 `字海残卷` 的 Godot 迁移链路：`启动器 -> 字海二级菜单 -> 3D 战斗`
