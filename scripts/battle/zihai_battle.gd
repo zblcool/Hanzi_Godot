@@ -24,6 +24,8 @@ const BIG_WAVE_ENEMY_CAP := 46
 const TREE_FADE_RADIUS := 2.65
 const TREE_FADE_ALPHA := 0.28
 const TREE_FADE_SPEED := 4.8
+const MAP_FOG_CELL_SIZE := 2.0
+const MAP_FOG_REVEAL_RADIUS := 5.2
 
 @onready var world_environment: WorldEnvironment = $WorldEnvironment
 @onready var sun: DirectionalLight3D = $Sun
@@ -67,6 +69,7 @@ var active_inkstone: Node3D = null
 var battle_intro: Dictionary = {}
 var web_mobile_safe_mode: bool = false
 var tree_fade_enabled: bool = true
+var explored_map_cells: Dictionary = {}
 
 var level: int = 1
 var experience: int = 0
@@ -87,6 +90,7 @@ func _ready() -> void:
 	_setup_environment()
 	_build_ground()
 	_spawn_player()
+	_reveal_map_around_position(player.global_position)
 	_spawn_props()
 	_spawn_hud()
 	_sync_hud()
@@ -137,6 +141,7 @@ func _process(delta: float) -> void:
 		return
 
 	_update_inkstone_interaction()
+	_reveal_map_around_position(player.global_position)
 
 	elapsed_time += delta
 	var new_threat_level: int = 1 + int(elapsed_time / 30.0)
@@ -1336,11 +1341,13 @@ func _build_map_snapshot() -> Dictionary:
 
 	return {
 		"world_radius": MAP_WORLD_RADIUS,
+		"fog_cell_size": MAP_FOG_CELL_SIZE,
+		"explored_cells": explored_map_cells.keys(),
 		"player": _map_point(player.global_position if is_instance_valid(player) else Vector3.ZERO),
 		"player_heading": _map_direction(player.look_direction if is_instance_valid(player) else Vector3(0.0, 0.0, -1.0)),
 		"markers": markers,
 		"enemies": enemies,
-		"summary": "敌群 %d  ·  砚台 %d  ·  草丛 %d  ·  地标 %d" % [enemies.size(), inkstone_count, bush_count, landmark_count]
+		"summary": "敌群 %d  ·  砚台 %d  ·  草丛 %d  ·  地标 %d  ·  探索 %d%%" % [enemies.size(), inkstone_count, bush_count, landmark_count, _map_exploration_percent()]
 	}
 
 
@@ -1384,6 +1391,41 @@ func _map_enemy_color(enemy_type: String) -> Color:
 			return Color(0.96, 0.72, 0.4, 1.0)
 		_:
 			return Color(0.92, 0.42, 0.34, 1.0)
+
+
+func _reveal_map_around_position(world_position: Vector3) -> void:
+	var center := _map_point(world_position)
+	var min_cell := _map_fog_cell_from_world(center - Vector2.ONE * MAP_FOG_REVEAL_RADIUS)
+	var max_cell := _map_fog_cell_from_world(center + Vector2.ONE * MAP_FOG_REVEAL_RADIUS)
+	var reveal_radius: float = MAP_FOG_REVEAL_RADIUS + MAP_FOG_CELL_SIZE * 0.42
+	for cell_x in range(min_cell.x, max_cell.x + 1):
+		for cell_y in range(min_cell.y, max_cell.y + 1):
+			var cell := Vector2i(cell_x, cell_y)
+			if _map_fog_cell_center(cell).distance_to(center) <= reveal_radius:
+				explored_map_cells[cell] = true
+
+
+func _map_fog_cell_from_world(point: Vector2) -> Vector2i:
+	var safe_extent: float = MAP_WORLD_RADIUS - 0.001
+	var clamped_x: float = clamp(point.x, -MAP_WORLD_RADIUS, safe_extent)
+	var clamped_y: float = clamp(point.y, -MAP_WORLD_RADIUS, safe_extent)
+	return Vector2i(
+		int(floor((clamped_x + MAP_WORLD_RADIUS) / MAP_FOG_CELL_SIZE)),
+		int(floor((clamped_y + MAP_WORLD_RADIUS) / MAP_FOG_CELL_SIZE))
+	)
+
+
+func _map_fog_cell_center(cell: Vector2i) -> Vector2:
+	return Vector2(
+		-MAP_WORLD_RADIUS + (float(cell.x) + 0.5) * MAP_FOG_CELL_SIZE,
+		-MAP_WORLD_RADIUS + (float(cell.y) + 0.5) * MAP_FOG_CELL_SIZE
+	)
+
+
+func _map_exploration_percent() -> int:
+	var cells_per_axis := maxi(1, int(ceil((MAP_WORLD_RADIUS * 2.0) / MAP_FOG_CELL_SIZE)))
+	var total_cells := cells_per_axis * cells_per_axis
+	return int(round(float(explored_map_cells.size()) / float(total_cells) * 100.0))
 
 
 func _on_hud_pause_resume_requested() -> void:

@@ -16,6 +16,8 @@ class BattleMapCanvas:
 	var center_world: Vector2 = Vector2.ZERO
 	var player_world: Vector2 = Vector2.ZERO
 	var player_heading: Vector2 = Vector2(0.0, -1.0)
+	var fog_cell_size: float = 2.0
+	var explored_cells: Dictionary = {}
 	var static_markers: Array[Dictionary] = []
 	var enemy_markers: Array[Dictionary] = []
 	var dragging: bool = false
@@ -33,10 +35,18 @@ class BattleMapCanvas:
 
 	func set_snapshot(snapshot: Dictionary) -> void:
 		world_radius = max(18.0, float(snapshot.get("world_radius", world_radius)))
+		fog_cell_size = max(0.5, float(snapshot.get("fog_cell_size", fog_cell_size)))
 		player_world = snapshot.get("player", Vector2.ZERO)
 		player_heading = snapshot.get("player_heading", Vector2(0.0, -1.0))
+		explored_cells.clear()
 		static_markers.clear()
 		enemy_markers.clear()
+		for cell_variant in snapshot.get("explored_cells", []):
+			if cell_variant is Vector2i:
+				explored_cells[cell_variant] = true
+			elif cell_variant is Vector2:
+				var cell_vector := cell_variant as Vector2
+				explored_cells[Vector2i(int(round(cell_vector.x)), int(round(cell_vector.y)))] = true
 		for marker_variant in snapshot.get("markers", []):
 			static_markers.append(marker_variant)
 		for marker_variant in snapshot.get("enemies", []):
@@ -133,6 +143,7 @@ class BattleMapCanvas:
 			_draw_static_marker(marker_variant)
 		for marker_variant in enemy_markers:
 			_draw_enemy_marker(marker_variant)
+		_draw_fog_of_war()
 		_draw_player_marker()
 
 	func _draw_static_marker(marker: Dictionary) -> void:
@@ -197,6 +208,30 @@ class BattleMapCanvas:
 				Color(0.98, 0.78, 0.42, 1.0)
 			])
 		)
+
+	func _draw_fog_of_war() -> void:
+		var cells_per_axis := maxi(1, int(ceil(world_radius * 2.0 / max(fog_cell_size, 0.001))))
+		var fog_color := Color(0.01, 0.02, 0.03, 0.84)
+		var edge_color := Color(0.18, 0.24, 0.3, 0.14)
+		var viewport_rect := Rect2(Vector2.ZERO, size)
+		for cell_x in range(cells_per_axis):
+			for cell_y in range(cells_per_axis):
+				var cell := Vector2i(cell_x, cell_y)
+				if explored_cells.has(cell):
+					continue
+				var cell_world_min := Vector2(
+					-world_radius + float(cell_x) * fog_cell_size,
+					-world_radius + float(cell_y) * fog_cell_size
+				)
+				var cell_world_max := cell_world_min + Vector2.ONE * fog_cell_size
+				var point_a := _world_to_canvas(cell_world_min)
+				var point_b := _world_to_canvas(cell_world_max)
+				var top_left := Vector2(minf(point_a.x, point_b.x), minf(point_a.y, point_b.y))
+				var cell_rect := Rect2(top_left, Vector2(absf(point_b.x - point_a.x), absf(point_b.y - point_a.y)))
+				if not viewport_rect.intersects(cell_rect):
+					continue
+				draw_rect(cell_rect, fog_color, true)
+				draw_rect(cell_rect, edge_color, false, 1.0)
 
 	func _world_to_canvas(point_world: Vector2) -> Vector2:
 		var relative := point_world - center_world
@@ -830,6 +865,7 @@ func _build_map_overlay(root: Control) -> void:
 	side_box.add_child(_make_map_legend_row("■", "卷主 / 砚台 / 宝箱", "方块标出卷主、磨词砚台与可开启宝箱。", Color(0.98, 0.76, 0.54, 1.0)))
 	side_box.add_child(_make_map_legend_row("○", "树丛 / 墨池", "圆形轮廓对应草丛与墨池。", Color(0.56, 0.84, 0.66, 1.0)))
 	side_box.add_child(_make_map_legend_row("◆", "碑刻 / 卷架", "静态地标，便于定方位。", Color(0.62, 0.84, 1.0, 1.0)))
+	side_box.add_child(_make_map_legend_row("▩", "迷雾", "未探索区域会被雾面遮住，走到附近才会展开。", Color(0.58, 0.66, 0.76, 1.0)))
 
 	var spacer := Control.new()
 	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
