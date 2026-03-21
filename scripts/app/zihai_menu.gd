@@ -1045,7 +1045,7 @@ func _build_local_leaderboard_text() -> String:
 		lines.append(
 			"%d. %s  %s  卷主 %d  波次 %d  击破 %d  存活 %s" % [
 				index + 1,
-				String(entry.get("hero_name", "书生")),
+				_format_leaderboard_identity(entry),
 				"定卷" if bool(entry.get("chapter_complete", false)) else "残卷",
 				int(entry.get("bosses", 0)),
 				int(entry.get("threat", 1)),
@@ -1054,6 +1054,16 @@ func _build_local_leaderboard_text() -> String:
 			]
 		)
 	return "\n".join(lines)
+
+
+func _format_leaderboard_identity(entry: Dictionary) -> String:
+	var player_name := String(entry.get("player_name", "")).strip_edges()
+	var hero_name := String(entry.get("hero_name", "书生")).strip_edges()
+	if player_name.is_empty():
+		return hero_name
+	if hero_name.is_empty():
+		return player_name
+	return "%s · %s" % [player_name, hero_name]
 
 
 func _build_enemy_archive_text() -> String:

@@ -5,6 +5,8 @@ const ZIHAI_MENU_SCENE := "res://scenes/app/zihai_menu.tscn"
 const ZIHAI_BATTLE_SCENE := "res://scenes/battle/zihai_battle.tscn"
 const LOCAL_LEADERBOARD_PATH := "user://local_leaderboard.json"
 const LOCAL_LEADERBOARD_LIMIT := 12
+const FALLBACK_RUN_NAME_SURNAMES := ["沈", "陆", "谢", "顾", "裴", "苏", "闻", "叶", "秦", "燕", "柳", "程"]
+const FALLBACK_RUN_NAME_GIVENS := ["孤舟", "青崖", "听雨", "照夜", "长风", "归云", "惊鸿", "秋水", "横雪", "寻梅", "渡川", "鸣泉"]
 
 const HERO_ORDER := ["scholar", "xia"]
 const HEROES := {
@@ -387,9 +389,11 @@ func build_empty_enemy_counts() -> Dictionary:
 func record_local_run(summary: Dictionary, hero_id: String = selected_hero) -> void:
 	_ensure_local_leaderboard_loaded()
 
+	var recorded_at: int = int(Time.get_unix_time_from_system())
 	var normalized_entry := _normalize_leaderboard_entry({
 		"hero_id": hero_id,
 		"hero_name": String(get_hero_data(hero_id).get("name", "书生")),
+		"player_name": _resolve_run_player_name(String(summary.get("player_name", "")), hero_id, recorded_at),
 		"elapsed": float(summary.get("elapsed", 0.0)),
 		"kills": int(summary.get("kills", 0)),
 		"threat": int(summary.get("threat", 1)),
@@ -401,7 +405,7 @@ func record_local_run(summary: Dictionary, hero_id: String = selected_hero) -> v
 		"words": summary.get("words", {}),
 		"blade_level": int(summary.get("blade_level", 0)),
 		"enemy_kills": summary.get("enemy_kills", {}),
-		"recorded_at": int(Time.get_unix_time_from_system())
+		"recorded_at": recorded_at
 	})
 	if normalized_entry.is_empty():
 		return
@@ -472,9 +476,11 @@ func _normalize_leaderboard_entry(raw_entry: Variant) -> Dictionary:
 	var data := raw_entry as Dictionary
 	var hero_id := String(data.get("hero_id", selected_hero))
 	var hero_data: Dictionary = get_hero_data(hero_id)
+	var recorded_at: int = maxi(0, int(data.get("recorded_at", 0)))
 	var entry: Dictionary = {
 		"hero_id": hero_id,
 		"hero_name": String(data.get("hero_name", hero_data.get("name", "书生"))),
+		"player_name": _resolve_run_player_name(String(data.get("player_name", "")), hero_id, recorded_at),
 		"elapsed": maxf(0.0, float(data.get("elapsed", 0.0))),
 		"kills": maxi(0, int(data.get("kills", 0))),
 		"threat": maxi(1, int(data.get("threat", 1))),
@@ -486,9 +492,26 @@ func _normalize_leaderboard_entry(raw_entry: Variant) -> Dictionary:
 		"words": _normalize_run_counts(data.get("words", {}), WORD_ORDER),
 		"blade_level": maxi(0, int(data.get("blade_level", 0))),
 		"enemy_kills": _normalize_run_counts(data.get("enemy_kills", {}), ENEMY_ORDER),
-		"recorded_at": maxi(0, int(data.get("recorded_at", 0)))
+		"recorded_at": recorded_at
 	}
 	return entry
+
+
+func _resolve_run_player_name(raw_name: String, hero_id: String, recorded_at: int) -> String:
+	var trimmed_name := raw_name.strip_edges()
+	if not trimmed_name.is_empty():
+		return trimmed_name
+	return _build_fallback_player_name(hero_id, recorded_at)
+
+
+func _build_fallback_player_name(hero_id: String, recorded_at: int) -> String:
+	var base_key := "%s:%d" % [hero_id, recorded_at]
+	var surname_index: int = abs(hash("%s:surname" % base_key)) % FALLBACK_RUN_NAME_SURNAMES.size()
+	var given_index: int = abs(hash("%s:given" % base_key)) % FALLBACK_RUN_NAME_GIVENS.size()
+	return "%s%s" % [
+		FALLBACK_RUN_NAME_SURNAMES[surname_index],
+		FALLBACK_RUN_NAME_GIVENS[given_index]
+	]
 
 
 func _normalize_run_counts(raw_counts: Variant, order: Array) -> Dictionary:
