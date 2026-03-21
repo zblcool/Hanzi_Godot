@@ -26,6 +26,7 @@ const TREE_FADE_ALPHA := 0.28
 const TREE_FADE_SPEED := 4.8
 
 @onready var world_environment: WorldEnvironment = $WorldEnvironment
+@onready var sun: DirectionalLight3D = $Sun
 @onready var camera_rig: Node3D = $CameraRig
 @onready var camera: Camera3D = $CameraRig/Camera3D
 @onready var ground_root: Node3D = $Ground
@@ -64,6 +65,8 @@ var inkstones: Array[Node3D] = []
 var tree_fade_entries: Array[Dictionary] = []
 var active_inkstone: Node3D = null
 var battle_intro: Dictionary = {}
+var web_mobile_safe_mode: bool = false
+var tree_fade_enabled: bool = true
 
 var level: int = 1
 var experience: int = 0
@@ -73,6 +76,8 @@ var pending_level_choices: int = 0
 
 func _ready() -> void:
 	rng.randomize()
+	web_mobile_safe_mode = _should_use_web_mobile_safe_mode()
+	tree_fade_enabled = not web_mobile_safe_mode
 	battle_intro = Session.consume_battle_intro()
 	radical_counts = Session.build_empty_radicals()
 	skill_levels = Session.build_empty_recipe_levels()
@@ -91,7 +96,8 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	_update_camera(delta)
-	_update_tree_fade(delta)
+	if tree_fade_enabled:
+		_update_tree_fade(delta)
 
 	if game_over:
 		if Input.is_action_just_pressed("restart_run"):
@@ -1579,17 +1585,33 @@ func _update_camera(delta: float) -> void:
 	camera.look_at(player.global_position + Vector3(0.0, 0.8, 0.0), Vector3.UP)
 
 
+func _should_use_web_mobile_safe_mode() -> bool:
+	if not OS.has_feature("web"):
+		return false
+
+	return (
+		OS.has_feature("mobile") or
+		OS.has_feature("android") or
+		OS.has_feature("ios") or
+		OS.has_feature("web_android") or
+		OS.has_feature("web_ios") or
+		DisplayServer.is_touchscreen_available()
+	)
+
+
 func _setup_environment() -> void:
 	var environment := Environment.new()
 	environment.background_mode = Environment.BG_COLOR
 	environment.background_color = Color(0.05, 0.07, 0.09, 1.0)
 	environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	environment.ambient_light_color = Color(0.7, 0.75, 0.8, 1.0)
-	environment.ambient_light_energy = 0.85
-	environment.fog_enabled = true
-	environment.fog_density = 0.012
-	environment.fog_light_color = Color(0.12, 0.16, 0.2, 1.0)
+	environment.ambient_light_energy = 0.92 if web_mobile_safe_mode else 0.85
+	environment.fog_enabled = not web_mobile_safe_mode
+	if environment.fog_enabled:
+		environment.fog_density = 0.012
+		environment.fog_light_color = Color(0.12, 0.16, 0.2, 1.0)
 	world_environment.environment = environment
+	sun.shadow_enabled = not web_mobile_safe_mode
 
 
 func _build_ground() -> void:
@@ -1637,7 +1659,8 @@ func _create_tree(position: Vector3) -> void:
 	trunk.position = Vector3(0.0, 1.3, 0.0)
 	var trunk_material := StandardMaterial3D.new()
 	trunk_material.albedo_color = Color(0.26, 0.17, 0.1, 1.0)
-	_prepare_tree_material_for_fade(trunk_material)
+	if tree_fade_enabled:
+		_prepare_tree_material_for_fade(trunk_material)
 	trunk.material_override = trunk_material
 	tree_root.add_child(trunk)
 
@@ -1647,7 +1670,8 @@ func _create_tree(position: Vector3) -> void:
 	canopy_material.emission_enabled = true
 	canopy_material.emission = Color(0.08, 0.16, 0.1, 1.0)
 	canopy_material.emission_energy_multiplier = 0.2
-	_prepare_tree_material_for_fade(canopy_material)
+	if tree_fade_enabled:
+		_prepare_tree_material_for_fade(canopy_material)
 
 	var canopy_offsets := [
 		Vector3(0.0, 3.08, 0.0),
@@ -1677,28 +1701,33 @@ func _create_tree(position: Vector3) -> void:
 	lantern_material.emission_enabled = true
 	lantern_material.emission = Color(0.96, 0.84, 0.46, 1.0)
 	lantern_material.emission_energy_multiplier = 0.5
-	_prepare_tree_material_for_fade(lantern_material)
+	if tree_fade_enabled:
+		_prepare_tree_material_for_fade(lantern_material)
 	lantern.material_override = lantern_material
 	tree_root.add_child(lantern)
 
-	tree_fade_entries.append({
-		"root": tree_root,
-		"materials": [trunk_material, canopy_material, lantern_material],
-		"base_colors": [
-			trunk_material.albedo_color,
-			canopy_material.albedo_color,
-			lantern_material.albedo_color
-		],
-		"base_emission_energy": [
-			trunk_material.emission_energy_multiplier,
-			canopy_material.emission_energy_multiplier,
-			lantern_material.emission_energy_multiplier
-		],
-		"alpha": 1.0
-	})
+	if tree_fade_enabled:
+		tree_fade_entries.append({
+			"root": tree_root,
+			"materials": [trunk_material, canopy_material, lantern_material],
+			"base_colors": [
+				trunk_material.albedo_color,
+				canopy_material.albedo_color,
+				lantern_material.albedo_color
+			],
+			"base_emission_energy": [
+				trunk_material.emission_energy_multiplier,
+				canopy_material.emission_energy_multiplier,
+				lantern_material.emission_energy_multiplier
+			],
+			"alpha": 1.0
+		})
 
 
 func _update_tree_fade(delta: float) -> void:
+	if not tree_fade_enabled or tree_fade_entries.is_empty():
+		return
+
 	if not is_instance_valid(player):
 		return
 
