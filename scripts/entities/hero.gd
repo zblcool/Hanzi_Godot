@@ -80,6 +80,20 @@ var motion_time: float = 0.0
 var move_blend: float = 0.0
 
 
+func _use_simple_web_mode() -> bool:
+	if not OS.has_feature("web"):
+		return false
+
+	return (
+		OS.has_feature("mobile") or
+		OS.has_feature("android") or
+		OS.has_feature("ios") or
+		OS.has_feature("web_android") or
+		OS.has_feature("web_ios") or
+		DisplayServer.is_touchscreen_available()
+	)
+
+
 func configure(hero_data: Dictionary) -> void:
 	hero_id = String(hero_data["id"])
 	hero_name = String(hero_data["name"])
@@ -411,7 +425,8 @@ func _build_visuals() -> void:
 		brush_tip.material_override = weapon_material
 		weapon_root.add_child(brush_tip)
 
-	_build_glyph_badge("文" if role == "ranged" else "侠")
+	if not _use_simple_web_mode():
+		_build_glyph_badge("文" if role == "ranged" else "侠")
 
 
 func _update_visual_state() -> void:

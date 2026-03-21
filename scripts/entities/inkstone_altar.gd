@@ -10,6 +10,20 @@ var hint_label: Label3D
 var orbit_root: Node3D
 
 
+func _use_simple_web_mode() -> bool:
+	if not OS.has_feature("web"):
+		return false
+
+	return (
+		OS.has_feature("mobile") or
+		OS.has_feature("android") or
+		OS.has_feature("ios") or
+		OS.has_feature("web_android") or
+		OS.has_feature("web_ios") or
+		DisplayServer.is_touchscreen_available()
+	)
+
+
 func _ready() -> void:
 	add_to_group("inkstone")
 	_build_visuals()
@@ -31,6 +45,7 @@ func _process(delta: float) -> void:
 
 
 func _build_visuals() -> void:
+	var simple_web_mode := _use_simple_web_mode()
 	var base := MeshInstance3D.new()
 	var base_mesh := BoxMesh.new()
 	base_mesh.size = Vector3(1.8, 0.34, 1.3)
@@ -42,22 +57,23 @@ func _build_visuals() -> void:
 	base.material_override = base_material
 	add_child(base)
 
-	var halo := MeshInstance3D.new()
-	var halo_mesh := CylinderMesh.new()
-	halo_mesh.top_radius = 1.18
-	halo_mesh.bottom_radius = 1.18
-	halo_mesh.height = 0.03
-	halo.mesh = halo_mesh
-	halo.position = Vector3(0.0, 0.05, 0.0)
-	ring_material = StandardMaterial3D.new()
-	ring_material.albedo_color = Color(0.26, 0.54, 0.88, 0.16)
-	ring_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	ring_material.cull_mode = BaseMaterial3D.CULL_DISABLED
-	ring_material.emission_enabled = true
-	ring_material.emission = Color(0.34, 0.62, 0.94, 1.0)
-	ring_material.emission_energy_multiplier = 0.66
-	halo.material_override = ring_material
-	add_child(halo)
+	if not simple_web_mode:
+		var halo := MeshInstance3D.new()
+		var halo_mesh := CylinderMesh.new()
+		halo_mesh.top_radius = 1.18
+		halo_mesh.bottom_radius = 1.18
+		halo_mesh.height = 0.03
+		halo.mesh = halo_mesh
+		halo.position = Vector3(0.0, 0.05, 0.0)
+		ring_material = StandardMaterial3D.new()
+		ring_material.albedo_color = Color(0.26, 0.54, 0.88, 0.16)
+		ring_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		ring_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+		ring_material.emission_enabled = true
+		ring_material.emission = Color(0.34, 0.62, 0.94, 1.0)
+		ring_material.emission_energy_multiplier = 0.66
+		halo.material_override = ring_material
+		add_child(halo)
 
 	var plate := MeshInstance3D.new()
 	var plate_mesh := CylinderMesh.new()
@@ -84,6 +100,9 @@ func _build_visuals() -> void:
 	slab_material.roughness = 0.98
 	slab.material_override = slab_material
 	add_child(slab)
+
+	if simple_web_mode:
+		return
 
 	orbit_root = Node3D.new()
 	add_child(orbit_root)

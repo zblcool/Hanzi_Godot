@@ -18,6 +18,20 @@ var label_node: Label3D
 var hint_label: Label3D
 
 
+func _use_simple_web_mode() -> bool:
+	if not OS.has_feature("web"):
+		return false
+
+	return (
+		OS.has_feature("mobile") or
+		OS.has_feature("android") or
+		OS.has_feature("ios") or
+		OS.has_feature("web_android") or
+		OS.has_feature("web_ios") or
+		DisplayServer.is_touchscreen_available()
+	)
+
+
 func configure(player_ref, new_drops: Dictionary, radius: float = 1.85) -> void:
 	player = player_ref
 	drops = new_drops.duplicate(true)
@@ -75,6 +89,7 @@ func _open_chest() -> void:
 
 
 func _build_visuals() -> void:
+	var simple_web_mode := _use_simple_web_mode()
 	body_root = Node3D.new()
 	add_child(body_root)
 
@@ -90,22 +105,23 @@ func _build_visuals() -> void:
 	glow_material.emission = Color(1.0, 0.84, 0.52, 1.0)
 	glow_material.emission_energy_multiplier = 0.72
 
-	var ring := MeshInstance3D.new()
-	var ring_mesh := CylinderMesh.new()
-	ring_mesh.top_radius = 1.05
-	ring_mesh.bottom_radius = 1.05
-	ring_mesh.height = 0.03
-	ring.mesh = ring_mesh
-	ring.position = Vector3(0.0, 0.03, 0.0)
-	ring_material = StandardMaterial3D.new()
-	ring_material.albedo_color = Color(0.96, 0.78, 0.44, 0.18)
-	ring_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	ring_material.cull_mode = BaseMaterial3D.CULL_DISABLED
-	ring_material.emission_enabled = true
-	ring_material.emission = Color(1.0, 0.82, 0.48, 1.0)
-	ring_material.emission_energy_multiplier = 0.5
-	ring.material_override = ring_material
-	add_child(ring)
+	if not simple_web_mode:
+		var ring := MeshInstance3D.new()
+		var ring_mesh := CylinderMesh.new()
+		ring_mesh.top_radius = 1.05
+		ring_mesh.bottom_radius = 1.05
+		ring_mesh.height = 0.03
+		ring.mesh = ring_mesh
+		ring.position = Vector3(0.0, 0.03, 0.0)
+		ring_material = StandardMaterial3D.new()
+		ring_material.albedo_color = Color(0.96, 0.78, 0.44, 0.18)
+		ring_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		ring_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+		ring_material.emission_enabled = true
+		ring_material.emission = Color(1.0, 0.82, 0.48, 1.0)
+		ring_material.emission_energy_multiplier = 0.5
+		ring.material_override = ring_material
+		add_child(ring)
 
 	var base := MeshInstance3D.new()
 	var base_mesh := BoxMesh.new()
@@ -143,6 +159,9 @@ func _build_visuals() -> void:
 	latch.position = Vector3(0.0, -0.2, 0.96)
 	latch.material_override = glow_material
 	lid_hinge.add_child(latch)
+
+	if simple_web_mode:
+		return
 
 	label_node = Label3D.new()
 	label_node.text = "箱"

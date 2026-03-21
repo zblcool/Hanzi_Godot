@@ -15,6 +15,20 @@ var bush_root: Node3D
 var sway_time: float = 0.0
 
 
+func _use_simple_web_mode() -> bool:
+	if not OS.has_feature("web"):
+		return false
+
+	return (
+		OS.has_feature("mobile") or
+		OS.has_feature("android") or
+		OS.has_feature("ios") or
+		OS.has_feature("web_android") or
+		OS.has_feature("web_ios") or
+		DisplayServer.is_touchscreen_available()
+	)
+
+
 func configure(player_ref, bush_radius: float = 2.1) -> void:
 	player = player_ref
 	radius = bush_radius
@@ -65,6 +79,7 @@ func _physics_process(delta: float) -> void:
 
 
 func _build_visuals() -> void:
+	var simple_web_mode := _use_simple_web_mode()
 	bush_root = Node3D.new()
 	add_child(bush_root)
 
@@ -75,27 +90,28 @@ func _build_visuals() -> void:
 	material.emission = Color(0.18, 0.42, 0.24, 1.0)
 	material.emission_energy_multiplier = 0.18
 
-	var ring := MeshInstance3D.new()
-	var ring_mesh := CylinderMesh.new()
-	ring_mesh.top_radius = radius * 0.92
-	ring_mesh.bottom_radius = radius * 0.92
-	ring_mesh.height = 0.04
-	ring.mesh = ring_mesh
-	ring.position = Vector3(0.0, 0.04, 0.0)
-	ring_material = StandardMaterial3D.new()
-	ring_material.albedo_color = Color(0.42, 0.82, 0.58, 0.22)
-	ring_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	ring_material.cull_mode = BaseMaterial3D.CULL_DISABLED
-	ring_material.emission_enabled = true
-	ring_material.emission = Color(0.34, 0.68, 0.42, 1.0)
-	ring.material_override = ring_material
-	add_child(ring)
+	if not simple_web_mode:
+		var ring := MeshInstance3D.new()
+		var ring_mesh := CylinderMesh.new()
+		ring_mesh.top_radius = radius * 0.92
+		ring_mesh.bottom_radius = radius * 0.92
+		ring_mesh.height = 0.04
+		ring.mesh = ring_mesh
+		ring.position = Vector3(0.0, 0.04, 0.0)
+		ring_material = StandardMaterial3D.new()
+		ring_material.albedo_color = Color(0.42, 0.82, 0.58, 0.22)
+		ring_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		ring_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+		ring_material.emission_enabled = true
+		ring_material.emission = Color(0.34, 0.68, 0.42, 1.0)
+		ring.material_override = ring_material
+		add_child(ring)
 
-	for index in range(5):
+	for index in range(3 if simple_web_mode else 5):
 		var clump := MeshInstance3D.new()
 		var clump_mesh := SphereMesh.new()
-		clump_mesh.radius = 0.85
-		clump_mesh.height = 1.3
+		clump_mesh.radius = 0.72 if simple_web_mode else 0.85
+		clump_mesh.height = 1.1 if simple_web_mode else 1.3
 		clump.mesh = clump_mesh
 		clump.position = Vector3(
 			cos(float(index) * 1.26) * 0.9,
@@ -104,6 +120,9 @@ func _build_visuals() -> void:
 		)
 		clump.material_override = material
 		bush_root.add_child(clump)
+
+	if simple_web_mode:
+		return
 
 	label_node = Label3D.new()
 	label_node.text = "隐"

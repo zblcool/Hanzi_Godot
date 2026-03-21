@@ -210,6 +210,12 @@ func _spawn_props() -> void:
 		Vector3(3.0, 0.0, 14.0),
 		Vector3(-2.0, 0.0, -15.0)
 	]
+	if web_mobile_safe_mode:
+		tree_positions = [
+			Vector3(-9.0, 0.0, -7.0),
+			Vector3(11.0, 0.0, -11.0),
+			Vector3(3.0, 0.0, 14.0)
+		]
 	for position_variant in tree_positions:
 		_create_tree(position_variant)
 
@@ -261,24 +267,27 @@ func _spawn_props() -> void:
 		{"position": Vector3(-16.0, 0.0, 14.0), "glyph": "休", "tint": Color(0.64, 0.92, 0.72, 1.0)},
 		{"position": Vector3(15.0, 0.0, 15.0), "glyph": "卷", "tint": Color(0.9, 0.68, 0.42, 1.0)}
 	]
-	for stela_variant in stela_data:
-		_create_stela(stela_variant["position"], String(stela_variant["glyph"]), Color(stela_variant["tint"]))
+	if not web_mobile_safe_mode:
+		for stela_variant in stela_data:
+			_create_stela(stela_variant["position"], String(stela_variant["glyph"]), Color(stela_variant["tint"]))
 
 	var scroll_racks := [
 		{"position": Vector3(-8.0, 0.0, -16.0), "yaw": 18.0},
 		{"position": Vector3(12.0, 0.0, -14.0), "yaw": -28.0},
 		{"position": Vector3(16.0, 0.0, 2.0), "yaw": 42.0}
 	]
-	for rack_variant in scroll_racks:
-		_create_scroll_rack(rack_variant["position"], float(rack_variant["yaw"]))
+	if not web_mobile_safe_mode:
+		for rack_variant in scroll_racks:
+			_create_scroll_rack(rack_variant["position"], float(rack_variant["yaw"]))
 
 	var ink_pools := [
 		{"position": Vector3(-15.0, 0.0, 3.0), "radius": 1.6, "tint": Color(0.28, 0.7, 0.82, 1.0)},
 		{"position": Vector3(13.0, 0.0, 12.0), "radius": 1.2, "tint": Color(0.76, 0.44, 0.94, 1.0)},
 		{"position": Vector3(4.0, 0.0, -17.0), "radius": 1.45, "tint": Color(0.98, 0.72, 0.4, 1.0)}
 	]
-	for pool_variant in ink_pools:
-		_create_ink_pool(pool_variant["position"], float(pool_variant["radius"]), Color(pool_variant["tint"]))
+	if not web_mobile_safe_mode:
+		for pool_variant in ink_pools:
+			_create_ink_pool(pool_variant["position"], float(pool_variant["radius"]), Color(pool_variant["tint"]))
 
 
 func _spawn_enemy() -> void:
@@ -333,8 +342,10 @@ func _is_big_wave(wave_index: int = threat_level) -> bool:
 func _enemy_cap() -> int:
 	var cap := BASE_ENEMY_CAP + maxi(threat_level - 1, 0) * 2
 	cap = min(cap, BIG_WAVE_ENEMY_CAP if _is_big_wave() else MAX_REGULAR_ENEMY_CAP)
+	if web_mobile_safe_mode:
+		cap = min(cap, 16 if _is_big_wave() else 12)
 	if is_instance_valid(active_boss) and not active_boss.is_queued_for_deletion():
-		cap = min(cap, 24)
+		cap = min(cap, 16 if web_mobile_safe_mode else 24)
 	return cap
 
 
@@ -346,11 +357,15 @@ func _spawn_batch_size() -> int:
 		batch += 1
 	if _is_big_wave():
 		batch += 2
+	if web_mobile_safe_mode:
+		return min(batch, 2)
 	return batch
 
 
 func _current_spawn_interval() -> float:
 	var interval: float = max(0.46, 1.35 - elapsed_time * 0.012)
+	if web_mobile_safe_mode:
+		interval *= 1.22
 	if _is_big_wave():
 		interval *= 0.72
 	if is_instance_valid(active_boss) and not active_boss.is_queued_for_deletion():
@@ -1666,6 +1681,9 @@ func _build_ground() -> void:
 	floor_material.roughness = 1.0
 	floor.material_override = floor_material
 	ground_root.add_child(floor)
+
+	if web_mobile_safe_mode:
+		return
 
 	for index in range(18):
 		var mound := MeshInstance3D.new()

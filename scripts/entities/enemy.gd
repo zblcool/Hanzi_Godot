@@ -64,6 +64,20 @@ var gait_amount: float = 0.0
 var health_bar_width: float = 1.08
 
 
+func _use_simple_web_mode() -> bool:
+	if not OS.has_feature("web"):
+		return false
+
+	return (
+		OS.has_feature("mobile") or
+		OS.has_feature("android") or
+		OS.has_feature("ios") or
+		OS.has_feature("web_android") or
+		OS.has_feature("web_ios") or
+		DisplayServer.is_touchscreen_available()
+	)
+
+
 func configure(kind: String, difficulty: float, player_ref) -> void:
 	enemy_type = kind
 	player = player_ref
@@ -558,8 +572,9 @@ func _build_visuals() -> void:
 	else:
 		_build_humanoid_visuals()
 
-	_build_glyph_badge()
-	_build_health_bar()
+	if not _use_simple_web_mode():
+		_build_glyph_badge()
+		_build_health_bar()
 
 
 func _build_humanoid_visuals() -> void:
