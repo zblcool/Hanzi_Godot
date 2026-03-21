@@ -3,12 +3,14 @@ extends Control
 const CJKFont := preload("res://scripts/core/cjk_font.gd")
 const BASE_VIEWPORT := Vector2(2100.0, 1200.0)
 const MIN_UI_SCALE := 0.6
+const HERO_REACTION_DURATION := 3.2
 
 var ui_font: Font
 var ui_scale := 1.0
 var floating_symbols: Array[Dictionary] = []
 var preview_motifs: Array[Dictionary] = []
 var selected_hero := "scholar"
+var hero_quote_indices: Dictionary = {}
 
 var hero_panels: Dictionary = {}
 var detail_name_label: Label
@@ -16,6 +18,8 @@ var detail_desc_label: Label
 var detail_weapon_label: Label
 var detail_focus_label: Label
 var detail_role_label: Label
+var detail_reaction_panel: PanelContainer
+var detail_reaction_label: Label
 var detail_preview_core: PanelContainer
 var detail_preview_glyph: Label
 var detail_tags_row: HBoxContainer
@@ -33,6 +37,7 @@ var transition_glyph_label: Label
 var transition_title_label: Label
 var transition_subtitle_label: Label
 var transition_busy: bool = false
+var reaction_time_remaining := 0.0
 
 
 func _ready() -> void:
@@ -71,6 +76,12 @@ func _process(delta: float) -> void:
 		for index in range(shards.size()):
 			var shard: Control = shards[index]
 			shard.position.y = float(shard.get_meta("base_y")) + sin(phase * 1.8 + float(index) * 1.2) * _f(6.0)
+
+	if reaction_time_remaining > 0.0:
+		reaction_time_remaining = max(reaction_time_remaining - delta, 0.0)
+	if detail_reaction_panel != null:
+		var emphasis: float = clampf(reaction_time_remaining / HERO_REACTION_DURATION, 0.0, 1.0)
+		detail_reaction_panel.modulate = Color(1.0, 1.0, 1.0, 0.84 + emphasis * 0.16)
 	queue_redraw()
 
 
@@ -109,6 +120,8 @@ func _rebuild_ui() -> void:
 	detail_weapon_label = null
 	detail_focus_label = null
 	detail_role_label = null
+	detail_reaction_panel = null
+	detail_reaction_label = null
 	detail_preview_core = null
 	detail_preview_glyph = null
 	detail_tags_row = null
@@ -128,7 +141,7 @@ func _rebuild_ui() -> void:
 		remove_child(child)
 		child.queue_free()
 	_build_ui()
-	_refresh_selection()
+	_refresh_selection(true)
 
 
 func _on_viewport_size_changed() -> void:
@@ -280,6 +293,26 @@ func _build_ui() -> void:
 	detail_box.add_child(detail_weapon_label)
 	detail_box.add_child(detail_desc_label)
 	detail_box.add_child(detail_focus_label)
+
+	detail_reaction_panel = PanelContainer.new()
+	detail_reaction_panel.custom_minimum_size = _v(0.0, 104.0)
+	detail_reaction_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.1, 0.13, 0.17, 0.78), Color(0.92, 0.68, 0.42, 0.34)))
+	detail_box.add_child(detail_reaction_panel)
+
+	var reaction_margin := MarginContainer.new()
+	reaction_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	reaction_margin.add_theme_constant_override("margin_left", _i(16))
+	reaction_margin.add_theme_constant_override("margin_top", _i(14))
+	reaction_margin.add_theme_constant_override("margin_right", _i(16))
+	reaction_margin.add_theme_constant_override("margin_bottom", _i(14))
+	detail_reaction_panel.add_child(reaction_margin)
+
+	var reaction_box := VBoxContainer.new()
+	reaction_box.add_theme_constant_override("separation", _i(6))
+	reaction_margin.add_child(reaction_box)
+	reaction_box.add_child(_make_label("执笔回应", 15, Color(0.96, 0.82, 0.54, 0.88)))
+	detail_reaction_label = _make_label("", 18, Color(0.96, 0.95, 0.9, 0.98))
+	reaction_box.add_child(detail_reaction_label)
 
 	detail_tags_row = HBoxContainer.new()
 	detail_tags_row.add_theme_constant_override("separation", _i(10))
@@ -1259,7 +1292,7 @@ func _on_back_pressed() -> void:
 	get_tree().change_scene_to_file(Session.LAUNCHER_SCENE)
 
 
-func _refresh_selection() -> void:
+func _refresh_selection(trigger_reaction: bool = false) -> void:
 	Session.select_hero(selected_hero)
 	for hero_id_variant in hero_panels.keys():
 		var hero_id := String(hero_id_variant)
@@ -1287,6 +1320,38 @@ func _refresh_selection() -> void:
 	_set_stat_value("max_health", float(selected_data["max_health"]), 140.0, "%.0f")
 	_set_stat_value("attack_damage", float(selected_data["attack_damage"]), 24.0, "%.0f")
 	_set_stat_value("attack_range", float(selected_data["attack_range"]), 15.5, "%.1f")
+	if trigger_reaction:
+		_show_hero_reaction(selected_hero, selected_data)
+
+
+func _show_hero_reaction(hero_id: String, hero_data: Dictionary) -> void:
+	if detail_reaction_panel == null or detail_reaction_label == null:
+		return
+
+	var accent: Color = hero_data["accent"]
+	var quote: String = _consume_hero_quote(hero_id, hero_data)
+	detail_reaction_panel.add_theme_stylebox_override(
+		"panel",
+		_make_panel_style(
+			Color(accent.r * 0.14, accent.g * 0.14, accent.b * 0.18, 0.8),
+			Color(accent.r, accent.g, accent.b, 0.34)
+		)
+	)
+	detail_reaction_label.text = "“%s”" % quote
+	reaction_time_remaining = HERO_REACTION_DURATION
+
+
+func _consume_hero_quote(hero_id: String, hero_data: Dictionary) -> String:
+	var quotes_variant: Variant = hero_data.get("select_quotes", [])
+	if quotes_variant is Array:
+		var quotes: Array = quotes_variant as Array
+		if not quotes.is_empty():
+			var next_index: int = int(hero_quote_indices.get(hero_id, 0))
+			var quote: String = String(quotes[next_index % quotes.size()]).strip_edges()
+			hero_quote_indices[hero_id] = (next_index + 1) % quotes.size()
+			if not quote.is_empty():
+				return quote
+	return String(hero_data.get("focus", hero_data.get("description", "")))
 
 
 func _set_stat_value(stat_id: String, value: float, max_value: float, format_text: String) -> void:
@@ -1316,7 +1381,7 @@ func _start_battle_transition() -> void:
 
 func _on_select_hero(hero_id: String) -> void:
 	selected_hero = hero_id
-	_refresh_selection()
+	_refresh_selection(true)
 
 
 func _change_to_battle() -> void:

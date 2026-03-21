@@ -21,7 +21,7 @@ Status legend:
 - `[done]` Zihai second-layer menu with hero selection and archive overlays. Notes: Godot has dedicated overlays for 人物志、合字图谱、怪物图鉴、本地排行榜, matching the source menu depth.
 - `[done]` Character selection flow with scholar / xia split and direct battle entry. Notes: source menu moved to "start -> choose hero -> battle"; Godot keeps that same hierarchy.
 - `[done]` Quick-start wave shortcuts for menu-side test entry. Notes: hanziHero keeps dedicated test starts for wave 10 / 20; Godot now exposes equivalent menu buttons and treats those shortcut runs as non-ranked checks.
-- `[pending]` Character reaction flavor on selection. Notes: hanziHero role cards trigger short personality lines and staging feedback; Godot selection is currently silent.
+- `[done]` Character reaction flavor on selection. Notes: hanziHero role cards trigger short personality lines; Godot now rotates short in-character response quotes in the detail panel whenever a hero is picked.
 - `[pending]` Theme / language parity inside the menu layer. Notes: source launcher/menu surfaces share theme and language toggles; Godot menu copy is still single-language.
 - `[pending]` More menu-side build and progression surfacing. Notes: source menu surfaces richer descriptive cards and front-end polish; Godot menu remains more utilitarian.
 
