@@ -17,12 +17,18 @@ func _ready() -> void:
 	layer = 100
 	_build_overlay()
 	get_viewport().size_changed.connect(_on_viewport_size_changed)
+	set_process(true)
 	_refresh_guard_state()
 
 
 func _exit_tree() -> void:
 	if time_scale_locked:
 		_unlock_time_scale()
+
+
+func _process(_delta: float) -> void:
+	# Mobile browsers do not always emit a viewport resize event on rotate.
+	_refresh_guard_state()
 
 
 func _build_overlay() -> void:
@@ -141,7 +147,12 @@ func _should_block_portrait() -> bool:
 	if not _is_mobile_like_device():
 		return false
 
-	var viewport_size: Vector2 = get_viewport().get_visible_rect().size
+	var viewport_size: Vector2 = Vector2.ZERO
+	var window := get_window()
+	if window != null:
+		viewport_size = window.size
+	if viewport_size.x <= 0.0 or viewport_size.y <= 0.0:
+		viewport_size = get_viewport().get_visible_rect().size
 	if viewport_size.x <= 0.0 or viewport_size.y <= 0.0:
 		return false
 

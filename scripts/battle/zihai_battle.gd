@@ -90,11 +90,25 @@ func _ready() -> void:
 	_setup_environment()
 	_build_ground()
 	_spawn_player()
-	_reveal_map_around_position(player.global_position)
-	_spawn_props()
 	_spawn_hud()
 	_sync_hud()
+	if web_mobile_safe_mode:
+		call_deferred("_finish_mobile_web_boot")
+	else:
+		_finish_full_boot()
+
+
+func _finish_full_boot() -> void:
+	_reveal_map_around_position(player.global_position)
+	_spawn_props()
 	_start_opening_sequence()
+	set_process(true)
+
+
+func _finish_mobile_web_boot() -> void:
+	_reveal_map_around_position(player.global_position)
+	hud.show_banner("移动端兼容模式", Color(0.92, 0.72, 0.42, 1.0), 2.4)
+	hud.set_tip("已跳过开场特效与场景生态物件，先确保战场能稳定进入。")
 	set_process(true)
 
 
