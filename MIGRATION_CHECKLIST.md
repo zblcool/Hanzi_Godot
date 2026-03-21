@@ -81,7 +81,7 @@ Status legend:
 
 ## Technical Debt
 
-- `[in progress]` Long-lived migration tracking in repo root. Notes: this checklist is now the shared source of truth; keep updating it instead of scattering parity state across README prose and issues.
+- `[done]` Long-lived migration tracking in repo root. Notes: `MIGRATION_CHECKLIST.md` remains the source of truth and now has a matching long-lived GitHub tracker issue for checklist/body sync instead of one-off progress issues.
 - `[pending]` Shared localization layer for launcher, menu, and battle UI. Notes: hanziHero already centralizes zh/en strings; Godot will need a similar data layer before toggles are practical.
 - `[pending]` Break up `scripts/battle/zihai_battle.gd` into smaller systems. Notes: source JS has already started splitting combat/rendering/data concerns; Godot battle logic is still concentrated in one large script.
 - `[pending]` Move launcher / menu content into data-driven definitions. Notes: current Godot UI is built inline in GDScript; data-backed cards would make future theme and language parity safer.
