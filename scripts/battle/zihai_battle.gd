@@ -28,7 +28,6 @@ const MAP_FOG_CELL_SIZE := 2.0
 const MAP_FOG_REVEAL_RADIUS := 5.2
 
 @onready var world_environment: WorldEnvironment = $WorldEnvironment
-@onready var sun: DirectionalLight3D = $Sun
 @onready var camera_rig: Node3D = $CameraRig
 @onready var camera: Camera3D = $CameraRig/Camera3D
 @onready var ground_root: Node3D = $Ground
@@ -67,8 +66,6 @@ var inkstones: Array[Node3D] = []
 var tree_fade_entries: Array[Dictionary] = []
 var active_inkstone: Node3D = null
 var battle_intro: Dictionary = {}
-var web_mobile_safe_mode: bool = false
-var tree_fade_enabled: bool = true
 var explored_map_cells: Dictionary = {}
 
 var level: int = 1
@@ -79,8 +76,6 @@ var pending_level_choices: int = 0
 
 func _ready() -> void:
 	rng.randomize()
-	web_mobile_safe_mode = _should_use_web_mobile_safe_mode()
-	tree_fade_enabled = not web_mobile_safe_mode
 	battle_intro = Session.consume_battle_intro()
 	radical_counts = Session.build_empty_radicals()
 	skill_levels = Session.build_empty_recipe_levels()
@@ -90,32 +85,17 @@ func _ready() -> void:
 	_setup_environment()
 	_build_ground()
 	_spawn_player()
-	_spawn_hud()
-	_sync_hud()
-	if web_mobile_safe_mode:
-		call_deferred("_finish_mobile_web_boot")
-	else:
-		_finish_full_boot()
-
-
-func _finish_full_boot() -> void:
 	_reveal_map_around_position(player.global_position)
 	_spawn_props()
+	_spawn_hud()
+	_sync_hud()
 	_start_opening_sequence()
-	set_process(true)
-
-
-func _finish_mobile_web_boot() -> void:
-	_reveal_map_around_position(player.global_position)
-	hud.show_banner("移动端兼容模式", Color(0.92, 0.72, 0.42, 1.0), 2.4)
-	hud.set_tip("已跳过开场特效与场景生态物件，先确保战场能稳定进入。")
 	set_process(true)
 
 
 func _process(delta: float) -> void:
 	_update_camera(delta)
-	if tree_fade_enabled:
-		_update_tree_fade(delta)
+	_update_tree_fade(delta)
 
 	if game_over:
 		if Input.is_action_just_pressed("restart_run"):
@@ -224,12 +204,6 @@ func _spawn_props() -> void:
 		Vector3(3.0, 0.0, 14.0),
 		Vector3(-2.0, 0.0, -15.0)
 	]
-	if web_mobile_safe_mode:
-		tree_positions = [
-			Vector3(-9.0, 0.0, -7.0),
-			Vector3(11.0, 0.0, -11.0),
-			Vector3(3.0, 0.0, 14.0)
-		]
 	for position_variant in tree_positions:
 		_create_tree(position_variant)
 
@@ -281,27 +255,24 @@ func _spawn_props() -> void:
 		{"position": Vector3(-16.0, 0.0, 14.0), "glyph": "休", "tint": Color(0.64, 0.92, 0.72, 1.0)},
 		{"position": Vector3(15.0, 0.0, 15.0), "glyph": "卷", "tint": Color(0.9, 0.68, 0.42, 1.0)}
 	]
-	if not web_mobile_safe_mode:
-		for stela_variant in stela_data:
-			_create_stela(stela_variant["position"], String(stela_variant["glyph"]), Color(stela_variant["tint"]))
+	for stela_variant in stela_data:
+		_create_stela(stela_variant["position"], String(stela_variant["glyph"]), Color(stela_variant["tint"]))
 
 	var scroll_racks := [
 		{"position": Vector3(-8.0, 0.0, -16.0), "yaw": 18.0},
 		{"position": Vector3(12.0, 0.0, -14.0), "yaw": -28.0},
 		{"position": Vector3(16.0, 0.0, 2.0), "yaw": 42.0}
 	]
-	if not web_mobile_safe_mode:
-		for rack_variant in scroll_racks:
-			_create_scroll_rack(rack_variant["position"], float(rack_variant["yaw"]))
+	for rack_variant in scroll_racks:
+		_create_scroll_rack(rack_variant["position"], float(rack_variant["yaw"]))
 
 	var ink_pools := [
 		{"position": Vector3(-15.0, 0.0, 3.0), "radius": 1.6, "tint": Color(0.28, 0.7, 0.82, 1.0)},
 		{"position": Vector3(13.0, 0.0, 12.0), "radius": 1.2, "tint": Color(0.76, 0.44, 0.94, 1.0)},
 		{"position": Vector3(4.0, 0.0, -17.0), "radius": 1.45, "tint": Color(0.98, 0.72, 0.4, 1.0)}
 	]
-	if not web_mobile_safe_mode:
-		for pool_variant in ink_pools:
-			_create_ink_pool(pool_variant["position"], float(pool_variant["radius"]), Color(pool_variant["tint"]))
+	for pool_variant in ink_pools:
+		_create_ink_pool(pool_variant["position"], float(pool_variant["radius"]), Color(pool_variant["tint"]))
 
 
 func _spawn_enemy() -> void:
@@ -356,10 +327,8 @@ func _is_big_wave(wave_index: int = threat_level) -> bool:
 func _enemy_cap() -> int:
 	var cap := BASE_ENEMY_CAP + maxi(threat_level - 1, 0) * 2
 	cap = min(cap, BIG_WAVE_ENEMY_CAP if _is_big_wave() else MAX_REGULAR_ENEMY_CAP)
-	if web_mobile_safe_mode:
-		cap = min(cap, 16 if _is_big_wave() else 12)
 	if is_instance_valid(active_boss) and not active_boss.is_queued_for_deletion():
-		cap = min(cap, 16 if web_mobile_safe_mode else 24)
+		cap = min(cap, 24)
 	return cap
 
 
@@ -371,15 +340,11 @@ func _spawn_batch_size() -> int:
 		batch += 1
 	if _is_big_wave():
 		batch += 2
-	if web_mobile_safe_mode:
-		return min(batch, 2)
 	return batch
 
 
 func _current_spawn_interval() -> float:
 	var interval: float = max(0.46, 1.35 - elapsed_time * 0.012)
-	if web_mobile_safe_mode:
-		interval *= 1.22
 	if _is_big_wave():
 		interval *= 0.72
 	if is_instance_valid(active_boss) and not active_boss.is_queued_for_deletion():
@@ -1656,33 +1621,17 @@ func _update_camera(delta: float) -> void:
 	camera.look_at(player.global_position + Vector3(0.0, 0.8, 0.0), Vector3.UP)
 
 
-func _should_use_web_mobile_safe_mode() -> bool:
-	if not OS.has_feature("web"):
-		return false
-
-	return (
-		OS.has_feature("mobile") or
-		OS.has_feature("android") or
-		OS.has_feature("ios") or
-		OS.has_feature("web_android") or
-		OS.has_feature("web_ios") or
-		DisplayServer.is_touchscreen_available()
-	)
-
-
 func _setup_environment() -> void:
 	var environment := Environment.new()
 	environment.background_mode = Environment.BG_COLOR
 	environment.background_color = Color(0.05, 0.07, 0.09, 1.0)
 	environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	environment.ambient_light_color = Color(0.7, 0.75, 0.8, 1.0)
-	environment.ambient_light_energy = 0.92 if web_mobile_safe_mode else 0.85
-	environment.fog_enabled = not web_mobile_safe_mode
-	if environment.fog_enabled:
-		environment.fog_density = 0.012
-		environment.fog_light_color = Color(0.12, 0.16, 0.2, 1.0)
+	environment.ambient_light_energy = 0.85
+	environment.fog_enabled = true
+	environment.fog_density = 0.012
+	environment.fog_light_color = Color(0.12, 0.16, 0.2, 1.0)
 	world_environment.environment = environment
-	sun.shadow_enabled = not web_mobile_safe_mode
 
 
 func _build_ground() -> void:
@@ -1695,9 +1644,6 @@ func _build_ground() -> void:
 	floor_material.roughness = 1.0
 	floor.material_override = floor_material
 	ground_root.add_child(floor)
-
-	if web_mobile_safe_mode:
-		return
 
 	for index in range(18):
 		var mound := MeshInstance3D.new()
@@ -1733,8 +1679,7 @@ func _create_tree(position: Vector3) -> void:
 	trunk.position = Vector3(0.0, 1.3, 0.0)
 	var trunk_material := StandardMaterial3D.new()
 	trunk_material.albedo_color = Color(0.26, 0.17, 0.1, 1.0)
-	if tree_fade_enabled:
-		_prepare_tree_material_for_fade(trunk_material)
+	_prepare_tree_material_for_fade(trunk_material)
 	trunk.material_override = trunk_material
 	tree_root.add_child(trunk)
 
@@ -1744,8 +1689,7 @@ func _create_tree(position: Vector3) -> void:
 	canopy_material.emission_enabled = true
 	canopy_material.emission = Color(0.08, 0.16, 0.1, 1.0)
 	canopy_material.emission_energy_multiplier = 0.2
-	if tree_fade_enabled:
-		_prepare_tree_material_for_fade(canopy_material)
+	_prepare_tree_material_for_fade(canopy_material)
 
 	var canopy_offsets := [
 		Vector3(0.0, 3.08, 0.0),
@@ -1775,31 +1719,29 @@ func _create_tree(position: Vector3) -> void:
 	lantern_material.emission_enabled = true
 	lantern_material.emission = Color(0.96, 0.84, 0.46, 1.0)
 	lantern_material.emission_energy_multiplier = 0.5
-	if tree_fade_enabled:
-		_prepare_tree_material_for_fade(lantern_material)
+	_prepare_tree_material_for_fade(lantern_material)
 	lantern.material_override = lantern_material
 	tree_root.add_child(lantern)
 
-	if tree_fade_enabled:
-		tree_fade_entries.append({
-			"root": tree_root,
-			"materials": [trunk_material, canopy_material, lantern_material],
-			"base_colors": [
-				trunk_material.albedo_color,
-				canopy_material.albedo_color,
-				lantern_material.albedo_color
-			],
-			"base_emission_energy": [
-				trunk_material.emission_energy_multiplier,
-				canopy_material.emission_energy_multiplier,
-				lantern_material.emission_energy_multiplier
-			],
-			"alpha": 1.0
-		})
+	tree_fade_entries.append({
+		"root": tree_root,
+		"materials": [trunk_material, canopy_material, lantern_material],
+		"base_colors": [
+			trunk_material.albedo_color,
+			canopy_material.albedo_color,
+			lantern_material.albedo_color
+		],
+		"base_emission_energy": [
+			trunk_material.emission_energy_multiplier,
+			canopy_material.emission_energy_multiplier,
+			lantern_material.emission_energy_multiplier
+		],
+		"alpha": 1.0
+	})
 
 
 func _update_tree_fade(delta: float) -> void:
-	if not tree_fade_enabled or tree_fade_entries.is_empty():
+	if tree_fade_entries.is_empty():
 		return
 
 	if not is_instance_valid(player):
