@@ -645,7 +645,7 @@ func _build_ui() -> void:
 	var detail_box := VBoxContainer.new()
 	detail_box.add_theme_constant_override("separation", _i(12))
 	detail_margin.add_child(detail_box)
-	detail_box.add_child(_make_label("当前执笔", 16, Color(0.96, 0.82, 0.54, 0.9)))
+	detail_box.add_child(_make_label(String(page_content.get("detail_heading", "当前执笔")), 16, Color(0.96, 0.82, 0.54, 0.9)))
 
 	var detail_main_row: BoxContainer = VBoxContainer.new() if portrait_layout else HBoxContainer.new()
 	detail_main_row.add_theme_constant_override("separation", _i(12))
@@ -683,7 +683,7 @@ func _build_ui() -> void:
 	detail_role_label = _make_label("", 18, Color(0.96, 0.82, 0.54, 0.96))
 	detail_weapon_label = _make_label("", 16, Color(0.88, 0.92, 0.96, 0.95))
 	detail_desc_label = _make_label("", 16, Color(0.9, 0.92, 0.95, 0.94))
-	detail_focus_label = _make_label("选择界面只保留短摘要和关键属性，更长的角色说明移到次级菜单。", 14, Color(0.82, 0.9, 1.0, 0.92))
+	detail_focus_label = _make_label(String(page_content.get("selection_note", "选择界面只保留短摘要和关键属性，更长的角色说明移到次级菜单。")), 14, Color(0.82, 0.9, 1.0, 0.92))
 	detail_dossier_label = _make_label("", 14, Color(0.95, 0.9, 0.8, 0.92))
 	spotlight_box.add_child(detail_name_label)
 	spotlight_box.add_child(detail_role_label)
@@ -763,9 +763,9 @@ func _build_ui() -> void:
 	var quick_start_box := VBoxContainer.new()
 	quick_start_box.add_theme_constant_override("separation", _i(8))
 	quick_start_margin.add_child(quick_start_box)
-	quick_start_box.add_child(_make_label("二级入口与试阵", 20, Color(1.0, 0.92, 0.8, 1.0)))
+	quick_start_box.add_child(_make_label(String(page_content.get("secondary_access_title", "二级入口与试阵")), 20, Color(1.0, 0.92, 0.8, 1.0)))
 	if portrait_layout:
-		quick_start_box.add_child(_make_label("长说明移到人物志与图谱；这里保留快速进入与测试入口。", 14, Color(0.88, 0.92, 0.96, 0.94)))
+		quick_start_box.add_child(_make_label(String(page_content.get("secondary_access_note", "长说明移到人物志与图谱；这里保留快速进入与测试入口。")), 14, Color(0.88, 0.92, 0.96, 0.94)))
 
 	var quick_start_row: Container
 	if portrait_layout:
@@ -2892,7 +2892,8 @@ func _refresh_selection(trigger_reaction: bool = false) -> void:
 	detail_weapon_label.text = "Current combat rhythm: %s" % String(selected_data["weapon"]) if _is_english() else "当前执笔节奏：%s" % String(selected_data["weapon"])
 	detail_desc_label.text = String(selected_data["focus"])
 	detail_focus_label.text = _build_hero_stage_summary(selected_data)
-	detail_dossier_label.text = "Long notes and build routes live in Archive and Atlas." if _is_english() else "长说明和 build 路线请看人物志与图谱。"
+	var page_content := FrontEndContent.menu_page_content()
+	detail_dossier_label.text = _localize_text(String(page_content.get("detail_archive_hint", "长说明和 build 路线请看人物志与图谱。")))
 
 	detail_preview_core.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.24, accent.g * 0.2, accent.b * 0.16, 0.94), Color(accent.r, accent.g, accent.b, 0.26)))
 	detail_preview_glyph.text = String(selected_data["glyph"])

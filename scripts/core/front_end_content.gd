@@ -280,7 +280,9 @@ const MENU_PAGE_CONTENT := {
 	"header_title": "字海残卷",
 	"header_summary": "先进入残卷，再决定谁来执笔。每名角色都会把同一套偏旁系统，写成完全不同的战斗节奏。",
 	"hero_section_title": "可选执笔者",
+	"detail_heading": "当前执笔",
 	"detail_title": "执笔者档案",
+	"detail_archive_hint": "长说明和 build 路线请看人物志与图谱。",
 	"reaction_title": "执笔回应",
 	"opening_title": "起笔落点",
 	"source_skill_title": "源稿字技（待迁移）",
@@ -293,7 +295,10 @@ const MENU_PAGE_CONTENT := {
 	"build_route_note": "当前只负责前台提示：源稿词技 / 遗物搭配还没有接回 Godot 战斗掉落或路线权重。",
 	"stats_title": "战斗轮廓",
 	"quick_start_title": "快速试阵",
-	"quick_start_summary": "对照 web 原型保留第 10 / 20 波捷径，便于快速检查 HUD、混编敌潮与角色 build。试阵入口会单独写入试阵榜，不影响主卷榜。"
+	"quick_start_summary": "对照 web 原型保留第 10 / 20 波捷径，便于快速检查 HUD、混编敌潮与角色 build。试阵入口会单独写入试阵榜，不影响主卷榜。",
+	"secondary_access_title": "二级入口与试阵",
+	"secondary_access_note": "长说明移到人物志与图谱；这里保留快速进入与测试入口。",
+	"selection_note": "选择界面只保留短摘要和关键属性，更长的角色说明移到次级菜单。"
 }
 
 const MENU_TOP_ACTIONS := [
