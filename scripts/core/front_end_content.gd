@@ -314,6 +314,51 @@ const MENU_QUICK_START_ACTIONS := [
 	{"title": "压测 · 第20波", "accent": Color(0.78, 0.52, 1.0, 1.0), "action": "start_wave_20"}
 ]
 
+const MENU_OVERLAY_CONTENT := {
+	"character_archive": {
+		"title": "人物志",
+		"summary": "把已经接入的执笔者档案收进二级菜单，进入残卷前先确认每名角色的身份与战斗轮廓。",
+		"note": "文本直接取自当前 Godot 迁移版的角色数据，不额外编造尚未落地的职业或成长线。",
+		"close_text": "收起人物志"
+	},
+	"recipe_atlas": {
+		"title": "合字图谱",
+		"summary": "把偏旁、成字与砚台磨词路线收进二级菜单，开局前就能快速确认成长链。",
+		"note": "当前先集中展示已经接入的偏旁、合字等级、词技等级与独立武器偏旁。真正的磨词仍然发生在战场砚台旁。",
+		"close_text": "收起图谱"
+	},
+	"enemy_archive": {
+		"title": "怪物图鉴",
+		"summary": "把已经接入的敌人谱系收进二级菜单，开局前先记住预警和应对重点。",
+		"note": "图鉴文本直接对应当前 Godot 迁移版已经写进战斗脚本的敌人行为，不额外虚构未接入兵种。",
+		"close_text": "收起图鉴"
+	},
+	"leaderboard": {
+		"title": "残卷战绩",
+		"summary": "现在可以在二级菜单里直接查看本地排行榜，并顺手回看每局 build 走向，不必先打到结算页。",
+		"sort_note": "当前可以按波次、击破或存活重新排序，更接近 source web 原型里回看不同 build 结果的方式。",
+		"close_text": "收起战绩"
+	},
+	"profile": {
+		"title": "玩家名帖",
+		"summary": "像 source web 原型一样，先在菜单里维护这台设备的默认排行榜署名。结算页留空时，会自动复用这里的名字。",
+		"preview_title": "当前署名",
+		"name_field_title": "默认排行榜署名",
+		"name_field_placeholder": "输入想显示的名字",
+		"random_text": "随机侠名",
+		"save_text": "保存署名",
+		"reset_text": "恢复默认",
+		"close_text": "返回菜单"
+	}
+}
+
+const MENU_TRANSITION_CONTENT := {
+	"glyph": "书",
+	"title": "残卷一·入墨",
+	"subtitle": "执笔者正落字入卷。",
+	"note": "墨线正在收束，字潮即将开启。"
+}
+
 
 static func launcher_top_actions() -> Array:
 	return LAUNCHER_TOP_ACTIONS.duplicate(true)
@@ -365,3 +410,11 @@ static func menu_top_actions() -> Array:
 
 static func menu_quick_start_actions() -> Array:
 	return MENU_QUICK_START_ACTIONS.duplicate(true)
+
+
+static func menu_overlay_content() -> Dictionary:
+	return MENU_OVERLAY_CONTENT.duplicate(true)
+
+
+static func menu_transition_content() -> Dictionary:
+	return MENU_TRANSITION_CONTENT.duplicate(true)

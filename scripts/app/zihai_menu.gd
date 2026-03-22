@@ -62,11 +62,15 @@ const MENU_EN_TEXT := {
 	"随机侠名": "Random Wuxia Name",
 	"保存署名": "Save Alias",
 	"恢复默认": "Restore Default",
+	"返回菜单": "Back to Menu",
+	"收起战绩": "Close Records",
 	"把已经接入的敌人谱系收进二级菜单，开局前先记住预警和应对重点。": "Keep the migrated enemy families inside the sub-menu so you can remember their warnings and counters before battle.",
 	"图鉴文本直接对应当前 Godot 迁移版已经写进战斗脚本的敌人行为，不额外虚构未接入兵种。": "Archive text maps directly to behaviors already implemented in the current Godot battle scripts instead of inventing unshipped units.",
 	"收起人物志": "Close Archive",
 	"收起图谱": "Close Atlas",
 	"收起图鉴": "Close Archive",
+	"残卷一·入墨": "Scroll I · Into Ink",
+	"执笔者正落字入卷。": "The scribe is laying the opening stroke into the scroll.",
 	"墨线正在收束，字潮即将开启。": "Ink lines are closing. The glyph tide is about to begin.",
 	"卷中文字": "Text Within the Scroll",
 	"机动": "Mobility",
@@ -1221,6 +1225,7 @@ func _build_floating_symbols() -> void:
 
 func _build_recipe_atlas_overlay() -> void:
 	var portrait_layout := _is_portrait_layout()
+	var overlay_content: Dictionary = FrontEndContent.menu_overlay_content().get("recipe_atlas", {})
 	recipe_atlas_overlay = Control.new()
 	recipe_atlas_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
 	recipe_atlas_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -1249,8 +1254,8 @@ func _build_recipe_atlas_overlay() -> void:
 	box.add_theme_constant_override("separation", _i(14))
 	margin.add_child(box)
 
-	box.add_child(_make_label("合字图谱", 36, Color(1.0, 0.95, 0.86, 1.0)))
-	box.add_child(_make_label("把偏旁、成字与砚台磨词路线收进二级菜单，开局前就能快速确认成长链。", 18, Color(0.88, 0.92, 0.96, 0.95)))
+	box.add_child(_make_label(String(overlay_content.get("title", "合字图谱")), 36, Color(1.0, 0.95, 0.86, 1.0)))
+	box.add_child(_make_label(String(overlay_content.get("summary", "把偏旁、成字与砚台磨词路线收进二级菜单，开局前就能快速确认成长链。")), 18, Color(0.88, 0.92, 0.96, 0.95)))
 
 	var summary_panel := PanelContainer.new()
 	summary_panel.custom_minimum_size = _v(0.0, 92.0)
@@ -1263,7 +1268,7 @@ func _build_recipe_atlas_overlay() -> void:
 	summary_margin.add_theme_constant_override("margin_right", _i(18))
 	summary_margin.add_theme_constant_override("margin_bottom", _i(16))
 	summary_panel.add_child(summary_margin)
-	summary_margin.add_child(_make_label("当前先集中展示已经接入的偏旁、合字等级、词技等级与独立武器偏旁。真正的磨词仍然发生在战场砚台旁。", 17, Color(0.94, 0.82, 0.56, 0.94)))
+	summary_margin.add_child(_make_label(String(overlay_content.get("note", "当前先集中展示已经接入的偏旁、合字等级、词技等级与独立武器偏旁。真正的磨词仍然发生在战场砚台旁。")), 17, Color(0.94, 0.82, 0.56, 0.94)))
 
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -1281,11 +1286,12 @@ func _build_recipe_atlas_overlay() -> void:
 	action_row.alignment = BoxContainer.ALIGNMENT_END
 	action_row.add_theme_constant_override("separation", _i(12))
 	box.add_child(action_row)
-	action_row.add_child(_make_pill_button("收起图谱", _v(150.0, 52.0), Callable(self, "_hide_recipe_atlas_overlay")))
+	action_row.add_child(_make_pill_button(String(overlay_content.get("close_text", "收起图谱")), _v(150.0, 52.0), Callable(self, "_hide_recipe_atlas_overlay")))
 
 
 func _build_character_archive_overlay() -> void:
 	var portrait_layout := _is_portrait_layout()
+	var overlay_content: Dictionary = FrontEndContent.menu_overlay_content().get("character_archive", {})
 	character_archive_overlay = Control.new()
 	character_archive_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
 	character_archive_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -1314,8 +1320,8 @@ func _build_character_archive_overlay() -> void:
 	box.add_theme_constant_override("separation", _i(14))
 	margin.add_child(box)
 
-	box.add_child(_make_label("人物志", 36, Color(1.0, 0.95, 0.86, 1.0)))
-	box.add_child(_make_label("把已经接入的执笔者档案收进二级菜单，进入残卷前先确认每名角色的身份与战斗轮廓。", 18, Color(0.88, 0.92, 0.96, 0.95)))
+	box.add_child(_make_label(String(overlay_content.get("title", "人物志")), 36, Color(1.0, 0.95, 0.86, 1.0)))
+	box.add_child(_make_label(String(overlay_content.get("summary", "把已经接入的执笔者档案收进二级菜单，进入残卷前先确认每名角色的身份与战斗轮廓。")), 18, Color(0.88, 0.92, 0.96, 0.95)))
 
 	var summary_panel := PanelContainer.new()
 	summary_panel.custom_minimum_size = _v(0.0, 92.0)
@@ -1328,7 +1334,7 @@ func _build_character_archive_overlay() -> void:
 	summary_margin.add_theme_constant_override("margin_right", _i(18))
 	summary_margin.add_theme_constant_override("margin_bottom", _i(16))
 	summary_panel.add_child(summary_margin)
-	summary_margin.add_child(_make_label("文本直接取自当前 Godot 迁移版的角色数据，不额外编造尚未落地的职业或成长线。", 17, Color(0.94, 0.82, 0.56, 0.94)))
+	summary_margin.add_child(_make_label(String(overlay_content.get("note", "文本直接取自当前 Godot 迁移版的角色数据，不额外编造尚未落地的职业或成长线。")), 17, Color(0.94, 0.82, 0.56, 0.94)))
 
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -1346,12 +1352,13 @@ func _build_character_archive_overlay() -> void:
 	action_row.alignment = BoxContainer.ALIGNMENT_END
 	action_row.add_theme_constant_override("separation", _i(12))
 	box.add_child(action_row)
-	action_row.add_child(_make_pill_button("收起人物志", _v(170.0, 52.0), Callable(self, "_hide_character_archive_overlay")))
+	action_row.add_child(_make_pill_button(String(overlay_content.get("close_text", "收起人物志")), _v(170.0, 52.0), Callable(self, "_hide_character_archive_overlay")))
 	_populate_character_archive_cards()
 
 
 func _build_leaderboard_overlay() -> void:
 	var portrait_layout := _is_portrait_layout()
+	var overlay_content: Dictionary = FrontEndContent.menu_overlay_content().get("leaderboard", {})
 	leaderboard_overlay = Control.new()
 	leaderboard_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
 	leaderboard_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -1380,8 +1387,8 @@ func _build_leaderboard_overlay() -> void:
 	box.add_theme_constant_override("separation", _i(14))
 	margin.add_child(box)
 
-	box.add_child(_make_label("残卷战绩", 36, Color(1.0, 0.95, 0.86, 1.0)))
-	box.add_child(_make_label("现在可以在二级菜单里直接查看本地排行榜，并顺手回看每局 build 走向，不必先打到结算页。", 18, Color(0.88, 0.92, 0.96, 0.95)))
+	box.add_child(_make_label(String(overlay_content.get("title", "残卷战绩")), 36, Color(1.0, 0.95, 0.86, 1.0)))
+	box.add_child(_make_label(String(overlay_content.get("summary", "现在可以在二级菜单里直接查看本地排行榜，并顺手回看每局 build 走向，不必先打到结算页。")), 18, Color(0.88, 0.92, 0.96, 0.95)))
 
 	var summary_panel := PanelContainer.new()
 	summary_panel.custom_minimum_size = _v(0.0, 88.0)
@@ -1412,7 +1419,7 @@ func _build_leaderboard_overlay() -> void:
 	var sort_shell := VBoxContainer.new()
 	sort_shell.add_theme_constant_override("separation", _i(10))
 	box.add_child(sort_shell)
-	sort_shell.add_child(_make_label("当前可以按波次、击破或存活重新排序，更接近 source web 原型里回看不同 build 结果的方式。", 16, Color(0.82, 0.9, 1.0, 0.9)))
+	sort_shell.add_child(_make_label(String(overlay_content.get("sort_note", "当前可以按波次、击破或存活重新排序，更接近 source web 原型里回看不同 build 结果的方式。")), 16, Color(0.82, 0.9, 1.0, 0.9)))
 
 	var sort_row: BoxContainer = VBoxContainer.new() if portrait_layout else HBoxContainer.new()
 	sort_row.add_theme_constant_override("separation", _i(10))
@@ -1446,12 +1453,13 @@ func _build_leaderboard_overlay() -> void:
 	action_row.alignment = BoxContainer.ALIGNMENT_END
 	action_row.add_theme_constant_override("separation", _i(12))
 	box.add_child(action_row)
-	action_row.add_child(_make_pill_button("收起战绩", _v(150.0, 52.0), Callable(self, "_hide_leaderboard_overlay")))
+	action_row.add_child(_make_pill_button(String(overlay_content.get("close_text", "收起战绩")), _v(150.0, 52.0), Callable(self, "_hide_leaderboard_overlay")))
 	_refresh_leaderboard_overlay()
 
 
 func _build_profile_overlay() -> void:
 	var portrait_layout := _is_portrait_layout()
+	var overlay_content: Dictionary = FrontEndContent.menu_overlay_content().get("profile", {})
 	profile_overlay = Control.new()
 	profile_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
 	profile_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -1480,8 +1488,8 @@ func _build_profile_overlay() -> void:
 	box.add_theme_constant_override("separation", _i(14))
 	margin.add_child(box)
 
-	box.add_child(_make_label("玩家名帖", 36, Color(1.0, 0.95, 0.86, 1.0)))
-	box.add_child(_make_label("像 source web 原型一样，先在菜单里维护这台设备的默认排行榜署名。结算页留空时，会自动复用这里的名字。", 18, Color(0.88, 0.92, 0.96, 0.95)))
+	box.add_child(_make_label(String(overlay_content.get("title", "玩家名帖")), 36, Color(1.0, 0.95, 0.86, 1.0)))
+	box.add_child(_make_label(String(overlay_content.get("summary", "像 source web 原型一样，先在菜单里维护这台设备的默认排行榜署名。结算页留空时，会自动复用这里的名字。")), 18, Color(0.88, 0.92, 0.96, 0.95)))
 
 	var content_row: BoxContainer = VBoxContainer.new() if portrait_layout else HBoxContainer.new()
 	content_row.add_theme_constant_override("separation", _i(16))
@@ -1504,7 +1512,7 @@ func _build_profile_overlay() -> void:
 	var preview_box := VBoxContainer.new()
 	preview_box.add_theme_constant_override("separation", _i(10))
 	preview_margin.add_child(preview_box)
-	preview_box.add_child(_make_label("当前署名", 18, Color(0.96, 0.82, 0.54, 0.94)))
+	preview_box.add_child(_make_label(String(overlay_content.get("preview_title", "当前署名")), 18, Color(0.96, 0.82, 0.54, 0.94)))
 
 	var avatar_panel := PanelContainer.new()
 	avatar_panel.custom_minimum_size = _v(0.0, 108.0)
@@ -1540,13 +1548,13 @@ func _build_profile_overlay() -> void:
 	var editor_box := VBoxContainer.new()
 	editor_box.add_theme_constant_override("separation", _i(10))
 	editor_margin.add_child(editor_box)
-	editor_box.add_child(_make_label("默认排行榜署名", 22, Color(1.0, 0.92, 0.8, 1.0)))
+	editor_box.add_child(_make_label(String(overlay_content.get("name_field_title", "默认排行榜署名")), 22, Color(1.0, 0.92, 0.8, 1.0)))
 
 	profile_status_label = _make_label("", 15, Color(0.82, 0.9, 1.0, 0.92))
 	profile_status_label.visible = false
 	editor_box.add_child(profile_status_label)
 
-	profile_name_input = _make_text_input("输入想显示的名字")
+	profile_name_input = _make_text_input(String(overlay_content.get("name_field_placeholder", "输入想显示的名字")))
 	profile_name_input.text_changed.connect(func(_text: String) -> void:
 		_refresh_profile_preview_from_input()
 	)
@@ -1562,11 +1570,11 @@ func _build_profile_overlay() -> void:
 	action_row.add_theme_constant_override("separation", _i(10))
 	editor_box.add_child(action_row)
 
-	var random_button := _make_pill_button("随机侠名", _v(0.0, 48.0), Callable(self, "_on_profile_random_pressed"))
+	var random_button := _make_pill_button(String(overlay_content.get("random_text", "随机侠名")), _v(0.0, 48.0), Callable(self, "_on_profile_random_pressed"))
 	random_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	action_row.add_child(random_button)
 
-	var save_button := _make_action_button("保存署名", Color(0.92, 0.62, 0.28, 1.0))
+	var save_button := _make_action_button(String(overlay_content.get("save_text", "保存署名")), Color(0.92, 0.62, 0.28, 1.0))
 	save_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	save_button.custom_minimum_size = _v(0.0, 48.0)
 	save_button.add_theme_font_size_override("font_size", _i(19))
@@ -1577,11 +1585,11 @@ func _build_profile_overlay() -> void:
 	footer_row.add_theme_constant_override("separation", _i(10))
 	box.add_child(footer_row)
 
-	var reset_button := _make_pill_button("恢复默认", _v(0.0, 50.0), Callable(self, "_on_profile_reset_pressed"))
+	var reset_button := _make_pill_button(String(overlay_content.get("reset_text", "恢复默认")), _v(0.0, 50.0), Callable(self, "_on_profile_reset_pressed"))
 	reset_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	footer_row.add_child(reset_button)
 
-	var close_button := _make_pill_button("返回菜单", _v(0.0, 50.0), Callable(self, "_hide_profile_overlay"))
+	var close_button := _make_pill_button(String(overlay_content.get("close_text", "返回菜单")), _v(0.0, 50.0), Callable(self, "_hide_profile_overlay"))
 	close_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	footer_row.add_child(close_button)
 
@@ -1590,6 +1598,7 @@ func _build_profile_overlay() -> void:
 
 func _build_enemy_archive_overlay() -> void:
 	var portrait_layout := _is_portrait_layout()
+	var overlay_content: Dictionary = FrontEndContent.menu_overlay_content().get("enemy_archive", {})
 	enemy_archive_overlay = Control.new()
 	enemy_archive_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
 	enemy_archive_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -1618,8 +1627,8 @@ func _build_enemy_archive_overlay() -> void:
 	box.add_theme_constant_override("separation", _i(14))
 	margin.add_child(box)
 
-	box.add_child(_make_label("怪物图鉴", 36, Color(1.0, 0.95, 0.86, 1.0)))
-	box.add_child(_make_label("把已经接入的敌人谱系收进二级菜单，开局前先记住预警和应对重点。", 18, Color(0.88, 0.92, 0.96, 0.95)))
+	box.add_child(_make_label(String(overlay_content.get("title", "怪物图鉴")), 36, Color(1.0, 0.95, 0.86, 1.0)))
+	box.add_child(_make_label(String(overlay_content.get("summary", "把已经接入的敌人谱系收进二级菜单，开局前先记住预警和应对重点。")), 18, Color(0.88, 0.92, 0.96, 0.95)))
 
 	var summary_panel := PanelContainer.new()
 	summary_panel.custom_minimum_size = _v(0.0, 92.0)
@@ -1632,7 +1641,7 @@ func _build_enemy_archive_overlay() -> void:
 	summary_margin.add_theme_constant_override("margin_right", _i(18))
 	summary_margin.add_theme_constant_override("margin_bottom", _i(16))
 	summary_panel.add_child(summary_margin)
-	summary_margin.add_child(_make_label("图鉴文本直接对应当前 Godot 迁移版已经写进战斗脚本的敌人行为，不额外虚构未接入兵种。", 17, Color(0.94, 0.82, 0.56, 0.94)))
+	summary_margin.add_child(_make_label(String(overlay_content.get("note", "图鉴文本直接对应当前 Godot 迁移版已经写进战斗脚本的敌人行为，不额外虚构未接入兵种。")), 17, Color(0.94, 0.82, 0.56, 0.94)))
 
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -1650,11 +1659,12 @@ func _build_enemy_archive_overlay() -> void:
 	action_row.alignment = BoxContainer.ALIGNMENT_END
 	action_row.add_theme_constant_override("separation", _i(12))
 	box.add_child(action_row)
-	action_row.add_child(_make_pill_button("收起图鉴", _v(150.0, 52.0), Callable(self, "_hide_enemy_archive_overlay")))
+	action_row.add_child(_make_pill_button(String(overlay_content.get("close_text", "收起图鉴")), _v(150.0, 52.0), Callable(self, "_hide_enemy_archive_overlay")))
 
 
 func _build_transition_overlay() -> void:
 	var portrait_layout := _is_portrait_layout()
+	var transition_content := FrontEndContent.menu_transition_content()
 	transition_overlay = Control.new()
 	transition_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
 	transition_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -1688,17 +1698,17 @@ func _build_transition_overlay() -> void:
 	glyph_shell.custom_minimum_size = _v(0.0, 116.0)
 	glyph_shell.add_theme_stylebox_override("panel", _make_panel_style(Color(0.14, 0.1, 0.08, 0.92), Color(0.92, 0.68, 0.42, 0.34)))
 	box.add_child(glyph_shell)
-	transition_glyph_label = _make_label("书", 62, Color(1.0, 0.95, 0.86, 1.0))
+	transition_glyph_label = _make_label(String(transition_content.get("glyph", "书")), 62, Color(1.0, 0.95, 0.86, 1.0))
 	transition_glyph_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	transition_glyph_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	transition_glyph_label.set_anchors_preset(Control.PRESET_FULL_RECT)
 	glyph_shell.add_child(transition_glyph_label)
 
-	transition_title_label = _make_label("残卷一·入墨", 38, Color(1.0, 0.95, 0.86, 1.0))
-	transition_subtitle_label = _make_label("执笔者正落字入卷。", 20, Color(0.9, 0.92, 0.96, 0.96))
+	transition_title_label = _make_label(String(transition_content.get("title", "残卷一·入墨")), 38, Color(1.0, 0.95, 0.86, 1.0))
+	transition_subtitle_label = _make_label(String(transition_content.get("subtitle", "执笔者正落字入卷。")), 20, Color(0.9, 0.92, 0.96, 0.96))
 	box.add_child(transition_title_label)
 	box.add_child(transition_subtitle_label)
-	box.add_child(_make_label("墨线正在收束，字潮即将开启。", 18, Color(0.96, 0.82, 0.54, 0.92)))
+	box.add_child(_make_label(String(transition_content.get("note", "墨线正在收束，字潮即将开启。")), 18, Color(0.96, 0.82, 0.54, 0.92)))
 
 
 func _localized_hero_data(hero_id: String) -> Dictionary:
