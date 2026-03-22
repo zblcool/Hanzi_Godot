@@ -378,6 +378,11 @@ var soundtrack_title_label: Label
 var soundtrack_detail_label: Label
 var banner_label: Label
 var overlay_label: Label
+var reveal_panel: PanelContainer
+var reveal_kicker_label: Label
+var reveal_glyph_label: Label
+var reveal_title_label: Label
+var reveal_detail_label: Label
 var xp_bar: ProgressBar
 var health_bar: ProgressBar
 var controls_label: Label
@@ -444,6 +449,8 @@ var map_zoom_label: Label
 
 var banner_time := 0.0
 var banner_color: Color = Color(1.0, 0.95, 0.84, 1.0)
+var reveal_time := 0.0
+var reveal_duration := 0.0
 var callout_time := 0.0
 var soundtrack_toast: PanelContainer
 var soundtrack_toast_title_label: Label
@@ -519,6 +526,20 @@ func _process(delta: float) -> void:
 		banner_label.modulate = Color(banner_color.r, banner_color.g, banner_color.b, alpha)
 	else:
 		banner_label.visible = false
+
+	if reveal_time > 0.0 and reveal_panel != null:
+		reveal_time -= delta
+		reveal_panel.visible = true
+		var reveal_alpha: float = 1.0
+		if reveal_duration > 0.0:
+			var reveal_progress: float = clampf((reveal_duration - reveal_time) / reveal_duration, 0.0, 1.0)
+			if reveal_progress < 0.12:
+				reveal_alpha = clampf(reveal_progress / 0.12, 0.0, 1.0)
+		if reveal_time < 0.48:
+			reveal_alpha = minf(reveal_alpha, clampf(reveal_time / 0.48, 0.0, 1.0))
+		reveal_panel.modulate = Color(1.0, 1.0, 1.0, reveal_alpha)
+	elif reveal_panel != null:
+		reveal_panel.visible = false
 
 	if callout_time > 0.0 and callout_panel != null:
 		callout_time -= delta
@@ -827,6 +848,38 @@ func show_banner(text: String, color: Color, duration: float = 2.4) -> void:
 	banner_time = duration
 
 
+func show_reveal(kicker: String, title: String, detail: String, accent: Color, glyph: String = "", duration: float = 2.8) -> void:
+	if reveal_panel == null:
+		return
+
+	reveal_panel.add_theme_stylebox_override(
+		"panel",
+		_make_panel_style(
+			Color(accent.r * 0.1, accent.g * 0.1, accent.b * 0.14, 0.9),
+			Color(accent.r, accent.g, accent.b, 0.78),
+			28
+		)
+	)
+	if reveal_kicker_label != null:
+		reveal_kicker_label.text = kicker
+		reveal_kicker_label.add_theme_color_override("font_color", Color(accent.r * 0.24 + 0.72, accent.g * 0.22 + 0.72, accent.b * 0.18 + 0.72, 0.96))
+	if reveal_glyph_label != null:
+		reveal_glyph_label.text = glyph
+		reveal_glyph_label.visible = not glyph.strip_edges().is_empty()
+		reveal_glyph_label.add_theme_color_override("font_color", Color(accent.r * 0.34 + 0.64, accent.g * 0.3 + 0.64, accent.b * 0.22 + 0.64, 1.0))
+	if reveal_title_label != null:
+		reveal_title_label.text = title
+		reveal_title_label.add_theme_color_override("font_color", Color(1.0, 0.96, 0.9, 0.98))
+	if reveal_detail_label != null:
+		reveal_detail_label.text = detail
+		reveal_detail_label.visible = not detail.strip_edges().is_empty()
+		reveal_detail_label.add_theme_color_override("font_color", Color(0.88, 0.93, 0.97, 0.96))
+	reveal_panel.visible = true
+	reveal_panel.modulate = Color(1.0, 1.0, 1.0, 1.0)
+	reveal_duration = max(duration, 0.9)
+	reveal_time = reveal_duration
+
+
 func show_callout(title: String, text: String, accent: Color, duration: float = 3.0) -> void:
 	if callout_panel == null:
 		return
@@ -907,6 +960,7 @@ func show_radical_choices(level: int, choices: Array[Dictionary], pending_count:
 		else "从三枚偏旁里选一枚。它会推进合字，满级后继续磨成词技。剩余待选：%d"
 	) % pending_count
 	overlay_label.visible = false
+	_hide_reveal()
 	for index in range(choice_buttons.size()):
 		var button: Button = choice_buttons[index]
 		if index < choices.size():
@@ -930,6 +984,7 @@ func show_word_choices(choices: Array[Dictionary]) -> void:
 	choice_title_label.text = "Inkstone Refinement" if _is_english() else "砚台磨词"
 	choice_hint_label.text = "Use extra maxed-glyph stock to refine a higher phrase art. Each refinement spends one related radical." if _is_english() else "把满级合字的余材磨成更高一层的词技。每次磨词会消耗一枚相关偏旁。"
 	overlay_label.visible = false
+	_hide_reveal()
 	for index in range(choice_buttons.size()):
 		var button: Button = choice_buttons[index]
 		if index < choices.size():
@@ -961,6 +1016,7 @@ func show_pause_menu(elapsed: float, kills: int, threat: int, level: int) -> voi
 	hide_choice_overlay()
 	hide_map_overlay()
 	overlay_label.visible = false
+	_hide_reveal()
 	_hide_state_name_editor()
 	last_pause_summary = {
 		"elapsed": elapsed,
@@ -1005,6 +1061,7 @@ func _show_settings_menu() -> void:
 	state_body_label.text = _build_settings_body()
 	_hide_state_name_editor()
 	overlay_label.visible = false
+	_hide_reveal()
 	_configure_state_button(state_primary_button, ("%s: %s" % ["Performance", _performance_mode_label()] if _is_english() else "演出档：%s" % _performance_mode_label()), Callable(self, "_cycle_performance_mode"))
 	_configure_state_button(state_secondary_button, ("%s: %s" % ["Glyph FX", _visual_effects_label()] if _is_english() else "视觉字效：%s" % _visual_effects_label()), Callable(self, "_toggle_visual_effects"))
 	_configure_state_button(state_tertiary_button, ("%s: %s" % ["Enemy Health Bars", _enemy_health_bar_label()] if _is_english() else "敌方血条：%s" % _enemy_health_bar_label()), Callable(self, "_toggle_enemy_health_bars"))
@@ -1072,6 +1129,7 @@ func set_game_over(
 	_hide_state_button(state_quinary_button)
 	_hide_state_button(state_senary_button)
 	overlay_label.visible = false
+	_hide_reveal()
 	state_overlay.visible = true
 
 
@@ -1131,6 +1189,7 @@ func _refresh_local_leaderboard_overlay() -> void:
 	_hide_state_button(state_quinary_button)
 	_hide_state_button(state_senary_button)
 	overlay_label.visible = false
+	_hide_reveal()
 	state_overlay.visible = true
 
 
@@ -1632,6 +1691,47 @@ func _build_ui() -> void:
 	overlay_label.visible = false
 	root_control.add_child(overlay_label)
 
+	reveal_panel = PanelContainer.new()
+	reveal_panel.set_anchors_preset(Control.PRESET_CENTER)
+	reveal_panel.offset_left = -360.0
+	reveal_panel.offset_top = -164.0
+	reveal_panel.offset_right = 360.0
+	reveal_panel.offset_bottom = -16.0
+	reveal_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	reveal_panel.visible = false
+	reveal_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.08, 0.11, 0.14, 0.92), Color(0.96, 0.74, 0.44, 0.76), 28))
+	root_control.add_child(reveal_panel)
+
+	var reveal_margin := MarginContainer.new()
+	reveal_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	reveal_margin.add_theme_constant_override("margin_left", 22)
+	reveal_margin.add_theme_constant_override("margin_top", 18)
+	reveal_margin.add_theme_constant_override("margin_right", 22)
+	reveal_margin.add_theme_constant_override("margin_bottom", 18)
+	reveal_panel.add_child(reveal_margin)
+
+	var reveal_row := HBoxContainer.new()
+	reveal_row.add_theme_constant_override("separation", 18)
+	reveal_margin.add_child(reveal_row)
+
+	reveal_glyph_label = _make_label("字", 70, Color(1.0, 0.92, 0.78, 1.0), 4.0)
+	reveal_glyph_label.custom_minimum_size = Vector2(104.0, 104.0)
+	reveal_glyph_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	reveal_glyph_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	reveal_row.add_child(reveal_glyph_label)
+
+	var reveal_box := VBoxContainer.new()
+	reveal_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	reveal_box.add_theme_constant_override("separation", 6)
+	reveal_row.add_child(reveal_box)
+
+	reveal_kicker_label = _make_label("字境相变", 15, Color(0.98, 0.84, 0.6, 0.9), 3.0)
+	reveal_box.add_child(reveal_kicker_label)
+	reveal_title_label = _make_label("碑林", 34, Color(1.0, 0.96, 0.9, 1.0))
+	reveal_box.add_child(reveal_title_label)
+	reveal_detail_label = _make_label("大字揭示会在这里提示合字、词技与字境变化。", 16, Color(0.88, 0.93, 0.97, 0.94), 2.0)
+	reveal_box.add_child(reveal_detail_label)
+
 	soundtrack_toast = _make_panel(Color(0.08, 0.11, 0.13, 0.96), Color(0.92, 0.69, 0.38, 0.64), Vector2(300.0, 100.0))
 	soundtrack_toast.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	soundtrack_toast.offset_left = -690.0
@@ -1758,6 +1858,14 @@ func _refresh_layout() -> void:
 		banner_label.offset_top = 82.0 if compact_layout else 86.0
 		banner_label.offset_bottom = banner_label.offset_top + 64.0
 
+	if reveal_panel != null:
+		var reveal_width := minf(viewport_size.x - 120.0, 720.0 if not compact_layout else 600.0)
+		var reveal_half_width := reveal_width * 0.5
+		reveal_panel.offset_left = -reveal_half_width
+		reveal_panel.offset_right = reveal_half_width
+		reveal_panel.offset_top = -146.0 if compact_layout else -164.0
+		reveal_panel.offset_bottom = -30.0 if compact_layout else -16.0
+
 	if soundtrack_toast != null:
 		var toast_width := 280.0
 		soundtrack_toast.offset_left = -toast_width
@@ -1803,6 +1911,7 @@ func show_map_overlay(snapshot: Dictionary) -> void:
 	if map_overlay == null or map_canvas == null:
 		return
 	overlay_label.visible = false
+	_hide_reveal()
 	map_canvas.set_snapshot(snapshot)
 	map_summary_label.text = _localize_text(String(snapshot.get("summary", "敌群 0  ·  砚台 0  ·  草丛 0")))
 	_update_map_zoom_label()
@@ -2627,3 +2736,10 @@ func _apply_soundtrack_style(panel: PanelContainer, accent: Color, fill_alpha: f
 			22
 		)
 	)
+
+
+func _hide_reveal() -> void:
+	reveal_time = 0.0
+	reveal_duration = 0.0
+	if reveal_panel != null:
+		reveal_panel.visible = false

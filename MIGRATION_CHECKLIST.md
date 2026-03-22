@@ -83,7 +83,7 @@ Status legend:
 - `[pending]` Procedural music playback and current-track feedback. Notes: Godot now has the HUD-side track card and toast, but actual procedural playback / loop rotation is still missing.
 - `[pending]` Higher-end hit/audio differentiation. Notes: hanziHero has more layered weapon/skill sound identity and lingering glyph afterimages; Godot feedback can be pushed further.
 - `[done]` Themeable launcher/menu presentation. Notes: Godot launcher, about overlay, and Zihai menu now share the remembered `夜墨 / 纸墨` presentation; battle/HUD localization and broader downstream parity remain tracked separately.
-- `[pending]` More stage spectacle for big unlocks and transitions. Notes: source leans harder into large character/word reveal moments and evolving battlefield mood.
+- `[in progress]` More stage spectacle for big unlocks and transitions. Notes: Godot battle HUD now adds a larger reveal card for new glyphs, phrase arts, and `字境相变`, but boss/chapter beats and other late-run flourishes can still be pushed further.
 
 ## Export
 
