@@ -6,8 +6,11 @@ const ZIHAI_BATTLE_SCENE := "res://scenes/battle/zihai_battle.tscn"
 const LOCAL_LEADERBOARD_PATH := "user://local_leaderboard.json"
 const LEADERBOARD_IDENTITY_PATH := "user://leaderboard_identity.json"
 const BATTLE_SETTINGS_PATH := "user://battle_settings.json"
+const LAUNCHER_THEME_PATH := "user://launcher_theme.json"
 const LOCAL_LEADERBOARD_LIMIT := 20
 const LEADERBOARD_NAME_LIMIT := 18
+const DEFAULT_LAUNCHER_THEME := "night-ink"
+const LAUNCHER_THEME_IDS := ["paper-ink", "night-ink"]
 const FALLBACK_RUN_NAME_SURNAMES := ["沈", "陆", "谢", "顾", "裴", "苏", "闻", "叶", "秦", "燕", "柳", "程"]
 const FALLBACK_RUN_NAME_GIVENS := ["孤舟", "青崖", "听雨", "照夜", "长风", "归云", "惊鸿", "秋水", "横雪", "寻梅", "渡川", "鸣泉"]
 const BATTLE_PERFORMANCE_MODES := ["performance", "balanced", "quality"]
@@ -504,12 +507,14 @@ var local_leaderboard: Array[Dictionary] = []
 var local_leaderboard_loaded: bool = false
 var last_recorded_leaderboard_run: Dictionary = {}
 var battle_settings: Dictionary = DEFAULT_BATTLE_SETTINGS.duplicate(true)
+var launcher_theme := DEFAULT_LAUNCHER_THEME
 
 
 func _ready() -> void:
 	_load_leaderboard_identity()
 	_load_local_leaderboard()
 	_load_battle_settings()
+	_load_launcher_theme()
 
 
 func select_hero(hero_id: String) -> void:
@@ -786,6 +791,16 @@ func set_battle_setting(key: String, value: Variant) -> Dictionary:
 	return battle_settings.duplicate(true)
 
 
+func get_launcher_theme() -> String:
+	return _sanitize_launcher_theme(launcher_theme)
+
+
+func set_launcher_theme(raw_theme: String) -> String:
+	launcher_theme = _sanitize_launcher_theme(raw_theme)
+	_save_launcher_theme()
+	return launcher_theme
+
+
 func update_last_recorded_run_player_name(raw_name: String) -> String:
 	if last_recorded_leaderboard_run.is_empty():
 		return ""
@@ -920,6 +935,31 @@ func _save_battle_settings() -> void:
 	file.store_string(JSON.stringify(battle_settings))
 
 
+func _load_launcher_theme() -> void:
+	launcher_theme = DEFAULT_LAUNCHER_THEME
+
+	if not FileAccess.file_exists(LAUNCHER_THEME_PATH):
+		return
+
+	var file := FileAccess.open(LAUNCHER_THEME_PATH, FileAccess.READ)
+	if file == null:
+		return
+
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	if parsed is Dictionary:
+		launcher_theme = _sanitize_launcher_theme(String(parsed.get("theme", launcher_theme)))
+	elif parsed is String:
+		launcher_theme = _sanitize_launcher_theme(String(parsed))
+
+
+func _save_launcher_theme() -> void:
+	var file := FileAccess.open(LAUNCHER_THEME_PATH, FileAccess.WRITE)
+	if file == null:
+		return
+
+	file.store_string(JSON.stringify({"theme": launcher_theme}))
+
+
 func _normalize_leaderboard_entry(raw_entry: Variant) -> Dictionary:
 	if not (raw_entry is Dictionary):
 		return {}
@@ -1045,6 +1085,12 @@ func _sanitize_battle_settings(raw_settings: Variant) -> Dictionary:
 	sanitized["enemy_health_bars"] = bool(data.get("enemy_health_bars", sanitized["enemy_health_bars"]))
 	sanitized["ambient_glyph_density"] = ambient_density
 	return sanitized
+
+
+func _sanitize_launcher_theme(raw_theme: String) -> String:
+	if LAUNCHER_THEME_IDS.has(raw_theme):
+		return raw_theme
+	return DEFAULT_LAUNCHER_THEME
 
 
 func _sort_local_leaderboard() -> void:

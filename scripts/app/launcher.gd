@@ -3,11 +3,32 @@ extends Control
 const CJKFont := preload("res://scripts/core/cjk_font.gd")
 const BASE_VIEWPORT := Vector2(2100.0, 1200.0)
 const MIN_UI_SCALE := 0.6
+const NIGHT_THEME := {
+	"background": Color(0.03, 0.05, 0.07, 1.0),
+	"glow_amber": Color(0.88, 0.58, 0.28, 0.08),
+	"glow_azure": Color(0.42, 0.74, 0.88, 0.06),
+	"glow_gold": Color(0.9, 0.74, 0.34, 0.04),
+	"line": Color(0.18, 0.24, 0.28, 0.08),
+	"diamond": Color(0.52, 0.62, 0.72, 0.12),
+	"shadow": Color(0.0, 0.0, 0.0, 0.18),
+	"outline": Color(0.02, 0.03, 0.04, 0.28)
+}
+const PAPER_THEME := {
+	"background": Color(0.94, 0.9, 0.82, 1.0),
+	"glow_amber": Color(0.66, 0.43, 0.18, 0.08),
+	"glow_azure": Color(0.38, 0.5, 0.66, 0.07),
+	"glow_gold": Color(0.76, 0.62, 0.26, 0.05),
+	"line": Color(0.32, 0.24, 0.16, 0.09),
+	"diamond": Color(0.48, 0.37, 0.24, 0.11),
+	"shadow": Color(0.18, 0.14, 0.1, 0.08),
+	"outline": Color(0.95, 0.92, 0.86, 0.4)
+}
 
 var title_font: Font
 var ui_scale := 1.0
 var floating_symbols: Array[Dictionary] = []
 var preview_motifs: Array[Dictionary] = []
+var current_theme := "night-ink"
 var about_overlay: Control
 var profile_overlay: Control
 var profile_name_input: LineEdit
@@ -20,6 +41,7 @@ var profile_preview_copy_label: Label
 
 func _ready() -> void:
 	title_font = CJKFont.get_font()
+	current_theme = Session.get_launcher_theme()
 	_build_floating_symbols()
 	get_viewport().size_changed.connect(_on_viewport_size_changed)
 	_rebuild_ui()
@@ -67,14 +89,15 @@ func _process(delta: float) -> void:
 
 func _draw() -> void:
 	var rect: Rect2 = get_viewport_rect()
-	draw_rect(rect, Color(0.03, 0.05, 0.07, 1.0), true)
-	draw_circle(Vector2(rect.size.x * 0.2, rect.size.y * 0.16), 240.0, Color(0.88, 0.58, 0.28, 0.08))
-	draw_circle(Vector2(rect.size.x * 0.74, rect.size.y * 0.18), 280.0, Color(0.42, 0.74, 0.88, 0.06))
-	draw_circle(Vector2(rect.size.x * 0.58, rect.size.y * 0.72), 360.0, Color(0.9, 0.74, 0.34, 0.04))
+	var palette := _get_theme_palette()
+	draw_rect(rect, palette["background"], true)
+	draw_circle(Vector2(rect.size.x * 0.2, rect.size.y * 0.16), 240.0, palette["glow_amber"])
+	draw_circle(Vector2(rect.size.x * 0.74, rect.size.y * 0.18), 280.0, palette["glow_azure"])
+	draw_circle(Vector2(rect.size.x * 0.58, rect.size.y * 0.72), 360.0, palette["glow_gold"])
 
 	for index in range(7):
 		var x: float = rect.size.x * (0.08 + float(index) * 0.14)
-		draw_line(Vector2(x, 0.0), Vector2(x - 120.0, rect.size.y), Color(0.18, 0.24, 0.28, 0.08), 1.0)
+		draw_line(Vector2(x, 0.0), Vector2(x - 120.0, rect.size.y), palette["line"], 1.0)
 
 	for index in range(6):
 		var size := 72.0 + float(index) * 20.0
@@ -89,11 +112,11 @@ func _draw() -> void:
 			center + Vector2(-size * 0.72, 0.0),
 			center + Vector2(0.0, -size)
 		])
-		draw_polyline(diamond, Color(0.52, 0.62, 0.72, 0.12), 2.0)
+		draw_polyline(diamond, palette["diamond"], 2.0)
 
 	for symbol in floating_symbols:
 		var position: Vector2 = symbol["position"]
-		var color: Color = symbol["color"]
+		var color: Color = _resolve_symbol_color(symbol["color"])
 		draw_string(
 			title_font,
 			position,
@@ -106,6 +129,11 @@ func _draw() -> void:
 
 
 func _rebuild_ui() -> void:
+	var restore_about := about_overlay != null and about_overlay.visible
+	var restore_profile := profile_overlay != null and profile_overlay.visible
+	var profile_draft := ""
+	if restore_profile and profile_name_input != null:
+		profile_draft = profile_name_input.text
 	ui_scale = _compute_ui_scale()
 	preview_motifs.clear()
 	about_overlay = null
@@ -120,6 +148,13 @@ func _rebuild_ui() -> void:
 		remove_child(child)
 		child.queue_free()
 	_build_ui()
+	if restore_about and about_overlay != null:
+		about_overlay.visible = true
+	if restore_profile and profile_overlay != null and profile_name_input != null:
+		profile_name_input.text = profile_draft
+		_refresh_profile_overlay()
+		profile_overlay.visible = true
+	queue_redraw()
 
 
 func _on_viewport_size_changed() -> void:
@@ -143,6 +178,72 @@ func _i(value: float) -> int:
 
 func _v(x: float, y: float) -> Vector2:
 	return Vector2(_f(x), _f(y))
+
+
+func _is_paper_theme() -> bool:
+	return current_theme == "paper-ink"
+
+
+func _get_theme_palette() -> Dictionary:
+	return PAPER_THEME if _is_paper_theme() else NIGHT_THEME
+
+
+func _get_theme_toggle_label() -> String:
+	return "纸墨" if _is_paper_theme() else "夜墨"
+
+
+func _get_theme_toggle_tooltip() -> String:
+	return "切换到夜墨主题" if _is_paper_theme() else "切换到纸墨主题"
+
+
+func _resolve_surface_fill(fill_color: Color) -> Color:
+	if not _is_paper_theme():
+		return fill_color
+	var paper := Color(0.97, 0.95, 0.9, fill_color.a)
+	return fill_color.lerp(paper, 0.88)
+
+
+func _resolve_surface_border(border_color: Color) -> Color:
+	if not _is_paper_theme():
+		return border_color
+	var ink := Color(0.46, 0.33, 0.2, border_color.a)
+	return ink.lerp(border_color, 0.4)
+
+
+func _resolve_button_fill(fill_color: Color) -> Color:
+	if not _is_paper_theme():
+		return fill_color
+	var paper := Color(0.95, 0.9, 0.8, fill_color.a)
+	var mix_strength := 0.22 if fill_color.get_luminance() > 0.45 else 0.58
+	return fill_color.lerp(paper, mix_strength)
+
+
+func _resolve_label_color(color: Color) -> Color:
+	if not _is_paper_theme():
+		return color
+	var ink := Color(0.18, 0.13, 0.09, color.a)
+	if color.r > color.b + 0.08:
+		ink = Color(0.38, 0.26, 0.13, color.a)
+	elif color.b > color.r + 0.08:
+		ink = Color(0.23, 0.28, 0.36, color.a)
+	var darkened := color.darkened(0.45)
+	var themed := ink.lerp(darkened, 0.28)
+	themed.a = color.a
+	return themed
+
+
+func _resolve_symbol_color(color: Color) -> Color:
+	if not _is_paper_theme():
+		return color
+	var themed := _resolve_label_color(color)
+	themed.a = min(0.18, color.a + 0.03)
+	return themed
+
+
+func _make_theme_toggle_button(size: Vector2) -> Button:
+	var button := _make_pill_button(_get_theme_toggle_label(), size, Callable(self, "_on_toggle_theme_pressed"))
+	button.tooltip_text = _get_theme_toggle_tooltip()
+	return button
 
 
 func _build_ui() -> void:
@@ -173,6 +274,7 @@ func _build_ui() -> void:
 	top_bar.add_child(top_spacer)
 	top_bar.add_child(_make_pill_button("玩家名帖", _v(152.0, 54.0), Callable(self, "_show_profile")))
 	top_bar.add_child(_make_pill_button("关于字海", _v(136.0, 54.0), Callable(self, "_show_about")))
+	top_bar.add_child(_make_theme_toggle_button(_v(94.0, 54.0)))
 	top_bar.add_child(_make_static_pill("EN", _v(78.0, 54.0)))
 
 	var header_panel := PanelContainer.new()
@@ -315,7 +417,7 @@ func _make_game_card(title: String, badge_text: String, tagline: String, tags: A
 	button.custom_minimum_size = _v(0.0, 56.0)
 	button.add_theme_font_override("font", title_font)
 	button.add_theme_font_size_override("font_size", _i(22))
-	button.add_theme_color_override("font_color", Color(0.08, 0.07, 0.07, 1.0))
+	button.add_theme_color_override("font_color", _resolve_label_color(Color(0.08, 0.07, 0.07, 1.0)))
 	button.add_theme_color_override("font_disabled_color", Color(0.56, 0.56, 0.56, 1.0))
 	button.add_theme_stylebox_override("normal", _make_button_style(accent, 16))
 	button.add_theme_stylebox_override("hover", _make_button_style(accent.lightened(0.1), 16))
@@ -514,17 +616,26 @@ func _build_about_overlay() -> void:
 		Color(0.58, 0.84, 0.62, 1.0)
 	))
 
+	var footer_row := HBoxContainer.new()
+	footer_row.add_theme_constant_override("separation", _i(10))
+	box.add_child(footer_row)
+
+	var theme_button := _make_theme_toggle_button(_v(0.0, 52.0))
+	theme_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	footer_row.add_child(theme_button)
+
 	var close_button := Button.new()
 	close_button.text = "返回启动器"
+	close_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	close_button.custom_minimum_size = _v(0.0, 52.0)
 	close_button.add_theme_font_override("font", title_font)
 	close_button.add_theme_font_size_override("font_size", _i(22))
-	close_button.add_theme_color_override("font_color", Color(0.08, 0.07, 0.07, 1.0))
+	close_button.add_theme_color_override("font_color", _resolve_label_color(Color(0.08, 0.07, 0.07, 1.0)))
 	close_button.add_theme_stylebox_override("normal", _make_button_style(Color(0.92, 0.62, 0.28, 1.0), 16))
 	close_button.add_theme_stylebox_override("hover", _make_button_style(Color(0.98, 0.7, 0.34, 1.0), 16))
 	close_button.add_theme_stylebox_override("pressed", _make_button_style(Color(0.84, 0.54, 0.22, 1.0), 16))
 	close_button.pressed.connect(_hide_about)
-	box.add_child(close_button)
+	footer_row.add_child(close_button)
 
 
 func _build_profile_overlay() -> void:
@@ -653,7 +764,7 @@ func _build_profile_overlay() -> void:
 	save_button.custom_minimum_size = _v(0.0, 48.0)
 	save_button.add_theme_font_override("font", title_font)
 	save_button.add_theme_font_size_override("font_size", _i(20))
-	save_button.add_theme_color_override("font_color", Color(0.08, 0.07, 0.07, 1.0))
+	save_button.add_theme_color_override("font_color", _resolve_label_color(Color(0.08, 0.07, 0.07, 1.0)))
 	save_button.add_theme_stylebox_override("normal", _make_button_style(Color(0.92, 0.62, 0.28, 1.0), 16))
 	save_button.add_theme_stylebox_override("hover", _make_button_style(Color(0.98, 0.7, 0.34, 1.0), 16))
 	save_button.add_theme_stylebox_override("pressed", _make_button_style(Color(0.84, 0.54, 0.22, 1.0), 16))
@@ -761,9 +872,9 @@ func _make_text_input(placeholder_text: String) -> LineEdit:
 	input.clear_button_enabled = true
 	input.add_theme_font_override("font", title_font)
 	input.add_theme_font_size_override("font_size", _i(20))
-	input.add_theme_color_override("font_color", Color(0.96, 0.95, 0.9, 0.98))
-	input.add_theme_color_override("caret_color", Color(0.96, 0.82, 0.56, 0.94))
-	input.add_theme_color_override("font_placeholder_color", Color(0.68, 0.76, 0.84, 0.8))
+	input.add_theme_color_override("font_color", _resolve_label_color(Color(0.96, 0.95, 0.9, 0.98)))
+	input.add_theme_color_override("caret_color", _resolve_label_color(Color(0.96, 0.82, 0.56, 0.94)))
+	input.add_theme_color_override("font_placeholder_color", _resolve_label_color(Color(0.68, 0.76, 0.84, 0.8)))
 	input.add_theme_stylebox_override("normal", _make_panel_style(Color(0.06, 0.08, 0.1, 0.9), Color(0.28, 0.36, 0.42, 0.56)))
 	input.add_theme_stylebox_override("focus", _make_panel_style(Color(0.08, 0.11, 0.14, 0.94), Color(0.92, 0.68, 0.42, 0.58)))
 	input.add_theme_stylebox_override("read_only", _make_panel_style(Color(0.06, 0.08, 0.1, 0.72), Color(0.28, 0.36, 0.42, 0.4)))
@@ -777,33 +888,33 @@ func _make_label(text: String, font_size: int, color: Color) -> Label:
 	var settings := LabelSettings.new()
 	settings.font = title_font
 	settings.font_size = _i(font_size)
-	settings.font_color = color
+	settings.font_color = _resolve_label_color(color)
 	settings.outline_size = 1
-	settings.outline_color = Color(0.02, 0.03, 0.04, 0.28)
+	settings.outline_color = _get_theme_palette()["outline"]
 	label.label_settings = settings
 	return label
 
 
 func _make_panel_style(fill_color: Color, border_color: Color) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
-	style.bg_color = fill_color
+	style.bg_color = _resolve_surface_fill(fill_color)
 	style.border_width_left = maxi(1, _i(2))
 	style.border_width_top = maxi(1, _i(2))
 	style.border_width_right = maxi(1, _i(2))
 	style.border_width_bottom = maxi(1, _i(2))
-	style.border_color = border_color
+	style.border_color = _resolve_surface_border(border_color)
 	style.corner_radius_top_left = _i(28)
 	style.corner_radius_top_right = _i(28)
 	style.corner_radius_bottom_left = _i(28)
 	style.corner_radius_bottom_right = _i(28)
-	style.shadow_color = Color(0.0, 0.0, 0.0, 0.18)
+	style.shadow_color = _get_theme_palette()["shadow"]
 	style.shadow_size = _i(12)
 	return style
 
 
 func _make_button_style(fill_color: Color, radius: int) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
-	style.bg_color = fill_color
+	style.bg_color = _resolve_button_fill(fill_color)
 	style.corner_radius_top_left = _i(radius)
 	style.corner_radius_top_right = _i(radius)
 	style.corner_radius_bottom_left = _i(radius)
@@ -817,7 +928,7 @@ func _make_pill_button(text: String, size: Vector2, callback: Callable) -> Butto
 	button.custom_minimum_size = size
 	button.add_theme_font_override("font", title_font)
 	button.add_theme_font_size_override("font_size", _i(20))
-	button.add_theme_color_override("font_color", Color(0.98, 0.92, 0.82, 0.98))
+	button.add_theme_color_override("font_color", _resolve_label_color(Color(0.98, 0.92, 0.82, 0.98)))
 	button.add_theme_stylebox_override("normal", _make_panel_style(Color(0.04, 0.06, 0.08, 0.78), Color(0.2, 0.26, 0.32, 0.54)))
 	button.add_theme_stylebox_override("hover", _make_panel_style(Color(0.08, 0.1, 0.12, 0.84), Color(0.92, 0.68, 0.42, 0.44)))
 	button.add_theme_stylebox_override("pressed", _make_panel_style(Color(0.08, 0.1, 0.12, 0.9), Color(0.92, 0.68, 0.42, 0.6)))
@@ -873,6 +984,12 @@ func _build_floating_symbols() -> void:
 			"size": randi_range(36, 88),
 			"color": colors[index % colors.size()]
 		})
+
+
+func _on_toggle_theme_pressed() -> void:
+	current_theme = "paper-ink" if current_theme == "night-ink" else "night-ink"
+	Session.set_launcher_theme(current_theme)
+	_rebuild_ui()
 
 
 func _show_about() -> void:
