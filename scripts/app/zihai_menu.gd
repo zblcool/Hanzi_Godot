@@ -84,7 +84,15 @@ const MENU_EN_TEXT := {
 	"对照 web 原型现有的路线选择，把更贴近这名执笔者的构筑方向与词技 / 遗物搭配保留成前台参考。": "Mirror the source web route choices by keeping the best-fitting build directions, words, and relic pairings visible for this hero.",
 	"这些卡片当前不直接改战斗数值、掉落权重或路线偏向，只帮助对照 web 原型的构筑意图。": "These cards do not yet change combat values, drop weights, or route bias. They only surface the source prototype's build intent.",
 	"源稿遗物偏向": "Source Relic Pairing",
-	"源稿词技偏向": "Source Word Pairing"
+	"源稿词技偏向": "Source Word Pairing",
+	"当前执笔": "Active Scribe",
+	"选择界面只保留短摘要和关键属性，更长的角色说明移到次级菜单。": "The selection screen now keeps only a short summary and core stats. Longer hero write-ups live in the secondary menus.",
+	"人物来路、源稿字技与构筑路线": "Origin, source skill, and build route",
+	"请打开下方次级入口查看完整人物志与路线参考。": "Open the secondary entries below for the full archive and route reference.",
+	"当前执笔节奏：%s": "Current combat rhythm: %s",
+	"起笔偏向：%s": "Opening route: %s",
+	"人物志里收录完整来路、摘句、源稿字技和 build 顺序。": "The archive keeps the full backstory, excerpts, source skill, and build order.",
+	"二级入口": "Secondary Access"
 }
 var ui_font: Font
 var ui_scale := 1.0
@@ -589,6 +597,7 @@ func _build_ui() -> void:
 
 	var cards_column := VBoxContainer.new()
 	cards_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	cards_column.custom_minimum_size = _v(0.0 if portrait_layout else 440.0, 0.0)
 	cards_column.add_theme_constant_override("separation", _i(14))
 	content_row.add_child(cards_column)
 
@@ -603,8 +612,9 @@ func _build_ui() -> void:
 		cards_column.add_child(hero_card)
 
 	var detail_panel := PanelContainer.new()
-	detail_panel.custom_minimum_size = _v(468.0, 0.0)
-	detail_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.07, 0.09, 0.11, 0.9), Color(0.36, 0.72, 0.82, 0.56)))
+	detail_panel.custom_minimum_size = _v(0.0 if portrait_layout else 640.0, 0.0)
+	detail_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	detail_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.05, 0.08, 0.1, 0.92), Color(0.36, 0.72, 0.82, 0.62)))
 	content_row.add_child(detail_panel)
 
 	var detail_margin := MarginContainer.new()
@@ -615,35 +625,54 @@ func _build_ui() -> void:
 	detail_panel.add_child(detail_margin)
 
 	var detail_box := VBoxContainer.new()
-	detail_box.add_theme_constant_override("separation", _i(12))
+	detail_box.add_theme_constant_override("separation", _i(14))
 	detail_margin.add_child(detail_box)
-	detail_box.add_child(_make_label(String(page_content.get("detail_title", "")), 26, Color(1.0, 0.92, 0.8, 1.0)))
+	detail_box.add_child(_make_label("当前执笔", 18, Color(0.96, 0.82, 0.54, 0.9)))
 
 	var preview_panel := PanelContainer.new()
-	preview_panel.custom_minimum_size = _v(0.0, 220.0)
-	preview_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.1, 0.14, 0.18, 0.7), Color(0.44, 0.76, 0.84, 0.24)))
+	preview_panel.custom_minimum_size = _v(0.0, 300.0 if portrait_layout else 320.0)
+	preview_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.08, 0.12, 0.16, 0.74), Color(0.44, 0.76, 0.84, 0.26)))
 	detail_box.add_child(preview_panel)
 	_build_detail_preview(preview_panel)
 
-	detail_name_label = _make_label("", 40, Color(1.0, 0.94, 0.86, 1.0))
-	detail_role_label = _make_label("", 18, Color(0.96, 0.82, 0.54, 0.96))
-	detail_weapon_label = _make_label("", 18, Color(0.86, 0.91, 0.98, 0.95))
-	detail_desc_label = _make_label("", 18, Color(0.9, 0.92, 0.95, 0.96))
-	detail_focus_label = _make_label("", 17, Color(0.82, 0.9, 1.0, 0.96))
-	detail_dossier_label = _make_label("", 16, Color(0.95, 0.9, 0.8, 0.96))
-	detail_quote_label = _make_label("", 16, Color(0.84, 0.91, 1.0, 0.95))
-	detail_box.add_child(detail_name_label)
-	detail_box.add_child(detail_role_label)
-	detail_box.add_child(detail_weapon_label)
-	detail_box.add_child(detail_desc_label)
-	detail_box.add_child(detail_focus_label)
-	detail_box.add_child(detail_dossier_label)
-	detail_box.add_child(detail_quote_label)
+	var spotlight_panel := PanelContainer.new()
+	spotlight_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.08, 0.12, 0.16, 0.72), Color(0.92, 0.68, 0.42, 0.28)))
+	detail_box.add_child(spotlight_panel)
+
+	var spotlight_margin := MarginContainer.new()
+	spotlight_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	spotlight_margin.add_theme_constant_override("margin_left", _i(18))
+	spotlight_margin.add_theme_constant_override("margin_top", _i(16))
+	spotlight_margin.add_theme_constant_override("margin_right", _i(18))
+	spotlight_margin.add_theme_constant_override("margin_bottom", _i(16))
+	spotlight_panel.add_child(spotlight_margin)
+
+	var spotlight_box := VBoxContainer.new()
+	spotlight_box.add_theme_constant_override("separation", _i(10))
+	spotlight_margin.add_child(spotlight_box)
+
+	detail_name_label = _make_label("", 44, Color(1.0, 0.95, 0.86, 1.0))
+	detail_role_label = _make_label("", 19, Color(0.96, 0.82, 0.54, 0.96))
+	detail_weapon_label = _make_label("", 18, Color(0.88, 0.92, 0.96, 0.95))
+	detail_desc_label = _make_label("", 17, Color(0.9, 0.92, 0.95, 0.94))
+	detail_focus_label = _make_label("选择界面只保留短摘要和关键属性，更长的角色说明移到次级菜单。", 15, Color(0.82, 0.9, 1.0, 0.92))
+	detail_dossier_label = _make_label("", 15, Color(0.95, 0.9, 0.8, 0.92))
+	spotlight_box.add_child(detail_name_label)
+	spotlight_box.add_child(detail_role_label)
+	spotlight_box.add_child(detail_weapon_label)
+	spotlight_box.add_child(detail_desc_label)
+	spotlight_box.add_child(detail_focus_label)
+	spotlight_box.add_child(detail_dossier_label)
+
+	detail_tags_row = HFlowContainer.new()
+	detail_tags_row.add_theme_constant_override("h_separation", _i(10))
+	detail_tags_row.add_theme_constant_override("v_separation", _i(10))
+	spotlight_box.add_child(detail_tags_row)
 
 	detail_reaction_panel = PanelContainer.new()
-	detail_reaction_panel.custom_minimum_size = _v(0.0, 104.0)
+	detail_reaction_panel.custom_minimum_size = _v(0.0, 96.0)
 	detail_reaction_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.1, 0.13, 0.17, 0.78), Color(0.92, 0.68, 0.42, 0.34)))
-	detail_box.add_child(detail_reaction_panel)
+	spotlight_box.add_child(detail_reaction_panel)
 
 	var reaction_margin := MarginContainer.new()
 	reaction_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -660,113 +689,49 @@ func _build_ui() -> void:
 	detail_reaction_label = _make_label("", 18, Color(0.96, 0.95, 0.9, 0.98))
 	reaction_box.add_child(detail_reaction_label)
 
-	detail_tags_row = HFlowContainer.new()
-	detail_tags_row.add_theme_constant_override("h_separation", _i(10))
-	detail_tags_row.add_theme_constant_override("v_separation", _i(10))
-	detail_box.add_child(detail_tags_row)
+	var secondary_panel := PanelContainer.new()
+	secondary_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.08, 0.12, 0.16, 0.7), Color(0.42, 0.68, 0.86, 0.28)))
+	detail_box.add_child(secondary_panel)
 
-	var opening_panel := PanelContainer.new()
-	opening_panel.custom_minimum_size = _v(0.0, 146.0)
-	opening_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.08, 0.12, 0.16, 0.72), Color(0.42, 0.68, 0.86, 0.34)))
-	detail_box.add_child(opening_panel)
+	var secondary_margin := MarginContainer.new()
+	secondary_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	secondary_margin.add_theme_constant_override("margin_left", _i(16))
+	secondary_margin.add_theme_constant_override("margin_top", _i(16))
+	secondary_margin.add_theme_constant_override("margin_right", _i(16))
+	secondary_margin.add_theme_constant_override("margin_bottom", _i(16))
+	secondary_panel.add_child(secondary_margin)
 
-	var opening_margin := MarginContainer.new()
-	opening_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-	opening_margin.add_theme_constant_override("margin_left", _i(16))
-	opening_margin.add_theme_constant_override("margin_top", _i(16))
-	opening_margin.add_theme_constant_override("margin_right", _i(16))
-	opening_margin.add_theme_constant_override("margin_bottom", _i(16))
-	opening_panel.add_child(opening_margin)
+	var secondary_box := VBoxContainer.new()
+	secondary_box.add_theme_constant_override("separation", _i(10))
+	secondary_margin.add_child(secondary_box)
+	secondary_box.add_child(_make_label("人物来路、源稿字技与构筑路线", 21, Color(1.0, 0.92, 0.8, 1.0)))
+	secondary_box.add_child(_make_label("请打开下方次级入口查看完整人物志与路线参考。", 16, Color(0.88, 0.92, 0.96, 0.94)))
 
-	var opening_box := VBoxContainer.new()
-	opening_box.add_theme_constant_override("separation", _i(8))
-	opening_margin.add_child(opening_box)
-	opening_box.add_child(_make_label(String(page_content.get("opening_title", "")), 22, Color(1.0, 0.92, 0.8, 1.0)))
-
-	detail_opening_label = _make_label("", 16, Color(0.88, 0.92, 0.96, 0.94))
-	opening_box.add_child(detail_opening_label)
-
-	detail_opening_radicals_row = HFlowContainer.new()
-	detail_opening_radicals_row.add_theme_constant_override("h_separation", _i(10))
-	detail_opening_radicals_row.add_theme_constant_override("v_separation", _i(10))
-	opening_box.add_child(detail_opening_radicals_row)
-
-	var source_skill_panel := PanelContainer.new()
-	source_skill_panel.custom_minimum_size = _v(0.0, 166.0)
-	source_skill_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.08, 0.12, 0.16, 0.72), Color(0.9, 0.66, 0.36, 0.3)))
-	detail_box.add_child(source_skill_panel)
-
-	var source_skill_margin := MarginContainer.new()
-	source_skill_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-	source_skill_margin.add_theme_constant_override("margin_left", _i(16))
-	source_skill_margin.add_theme_constant_override("margin_top", _i(16))
-	source_skill_margin.add_theme_constant_override("margin_right", _i(16))
-	source_skill_margin.add_theme_constant_override("margin_bottom", _i(16))
-	source_skill_panel.add_child(source_skill_margin)
-
-	var source_skill_box := VBoxContainer.new()
-	source_skill_box.add_theme_constant_override("separation", _i(8))
-	source_skill_margin.add_child(source_skill_box)
-	source_skill_box.add_child(_make_label(String(page_content.get("source_skill_title", "")), 22, Color(1.0, 0.92, 0.8, 1.0)))
-
-	detail_source_skill_title_label = _make_label("", 17, Color(0.96, 0.82, 0.54, 0.96))
-	source_skill_box.add_child(detail_source_skill_title_label)
-
-	detail_source_skill_body_label = _make_label("", 16, Color(0.9, 0.92, 0.95, 0.94))
-	source_skill_box.add_child(detail_source_skill_body_label)
-
-	source_skill_box.add_child(_make_label(String(page_content.get("source_skill_note", "")), 15, Color(0.82, 0.9, 1.0, 0.9)))
-
-	var progression_panel := PanelContainer.new()
-	progression_panel.custom_minimum_size = _v(0.0, 224.0)
-	progression_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.08, 0.12, 0.16, 0.72), Color(0.74, 0.56, 0.28, 0.34)))
-	detail_box.add_child(progression_panel)
-
-	var progression_margin := MarginContainer.new()
-	progression_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-	progression_margin.add_theme_constant_override("margin_left", _i(16))
-	progression_margin.add_theme_constant_override("margin_top", _i(16))
-	progression_margin.add_theme_constant_override("margin_right", _i(16))
-	progression_margin.add_theme_constant_override("margin_bottom", _i(16))
-	progression_panel.add_child(progression_margin)
-
-	var progression_box := VBoxContainer.new()
-	progression_box.add_theme_constant_override("separation", _i(10))
-	progression_margin.add_child(progression_box)
-	progression_box.add_child(_make_label(String(page_content.get("progression_title", "")), 22, Color(1.0, 0.92, 0.8, 1.0)))
-	progression_box.add_child(_make_label(String(page_content.get("progression_summary", "")), 16, Color(0.88, 0.92, 0.96, 0.94)))
-
-	detail_progression_cards_root = VBoxContainer.new()
-	detail_progression_cards_root.add_theme_constant_override("separation", _i(10))
-	progression_box.add_child(detail_progression_cards_root)
-	progression_box.add_child(_make_label(String(page_content.get("progression_note", "")), 15, Color(0.82, 0.9, 1.0, 0.88)))
-
-	var build_route_panel := PanelContainer.new()
-	build_route_panel.custom_minimum_size = _v(0.0, 224.0)
-	build_route_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.08, 0.12, 0.16, 0.72), Color(0.42, 0.68, 0.86, 0.34)))
-	detail_box.add_child(build_route_panel)
-
-	var build_route_margin := MarginContainer.new()
-	build_route_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-	build_route_margin.add_theme_constant_override("margin_left", _i(16))
-	build_route_margin.add_theme_constant_override("margin_top", _i(16))
-	build_route_margin.add_theme_constant_override("margin_right", _i(16))
-	build_route_margin.add_theme_constant_override("margin_bottom", _i(16))
-	build_route_panel.add_child(build_route_margin)
-
-	var build_route_box := VBoxContainer.new()
-	build_route_box.add_theme_constant_override("separation", _i(10))
-	build_route_margin.add_child(build_route_box)
-	build_route_box.add_child(_make_label(String(page_content.get("build_route_title", "")), 22, Color(1.0, 0.92, 0.8, 1.0)))
-	build_route_box.add_child(_make_label(String(page_content.get("build_route_summary", "")), 16, Color(0.88, 0.92, 0.96, 0.94)))
-
-	detail_build_route_cards_root = VBoxContainer.new()
-	detail_build_route_cards_root.add_theme_constant_override("separation", _i(10))
-	build_route_box.add_child(detail_build_route_cards_root)
-	build_route_box.add_child(_make_label(String(page_content.get("build_route_note", "")), 15, Color(0.82, 0.9, 1.0, 0.88)))
+	var secondary_row: Container
+	if portrait_layout:
+		var secondary_grid := GridContainer.new()
+		secondary_grid.columns = 2
+		secondary_grid.add_theme_constant_override("h_separation", _i(10))
+		secondary_grid.add_theme_constant_override("v_separation", _i(10))
+		secondary_row = secondary_grid
+	else:
+		var secondary_flow := HFlowContainer.new()
+		secondary_flow.add_theme_constant_override("h_separation", _i(10))
+		secondary_flow.add_theme_constant_override("v_separation", _i(10))
+		secondary_row = secondary_flow
+	secondary_box.add_child(secondary_row)
+	var secondary_buttons: Array[Button] = [
+		_make_pill_button("人物志", _v(0.0, 48.0), Callable(self, "_on_character_archive_pressed")),
+		_make_pill_button("合字图谱", _v(0.0, 48.0), Callable(self, "_on_recipe_atlas_pressed")),
+		_make_pill_button("怪物图鉴", _v(0.0, 48.0), Callable(self, "_on_enemy_archive_pressed")),
+		_make_pill_button("查看排行榜", _v(0.0, 48.0), Callable(self, "_on_leaderboard_pressed"))
+	]
+	for secondary_button in secondary_buttons:
+		secondary_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		secondary_row.add_child(secondary_button)
 
 	var stats_panel := PanelContainer.new()
-	stats_panel.custom_minimum_size = _v(0.0, 312.0)
+	stats_panel.custom_minimum_size = _v(0.0, 284.0)
 	stats_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.08, 0.12, 0.16, 0.72), Color(0.28, 0.36, 0.42, 0.46)))
 	detail_box.add_child(stats_panel)
 
@@ -831,7 +796,7 @@ func _make_hero_card(hero_id: String, hero_data: Dictionary) -> PanelContainer:
 	var portrait_layout := _is_portrait_layout()
 	var accent: Color = hero_data["accent"]
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size = _v(0.0, 230.0)
+	panel.custom_minimum_size = _v(0.0, 188.0 if portrait_layout else 176.0)
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	panel.add_theme_stylebox_override("panel", _make_card_style(false, accent))
 
@@ -843,25 +808,25 @@ func _make_hero_card(hero_id: String, hero_data: Dictionary) -> PanelContainer:
 	panel.add_child(margin)
 
 	var row: BoxContainer = VBoxContainer.new() if portrait_layout else HBoxContainer.new()
-	row.add_theme_constant_override("separation", _i(16))
+	row.add_theme_constant_override("separation", _i(14))
 	margin.add_child(row)
 
 	var preview := PanelContainer.new()
-	preview.custom_minimum_size = _v(0.0, 132.0 if portrait_layout else 0.0)
+	preview.custom_minimum_size = _v(0.0, 116.0 if portrait_layout else 0.0)
 	preview.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.14, accent.g * 0.14, accent.b * 0.16, 0.58), Color(accent.r, accent.g, accent.b, 0.24)))
 	row.add_child(preview)
 	_build_card_preview(preview, hero_data)
 
 	var text_col := VBoxContainer.new()
 	text_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	text_col.add_theme_constant_override("separation", _i(8))
+	text_col.add_theme_constant_override("separation", _i(6))
 	row.add_child(text_col)
 
 	var title_row := HBoxContainer.new()
 	title_row.add_theme_constant_override("separation", _i(10))
 	text_col.add_child(title_row)
 
-	var title_label := _make_label("%s  ·  %s" % [_localize_text(String(hero_data["name"])), _localize_text(String(hero_data["title"]))], 30, Color(1.0, 0.95, 0.86, 1.0))
+	var title_label := _make_label("%s  ·  %s" % [_localize_text(String(hero_data["name"])), _localize_text(String(hero_data["title"]))], 27, Color(1.0, 0.95, 0.86, 1.0))
 	title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title_row.add_child(title_label)
 
@@ -870,11 +835,12 @@ func _make_hero_card(hero_id: String, hero_data: Dictionary) -> PanelContainer:
 	panel.set_meta("status_badge", status_badge)
 	panel.set_meta("status_badge_label", status_badge.get_meta("label"))
 
-	text_col.add_child(_make_label(String(hero_data["role_label"]), 18, accent))
-	text_col.add_child(_make_label(String(hero_data["description"]), 17, Color(0.91, 0.92, 0.9, 0.95)))
+	text_col.add_child(_make_label(String(hero_data["role_label"]), 17, accent))
+	text_col.add_child(_make_label(String(hero_data["focus"]), 15, Color(0.86, 0.9, 0.96, 0.9)))
 
-	var tag_row := HBoxContainer.new()
-	tag_row.add_theme_constant_override("separation", 8)
+	var tag_row := HFlowContainer.new()
+	tag_row.add_theme_constant_override("h_separation", _i(8))
+	tag_row.add_theme_constant_override("v_separation", _i(8))
 	text_col.add_child(tag_row)
 	for tag_text in hero_data["tags"]:
 		tag_row.add_child(_make_tag(String(tag_text), Color(accent.r * 0.16, accent.g * 0.16, accent.b * 0.2, 0.88), Color(0.98, 0.95, 0.9, 0.96)))
@@ -889,12 +855,15 @@ func _make_hero_card(hero_id: String, hero_data: Dictionary) -> PanelContainer:
 	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	text_col.add_child(spacer)
 
-	var select_label := "Choose %s" % String(hero_data["name"]) if _is_english() else "选择 %s" % String(hero_data["name"])
+	var select_label := "Take the stage" if _is_english() else "进入主舞台"
 	var select_button := _make_action_button(select_label, accent)
+	select_button.custom_minimum_size = _v(0.0, 46.0)
+	select_button.add_theme_font_size_override("font_size", _i(18))
 	select_button.pressed.connect(func() -> void:
 		_on_select_hero(hero_id)
 	)
 	text_col.add_child(select_button)
+	panel.set_meta("select_button", select_button)
 
 	return panel
 
@@ -996,36 +965,36 @@ func _build_detail_preview(panel: PanelContainer) -> void:
 	panel.add_child(stage)
 
 	var ring_a := PanelContainer.new()
-	ring_a.size = _v(168.0, 168.0)
-	ring_a.position = _v(84.0, 16.0)
+	ring_a.size = _v(238.0, 238.0)
+	ring_a.position = _v(116.0, 22.0)
 	ring_a.add_theme_stylebox_override("panel", _make_panel_style(Color(0.14, 0.16, 0.18, 0.12), Color(0.86, 0.64, 0.34, 0.22)))
 	stage.add_child(ring_a)
 
 	var ring_b := PanelContainer.new()
-	ring_b.size = _v(118.0, 118.0)
-	ring_b.position = _v(109.0, 41.0)
+	ring_b.size = _v(162.0, 162.0)
+	ring_b.position = _v(154.0, 60.0)
 	ring_b.add_theme_stylebox_override("panel", _make_panel_style(Color(0.12, 0.14, 0.16, 0.0), Color(0.34, 0.72, 0.82, 0.22)))
 	stage.add_child(ring_b)
 
 	detail_preview_core = PanelContainer.new()
-	detail_preview_core.size = _v(110.0, 110.0)
-	detail_preview_core.position = _v(114.0, 58.0)
+	detail_preview_core.size = _v(156.0, 156.0)
+	detail_preview_core.position = _v(157.0, 76.0)
 	detail_preview_core.add_theme_stylebox_override("panel", _make_panel_style(Color(0.26, 0.2, 0.16, 0.94), Color(0.88, 0.64, 0.34, 0.26)))
 	stage.add_child(detail_preview_core)
 
-	detail_preview_glyph = _make_label("书", 58, Color(1.0, 0.95, 0.86, 1.0))
+	detail_preview_glyph = _make_label("书", 84, Color(1.0, 0.95, 0.86, 1.0))
 	detail_preview_glyph.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	detail_preview_glyph.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	detail_preview_glyph.set_anchors_preset(Control.PRESET_FULL_RECT)
 	detail_preview_core.add_child(detail_preview_glyph)
 
 	var shards: Array = []
-	for index in range(3):
+	for index in range(4):
 		var shard := ColorRect.new()
 		shard.color = Color(0.92, 0.68, 0.42, 0.86)
-		shard.size = _v(48.0, 8.0)
-		shard.position = _v(58.0 + float(index) * 74.0, 66.0 + float(index % 2) * 58.0)
-		shard.rotation = -0.4 + float(index) * 0.36
+		shard.size = _v(60.0, 9.0)
+		shard.position = _v(84.0 + float(index) * 66.0, 92.0 + float(index % 2) * 86.0)
+		shard.rotation = -0.56 + float(index) * 0.34
 		shard.set_meta("base_y", shard.position.y)
 		stage.add_child(shard)
 		shards.append(shard)
@@ -2872,44 +2841,30 @@ func _refresh_selection(trigger_reaction: bool = false) -> void:
 		panel.add_theme_stylebox_override("panel", _make_card_style(hero_id == selected_hero, hero_data["accent"]))
 		var status_badge: PanelContainer = panel.get_meta("status_badge", null) as PanelContainer
 		var status_badge_label: Label = panel.get_meta("status_badge_label", null) as Label
+		var select_button: Button = panel.get_meta("select_button", null) as Button
 		if status_badge_label != null:
 			status_badge_label.text = "Selected" if _is_english() else "已选中"
 		if status_badge != null:
 			status_badge.visible = hero_id == selected_hero
+		if select_button != null:
+			if hero_id == selected_hero:
+				select_button.text = "On Stage" if _is_english() else "正在展示"
+			else:
+				select_button.text = "Take the stage" if _is_english() else "进入主舞台"
 
 	var selected_data: Dictionary = _localized_hero_data(selected_hero)
 	var accent: Color = selected_data["accent"]
-	detail_name_label.text = "%s  ·  %s" % [String(selected_data["name"]), String(selected_data["title"])]
-	detail_role_label.text = "%s  ·  %s" % [String(selected_data["role_label"]), String(selected_data["weapon"])]
-	detail_weapon_label.text = "Primary profile: %s" % String(selected_data["description"]) if _is_english() else "主战描述：%s" % String(selected_data["description"])
-	detail_desc_label.text = "Combat focus: %s" % String(selected_data["focus"]) if _is_english() else "战斗焦点：%s" % String(selected_data["focus"])
+	detail_name_label.text = String(selected_data["name"])
+	detail_role_label.text = "%s  ·  %s" % [String(selected_data["title"]), String(selected_data["role_label"])]
+	detail_weapon_label.text = "Current combat rhythm: %s" % String(selected_data["weapon"]) if _is_english() else "当前执笔节奏：%s" % String(selected_data["weapon"])
+	detail_desc_label.text = String(selected_data["description"])
 	var record_title := String(selected_data.get("record_title", "")).strip_edges()
-	var record_excerpt := String(selected_data.get("record_excerpt", "")).strip_edges()
-	var record_source := String(selected_data.get("record_source", "")).strip_edges()
-	var trait_label := String(selected_data.get("trait_label", "")).strip_edges()
-	var trait_description := String(selected_data.get("trait_description", "")).strip_edges()
-	var route_hint := String(selected_data.get("route_hint", "")).strip_edges()
+	var opening_summary := _build_hero_opening_summary(selected_data)
 	if record_title.is_empty():
-		detail_focus_label.text = "Once you enter the scroll, the same radical route feels different depending on the hero's weapon." if _is_english() else "进入残卷后，同样的偏旁路线会因为角色武器而产生不同输出手感。"
+		detail_focus_label.text = "Opening route: %s" % opening_summary if _is_english() else "起笔偏向：%s" % opening_summary
 	else:
-		detail_focus_label.text = "Origin: %s" % record_title if _is_english() else "人物来路：%s" % record_title
-	if trait_label.is_empty() and trait_description.is_empty():
-		detail_dossier_label.text = ""
-	elif trait_description.is_empty():
-		detail_dossier_label.text = "Trait: %s" % trait_label if _is_english() else "角色特性：%s" % trait_label
-	elif trait_label.is_empty():
-		detail_dossier_label.text = "Trait: %s" % trait_description if _is_english() else "角色特性：%s" % trait_description
-	else:
-		detail_dossier_label.text = "Trait: %s · %s" % [trait_label, trait_description] if _is_english() else "角色特性：%s · %s" % [trait_label, trait_description]
-	var quote_lines: Array[String] = []
-	if not route_hint.is_empty():
-		quote_lines.append("Run advice: %s" % route_hint if _is_english() else "入卷建议：%s" % route_hint)
-	if not record_excerpt.is_empty():
-		if record_source.is_empty():
-			quote_lines.append("Excerpt: %s" % record_excerpt if _is_english() else "摘句：%s" % record_excerpt)
-		else:
-			quote_lines.append("Excerpt: %s · %s" % [record_excerpt, record_source] if _is_english() else "摘句：%s · %s" % [record_excerpt, record_source])
-	detail_quote_label.text = "\n".join(quote_lines)
+		detail_focus_label.text = "%s · %s" % [record_title, opening_summary] if not _is_english() else "%s · %s" % [record_title, opening_summary]
+	detail_dossier_label.text = "Open the archive below for origin notes, source skill, and build route." if _is_english() else "人物志里收录完整来路、摘句、源稿字技和 build 顺序。"
 
 	detail_preview_core.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.24, accent.g * 0.2, accent.b * 0.16, 0.94), Color(accent.r, accent.g, accent.b, 0.26)))
 	detail_preview_glyph.text = String(selected_data["glyph"])
@@ -2918,15 +2873,6 @@ func _refresh_selection(trigger_reaction: bool = false) -> void:
 		child.queue_free()
 	for tag_text in selected_data["tags"]:
 		detail_tags_row.add_child(_make_tag(String(tag_text), Color(accent.r * 0.16, accent.g * 0.16, accent.b * 0.2, 0.88), Color(0.98, 0.95, 0.9, 0.96)))
-	detail_opening_label.text = _build_hero_opening_summary(selected_data)
-	for child in detail_opening_radicals_row.get_children():
-		child.queue_free()
-	for tag_text in _build_hero_starting_tags(selected_data):
-		detail_opening_radicals_row.add_child(_make_tag(tag_text, Color(accent.r * 0.16, accent.g * 0.16, accent.b * 0.2, 0.88), Color(0.98, 0.95, 0.9, 0.96)))
-	detail_source_skill_title_label.text = _build_hero_active_skill_headline(selected_data)
-	detail_source_skill_body_label.text = _build_hero_active_skill_body(selected_data)
-	_populate_progression_cards(detail_progression_cards_root, selected_data, accent, true)
-	_populate_build_route_cards(detail_build_route_cards_root, selected_data, accent, true)
 
 	_set_stat_value("move_speed", float(selected_data["move_speed"]), 7.2, "%.1f")
 	_set_stat_value("max_health", float(selected_data["max_health"]), 140.0, "%.0f")
