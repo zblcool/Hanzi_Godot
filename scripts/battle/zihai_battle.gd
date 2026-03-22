@@ -56,6 +56,18 @@ const SOUNDTRACK_LIBRARY := {
 		"accent": Color(0.98, 0.76, 0.42, 1.0)
 	}
 }
+const ENEMY_ENTRANCE_TAUNTS := {
+	"elite": [
+		"魇潮已至，退无可退。",
+		"把名字留在败卷里。",
+		"这一页写你的败笔。"
+	],
+	"boss": [
+		"残卷深处，不留活笔。",
+		"你会写进我的卷底。",
+		"到此为止，执笔者。"
+	]
+}
 const FIELD_PHASE_THEMES := [
 	{
 		"id": "stelaeGrove",
@@ -198,6 +210,11 @@ var current_soundtrack_id: String = ""
 var current_soundtrack_cue: String = ""
 var health_potion_drop_meter: float = 0.0
 var enemy_detail_refresh_timer: float = 0.0
+var callout_history: Dictionary = {}
+var low_health_callout_ready := true
+var first_recipe_callout_shown := false
+var first_word_callout_shown := false
+var elite_taunt_cooldown := 0.0
 
 var level: int = 1
 var experience: int = 0
@@ -303,6 +320,7 @@ func _process(delta: float) -> void:
 	if enemy_detail_refresh_timer <= 0.0:
 		_refresh_enemy_detail_visibility()
 		enemy_detail_refresh_timer = ENEMY_DETAIL_REFRESH_INTERVAL
+	elite_taunt_cooldown = max(elite_taunt_cooldown - delta, 0.0)
 
 	hud.set_status(elapsed_time, kills, threat_level)
 
@@ -352,6 +370,65 @@ func _log_battle_event(text: String, color: Color = Color(0.88, 0.92, 0.97, 1.0)
 	if hud == null or not hud.has_method("push_event_log"):
 		return
 	hud.push_event_log(text, color)
+
+
+func _pick_callout_line(pool: Array, history_key: String) -> String:
+	if pool.is_empty():
+		return ""
+
+	var previous := String(callout_history.get(history_key, ""))
+	var candidates: Array[String] = []
+	for entry in pool:
+		var text := String(entry).strip_edges()
+		if text.is_empty():
+			continue
+		if text != previous:
+			candidates.append(text)
+
+	var source: Array[String] = []
+	for candidate in candidates:
+		source.append(candidate)
+	if source.is_empty():
+		for entry in pool:
+			var fallback := String(entry).strip_edges()
+			if not fallback.is_empty():
+				source.append(fallback)
+	if source.is_empty():
+		return ""
+
+	var selected := source[rng.randi_range(0, source.size() - 1)]
+	callout_history[history_key] = selected
+	return selected
+
+
+func _show_battle_callout(title: String, text: String, accent: Color, log_prefix: String = "", duration: float = 3.1) -> void:
+	var trimmed_text := text.strip_edges()
+	if trimmed_text.is_empty():
+		return
+	if hud != null and hud.has_method("show_callout"):
+		hud.show_callout(title, trimmed_text, accent, duration)
+	var log_text := trimmed_text if log_prefix.is_empty() else "%s%s" % [log_prefix, trimmed_text]
+	_log_battle_event(log_text, accent)
+
+
+func _show_hero_callout(context: String, duration: float = 3.2) -> void:
+	var hero_data: Dictionary = Session.get_selected_hero()
+	var quote_groups: Dictionary = hero_data.get("battle_quotes", {})
+	var pool: Array = quote_groups.get(context, [])
+	var line := _pick_callout_line(pool, "hero_%s" % context)
+	if line.is_empty():
+		return
+	var hero_name := String(hero_data.get("name", "执笔者"))
+	var accent: Color = hero_data.get("accent", Color(0.92, 0.76, 0.48, 1.0))
+	_show_battle_callout("%s应声" % hero_name, line, accent, "%s：" % hero_name, duration)
+
+
+func _show_enemy_taunt(enemy_name: String, enemy_type: String, tint: Color, duration: float = 2.9) -> void:
+	var pool: Array = ENEMY_ENTRANCE_TAUNTS.get(enemy_type, [])
+	var line := _pick_callout_line(pool, "enemy_%s" % enemy_type)
+	if line.is_empty():
+		return
+	_show_battle_callout("%s叫阵" % enemy_name, line, tint, "%s：" % enemy_name, duration)
 
 
 func _test_tools_enabled() -> bool:
@@ -501,6 +578,9 @@ func _spawn_enemy() -> void:
 	enemies_root.add_child(enemy)
 	if enemy_type == "elite":
 		hud.show_banner("精英现身", Color(0.94, 0.42, 0.52, 1.0), 2.0)
+		if elite_taunt_cooldown <= 0.0:
+			_show_enemy_taunt(String(enemy.enemy_name), enemy_type, Color(enemy.tint), 2.7)
+			elite_taunt_cooldown = 18.0
 
 
 func _spawn_boss(stage_index: int) -> void:
@@ -529,6 +609,7 @@ func _spawn_boss(stage_index: int) -> void:
 	hud.set_tip(_boss_stage_tip(stage_index))
 	hud.show_boss(String(boss.enemy_name), String(boss.glyph), tint, boss.max_health)
 	_log_battle_event("卷主现身 · %s" % String(boss.enemy_name), tint)
+	_show_enemy_taunt(String(boss.enemy_name), "boss", tint, 3.1)
 	_set_soundtrack("fireflyFootpath", "卷主压阵", true, true)
 	_spawn_wave_effect(boss.global_position, 6.2, tint, String(boss.glyph))
 	_spawn_boss_entrance_effect(boss.global_position, String(boss.glyph), tint)
@@ -1375,6 +1456,9 @@ func _set_recipe_level(recipe_id: String, new_level: int) -> void:
 	if new_level == 1:
 		hud.show_banner("合字成型  %s" % String(recipe["display"]), recipe["color"], 2.3)
 		_log_battle_event("合字成型 · %s" % String(recipe["display"]), Color(recipe["color"]))
+		if not first_recipe_callout_shown:
+			first_recipe_callout_shown = true
+			_show_hero_callout("recipe_unlock")
 	else:
 		hud.show_banner("%s 进为 Lv.%d" % [String(recipe["display"]), new_level], recipe["color"], 1.7)
 		_log_battle_event("%s 升至 Lv.%d" % [String(recipe["display"]), new_level], Color(recipe["color"]))
@@ -1387,6 +1471,9 @@ func _set_word_level(word_id: String, new_level: int) -> void:
 	if new_level == 1:
 		hud.show_banner("词技成型  %s" % String(word["display"]), word["color"], 2.5)
 		_log_battle_event("词技成型 · %s" % String(word["display"]), Color(word["color"]))
+		if not first_word_callout_shown:
+			first_word_callout_shown = true
+			_show_hero_callout("word_unlock")
 	else:
 		hud.show_banner("%s 进为 Lv.%d" % [String(word["display"]), new_level], word["color"], 1.8)
 		_log_battle_event("%s 升至 Lv.%d" % [String(word["display"]), new_level], Color(word["color"]))
@@ -1679,6 +1766,12 @@ func _enemy_effect_glyph(enemy_type: String) -> String:
 
 func _on_player_health_changed(current: float, maximum: float) -> void:
 	hud.set_health(current, maximum)
+	var health_ratio: float = current / maxf(maximum, 0.001)
+	if health_ratio <= 0.35 and low_health_callout_ready:
+		low_health_callout_ready = false
+		_show_hero_callout("low_health", 3.0)
+	elif health_ratio >= 0.58:
+		low_health_callout_ready = true
 
 
 func _on_player_defeated() -> void:
@@ -1858,6 +1951,7 @@ func _start_opening_sequence() -> void:
 	_log_battle_event("%s · %s入卷" % [intro_title, String(hero_data["name"])], accent)
 	_spawn_wave_effect(player.global_position, 3.3, accent, String(hero_data["glyph"]))
 	_spawn_intro_symbols(String(hero_data["glyph"]), accent)
+	_show_hero_callout("intro", 3.0)
 
 
 func _clear_active_wave_for_test_jump() -> void:
@@ -1907,11 +2001,13 @@ func _on_boss_defeated(world_position: Vector3) -> void:
 		hud.set_tip("本卷两位卷主都已崩散，章节目标完成。继续战斗可测试成长上限。")
 		_log_battle_event("残卷一暂定 · 卷主尽散", Color(1.0, 0.88, 0.58, 1.0))
 		_set_soundtrack("mosslightCanopy", "残卷暂定", true, true)
+		_show_hero_callout("chapter_complete", 3.2)
 	else:
 		hud.show_banner("卷主退散", Color(1.0, 0.84, 0.52, 1.0), 2.2)
 		hud.set_tip("卷主崩散，残卷继续翻开。抓紧收补给并准备迎接更深的一层。")
 		_log_battle_event("卷主退散 · 残卷继续翻开", Color(1.0, 0.84, 0.52, 1.0))
 		_set_soundtrack("mosslightCanopy", "残卷回气", true, true)
+		_show_hero_callout("boss_defeat", 3.0)
 	_spawn_wave_effect(world_position, 7.2, Color(1.0, 0.74, 0.46, 1.0), "破")
 	_gain_experience(12)
 

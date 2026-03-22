@@ -312,6 +312,9 @@ var compact_tip_label: Label
 var compact_health_bar: ProgressBar
 var compact_xp_bar: ProgressBar
 var objective_panel: PanelContainer
+var callout_panel: PanelContainer
+var callout_title_label: Label
+var callout_text_label: Label
 var skills_panel: PanelContainer
 var compact_skill_panel: PanelContainer
 var compact_skill_chip_container: HFlowContainer
@@ -351,6 +354,7 @@ var map_zoom_label: Label
 
 var banner_time := 0.0
 var banner_color: Color = Color(1.0, 0.95, 0.84, 1.0)
+var callout_time := 0.0
 var soundtrack_toast: PanelContainer
 var soundtrack_toast_title_label: Label
 var soundtrack_toast_detail_label: Label
@@ -382,6 +386,16 @@ func _process(delta: float) -> void:
 		banner_label.modulate = Color(banner_color.r, banner_color.g, banner_color.b, alpha)
 	else:
 		banner_label.visible = false
+
+	if callout_time > 0.0 and callout_panel != null:
+		callout_time -= delta
+		callout_panel.visible = true
+		var callout_alpha := 1.0
+		if callout_time < 0.38:
+			callout_alpha = clamp(callout_time / 0.38, 0.0, 1.0)
+		callout_panel.modulate = Color(1.0, 1.0, 1.0, callout_alpha)
+	elif callout_panel != null:
+		callout_panel.visible = false
 
 	if soundtrack_toast_time > 0.0:
 		soundtrack_toast_time -= delta
@@ -655,6 +669,22 @@ func show_banner(text: String, color: Color, duration: float = 2.4) -> void:
 	banner_label.modulate = color
 	banner_label.visible = true
 	banner_time = duration
+
+
+func show_callout(title: String, text: String, accent: Color, duration: float = 3.0) -> void:
+	if callout_panel == null:
+		return
+
+	callout_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.14, accent.g * 0.14, accent.b * 0.18, 0.9), Color(accent.r, accent.g, accent.b, 0.54), 24))
+	if callout_title_label != null:
+		callout_title_label.text = title
+		callout_title_label.add_theme_color_override("font_color", Color(accent.r * 0.34 + 0.66, accent.g * 0.3 + 0.66, accent.b * 0.26 + 0.66, 0.96))
+	if callout_text_label != null:
+		callout_text_label.text = text
+		callout_text_label.add_theme_color_override("font_color", Color(0.98, 0.96, 0.91, 0.98))
+	callout_panel.visible = true
+	callout_panel.modulate = Color(1.0, 1.0, 1.0, 1.0)
+	callout_time = max(duration, 0.8)
 
 
 func set_soundtrack(title: String, mood: String, cue: String, accent: Color, announce: bool = false) -> void:
@@ -1309,6 +1339,17 @@ func _build_ui() -> void:
 	compact_tip_label = _make_label("击倒字灵收集字力与补给。", 15, Color(0.92, 0.94, 0.96, 0.94))
 	compact_box.add_child(compact_tip_label)
 
+	callout_panel = _make_panel(Color(0.05, 0.07, 0.09, 0.84), Color(0.92, 0.69, 0.38, 0.42), Vector2(340.0, 92.0))
+	callout_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	callout_panel.visible = false
+	top_right_stack.add_child(callout_panel)
+	var callout_box := _panel_box(callout_panel)
+	callout_box.add_theme_constant_override("separation", 4)
+	callout_title_label = _make_label("战场呼应", 14, Color(0.96, 0.84, 0.6, 0.94), 3.0)
+	callout_box.add_child(callout_title_label)
+	callout_text_label = _make_label("字潮翻动时，呼应会在这里出现。", 16, Color(0.98, 0.96, 0.91, 0.98))
+	callout_box.add_child(callout_text_label)
+
 	objective_panel = _make_panel(Color(0.05, 0.07, 0.09, 0.76), Color(0.94, 0.7, 0.4, 0.6), Vector2(340.0, 150.0))
 	top_right_stack.add_child(objective_panel)
 	var objective_box := _panel_box(objective_panel)
@@ -1462,6 +1503,8 @@ func _refresh_layout() -> void:
 
 	if compact_summary_panel != null:
 		compact_summary_panel.custom_minimum_size = Vector2(stack_width, 188.0)
+	if callout_panel != null:
+		callout_panel.custom_minimum_size = Vector2(stack_width, 92.0 if compact_layout else 88.0)
 	if objective_panel != null:
 		objective_panel.custom_minimum_size = Vector2(stack_width, 136.0)
 	if skills_panel != null:
