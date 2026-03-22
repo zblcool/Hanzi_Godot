@@ -180,6 +180,7 @@ var opening_time: float = 0.0
 var last_announced_threat_level: int = 1
 var boss_spawn_index: int = 0
 var active_boss = null
+var chamber_break_pending := false
 
 var radical_counts: Dictionary = {}
 var skill_levels: Dictionary = {}
@@ -321,6 +322,24 @@ func _boss_defeat_kicker(completed_bosses: int) -> String:
 	return "%s · %s" % [_current_scroll_label(), "Layer Break" if _is_english() else "破卷入深层"]
 
 
+func _chamber_break_title() -> String:
+	return "%s · %s" % [_current_scroll_label(), "Chamber Break" if _is_english() else "卷间缓冲"]
+
+
+func _chamber_break_body(next_wave: int) -> String:
+	var localized_next_theme := _localized_field_phase_theme(_field_phase_theme_for_wave(next_wave))
+	var next_theme_name := String(localized_next_theme.get("name", "Inkfield" if _is_english() else "字境"))
+	if _is_english():
+		return "The first scroll lord is gone and the chamber has gone quiet. Treat this as the first room-break stop before the run pushes deeper.\n\nNext pressure: Wave %d\nNext realm cue: %s\nContinue when you are ready to reopen the scroll." % [
+			next_wave,
+			next_theme_name
+		]
+	return "首位卷主已散，当前房间也暂时清空。这一步先做成进入更深残卷前的停顿。\n\n下一段压力：第 %d 波\n下一层字境：%s\n准备好后再续卷入深层。" % [
+		next_wave,
+		next_theme_name
+	]
+
+
 func _ready() -> void:
 	rng.randomize()
 	battle_intro = Session.consume_battle_intro()
@@ -373,7 +392,7 @@ func _process(delta: float) -> void:
 		if Input.is_action_just_pressed("return_menu") or Input.is_action_just_pressed("interact"):
 			if hud != null and hud.has_method("is_settings_menu_open") and hud.is_settings_menu_open():
 				hud.return_to_pause_menu()
-			else:
+			elif hud != null and hud.has_method("is_pause_menu_open") and hud.is_pause_menu_open():
 				_set_paused(false)
 		elif Input.is_action_just_pressed("restart_run"):
 			Engine.time_scale = 1.0
@@ -405,15 +424,19 @@ func _process(delta: float) -> void:
 			_on_threat_level_advanced(advanced_level)
 	threat_level = new_threat_level
 	_update_boss_flow()
+	if chamber_break_pending and active_boss == null and _enemy_count() == 0:
+		_open_chamber_break_gate()
+		return
 
-	spawn_timer -= delta
-	var enemy_cap := _enemy_cap()
-	if spawn_timer <= 0.0 and _enemy_count() < enemy_cap:
-		var available_slots: int = max(enemy_cap - _enemy_count(), 0)
-		for _index in range(min(_spawn_batch_size(), available_slots)):
-			_spawn_enemy()
-		spawn_interval = _current_spawn_interval()
-		spawn_timer = spawn_interval
+	if not chamber_break_pending:
+		spawn_timer -= delta
+		var enemy_cap := _enemy_cap()
+		if spawn_timer <= 0.0 and _enemy_count() < enemy_cap:
+			var available_slots: int = max(enemy_cap - _enemy_count(), 0)
+			for _index in range(min(_spawn_batch_size(), available_slots)):
+				_spawn_enemy()
+			spawn_interval = _current_spawn_interval()
+			spawn_timer = spawn_interval
 
 	enemy_detail_refresh_timer = max(enemy_detail_refresh_timer - delta, 0.0)
 	if enemy_detail_refresh_timer <= 0.0:
@@ -2254,6 +2277,7 @@ func _on_boss_defeated(world_position: Vector3) -> void:
 	var completed_bosses: int = int(Session.chapter_progress.get("completed_bosses", 0)) + 1
 	Session.chapter_progress["completed_bosses"] = completed_bosses
 	if completed_bosses >= BOSS_SPAWN_TIMES.size():
+		chamber_break_pending = false
 		Session.chapter_progress["chapter_complete"] = true
 		hud.show_banner("Scroll I Secured" if _is_english() else "残卷一暂定", Color(1.0, 0.88, 0.58, 1.0), 2.6)
 		hud.show_reveal(
@@ -2269,6 +2293,7 @@ func _on_boss_defeated(world_position: Vector3) -> void:
 		_set_soundtrack("mosslightCanopy", "残卷暂定", true, true)
 		_show_hero_callout("chapter_complete", 3.2)
 	else:
+		chamber_break_pending = true
 		hud.show_banner("Boss Dispersed" if _is_english() else "卷主退散", Color(1.0, 0.84, 0.52, 1.0), 2.2)
 		hud.show_reveal(
 			_boss_defeat_kicker(completed_bosses),
@@ -2278,12 +2303,26 @@ func _on_boss_defeated(world_position: Vector3) -> void:
 			"破",
 			3.1
 		)
-		hud.set_tip("The scroll lord has fallen. Gather the scattered supplies quickly and prepare for the deeper layer ahead." if _is_english() else "卷主崩散，残卷继续翻开。抓紧收补给并准备迎接更深的一层。")
+		hud.set_tip("The scroll lord has fallen. Clear the lingering glyph spirits and a chamber break will open before the run pushes deeper." if _is_english() else "卷主崩散后，先清掉残留字灵；战场安静下来后，会先停在卷间缓冲再继续入深层。")
 		_log_battle_event("Boss Dispersed · The scroll unfolds deeper" if _is_english() else "卷主退散 · 残卷继续翻开", Color(1.0, 0.84, 0.52, 1.0))
 		_set_soundtrack("mosslightCanopy", "残卷回气", true, true)
 		_show_hero_callout("boss_defeat", 3.0)
 	_spawn_wave_effect(world_position, 7.2, Color(1.0, 0.74, 0.46, 1.0), "破")
 	_gain_experience(12)
+
+
+func _open_chamber_break_gate() -> void:
+	if game_over or not chamber_break_pending:
+		return
+	chamber_break_pending = false
+	if map_overlay_active:
+		_set_map_overlay(false)
+	paused = true
+	Engine.time_scale = 0.0
+	if hud != null and hud.has_method("show_chamber_transition"):
+		var next_wave := maxi(threat_level + 1, 2)
+		hud.show_chamber_transition(_chamber_break_title(), _chamber_break_body(next_wave))
+	_log_battle_event("Chamber Break · Continue when ready" if _is_english() else "卷间缓冲 · 整顿后再续卷", Color(0.96, 0.82, 0.54, 1.0))
 
 
 func _field_phase_theme_for_wave(wave: int) -> Dictionary:
@@ -2782,7 +2821,7 @@ func _on_hud_map_toggle_requested() -> void:
 
 
 func _on_hud_test_next_wave_requested() -> void:
-	if game_over or paused or map_overlay_active or levelup_active or word_choice_active:
+	if game_over or paused or map_overlay_active or levelup_active or word_choice_active or chamber_break_pending:
 		return
 	_jump_to_next_wave_for_test()
 
@@ -2801,7 +2840,10 @@ func _on_hud_interact_requested() -> void:
 	if game_over or map_overlay_active or levelup_active or word_choice_active:
 		return
 	if paused:
-		_set_paused(false)
+		if hud != null and hud.has_method("is_settings_menu_open") and hud.is_settings_menu_open():
+			hud.return_to_pause_menu()
+		elif hud != null and hud.has_method("is_pause_menu_open") and hud.is_pause_menu_open():
+			_set_paused(false)
 		return
 	if active_inkstone != null:
 		_handle_inkstone_interact()
