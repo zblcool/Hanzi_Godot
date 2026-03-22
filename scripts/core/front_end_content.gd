@@ -457,6 +457,8 @@ const MENU_LEADERBOARD_CONTENT := {
 	"intro_test": "试阵榜会单独记录第 10 / 20 波捷径，不与主卷榜混排。",
 	"intro_manual": "主卷榜只统计从第 1 波真正开卷的正式战绩。",
 	"sorted_format": "当前排序：%s。",
+	"identity_hero_fallback": "书生",
+	"identity_format": "%s · %s",
 	"summary_test": "试阵榜单独收录第 10 / 20 波捷径，方便检查敌潮、build 与 HUD；现在也能在波次 / 击破 / 存活三种排序之间切换，更接近 source 榜单的回看方式。",
 	"summary_manual": "主卷榜只收从第 1 波真正开卷的战绩；现在也能在波次 / 击破 / 存活三种排序之间切换，开局前可以从不同角度回看 route 成果。",
 	"main_board": "主卷榜",
@@ -483,7 +485,8 @@ const MENU_LEADERBOARD_CONTENT := {
 	"detail_blade_xia": "剑势",
 	"detail_blade_scholar": "笔锋",
 	"detail_blade_level_format": "%s Lv.%d",
-	"detail_takedowns": "击倒 %s"
+	"detail_takedowns": "击倒 %s",
+	"detail_joiner": " | "
 }
 
 const MENU_ENEMY_CONTENT := {

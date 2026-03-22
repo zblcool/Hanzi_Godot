@@ -2541,13 +2541,14 @@ func _compare_leaderboard_overlay_entries_default(left: Dictionary, right: Dicti
 
 
 func _format_leaderboard_identity(entry: Dictionary) -> String:
+	var leaderboard_content := FrontEndContent.menu_leaderboard_content()
 	var player_name := String(entry.get("player_name", "")).strip_edges()
-	var hero_name := _localize_text(String(entry.get("hero_name", "书生")).strip_edges())
+	var hero_name := _localize_text(String(entry.get("hero_name", String(leaderboard_content.get("identity_hero_fallback", "书生")))).strip_edges())
 	if player_name.is_empty():
 		return hero_name
 	if hero_name.is_empty():
 		return player_name
-	return "%s · %s" % [player_name, hero_name]
+	return _localize_text(String(leaderboard_content.get("identity_format", "%s · %s"))) % [player_name, hero_name]
 
 
 func _build_local_leaderboard_detail_line(entry: Dictionary) -> String:
@@ -2569,15 +2570,14 @@ func _build_local_leaderboard_detail_line(entry: Dictionary) -> String:
 	var blade_level: int = int(entry.get("blade_level", 0))
 	if blade_level > 0:
 		var blade_key := "detail_blade_xia" if String(entry.get("hero_id", "scholar")) == "xia" else "detail_blade_scholar"
-		var blade_fallback := "剑势" if String(entry.get("hero_id", "scholar")) == "xia" else "笔锋"
-		var blade_label := _localize_text(String(leaderboard_content.get(blade_key, blade_fallback)))
+		var blade_label := _localize_text(String(leaderboard_content.get(blade_key, "")))
 		segments.append(String(leaderboard_content.get("detail_blade_level_format", "%s Lv.%d")) % [blade_label, blade_level])
 
 	var enemy_text := _summarize_enemy_kills(entry.get("enemy_kills", {}))
 	if not enemy_text.is_empty():
 		segments.append(_localize_text(String(leaderboard_content.get("detail_takedowns", "击倒 %s"))) % enemy_text)
 
-	return " | ".join(segments)
+	return String(leaderboard_content.get("detail_joiner", " | ")).join(segments)
 
 
 func _summarize_run_counts(raw_counts: Variant, order: Array, category: String) -> String:
