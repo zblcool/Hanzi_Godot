@@ -2585,6 +2585,7 @@ func _summarize_run_counts(raw_counts: Variant, order: Array, category: String) 
 	if not (raw_counts is Dictionary):
 		return ""
 
+	var leaderboard_content := FrontEndContent.menu_leaderboard_content()
 	var counts := raw_counts as Dictionary
 	var parts: Array[String] = []
 	for key_variant in order:
@@ -2592,10 +2593,10 @@ func _summarize_run_counts(raw_counts: Variant, order: Array, category: String) 
 		var amount: int = int(counts.get(key, 0))
 		if amount <= 0:
 			continue
-		parts.append("%s%d" % [_run_count_label(key, category), amount])
+		parts.append(_localize_text(String(leaderboard_content.get("detail_count_entry_format", "%s%d"))) % [_run_count_label(key, category), amount])
 		if parts.size() >= 3:
 			break
-	return " ".join(parts)
+	return String(leaderboard_content.get("detail_count_joiner", " ")).join(parts)
 
 
 func _run_count_label(key: String, category: String) -> String:
@@ -2612,6 +2613,7 @@ func _summarize_enemy_kills(raw_counts: Variant) -> String:
 	if not (raw_counts is Dictionary):
 		return ""
 
+	var leaderboard_content := FrontEndContent.menu_leaderboard_content()
 	var counts := raw_counts as Dictionary
 	var ranked_enemies: Array[Dictionary] = []
 	for enemy_id_variant in Session.ENEMY_ORDER:
@@ -2640,8 +2642,8 @@ func _summarize_enemy_kills(raw_counts: Variant) -> String:
 	for index in range(limit):
 		var item: Dictionary = ranked_enemies[index]
 		var enemy_id := String(item.get("id", "basic"))
-		parts.append("%s%d" % [String(Session.get_enemy_data(enemy_id).get("glyph", enemy_id)), int(item.get("amount", 0))])
-	return " ".join(parts)
+		parts.append(_localize_text(String(leaderboard_content.get("enemy_kill_entry_format", "%s%d"))) % [String(Session.get_enemy_data(enemy_id).get("glyph", enemy_id)), int(item.get("amount", 0))])
+	return String(leaderboard_content.get("enemy_kill_joiner", " ")).join(parts)
 
 
 func _normalize_leaderboard_view(view: String) -> String:

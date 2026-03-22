@@ -483,11 +483,15 @@ const MENU_LEADERBOARD_CONTENT := {
 	"detail_radicals": "偏旁 %s",
 	"detail_glyphs": "成字 %s",
 	"detail_phrases": "词技 %s",
+	"detail_count_entry_format": "%s%d",
+	"detail_count_joiner": " ",
 	"detail_blade_xia": "剑势",
 	"detail_blade_scholar": "笔锋",
 	"detail_blade_level_format": "%s Lv.%d",
 	"detail_takedowns": "击倒 %s",
-	"detail_joiner": " | "
+	"detail_joiner": " | ",
+	"enemy_kill_entry_format": "%s%d",
+	"enemy_kill_joiner": " "
 }
 
 const MENU_ENEMY_CONTENT := {
