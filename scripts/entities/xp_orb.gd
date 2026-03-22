@@ -20,6 +20,14 @@ func configure(player_ref, xp_value: int) -> void:
 	value = xp_value
 
 
+func collect_now() -> int:
+	if is_queued_for_deletion():
+		return 0
+	var collected_value := value
+	queue_free()
+	return collected_value
+
+
 func _ready() -> void:
 	_build_visuals()
 	drift_velocity = Vector3(randf_range(-0.9, 0.9), 0.0, randf_range(-0.9, 0.9))

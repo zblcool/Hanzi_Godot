@@ -2,6 +2,8 @@ extends Node3D
 
 const CJKFont := preload("res://scripts/core/cjk_font.gd")
 const BRUSH_HASTE_SPEED_BONUS := 1.85
+const FURY_HASTE_SPEED_MULTIPLIER := 1.18
+const FURY_ATTACK_RATE_MULTIPLIER := 1.28
 
 signal health_changed(current: float, maximum: float)
 signal defeated
@@ -63,6 +65,7 @@ var resolve_pulse_timer: float = 0.0
 var stealth_time: float = 0.0
 var bush_lock_time: float = 0.0
 var brush_haste_time: float = 0.0
+var fury_time: float = 0.0
 var slash_anim_time: float = 0.0
 var stun_time: float = 0.0
 var resolve_active: bool = false
@@ -145,6 +148,8 @@ func _physics_process(delta: float) -> void:
 	move_blend = move_vector.length()
 	motion_time += delta * (1.8 + move_blend * 6.0 + (0.9 if stun_time > 0.0 else 0.0))
 	var effective_move_speed: float = move_speed + (BRUSH_HASTE_SPEED_BONUS if brush_haste_time > 0.0 else 0.0)
+	if fury_time > 0.0:
+		effective_move_speed *= FURY_HASTE_SPEED_MULTIPLIER
 	global_position += move_vector * effective_move_speed * delta
 	global_position.y = ground_height
 
@@ -153,6 +158,7 @@ func _physics_process(delta: float) -> void:
 	stealth_time = max(stealth_time - delta, 0.0)
 	bush_lock_time = max(bush_lock_time - delta, 0.0)
 	brush_haste_time = max(brush_haste_time - delta, 0.0)
+	fury_time = max(fury_time - delta, 0.0)
 	slash_anim_time = max(slash_anim_time - delta, 0.0)
 	stun_time = max(stun_time - delta, 0.0)
 
@@ -193,6 +199,13 @@ func apply_brush_haste(duration: float) -> void:
 	if is_dead:
 		return
 	brush_haste_time = max(brush_haste_time, duration)
+	_update_visual_state()
+
+
+func apply_fury_haste(duration: float) -> void:
+	if is_dead:
+		return
+	fury_time = max(fury_time, duration)
 	_update_visual_state()
 
 
@@ -385,7 +398,7 @@ func _try_attack() -> void:
 		var melee_range: float = attack_range + slash_radius_bonus + float(blade_level) * 0.16
 		if distance > melee_range:
 			return
-		attack_cooldown = current_attack_interval
+		attack_cooldown = _get_attack_interval()
 		slash_anim_time = 0.18
 		request_slash.emit(global_position, look_direction, melee_range, current_attack_damage, 0.3, accent_color, "斩")
 		return
@@ -393,13 +406,20 @@ func _try_attack() -> void:
 	if distance > attack_range:
 		return
 
-	attack_cooldown = current_attack_interval
+	attack_cooldown = _get_attack_interval()
 	var projectile_count: int = 1 + extra_projectiles
 	for index in range(projectile_count):
 		var offset: float = float(index) - float(projectile_count - 1) * 0.5
 		var direction := (target_position - global_position).normalized()
 		direction = direction.rotated(Vector3.UP, offset * 0.1)
 		fire_projectile.emit(global_position + Vector3(0.0, 1.0, 0.0) + direction * 1.2, direction, current_attack_damage, projectile_speed, "墨", accent_color)
+
+
+func _get_attack_interval() -> float:
+	var interval := current_attack_interval
+	if fury_time > 0.0:
+		interval /= FURY_ATTACK_RATE_MULTIPLIER
+	return max(0.18 if role == "ranged" else 0.24, interval)
 
 
 func _find_closest_enemy():
@@ -609,6 +629,9 @@ func _update_visual_state() -> void:
 		current_body = Color(0.44, 0.6, 0.52, 1.0)
 		current_accent = Color(0.6, 0.84, 0.7, 1.0)
 		current_trim = Color(0.82, 0.96, 0.88, 1.0)
+	elif fury_time > 0.0:
+		current_accent = current_accent.lerp(Color(1.0, 0.68, 0.42, 1.0), 0.36)
+		current_trim = current_trim.lerp(Color(1.0, 0.9, 0.82, 1.0), 0.24)
 	elif brush_haste_time > 0.0:
 		current_accent = current_accent.lightened(0.16)
 		current_trim = current_trim.lightened(0.08)

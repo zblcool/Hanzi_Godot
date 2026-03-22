@@ -26,6 +26,20 @@ const SUPPLY_DATA := {
 		"glow": Color(1.0, 0.76, 0.62, 1.0),
 		"amount": 1.0
 	},
+	"magnet": {
+		"glyph": "聚",
+		"title": "聚墨符",
+		"color": Color(0.29, 0.5, 0.69, 1.0),
+		"glow": Color(0.84, 0.94, 1.0, 1.0),
+		"amount": 0.0
+	},
+	"fury": {
+		"glyph": "疾",
+		"title": "疾书令",
+		"color": Color(0.77, 0.42, 0.27, 1.0),
+		"glow": Color(1.0, 0.84, 0.72, 1.0),
+		"amount": 10.0
+	},
 	"brush": {
 		"glyph": "笔",
 		"title": "文笔",
@@ -117,7 +131,7 @@ func _build_visuals() -> void:
 
 	halo_node = MeshInstance3D.new()
 	var halo_mesh := CylinderMesh.new()
-	halo_mesh.top_radius = 0.48 if supply_id == "seal" else 0.42
+	halo_mesh.top_radius = 0.48 if supply_id in ["seal", "magnet", "fury"] else 0.42
 	halo_mesh.bottom_radius = halo_mesh.top_radius
 	halo_mesh.height = 0.02
 	halo_node.mesh = halo_mesh
@@ -130,6 +144,10 @@ func _build_visuals() -> void:
 			_build_ink_visuals()
 		"seal":
 			_build_seal_visuals()
+		"magnet":
+			_build_magnet_visuals()
+		"fury":
+			_build_fury_visuals()
 		"brush":
 			_build_brush_visuals()
 		_:
@@ -228,6 +246,76 @@ func _build_seal_visuals() -> void:
 		shard.material_override = cap_material
 		orbit_root.add_child(shard)
 		detail_nodes.append(shard)
+
+
+func _build_magnet_visuals() -> void:
+	var core_material := _make_solid_material(Color(0.12, 0.18, 0.26, 1.0), glow)
+	var ring_material := _make_solid_material(tint, glow)
+	var shard_material := _make_solid_material(glow, Color(0.96, 0.98, 1.0, 1.0))
+
+	core_node = MeshInstance3D.new()
+	var orb_mesh := SphereMesh.new()
+	orb_mesh.radius = 0.2
+	orb_mesh.height = 0.4
+	core_node.mesh = orb_mesh
+	core_node.material_override = core_material
+	visual_root.add_child(core_node)
+
+	var ring := MeshInstance3D.new()
+	var ring_mesh := TorusMesh.new()
+	ring_mesh.inner_radius = 0.04
+	ring_mesh.outer_radius = 0.3
+	ring.mesh = ring_mesh
+	ring.rotation_degrees = Vector3(88.0, 0.0, 0.0)
+	ring.material_override = ring_material
+	visual_root.add_child(ring)
+
+	for index in range(4):
+		var shard := MeshInstance3D.new()
+		var shard_mesh := BoxMesh.new()
+		shard_mesh.size = Vector3(0.08, 0.18, 0.16)
+		shard.mesh = shard_mesh
+		var angle: float = TAU * float(index) / 4.0
+		shard.position = Vector3(cos(angle) * 0.29, 0.02, sin(angle) * 0.29)
+		shard.rotation_degrees = Vector3(18.0, rad_to_deg(angle), 18.0)
+		shard.material_override = shard_material
+		orbit_root.add_child(shard)
+		detail_nodes.append(shard)
+
+
+func _build_fury_visuals() -> void:
+	var plate_material := _make_solid_material(tint, glow)
+	var edge_material := _make_solid_material(glow, Color(1.0, 0.95, 0.86, 1.0))
+	var ribbon_material := _make_solid_material(Color(0.3, 0.14, 0.08, 1.0), tint)
+
+	core_node = MeshInstance3D.new()
+	var plate_mesh := BoxMesh.new()
+	plate_mesh.size = Vector3(0.34, 0.08, 0.5)
+	core_node.mesh = plate_mesh
+	core_node.rotation_degrees = Vector3(12.0, 14.0, -6.0)
+	core_node.material_override = plate_material
+	visual_root.add_child(core_node)
+
+	var seal_strip := MeshInstance3D.new()
+	var strip_mesh := BoxMesh.new()
+	strip_mesh.size = Vector3(0.18, 0.1, 0.08)
+	seal_strip.mesh = strip_mesh
+	seal_strip.position = Vector3(0.0, 0.03, -0.08)
+	seal_strip.rotation_degrees = Vector3(12.0, 14.0, -6.0)
+	seal_strip.material_override = edge_material
+	visual_root.add_child(seal_strip)
+
+	for index in range(3):
+		var ribbon := MeshInstance3D.new()
+		var ribbon_mesh := BoxMesh.new()
+		ribbon_mesh.size = Vector3(0.08, 0.03, 0.24)
+		ribbon.mesh = ribbon_mesh
+		var angle: float = TAU * float(index) / 3.0
+		ribbon.position = Vector3(cos(angle) * 0.24, 0.02, sin(angle) * 0.24)
+		ribbon.rotation_degrees = Vector3(24.0, rad_to_deg(angle) + 18.0, 12.0)
+		ribbon.material_override = ribbon_material
+		orbit_root.add_child(ribbon)
+		detail_nodes.append(ribbon)
 
 
 func _build_brush_visuals() -> void:

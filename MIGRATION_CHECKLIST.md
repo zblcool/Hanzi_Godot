@@ -47,7 +47,8 @@ Status legend:
 - `[pending]` Relic / artifact system. Notes: hanziHero treats relics as a second growth lane parallel to radicals; Godot chests currently drop only direct pickups.
 - `[pending]` Stage phase-shift themes. Notes: hanziHero rotates battlefield atmosphere through 字境 themes like 碑林 / 墨潮 / 雷纹 / 残卷; Godot battle ambience is static.
 - `[pending]` Wider radical / recipe / word pool. Notes: hanziHero already has a broader content set; Godot currently centers on 明 / 休 / 海 plus blade growth.
-- `[pending]` Source pickup taxonomy parity. Notes: hanziHero includes pickups like 聚墨符 and 疾书令; Godot currently ships a smaller supply set.
+- `[done]` Static `聚墨符 / 疾书令` battlefield pickups. Notes: hanziHero ships one-shot utility pickups for full-map ink recall and burst haste; Godot now has fixed battlefield placements with matching core effects.
+- `[pending]` Enemy-dropped utility pickup routing and `回春丹` parity. Notes: source key enemies / bosses can also drop utility pickups and recovery drops; Godot still keeps the safer static-only slice today.
 
 ## Progression
 

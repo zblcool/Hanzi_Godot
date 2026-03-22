@@ -345,6 +345,14 @@ func _spawn_props() -> void:
 	for brush_position in brush_pickups:
 		_spawn_world_supply_pickup(brush_position, "brush")
 
+	var utility_pickups := [
+		{"position": Vector3(-11.5, 0.0, 0.5), "supply_id": "magnet"},
+		{"position": Vector3(14.5, 0.0, 4.5), "supply_id": "fury"}
+	]
+	for pickup_variant in utility_pickups:
+		var pickup_position: Vector3 = pickup_variant["position"]
+		_spawn_world_supply_pickup(pickup_position, String(pickup_variant["supply_id"]))
+
 
 func _spawn_enemy() -> void:
 	if not is_instance_valid(player):
@@ -840,6 +848,16 @@ func _on_xp_collected(value: int) -> void:
 	_gain_experience(value)
 
 
+func _collect_all_xp_pickups() -> int:
+	var total_xp := 0
+	for pickup in pickups_root.get_children():
+		if not is_instance_valid(pickup) or pickup.is_queued_for_deletion():
+			continue
+		if pickup.has_method("collect_now"):
+			total_xp += int(pickup.collect_now())
+	return total_xp
+
+
 func _on_supply_collected(world_position: Vector3, supply_id: String, amount: float, tint: Color, label: String) -> void:
 	var pulse_radius: float = 1.05
 	match supply_id:
@@ -862,6 +880,22 @@ func _on_supply_collected(world_position: Vector3, supply_id: String, amount: fl
 					1.7
 				)
 			pulse_radius = 1.22
+		"magnet":
+			var gathered_xp: int = _collect_all_xp_pickups()
+			if gathered_xp > 0:
+				_gain_experience(gathered_xp)
+				hud.show_banner("拾得聚墨符  收束 %d 字墨" % gathered_xp, tint, 1.8)
+			else:
+				hud.show_banner("拾得聚墨符  场上已无散墨", tint, 1.6)
+			hud.set_tip("聚墨符会把战场上遗落的字墨尽数回收，适合在绕场之后一口气补等级。")
+			pulse_radius = 1.26
+		"fury":
+			if is_instance_valid(player):
+				var duration: float = max(amount, 10.0)
+				player.apply_fury_haste(duration)
+				hud.show_banner("拾得疾书令  攻速移速提升 %d 秒" % int(round(duration)), tint, 1.85)
+				hud.set_tip("疾书令会短时间拉高攻速与移速，适合强开精英或抢一波散落补给。")
+			pulse_radius = 1.24
 		"brush":
 			if is_instance_valid(player):
 				var duration: float = max(amount, 6.0)
