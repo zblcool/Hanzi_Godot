@@ -156,6 +156,131 @@ const FIELD_PHASE_THEMES := [
 		"tip": "残卷回暖，纸本山水会偏回赭金，巨字像旧墨一样烙在地上。"
 	}
 ]
+const CHAMBER_ORDER := ["entry_court", "slip_archive"]
+const CHAMBER_LAYOUTS := {
+	"entry_court": {
+		"name": "入卷前庭",
+		"english_name": "Entry Court",
+		"glyph": "庭",
+		"accent": Color(0.96, 0.82, 0.54, 1.0),
+		"tip": "这是开卷前庭，树阵、卷架与补给点还保持第一层较开阔的铺陈。",
+		"english_tip": "This is the opening court: a wider first chamber where trees, racks, and supplies still sit in their broad entry spread.",
+		"trees": [
+			Vector3(-9.0, 0.0, -7.0),
+			Vector3(11.0, 0.0, -11.0),
+			Vector3(-14.0, 0.0, 9.0),
+			Vector3(15.0, 0.0, 7.0),
+			Vector3(3.0, 0.0, 14.0),
+			Vector3(-2.0, 0.0, -15.0)
+		],
+		"bushes": [
+			Vector3(-6.0, 0.0, 4.0),
+			Vector3(7.0, 0.0, -3.0),
+			Vector3(-12.0, 0.0, -1.0),
+			Vector3(10.0, 0.0, 11.0)
+		],
+		"inkstones": [
+			Vector3(0.0, 0.0, 8.5),
+			Vector3(-10.0, 0.0, 12.0)
+		],
+		"chests": [
+			{
+				"position": Vector3(-5.0, 0.0, 15.0),
+				"drops": {"paper": 5.0, "ink": 14.0}
+			},
+			{
+				"position": Vector3(13.5, 0.0, -9.5),
+				"drops": {"paper": 4.0, "seal": 1.0}
+			}
+		],
+		"stelae": [
+			{"position": Vector3(-18.0, 0.0, -12.0), "glyph": "海", "tint": Color(0.56, 0.84, 1.0, 1.0)},
+			{"position": Vector3(18.0, 0.0, -6.0), "glyph": "明", "tint": Color(1.0, 0.86, 0.48, 1.0)},
+			{"position": Vector3(-16.0, 0.0, 14.0), "glyph": "休", "tint": Color(0.64, 0.92, 0.72, 1.0)},
+			{"position": Vector3(15.0, 0.0, 15.0), "glyph": "卷", "tint": Color(0.9, 0.68, 0.42, 1.0)}
+		],
+		"scroll_racks": [
+			{"position": Vector3(-8.0, 0.0, -16.0), "yaw": 18.0},
+			{"position": Vector3(12.0, 0.0, -14.0), "yaw": -28.0},
+			{"position": Vector3(16.0, 0.0, 2.0), "yaw": 42.0}
+		],
+		"ink_pools": [
+			{"position": Vector3(-15.0, 0.0, 3.0), "radius": 1.6, "tint": Color(0.28, 0.7, 0.82, 1.0)},
+			{"position": Vector3(13.0, 0.0, 12.0), "radius": 1.2, "tint": Color(0.76, 0.44, 0.94, 1.0)},
+			{"position": Vector3(4.0, 0.0, -17.0), "radius": 1.45, "tint": Color(0.98, 0.72, 0.4, 1.0)}
+		],
+		"brush_pickups": [
+			Vector3(-17.0, 0.0, -4.0),
+			Vector3(9.0, 0.0, 16.5)
+		],
+		"utility_pickups": [
+			{"position": Vector3(-11.5, 0.0, 0.5), "supply_id": "magnet"},
+			{"position": Vector3(14.5, 0.0, 4.5), "supply_id": "fury"}
+		]
+	},
+	"slip_archive": {
+		"name": "简库中庭",
+		"english_name": "Slip Archive",
+		"glyph": "简",
+		"accent": Color(0.92, 0.84, 0.66, 1.0),
+		"tip": "更深一层会推入简库中庭，卷架与碑刻挤得更近，补给点和砚台也会重排成新的房间读法。",
+		"english_tip": "The next layer opens into Slip Archive, where racks and stelae crowd the room more tightly and the supply / inkstone rhythm is fully re-seeded.",
+		"trees": [
+			Vector3(-16.0, 0.0, -13.0),
+			Vector3(16.0, 0.0, -12.0),
+			Vector3(-17.0, 0.0, 10.0),
+			Vector3(14.0, 0.0, 15.0)
+		],
+		"bushes": [
+			Vector3(-4.0, 0.0, -11.0),
+			Vector3(6.5, 0.0, -7.5),
+			Vector3(-13.0, 0.0, 2.0),
+			Vector3(11.0, 0.0, 6.0),
+			Vector3(0.5, 0.0, 14.0)
+		],
+		"inkstones": [
+			Vector3(-7.5, 0.0, 11.5),
+			Vector3(9.5, 0.0, -1.5)
+		],
+		"chests": [
+			{
+				"position": Vector3(-13.5, 0.0, 6.0),
+				"drops": {"paper": 6.0, "ink": 12.0}
+			},
+			{
+				"position": Vector3(14.0, 0.0, 13.0),
+				"drops": {"paper": 4.0, "seal": 2.0}
+			}
+		],
+		"stelae": [
+			{"position": Vector3(-18.0, 0.0, -6.0), "glyph": "简", "tint": Color(0.94, 0.82, 0.58, 1.0)},
+			{"position": Vector3(-2.0, 0.0, -16.0), "glyph": "牍", "tint": Color(0.72, 0.86, 1.0, 1.0)},
+			{"position": Vector3(17.0, 0.0, -8.0), "glyph": "卷", "tint": Color(1.0, 0.74, 0.48, 1.0)},
+			{"position": Vector3(-15.0, 0.0, 15.0), "glyph": "典", "tint": Color(0.66, 0.92, 0.76, 1.0)},
+			{"position": Vector3(12.0, 0.0, 16.0), "glyph": "墨", "tint": Color(0.82, 0.72, 1.0, 1.0)}
+		],
+		"scroll_racks": [
+			{"position": Vector3(-10.5, 0.0, -15.5), "yaw": 22.0},
+			{"position": Vector3(7.5, 0.0, -14.0), "yaw": -18.0},
+			{"position": Vector3(15.5, 0.0, -1.5), "yaw": 38.0},
+			{"position": Vector3(-2.5, 0.0, 4.0), "yaw": -42.0},
+			{"position": Vector3(8.0, 0.0, 15.5), "yaw": 14.0}
+		],
+		"ink_pools": [
+			{"position": Vector3(-15.0, 0.0, -0.5), "radius": 1.35, "tint": Color(0.36, 0.76, 0.88, 1.0)},
+			{"position": Vector3(12.5, 0.0, 8.5), "radius": 1.15, "tint": Color(0.82, 0.52, 0.98, 1.0)},
+			{"position": Vector3(2.5, 0.0, -16.0), "radius": 1.5, "tint": Color(0.96, 0.74, 0.46, 1.0)}
+		],
+		"brush_pickups": [
+			Vector3(-12.0, 0.0, -8.0),
+			Vector3(11.0, 0.0, 15.5)
+		],
+		"utility_pickups": [
+			{"position": Vector3(-8.5, 0.0, 2.5), "supply_id": "magnet"},
+			{"position": Vector3(13.5, 0.0, -5.5), "supply_id": "fury"}
+		]
+	}
+}
 
 @onready var world_environment: WorldEnvironment = $WorldEnvironment
 @onready var camera_rig: Node3D = $CameraRig
@@ -187,6 +312,7 @@ var opening_time: float = 0.0
 var last_announced_threat_level: int = 1
 var boss_spawn_index: int = 0
 var active_boss = null
+var current_chamber_id: String = "entry_court"
 var chamber_break_pending := false
 var chamber_interlude_offer: Dictionary = {}
 var chamber_modifier_id: String = ""
@@ -393,6 +519,52 @@ func _short_rest_modifier_active() -> bool:
 	return chamber_modifier_id == "short_rest"
 
 
+func _chamber_id_for_completed_bosses(completed_bosses: int) -> String:
+	var chamber_index := mini(maxi(completed_bosses, 0), CHAMBER_ORDER.size() - 1)
+	return String(CHAMBER_ORDER[chamber_index])
+
+
+func _current_chamber_data() -> Dictionary:
+	var chamber_variant: Variant = CHAMBER_LAYOUTS.get(current_chamber_id, CHAMBER_LAYOUTS.get(String(CHAMBER_ORDER[0]), {}))
+	if chamber_variant is Dictionary:
+		return chamber_variant as Dictionary
+	return {}
+
+
+func _localized_chamber_name(chamber_id: String) -> String:
+	var chamber_variant: Variant = CHAMBER_LAYOUTS.get(chamber_id, {})
+	if chamber_variant is Dictionary:
+		var chamber_data := chamber_variant as Dictionary
+		return String(chamber_data.get("english_name" if _is_english() else "name", chamber_id))
+	return chamber_id
+
+
+func _current_chamber_name() -> String:
+	return _localized_chamber_name(current_chamber_id)
+
+
+func _current_chamber_tip() -> String:
+	var chamber_data := _current_chamber_data()
+	return String(chamber_data.get("english_tip" if _is_english() else "tip", _default_battle_tip()))
+
+
+func _current_chamber_accent() -> Color:
+	var chamber_data := _current_chamber_data()
+	return Color(chamber_data.get("accent", Color(0.96, 0.82, 0.54, 1.0)))
+
+
+func _current_chamber_glyph() -> String:
+	var chamber_data := _current_chamber_data()
+	return String(chamber_data.get("glyph", "界"))
+
+
+func _next_chamber_id_after_interlude() -> String:
+	var current_index := CHAMBER_ORDER.find(current_chamber_id)
+	if current_index == -1:
+		return String(CHAMBER_ORDER[0])
+	return String(CHAMBER_ORDER[mini(current_index + 1, CHAMBER_ORDER.size() - 1)])
+
+
 func _chamber_interlude_title() -> String:
 	return "%s · %s" % [_current_scroll_label(), "Between Chambers" if _is_english() else "卷间抉择"]
 
@@ -435,16 +607,20 @@ func _chamber_preview_threat_names(next_wave: int) -> Array[String]:
 func _chamber_interlude_preview_lines(next_wave: int) -> Array[String]:
 	var localized_next_theme := _localized_field_phase_theme(_field_phase_theme_for_wave(next_wave))
 	var next_theme_name := String(localized_next_theme.get("name", "Inkfield" if _is_english() else "字境"))
+	var next_chamber_id := String(chamber_interlude_offer.get("next_chamber_id", _next_chamber_id_after_interlude()))
+	var next_chamber_name := _localized_chamber_name(next_chamber_id)
 	var threat_joiner := ", " if _is_english() else " / "
 	var threat_mix := threat_joiner.join(PackedStringArray(_chamber_preview_threat_names(next_wave)))
 	if _is_english():
 		return [
+			"Chamber · %s" % next_chamber_name,
 			"Next Wave · %d%s" % [next_wave, " · Major Surge" if _is_big_wave(next_wave) else ""],
 			"Realm · %s" % next_theme_name,
 			"Pressure · %s" % _chamber_preview_pressure_copy(next_wave),
 			"Threat Mix · %s" % threat_mix
 		]
 	return [
+		"下一房间 · %s" % next_chamber_name,
 		"下一波 · 第 %d 波%s" % [next_wave, " · 大潮压境" if _is_big_wave(next_wave) else ""],
 		"字境 · %s" % next_theme_name,
 		"压境重点 · %s" % _chamber_preview_pressure_copy(next_wave),
@@ -454,15 +630,19 @@ func _chamber_interlude_preview_lines(next_wave: int) -> Array[String]:
 
 func _chamber_interlude_body(next_wave: int) -> String:
 	var reward_radical := String(chamber_interlude_offer.get("reward_radical", "日"))
+	var next_chamber_id := String(chamber_interlude_offer.get("next_chamber_id", _next_chamber_id_after_interlude()))
+	var next_chamber_name := _localized_chamber_name(next_chamber_id)
 	if _is_english():
-		return "The first scroll lord is gone and the chamber has gone quiet. This is the first room-break stop before the run pushes deeper.\n\nCheck the next push below, then choose one:\nReward keeps radical %s and lifts paper / seal drops through the next chamber.\nEvent carries a Scroll Echo forward so pressure enemies echo extra paper and elites can drop %d s of Swift Edict until the next scroll lord.\nRecovery restores %d%% vitality, clears stun, and grants %d s of brush haste now, then repeats a smaller %d%% recovery echo on later wave pushes." % [
+		return "The first scroll lord is gone and the chamber has gone quiet. The run is about to shift into %s.\n\nCheck the next push below, then choose one:\nReward keeps radical %s and lifts paper / seal drops through the next chamber.\nEvent carries a Scroll Echo forward so pressure enemies echo extra paper and elites can drop %d s of Swift Edict until the next scroll lord.\nRecovery restores %d%% vitality, clears stun, and grants %d s of brush haste now, then repeats a smaller %d%% recovery echo on later wave pushes." % [
+			next_chamber_name,
 			reward_radical,
 			int(round(CHAMBER_SCROLL_ECHO_FURY_DROP_DURATION)),
 			int(round(CHAMBER_INTERLUDE_REST_HEAL_RATIO * 100.0)),
 			int(round(CHAMBER_INTERLUDE_REST_BRUSH_DURATION)),
 			int(round(CHAMBER_INTERLUDE_REST_ECHO_HEAL_RATIO * 100.0))
 		]
-	return "首位卷主已散，当前房间也暂时清空。这一步先做成进入更深残卷前的停顿。\n\n先看下方下一段预览，再定一项：\n奖励 · 偏旁补给：带走偏旁「%s」，而且下一段敌人会更常掉残纸 / 战印。\n异事 · 残卷回响：给下一段挂上一层掉落偏向，让压境敌群额外回响残纸，精英也能额外吐出 %d 秒疾书令，持续到下一位卷主。\n修整 · 歇笔回气：先回复 %d%% 气血、解除眩晕并获得 %d 秒文笔提速，后面每逢字潮推进还会再补一小口气。" % [
+	return "首位卷主已散，当前房间也暂时清空，下一段会推入「%s」。\n\n先看下方下一段预览，再定一项：\n奖励 · 偏旁补给：带走偏旁「%s」，而且下一段敌人会更常掉残纸 / 战印。\n异事 · 残卷回响：给下一段挂上一层掉落偏向，让压境敌群额外回响残纸，精英也能额外吐出 %d 秒疾书令，持续到下一位卷主。\n修整 · 歇笔回气：先回复 %d%% 气血、解除眩晕并获得 %d 秒文笔提速，后面每逢字潮推进还会再补一小口气。" % [
+		next_chamber_name,
 		reward_radical,
 		int(round(CHAMBER_SCROLL_ECHO_FURY_DROP_DURATION)),
 		int(round(CHAMBER_INTERLUDE_REST_HEAL_RATIO * 100.0)),
@@ -501,11 +681,12 @@ func _ready() -> void:
 	_setup_environment()
 	_build_ground()
 	_spawn_player()
-	_reveal_map_around_position(player.global_position)
+	_apply_intro_preset()
+	current_chamber_id = _chamber_id_for_completed_bosses(int(Session.chapter_progress.get("completed_bosses", 0)))
 	_spawn_props()
+	_reveal_map_around_position(player.global_position)
 	_spawn_hud()
 	_ensure_decorative_effects_root()
-	_apply_intro_preset()
 	_reset_field_phase_state(threat_level)
 	_apply_battle_settings()
 	_sync_hud()
@@ -745,24 +926,27 @@ func _spawn_touch_controls() -> void:
 	touch_controls.pause_requested.connect(_on_hud_pause_requested)
 
 
+func _clear_chamber_scene(clear_pickups: bool = false) -> void:
+	tree_fade_entries.clear()
+	inkstones.clear()
+	active_inkstone = null
+	for child in props_root.get_children():
+		if is_instance_valid(child) and not child.is_queued_for_deletion():
+			child.queue_free()
+	if clear_pickups:
+		for root in [pickups_root, projectiles_root, effects_root]:
+			for child in root.get_children():
+				if is_instance_valid(child) and not child.is_queued_for_deletion():
+					child.queue_free()
+
+
 func _spawn_props() -> void:
-	var tree_positions := [
-		Vector3(-9.0, 0.0, -7.0),
-		Vector3(11.0, 0.0, -11.0),
-		Vector3(-14.0, 0.0, 9.0),
-		Vector3(15.0, 0.0, 7.0),
-		Vector3(3.0, 0.0, 14.0),
-		Vector3(-2.0, 0.0, -15.0)
-	]
+	var chamber_data := _current_chamber_data()
+	var tree_positions: Array = chamber_data.get("trees", [])
 	for position_variant in tree_positions:
 		_create_tree(position_variant)
 
-	var bush_positions := [
-		Vector3(-6.0, 0.0, 4.0),
-		Vector3(7.0, 0.0, -3.0),
-		Vector3(-12.0, 0.0, -1.0),
-		Vector3(10.0, 0.0, 11.0)
-	]
+	var bush_positions: Array = chamber_data.get("bushes", [])
 	for bush_position_variant in bush_positions:
 		var bush = BUSH_ZONE_SCENE.instantiate()
 		bush.position = bush_position_variant
@@ -771,10 +955,7 @@ func _spawn_props() -> void:
 		bush.add_to_group("map_bush")
 		props_root.add_child(bush)
 
-	var inkstone_positions := [
-		Vector3(0.0, 0.0, 8.5),
-		Vector3(-10.0, 0.0, 12.0)
-	]
+	var inkstone_positions: Array = chamber_data.get("inkstones", [])
 	for inkstone_position in inkstone_positions:
 		var inkstone = INKSTONE_SCENE.instantiate()
 		inkstone.position = inkstone_position
@@ -782,16 +963,7 @@ func _spawn_props() -> void:
 		props_root.add_child(inkstone)
 		inkstones.append(inkstone)
 
-	var chest_data := [
-		{
-			"position": Vector3(-5.0, 0.0, 15.0),
-			"drops": {"paper": 5.0, "ink": 14.0}
-		},
-		{
-			"position": Vector3(13.5, 0.0, -9.5),
-			"drops": {"paper": 4.0, "seal": 1.0}
-		}
-	]
+	var chest_data: Array = chamber_data.get("chests", [])
 	for chest_variant in chest_data:
 		var chest = TREASURE_CHEST_SCENE.instantiate()
 		chest.position = chest_variant["position"]
@@ -799,45 +971,63 @@ func _spawn_props() -> void:
 		chest.opened.connect(_on_treasure_chest_opened)
 		props_root.add_child(chest)
 
-	var stela_data := [
-		{"position": Vector3(-18.0, 0.0, -12.0), "glyph": "海", "tint": Color(0.56, 0.84, 1.0, 1.0)},
-		{"position": Vector3(18.0, 0.0, -6.0), "glyph": "明", "tint": Color(1.0, 0.86, 0.48, 1.0)},
-		{"position": Vector3(-16.0, 0.0, 14.0), "glyph": "休", "tint": Color(0.64, 0.92, 0.72, 1.0)},
-		{"position": Vector3(15.0, 0.0, 15.0), "glyph": "卷", "tint": Color(0.9, 0.68, 0.42, 1.0)}
-	]
+	var stela_data: Array = chamber_data.get("stelae", [])
 	for stela_variant in stela_data:
 		_create_stela(stela_variant["position"], String(stela_variant["glyph"]), Color(stela_variant["tint"]))
 
-	var scroll_racks := [
-		{"position": Vector3(-8.0, 0.0, -16.0), "yaw": 18.0},
-		{"position": Vector3(12.0, 0.0, -14.0), "yaw": -28.0},
-		{"position": Vector3(16.0, 0.0, 2.0), "yaw": 42.0}
-	]
+	var scroll_racks: Array = chamber_data.get("scroll_racks", [])
 	for rack_variant in scroll_racks:
 		_create_scroll_rack(rack_variant["position"], float(rack_variant["yaw"]))
 
-	var ink_pools := [
-		{"position": Vector3(-15.0, 0.0, 3.0), "radius": 1.6, "tint": Color(0.28, 0.7, 0.82, 1.0)},
-		{"position": Vector3(13.0, 0.0, 12.0), "radius": 1.2, "tint": Color(0.76, 0.44, 0.94, 1.0)},
-		{"position": Vector3(4.0, 0.0, -17.0), "radius": 1.45, "tint": Color(0.98, 0.72, 0.4, 1.0)}
-	]
+	var ink_pools: Array = chamber_data.get("ink_pools", [])
 	for pool_variant in ink_pools:
 		_create_ink_pool(pool_variant["position"], float(pool_variant["radius"]), Color(pool_variant["tint"]))
 
-	var brush_pickups := [
-		Vector3(-17.0, 0.0, -4.0),
-		Vector3(9.0, 0.0, 16.5)
-	]
+	var brush_pickups: Array = chamber_data.get("brush_pickups", [])
 	for brush_position in brush_pickups:
 		_spawn_world_supply_pickup(brush_position, "brush")
 
-	var utility_pickups := [
-		{"position": Vector3(-11.5, 0.0, 0.5), "supply_id": "magnet"},
-		{"position": Vector3(14.5, 0.0, 4.5), "supply_id": "fury"}
-	]
+	var utility_pickups: Array = chamber_data.get("utility_pickups", [])
 	for pickup_variant in utility_pickups:
 		var pickup_position: Vector3 = pickup_variant["position"]
 		_spawn_world_supply_pickup(pickup_position, String(pickup_variant["supply_id"]))
+
+
+func _transition_to_chamber(next_chamber_id: String) -> void:
+	if next_chamber_id.is_empty() or next_chamber_id == current_chamber_id:
+		return
+	current_chamber_id = next_chamber_id
+	_clear_chamber_scene(true)
+	_spawn_props()
+	if is_instance_valid(player):
+		var reset_position: Vector3 = player.global_position
+		reset_position.x = 0.0
+		reset_position.z = 0.0
+		player.global_position = reset_position
+		player.rotation.y = 0.0
+		player.look_direction = Vector3(0.0, 0.0, -1.0)
+		player.set_external_move_input(Vector2.ZERO)
+	explored_map_cells.clear()
+	if is_instance_valid(player):
+		_reveal_map_around_position(player.global_position)
+	var chamber_name := _current_chamber_name()
+	var chamber_accent := _current_chamber_accent()
+	if hud != null:
+		hud.show_banner(
+			("Next Chamber · %s" if _is_english() else "下一房间 · %s") % chamber_name,
+			chamber_accent,
+			2.0
+		)
+		hud.show_reveal(
+			"Between Chambers" if _is_english() else "卷间换房",
+			chamber_name,
+			_current_chamber_tip(),
+			chamber_accent,
+			_current_chamber_glyph(),
+			2.9
+		)
+		hud.set_tip(_current_chamber_tip())
+	_log_battle_event(("Chamber Shift · %s" if _is_english() else "房间更替 · %s") % chamber_name, chamber_accent)
 
 
 func _spawn_enemy() -> void:
@@ -2497,7 +2687,10 @@ func _open_chamber_break_gate() -> void:
 	if game_over or not chamber_break_pending:
 		return
 	chamber_break_pending = false
-	chamber_interlude_offer = {"reward_radical": _pick_chamber_interlude_radical()}
+	chamber_interlude_offer = {
+		"reward_radical": _pick_chamber_interlude_radical(),
+		"next_chamber_id": _next_chamber_id_after_interlude()
+	}
 	if map_overlay_active:
 		_set_map_overlay(false)
 	paused = true
@@ -2903,6 +3096,7 @@ func _build_map_snapshot() -> Dictionary:
 		get_tree().get_nodes_in_group("map_scroll_rack").size() +
 		get_tree().get_nodes_in_group("map_ink_pool").size()
 	)
+	var chamber_name := _current_chamber_name()
 
 	return {
 		"world_radius": MAP_WORLD_RADIUS,
@@ -2913,10 +3107,10 @@ func _build_map_snapshot() -> Dictionary:
 		"markers": markers,
 		"enemies": enemies,
 		"summary": (
-			"Enemies %d  ·  Inkstones %d  ·  Bushes %d  ·  Landmarks %d  ·  Explored %d%%"
+			"%s  ·  Enemies %d  ·  Inkstones %d  ·  Bushes %d  ·  Landmarks %d  ·  Explored %d%%"
 			if _is_english()
-			else "敌群 %d  ·  砚台 %d  ·  草丛 %d  ·  地标 %d  ·  探索 %d%%"
-		) % [enemies.size(), inkstone_count, bush_count, landmark_count, _map_exploration_percent()]
+			else "%s  ·  敌群 %d  ·  砚台 %d  ·  草丛 %d  ·  地标 %d  ·  探索 %d%%"
+		) % [chamber_name, enemies.size(), inkstone_count, bush_count, landmark_count, _map_exploration_percent()]
 	}
 
 
@@ -3004,6 +3198,7 @@ func _on_hud_pause_resume_requested() -> void:
 func _on_hud_chamber_interlude_selected(choice_id: String) -> void:
 	if game_over or not paused:
 		return
+	var next_chamber_id := String(chamber_interlude_offer.get("next_chamber_id", current_chamber_id))
 
 	match choice_id:
 		"reward":
@@ -3055,6 +3250,7 @@ func _on_hud_chamber_interlude_selected(choice_id: String) -> void:
 			return
 
 	chamber_interlude_offer.clear()
+	_transition_to_chamber(next_chamber_id)
 	_sync_hud()
 	_set_paused(false)
 
