@@ -123,8 +123,25 @@ const MENU_EN_TEXT := {
 	"按波次": "Wave",
 	"按击破": "Kills",
 	"按存活": "Time",
+	"按波次优先": "wave",
+	"按击破优先": "kills",
+	"按存活优先": "survival time",
 	"定卷": "Completed",
-	"残卷": "Scroll"
+	"残卷": "Scroll",
+	"卷主": "Bosses",
+	"波次": "Wave",
+	"击破": "Kills",
+	"等级": "Level",
+	"存活": "Time",
+	"偏旁 %s": "Radicals %s",
+	"成字 %s": "Glyphs %s",
+	"词技 %s": "Phrases %s",
+	"剑势": "Blade Arc",
+	"笔锋": "Brush Edge",
+	"击倒 %s": "Takedowns %s",
+	"以下条目对应当前残卷里已经接入的敌人谱系、预警方式与最实用的临场处理思路。": "The entries below describe enemy families, warnings, and counters that are already implemented in the current remnant scroll.",
+	"  预警：%s": "  Warning: %s",
+	"  应对：%s": "  Counter: %s"
 }
 var ui_font: Font
 var ui_scale := 1.0
@@ -2291,11 +2308,11 @@ func _build_local_leaderboard_text(view: String = "manual", limit: int = 8, sort
 		var run_label := _localize_text(String(leaderboard_content.get("test_run_format", "试阵 W%d"))) % int(entry.get("start_wave", 1))
 		if normalized_view == "manual":
 			run_label = _localize_text(String(leaderboard_content.get("manual_completed", "定卷"))) if bool(entry.get("chapter_complete", false)) else _localize_text(String(leaderboard_content.get("manual_scroll", "残卷")))
-		var bosses_label := "Bosses" if _is_english() else "卷主"
-		var threat_label := "Wave" if _is_english() else "波次"
-		var kills_label := "Kills" if _is_english() else "击破"
-		var level_label := "Level" if _is_english() else "等级"
-		var elapsed_label := "Time" if _is_english() else "存活"
+		var bosses_label := _localize_text(String(leaderboard_content.get("bosses_label", "卷主")))
+		var threat_label := _localize_text(String(leaderboard_content.get("wave_label", "波次")))
+		var kills_label := _localize_text(String(leaderboard_content.get("kills_label", "击破")))
+		var level_label := _localize_text(String(leaderboard_content.get("level_label", "等级")))
+		var elapsed_label := _localize_text(String(leaderboard_content.get("time_label", "存活")))
 		lines.append(
 			"%d. %s  %s  %s %d  %s %d  %s %d  %s %d  %s %s" % [
 				index + 1,
@@ -2391,13 +2408,14 @@ func _normalize_leaderboard_sort(sort: String) -> String:
 
 
 func _get_leaderboard_sort_summary_label(sort: String) -> String:
+	var leaderboard_content := FrontEndContent.menu_leaderboard_content()
 	match _normalize_leaderboard_sort(sort):
 		"kills":
-			return "kills" if _is_english() else "按击破优先"
+			return _localize_text(String(leaderboard_content.get("sort_summary_kills", "按击破优先")))
 		"time":
-			return "survival time" if _is_english() else "按存活优先"
+			return _localize_text(String(leaderboard_content.get("sort_summary_time", "按存活优先")))
 		_:
-			return "wave" if _is_english() else "按波次优先"
+			return _localize_text(String(leaderboard_content.get("sort_summary_wave", "按波次优先")))
 
 
 func _get_local_leaderboard_overlay_entries(view: String, sort: String, limit: int = 8) -> Array[Dictionary]:
@@ -2494,30 +2512,31 @@ func _format_leaderboard_identity(entry: Dictionary) -> String:
 
 
 func _build_local_leaderboard_detail_line(entry: Dictionary) -> String:
+	var leaderboard_content := FrontEndContent.menu_leaderboard_content()
 	var segments: Array[String] = []
 
 	var radicals_text := _summarize_run_counts(entry.get("radicals", {}), Session.RADICAL_ORDER, "radical")
 	if not radicals_text.is_empty():
-		segments.append("Radicals %s" % radicals_text if _is_english() else "偏旁 %s" % radicals_text)
+		segments.append(_localize_text(String(leaderboard_content.get("detail_radicals", "偏旁 %s"))) % radicals_text)
 
 	var recipes_text := _summarize_run_counts(entry.get("recipes", {}), Session.RECIPE_ORDER, "recipe")
 	if not recipes_text.is_empty():
-		segments.append("Glyphs %s" % recipes_text if _is_english() else "成字 %s" % recipes_text)
+		segments.append(_localize_text(String(leaderboard_content.get("detail_glyphs", "成字 %s"))) % recipes_text)
 
 	var words_text := _summarize_run_counts(entry.get("words", {}), Session.WORD_ORDER, "word")
 	if not words_text.is_empty():
-		segments.append("Phrases %s" % words_text if _is_english() else "词技 %s" % words_text)
+		segments.append(_localize_text(String(leaderboard_content.get("detail_phrases", "词技 %s"))) % words_text)
 
 	var blade_level: int = int(entry.get("blade_level", 0))
 	if blade_level > 0:
-		var blade_label := "Blade Arc" if String(entry.get("hero_id", "scholar")) == "xia" else "Brush Edge"
-		if not _is_english():
-			blade_label = "剑势" if String(entry.get("hero_id", "scholar")) == "xia" else "笔锋"
+		var blade_key := "detail_blade_xia" if String(entry.get("hero_id", "scholar")) == "xia" else "detail_blade_scholar"
+		var blade_fallback := "剑势" if String(entry.get("hero_id", "scholar")) == "xia" else "笔锋"
+		var blade_label := _localize_text(String(leaderboard_content.get(blade_key, blade_fallback)))
 		segments.append("%s Lv.%d" % [blade_label, blade_level])
 
 	var enemy_text := _summarize_enemy_kills(entry.get("enemy_kills", {}))
 	if not enemy_text.is_empty():
-		segments.append("Takedowns %s" % enemy_text if _is_english() else "击倒 %s" % enemy_text)
+		segments.append(_localize_text(String(leaderboard_content.get("detail_takedowns", "击倒 %s"))) % enemy_text)
 
 	return " | ".join(segments)
 
@@ -2590,8 +2609,9 @@ func _normalize_leaderboard_view(view: String) -> String:
 
 
 func _build_enemy_archive_text() -> String:
+	var enemy_content := FrontEndContent.menu_enemy_content()
 	var lines: Array[String] = [
-		"The entries below describe enemy families, warnings, and counters that are already implemented in the current remnant scroll." if _is_english() else "以下条目对应当前残卷里已经接入的敌人谱系、预警方式与最实用的临场处理思路。",
+		_localize_text(String(enemy_content.get("intro", "以下条目对应当前残卷里已经接入的敌人谱系、预警方式与最实用的临场处理思路。"))),
 		""
 	]
 	for enemy_id_variant in Session.ENEMY_ORDER:
@@ -2603,8 +2623,8 @@ func _build_enemy_archive_text() -> String:
 			String(enemy.get("title", ""))
 		])
 		lines.append("  %s" % String(enemy.get("summary", "")))
-		lines.append("  Warning: %s" % String(enemy.get("warning", "")) if _is_english() else "  预警：%s" % String(enemy.get("warning", "")))
-		lines.append("  Counter: %s" % String(enemy.get("counter", "")) if _is_english() else "  应对：%s" % String(enemy.get("counter", "")))
+		lines.append(_localize_text(String(enemy_content.get("warning_format", "  预警：%s"))) % String(enemy.get("warning", "")))
+		lines.append(_localize_text(String(enemy_content.get("counter_format", "  应对：%s"))) % String(enemy.get("counter", "")))
 		lines.append("")
 	return "\n".join(lines)
 

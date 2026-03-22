@@ -403,9 +403,29 @@ const MENU_LEADERBOARD_CONTENT := {
 	"sort_wave": "按波次",
 	"sort_kills": "按击破",
 	"sort_time": "按存活",
+	"sort_summary_wave": "按波次优先",
+	"sort_summary_kills": "按击破优先",
+	"sort_summary_time": "按存活优先",
 	"test_run_format": "试阵 W%d",
 	"manual_completed": "定卷",
-	"manual_scroll": "残卷"
+	"manual_scroll": "残卷",
+	"bosses_label": "卷主",
+	"wave_label": "波次",
+	"kills_label": "击破",
+	"level_label": "等级",
+	"time_label": "存活",
+	"detail_radicals": "偏旁 %s",
+	"detail_glyphs": "成字 %s",
+	"detail_phrases": "词技 %s",
+	"detail_blade_xia": "剑势",
+	"detail_blade_scholar": "笔锋",
+	"detail_takedowns": "击倒 %s"
+}
+
+const MENU_ENEMY_CONTENT := {
+	"intro": "以下条目对应当前残卷里已经接入的敌人谱系、预警方式与最实用的临场处理思路。",
+	"warning_format": "  预警：%s",
+	"counter_format": "  应对：%s"
 }
 
 
@@ -479,3 +499,7 @@ static func menu_recipe_content() -> Dictionary:
 
 static func menu_leaderboard_content() -> Dictionary:
 	return MENU_LEADERBOARD_CONTENT.duplicate(true)
+
+
+static func menu_enemy_content() -> Dictionary:
+	return MENU_ENEMY_CONTENT.duplicate(true)
