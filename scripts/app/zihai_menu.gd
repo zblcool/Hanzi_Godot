@@ -48,6 +48,7 @@ var detail_opening_label: Label
 var detail_opening_radicals_row: Container
 var detail_source_skill_title_label: Label
 var detail_source_skill_body_label: Label
+var detail_progression_cards_root: VBoxContainer
 var detail_stat_widgets: Dictionary = {}
 var character_archive_overlay: Control
 var character_archive_cards_root: VBoxContainer
@@ -183,6 +184,7 @@ func _rebuild_ui() -> void:
 	detail_opening_radicals_row = null
 	detail_source_skill_title_label = null
 	detail_source_skill_body_label = null
+	detail_progression_cards_root = null
 	character_archive_overlay = null
 	character_archive_cards_root = null
 	recipe_atlas_overlay = null
@@ -580,6 +582,29 @@ func _build_ui() -> void:
 	source_skill_box.add_child(detail_source_skill_body_label)
 
 	source_skill_box.add_child(_make_label("当前只在菜单里保留 hanziHero 的字技预览，Godot 战斗内仍未接入独立主动输入。", 15, Color(0.82, 0.9, 1.0, 0.9)))
+
+	var progression_panel := PanelContainer.new()
+	progression_panel.custom_minimum_size = _v(0.0, 224.0)
+	progression_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.08, 0.12, 0.16, 0.72), Color(0.74, 0.56, 0.28, 0.34)))
+	detail_box.add_child(progression_panel)
+
+	var progression_margin := MarginContainer.new()
+	progression_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	progression_margin.add_theme_constant_override("margin_left", _i(16))
+	progression_margin.add_theme_constant_override("margin_top", _i(16))
+	progression_margin.add_theme_constant_override("margin_right", _i(16))
+	progression_margin.add_theme_constant_override("margin_bottom", _i(16))
+	progression_panel.add_child(progression_margin)
+
+	var progression_box := VBoxContainer.new()
+	progression_box.add_theme_constant_override("separation", _i(10))
+	progression_margin.add_child(progression_box)
+	progression_box.add_child(_make_label("残卷路线", 22, Color(1.0, 0.92, 0.8, 1.0)))
+	progression_box.add_child(_make_label("把开卷补笔、中盘续写与砚台磨词顺序先记住，进入战斗后更容易判断本轮 build 该补哪一笔。", 16, Color(0.88, 0.92, 0.96, 0.94)))
+
+	detail_progression_cards_root = VBoxContainer.new()
+	detail_progression_cards_root.add_theme_constant_override("separation", _i(10))
+	progression_box.add_child(detail_progression_cards_root)
 
 	var stats_panel := PanelContainer.new()
 	stats_panel.custom_minimum_size = _v(0.0, 232.0)
@@ -1537,6 +1562,54 @@ func _build_hero_active_skill_body(hero: Dictionary) -> String:
 	return description
 
 
+func _make_progression_card(card: Dictionary, accent: Color, compact: bool = false) -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.12, accent.g * 0.12, accent.b * 0.16, 0.58), Color(accent.r, accent.g, accent.b, 0.24)))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", _i(14 if compact else 16))
+	margin.add_theme_constant_override("margin_top", _i(12 if compact else 14))
+	margin.add_theme_constant_override("margin_right", _i(14 if compact else 16))
+	margin.add_theme_constant_override("margin_bottom", _i(12 if compact else 14))
+	panel.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", _i(6 if compact else 8))
+	margin.add_child(box)
+
+	var title := String(card.get("title", "")).strip_edges()
+	if not title.is_empty():
+		box.add_child(_make_label(title, 16 if compact else 17, Color(1.0, 0.92, 0.8, 1.0)))
+
+	var description := String(card.get("description", "")).strip_edges()
+	if not description.is_empty():
+		box.add_child(_make_label(description, 15 if compact else 16, Color(0.9, 0.92, 0.95, 0.95)))
+
+	var tags_variant: Variant = card.get("tags", [])
+	if tags_variant is Array and not (tags_variant as Array).is_empty():
+		var tag_row := HFlowContainer.new()
+		tag_row.add_theme_constant_override("h_separation", _i(10))
+		tag_row.add_theme_constant_override("v_separation", _i(10))
+		box.add_child(tag_row)
+		for tag_variant in tags_variant:
+			tag_row.add_child(_make_tag(String(tag_variant), Color(accent.r * 0.16, accent.g * 0.16, accent.b * 0.2, 0.88), Color(0.98, 0.95, 0.9, 0.96)))
+
+	return panel
+
+
+func _populate_progression_cards(root: VBoxContainer, hero: Dictionary, accent: Color, compact: bool = false) -> void:
+	if root == null:
+		return
+	for child in root.get_children():
+		child.queue_free()
+	var cards_variant: Variant = hero.get("progression_cards", [])
+	if cards_variant is Array:
+		for card_variant in cards_variant:
+			if card_variant is Dictionary:
+				root.add_child(_make_progression_card(card_variant as Dictionary, accent, compact))
+
+
 func _make_archive_stat_item(title: String, value: String, accent: Color) -> PanelContainer:
 	var panel := PanelContainer.new()
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -1692,6 +1765,29 @@ func _make_character_archive_card(hero: Dictionary) -> PanelContainer:
 	active_box.add_child(_make_label(_build_hero_active_skill_headline(hero), 16, Color(0.96, 0.82, 0.54, 0.96)))
 	active_box.add_child(_make_label(_build_hero_active_skill_body(hero), 16, Color(0.9, 0.92, 0.95, 0.94)))
 	active_box.add_child(_make_label("当前只在人物志里保留对照预览，实际战斗输入仍待迁移。", 15, Color(0.82, 0.9, 1.0, 0.9)))
+
+	var progression_panel := PanelContainer.new()
+	progression_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	progression_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.08, 0.12, 0.16, 0.72), Color(0.74, 0.56, 0.28, 0.34)))
+	box.add_child(progression_panel)
+
+	var progression_margin := MarginContainer.new()
+	progression_margin.add_theme_constant_override("margin_left", _i(16))
+	progression_margin.add_theme_constant_override("margin_top", _i(16))
+	progression_margin.add_theme_constant_override("margin_right", _i(16))
+	progression_margin.add_theme_constant_override("margin_bottom", _i(16))
+	progression_panel.add_child(progression_margin)
+
+	var progression_box := VBoxContainer.new()
+	progression_box.add_theme_constant_override("separation", _i(10))
+	progression_margin.add_child(progression_box)
+	progression_box.add_child(_make_label("残卷路线", 18, Color(1.0, 0.92, 0.8, 1.0)))
+	progression_box.add_child(_make_label("把这名执笔者的前几步 build 顺序先看清，再入卷会更容易顺着掉落继续写。", 16, Color(0.88, 0.92, 0.96, 0.94)))
+
+	var progression_cards_root := VBoxContainer.new()
+	progression_cards_root.add_theme_constant_override("separation", _i(10))
+	progression_box.add_child(progression_cards_root)
+	_populate_progression_cards(progression_cards_root, hero, accent)
 
 	var stats_panel := PanelContainer.new()
 	stats_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -2234,6 +2330,7 @@ func _refresh_selection(trigger_reaction: bool = false) -> void:
 		detail_opening_radicals_row.add_child(_make_tag(tag_text, Color(accent.r * 0.16, accent.g * 0.16, accent.b * 0.2, 0.88), Color(0.98, 0.95, 0.9, 0.96)))
 	detail_source_skill_title_label.text = _build_hero_active_skill_headline(selected_data)
 	detail_source_skill_body_label.text = _build_hero_active_skill_body(selected_data)
+	_populate_progression_cards(detail_progression_cards_root, selected_data, accent, true)
 
 	_set_stat_value("move_speed", float(selected_data["move_speed"]), 7.2, "%.1f")
 	_set_stat_value("max_health", float(selected_data["max_health"]), 140.0, "%.0f")
