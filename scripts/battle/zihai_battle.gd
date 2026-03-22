@@ -92,6 +92,7 @@ var ambient_glyph_root: Node3D
 var ambient_glyph_entries: Array[Dictionary] = []
 var ground_detail_nodes: Array[Node3D] = []
 var ground_surface_materials: Array = []
+var ground_ripple_focus: Vector3 = Vector3.ZERO
 var current_soundtrack_id: String = ""
 var current_soundtrack_cue: String = ""
 
@@ -127,7 +128,7 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	_update_camera(delta)
-	_update_ground_shader()
+	_update_ground_shader(delta)
 	_update_tree_fade(delta)
 	_update_ambient_glyphs(delta)
 
@@ -2136,19 +2137,24 @@ func _make_ground_material(base_color: Color, ink_color: Color, paper_color: Col
 	material.set_shader_parameter("emission_strength", emission_strength)
 	material.set_shader_parameter("phase_offset", phase_offset)
 	material.set_shader_parameter("focus_position", Vector3.ZERO)
+	material.set_shader_parameter("ambient_drift", Vector2(0.12, -0.08))
 	ground_surface_materials.append(material)
 	return material
 
 
-func _update_ground_shader() -> void:
+func _update_ground_shader(delta: float) -> void:
 	if ground_surface_materials.is_empty() or not is_instance_valid(player):
 		return
-	var focus_position := Vector3(player.global_position.x, 0.0, player.global_position.z)
+	var target_focus := Vector3(player.global_position.x, 0.0, player.global_position.z)
+	if ground_ripple_focus == Vector3.ZERO:
+		ground_ripple_focus = target_focus
+	else:
+		ground_ripple_focus = ground_ripple_focus.lerp(target_focus, clamp(delta * 3.6, 0.0, 1.0))
 	for material_variant in ground_surface_materials:
 		var material: ShaderMaterial = material_variant
 		if material == null:
 			continue
-		material.set_shader_parameter("focus_position", focus_position)
+		material.set_shader_parameter("focus_position", ground_ripple_focus)
 
 
 func _create_tree(position: Vector3) -> void:
