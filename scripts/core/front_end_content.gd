@@ -364,6 +364,24 @@ const MENU_TRANSITION_CONTENT := {
 	"note": "墨线正在收束，字潮即将开启。"
 }
 
+const MENU_ARCHIVE_CONTENT := {
+	"focus_format": "执笔焦点：%s",
+	"quote_title": "卷中文字",
+	"record_fallback_title": "人物札记",
+	"opening_title": "起笔落点",
+	"trait_format": "角色特性：%s",
+	"route_hint_format": "入卷建议：%s",
+	"active_skill_title": "源稿字技（待迁移）",
+	"active_skill_note": "当前只在人物志里保留对照预览，实际战斗输入仍待迁移。",
+	"progression_title": "残卷路线",
+	"progression_summary": "把这名执笔者的前几步 build 顺序先看清，再入卷会更容易顺着掉落继续写。",
+	"progression_note": "当前先保留 web 原型的 build 顺序与路线提示，Godot 战斗内还没有真正的路线权重修正与额外掉落偏向。",
+	"build_route_title": "源稿构筑方向",
+	"build_route_summary": "对照 web 原型现有的路线选择，把更贴近这名执笔者的构筑方向与词技 / 遗物搭配保留成前台参考。",
+	"build_route_note": "这些卡片当前不直接改战斗数值、掉落权重或路线偏向，只帮助对照 web 原型的构筑意图。",
+	"stats_title": "战斗轮廓"
+}
+
 
 static func launcher_top_actions() -> Array:
 	return LAUNCHER_TOP_ACTIONS.duplicate(true)
@@ -423,3 +441,7 @@ static func menu_overlay_content() -> Dictionary:
 
 static func menu_transition_content() -> Dictionary:
 	return MENU_TRANSITION_CONTENT.duplicate(true)
+
+
+static func menu_archive_content() -> Dictionary:
+	return MENU_ARCHIVE_CONTENT.duplicate(true)

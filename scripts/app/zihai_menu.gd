@@ -99,7 +99,13 @@ const MENU_EN_TEXT := {
 	"二级入口": "Secondary Access",
 	"二级入口与试阵": "Secondary Access and Test Runs",
 	"长说明移到人物志与图谱；这里保留快速进入与测试入口。": "Longer notes live in Archive and Atlas; this panel keeps quick entry and test access.",
-	"长说明和 build 路线请看人物志与图谱。": "See Archive and Atlas for the full write-up and build route."
+	"长说明和 build 路线请看人物志与图谱。": "See Archive and Atlas for the full write-up and build route.",
+	"执笔焦点：%s": "Hero focus: %s",
+	"角色特性：%s": "Trait: %s",
+	"入卷建议：%s": "Entry hint: %s",
+	"当前只在人物志里保留对照预览，实际战斗输入仍待迁移。": "This archive keeps the source-skill preview only as a reference. Actual battle input is still pending migration.",
+	"把这名执笔者的前几步 build 顺序先看清，再入卷会更容易顺着掉落继续写。": "Review this hero's early build order first so it is easier to follow later drops once the run begins.",
+	"当前先保留 web 原型的 build 顺序与路线提示，Godot 战斗内还没有真正的路线权重修正与额外掉落偏向。": "The current build still keeps the source route order only as a preview. Godot battle has not yet restored route bias or extra drop weighting."
 }
 var ui_font: Font
 var ui_scale := 1.0
@@ -2031,6 +2037,7 @@ func _make_archive_stat_item(title: String, value: String, accent: Color) -> Pan
 
 func _make_character_archive_card(hero: Dictionary) -> PanelContainer:
 	var portrait_layout := _is_portrait_layout()
+	var archive_content := FrontEndContent.menu_archive_content()
 	var accent: Color = hero["accent"]
 	var panel := PanelContainer.new()
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -2064,7 +2071,7 @@ func _make_character_archive_card(hero: Dictionary) -> PanelContainer:
 	summary_box.add_child(_make_label("%s  ·  %s" % [_localize_text(String(hero.get("name", ""))), _localize_text(String(hero.get("title", "")))], 30, Color(1.0, 0.95, 0.86, 1.0)))
 	summary_box.add_child(_make_label(String(hero.get("role_label", "")), 18, accent))
 	summary_box.add_child(_make_label(String(hero.get("description", "")), 17, Color(0.9, 0.92, 0.95, 0.96)))
-	summary_box.add_child(_make_label("Hero focus: %s" % String(hero.get("focus", "")) if _is_english() else "执笔焦点：%s" % String(hero.get("focus", "")), 16, Color(0.82, 0.9, 1.0, 0.94)))
+	summary_box.add_child(_make_label(_localize_text(String(archive_content.get("focus_format", "执笔焦点：%s"))) % String(hero.get("focus", "")), 16, Color(0.82, 0.9, 1.0, 0.94)))
 
 	var tag_row := HFlowContainer.new()
 	tag_row.add_theme_constant_override("h_separation", _i(10))
@@ -2088,7 +2095,7 @@ func _make_character_archive_card(hero: Dictionary) -> PanelContainer:
 	var quote_box := VBoxContainer.new()
 	quote_box.add_theme_constant_override("separation", _i(6))
 	quote_margin.add_child(quote_box)
-	quote_box.add_child(_make_label("卷中文字", 16, Color(0.96, 0.82, 0.54, 0.88)))
+	quote_box.add_child(_make_label(String(archive_content.get("quote_title", "卷中文字")), 16, Color(0.96, 0.82, 0.54, 0.88)))
 	quote_box.add_child(_make_label("“%s”" % String(hero.get("record_excerpt", String(hero.get("focus", "")))), 18, Color(0.98, 0.95, 0.9, 0.98)))
 	quote_box.add_child(_make_label(String(hero.get("record_source", "")), 15, Color(0.82, 0.9, 1.0, 0.92)))
 
@@ -2107,7 +2114,7 @@ func _make_character_archive_card(hero: Dictionary) -> PanelContainer:
 	var record_box := VBoxContainer.new()
 	record_box.add_theme_constant_override("separation", _i(6))
 	record_margin.add_child(record_box)
-	record_box.add_child(_make_label(String(hero.get("record_title", "人物札记")), 20, Color(1.0, 0.92, 0.8, 1.0)))
+	record_box.add_child(_make_label(String(hero.get("record_title", String(archive_content.get("record_fallback_title", "人物札记")))), 20, Color(1.0, 0.92, 0.8, 1.0)))
 	record_box.add_child(_make_label(String(hero.get("record_body", String(hero.get("description", "")))), 17, Color(0.9, 0.92, 0.95, 0.96)))
 
 	var route_panel := PanelContainer.new()
@@ -2125,7 +2132,7 @@ func _make_character_archive_card(hero: Dictionary) -> PanelContainer:
 	var route_box := VBoxContainer.new()
 	route_box.add_theme_constant_override("separation", _i(8))
 	route_margin.add_child(route_box)
-	route_box.add_child(_make_label("起笔落点", 18, Color(1.0, 0.92, 0.8, 1.0)))
+	route_box.add_child(_make_label(String(archive_content.get("opening_title", "起笔落点")), 18, Color(1.0, 0.92, 0.8, 1.0)))
 	route_box.add_child(_make_label(_build_hero_opening_summary(hero), 16, Color(0.88, 0.92, 0.96, 0.94)))
 
 	var route_tags := HFlowContainer.new()
@@ -2139,11 +2146,11 @@ func _make_character_archive_card(hero: Dictionary) -> PanelContainer:
 	var trait_description := String(hero.get("trait_description", "")).strip_edges()
 	var route_hint := String(hero.get("route_hint", "")).strip_edges()
 	if not trait_label.is_empty():
-		route_box.add_child(_make_label("角色特性：%s" % trait_label, 16, Color(0.96, 0.82, 0.54, 0.9)))
+		route_box.add_child(_make_label(_localize_text(String(archive_content.get("trait_format", "角色特性：%s"))) % trait_label, 16, Color(0.96, 0.82, 0.54, 0.9)))
 	if not trait_description.is_empty():
 		route_box.add_child(_make_label(trait_description, 16, Color(0.9, 0.92, 0.95, 0.94)))
 	if not route_hint.is_empty():
-		route_box.add_child(_make_label("入卷建议：%s" % route_hint, 16, Color(0.82, 0.9, 1.0, 0.94)))
+		route_box.add_child(_make_label(_localize_text(String(archive_content.get("route_hint_format", "入卷建议：%s"))) % route_hint, 16, Color(0.82, 0.9, 1.0, 0.94)))
 
 	var active_panel := PanelContainer.new()
 	active_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -2160,10 +2167,10 @@ func _make_character_archive_card(hero: Dictionary) -> PanelContainer:
 	var active_box := VBoxContainer.new()
 	active_box.add_theme_constant_override("separation", _i(8))
 	active_margin.add_child(active_box)
-	active_box.add_child(_make_label("源稿字技（待迁移）", 18, Color(1.0, 0.92, 0.8, 1.0)))
+	active_box.add_child(_make_label(String(archive_content.get("active_skill_title", "源稿字技（待迁移）")), 18, Color(1.0, 0.92, 0.8, 1.0)))
 	active_box.add_child(_make_label(_build_hero_active_skill_headline(hero), 16, Color(0.96, 0.82, 0.54, 0.96)))
 	active_box.add_child(_make_label(_build_hero_active_skill_body(hero), 16, Color(0.9, 0.92, 0.95, 0.94)))
-	active_box.add_child(_make_label("当前只在人物志里保留对照预览，实际战斗输入仍待迁移。", 15, Color(0.82, 0.9, 1.0, 0.9)))
+	active_box.add_child(_make_label(String(archive_content.get("active_skill_note", "当前只在人物志里保留对照预览，实际战斗输入仍待迁移。")), 15, Color(0.82, 0.9, 1.0, 0.9)))
 
 	var progression_panel := PanelContainer.new()
 	progression_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -2180,14 +2187,14 @@ func _make_character_archive_card(hero: Dictionary) -> PanelContainer:
 	var progression_box := VBoxContainer.new()
 	progression_box.add_theme_constant_override("separation", _i(10))
 	progression_margin.add_child(progression_box)
-	progression_box.add_child(_make_label("残卷路线", 18, Color(1.0, 0.92, 0.8, 1.0)))
-	progression_box.add_child(_make_label("把这名执笔者的前几步 build 顺序先看清，再入卷会更容易顺着掉落继续写。", 16, Color(0.88, 0.92, 0.96, 0.94)))
+	progression_box.add_child(_make_label(String(archive_content.get("progression_title", "残卷路线")), 18, Color(1.0, 0.92, 0.8, 1.0)))
+	progression_box.add_child(_make_label(String(archive_content.get("progression_summary", "把这名执笔者的前几步 build 顺序先看清，再入卷会更容易顺着掉落继续写。")), 16, Color(0.88, 0.92, 0.96, 0.94)))
 
 	var progression_cards_root := VBoxContainer.new()
 	progression_cards_root.add_theme_constant_override("separation", _i(10))
 	progression_box.add_child(progression_cards_root)
 	_populate_progression_cards(progression_cards_root, hero, accent)
-	progression_box.add_child(_make_label("当前先保留 web 原型的 build 顺序与路线提示，Godot 战斗内还没有真正的路线权重修正与额外掉落偏向。", 15, Color(0.82, 0.9, 1.0, 0.88)))
+	progression_box.add_child(_make_label(String(archive_content.get("progression_note", "当前先保留 web 原型的 build 顺序与路线提示，Godot 战斗内还没有真正的路线权重修正与额外掉落偏向。")), 15, Color(0.82, 0.9, 1.0, 0.88)))
 
 	var build_route_panel := PanelContainer.new()
 	build_route_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -2204,14 +2211,14 @@ func _make_character_archive_card(hero: Dictionary) -> PanelContainer:
 	var build_route_box := VBoxContainer.new()
 	build_route_box.add_theme_constant_override("separation", _i(10))
 	build_route_margin.add_child(build_route_box)
-	build_route_box.add_child(_make_label("源稿构筑方向", 18, Color(1.0, 0.92, 0.8, 1.0)))
-	build_route_box.add_child(_make_label("对照 web 原型现有的路线选择，把更贴近这名执笔者的构筑方向与词技 / 遗物搭配保留成前台参考。", 16, Color(0.88, 0.92, 0.96, 0.94)))
+	build_route_box.add_child(_make_label(String(archive_content.get("build_route_title", "源稿构筑方向")), 18, Color(1.0, 0.92, 0.8, 1.0)))
+	build_route_box.add_child(_make_label(String(archive_content.get("build_route_summary", "对照 web 原型现有的路线选择，把更贴近这名执笔者的构筑方向与词技 / 遗物搭配保留成前台参考。")), 16, Color(0.88, 0.92, 0.96, 0.94)))
 
 	var build_route_cards_root := VBoxContainer.new()
 	build_route_cards_root.add_theme_constant_override("separation", _i(10))
 	build_route_box.add_child(build_route_cards_root)
 	_populate_build_route_cards(build_route_cards_root, hero, accent)
-	build_route_box.add_child(_make_label("这些卡片当前不直接改战斗数值、掉落权重或路线偏向，只帮助对照 web 原型的构筑意图。", 15, Color(0.82, 0.9, 1.0, 0.88)))
+	build_route_box.add_child(_make_label(String(archive_content.get("build_route_note", "这些卡片当前不直接改战斗数值、掉落权重或路线偏向，只帮助对照 web 原型的构筑意图。")), 15, Color(0.82, 0.9, 1.0, 0.88)))
 
 	var stats_panel := PanelContainer.new()
 	stats_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -2228,7 +2235,7 @@ func _make_character_archive_card(hero: Dictionary) -> PanelContainer:
 	var stats_box := VBoxContainer.new()
 	stats_box.add_theme_constant_override("separation", _i(10))
 	stats_margin.add_child(stats_box)
-	stats_box.add_child(_make_label("战斗轮廓", 18, Color(1.0, 0.92, 0.8, 1.0)))
+	stats_box.add_child(_make_label(String(archive_content.get("stats_title", "战斗轮廓")), 18, Color(1.0, 0.92, 0.8, 1.0)))
 
 	var stats_grid := GridContainer.new()
 	stats_grid.columns = 2 if portrait_layout else 3
