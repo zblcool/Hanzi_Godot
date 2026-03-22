@@ -75,7 +75,13 @@ const MENU_EN_TEXT := {
 	"夜墨": "Night Ink",
 	"纸墨": "Paper Ink",
 	"切换到夜墨主题": "Switch to Night Ink theme",
-	"切换到纸墨主题": "Switch to Paper Ink theme"
+	"切换到纸墨主题": "Switch to Paper Ink theme",
+	"把 web 原型里更偏向的构筑方向先压缩成菜单预览，连同源稿词技 / 遗物搭配一起放在开局前参考。": "Compress the source web build routes into a menu preview and keep their source word and relic pairings visible before the run.",
+	"当前只负责前台提示：源稿词技 / 遗物搭配还没有接回 Godot 战斗掉落或路线权重。": "Front-end reference only: source word and relic pairings are not yet wired back into Godot battle drops or route bias.",
+	"对照 web 原型现有的路线选择，把更贴近这名执笔者的构筑方向与词技 / 遗物搭配保留成前台参考。": "Mirror the source web route choices by keeping the best-fitting build directions, words, and relic pairings visible for this hero.",
+	"这些卡片当前不直接改战斗数值、掉落权重或路线偏向，只帮助对照 web 原型的构筑意图。": "These cards do not yet change combat values, drop weights, or route bias. They only surface the source prototype's build intent.",
+	"源稿遗物偏向": "Source Relic Pairing",
+	"源稿词技偏向": "Source Word Pairing"
 }
 const HERO_EN := {
 	"scholar": {
@@ -110,6 +116,26 @@ const HERO_EN := {
 				"title": "Inkstone Phrase",
 				"description": "Refine the most reliable main route first so it can take over the midgame. The scholar prefers depth over even spread.",
 				"tags": ["明月", "海啸", "休养"]
+			}
+		],
+		"build_route_cards": [
+			{
+				"glyph": "守",
+				"title": "Ink Ward",
+				"subtitle": "Sustain / Hold",
+				"description": "Mirroring the source web route picks, this lane leans toward Wood, Water, Field, and Moon so the run can stabilize around sustain, safer paper arrays, and hold-your-ground control.",
+				"tags": ["木", "氵", "田", "月"],
+				"source_relics": ["Jade Slip", "Ink Gourd"],
+				"source_words": ["Sea of Forest", "Moonlit Orbit"]
+			},
+			{
+				"glyph": "雷",
+				"title": "Storm Lattice",
+				"subtitle": "Volley / Control",
+				"description": "This route tilts toward Rain, Field, Sun, and Water, extending the scholar's ranged tempo into steadier volleys and broader battlefield control.",
+				"tags": ["雨", "田", "日", "氵"],
+				"source_relics": ["Ink Bell", "Star Ladle"],
+				"source_words": ["Storm Front", "Radiant Clarity"]
 			}
 		],
 		"select_quotes": [
@@ -150,6 +176,26 @@ const HERO_EN := {
 				"title": "Inkstone Phrase",
 				"description": "Use the inkstone first on the route that protects you or opens lanes for melee. Do not wait for every line to be complete.",
 				"tags": ["休养", "忍心", "海啸"]
+			}
+		],
+		"build_route_cards": [
+			{
+				"glyph": "游",
+				"title": "Wayfarer Script",
+				"subtitle": "Mobility / Active",
+				"description": "This source route leans toward Human, Blade, Moon, and Heart so melee spacing, lane cuts, and active-skill cadence stay fluid while diving in.",
+				"tags": ["亻", "刂", "月", "心"],
+				"source_relics": ["Ancient Seal", "Star Ladle"],
+				"source_words": ["Moonlit Orbit", "Hardened Resolve"]
+			},
+			{
+				"glyph": "烈",
+				"title": "Ember Edge",
+				"subtitle": "Burst / Pressure",
+				"description": "It favors Fire, Blade, and Heart, pushing the run toward burst, close-range pressure, and heavier front-loaded cuts.",
+				"tags": ["火", "刂", "心", "炎 / 忍"],
+				"source_relics": ["Ink Bell", "Ancient Seal"],
+				"source_words": ["Hardened Resolve", "Radiant Clarity"]
 			}
 		],
 		"select_quotes": [
@@ -835,12 +881,12 @@ func _build_ui() -> void:
 	build_route_box.add_theme_constant_override("separation", _i(10))
 	build_route_margin.add_child(build_route_box)
 	build_route_box.add_child(_make_label("源稿构筑方向", 22, Color(1.0, 0.92, 0.8, 1.0)))
-	build_route_box.add_child(_make_label("把 web 原型里更偏向的构筑方向先压缩成菜单预览，开局前更容易决定这局想往哪边写。", 16, Color(0.88, 0.92, 0.96, 0.94)))
+	build_route_box.add_child(_make_label("把 web 原型里更偏向的构筑方向先压缩成菜单预览，连同源稿词技 / 遗物搭配一起放在开局前参考。", 16, Color(0.88, 0.92, 0.96, 0.94)))
 
 	detail_build_route_cards_root = VBoxContainer.new()
 	detail_build_route_cards_root.add_theme_constant_override("separation", _i(10))
 	build_route_box.add_child(detail_build_route_cards_root)
-	build_route_box.add_child(_make_label("这些卡片当前只负责前台提示，不会在 Godot 战斗里额外改掉落权重或自动加成。", 15, Color(0.82, 0.9, 1.0, 0.88)))
+	build_route_box.add_child(_make_label("当前只负责前台提示：源稿词技 / 遗物搭配还没有接回 Godot 战斗掉落或路线权重。", 15, Color(0.82, 0.9, 1.0, 0.88)))
 
 	var stats_panel := PanelContainer.new()
 	stats_panel.custom_minimum_size = _v(0.0, 312.0)
@@ -2034,7 +2080,47 @@ func _make_build_route_card(card: Dictionary, accent: Color, compact: bool = fal
 		for tag_variant in tags_variant:
 			tag_row.add_child(_make_tag(String(tag_variant), Color(accent.r * 0.16, accent.g * 0.16, accent.b * 0.2, 0.88), Color(0.98, 0.95, 0.9, 0.96)))
 
+	var source_relics_variant: Variant = card.get("source_relics", [])
+	if source_relics_variant is Array and not (source_relics_variant as Array).is_empty():
+		box.add_child(
+			_make_build_route_pairing_block(
+				"源稿遗物偏向",
+				source_relics_variant as Array,
+				Color(0.92, 0.7, 0.42, 0.14),
+				Color(1.0, 0.95, 0.88, 0.96),
+				compact
+			)
+		)
+
+	var source_words_variant: Variant = card.get("source_words", [])
+	if source_words_variant is Array and not (source_words_variant as Array).is_empty():
+		box.add_child(
+			_make_build_route_pairing_block(
+				"源稿词技偏向",
+				source_words_variant as Array,
+				Color(0.44, 0.68, 0.86, 0.14),
+				Color(0.92, 0.96, 1.0, 0.96),
+				compact
+			)
+		)
+
 	return panel
+
+
+func _make_build_route_pairing_block(title: String, entries: Array, fill_color: Color, text_color: Color, compact: bool = false) -> VBoxContainer:
+	var block := VBoxContainer.new()
+	block.add_theme_constant_override("separation", _i(6))
+	block.add_child(_make_label(title, 13 if compact else 14, Color(0.96, 0.82, 0.54, 0.9)))
+
+	var row := HFlowContainer.new()
+	row.add_theme_constant_override("h_separation", _i(8))
+	row.add_theme_constant_override("v_separation", _i(8))
+	block.add_child(row)
+
+	for entry_variant in entries:
+		row.add_child(_make_tag(String(entry_variant), fill_color, text_color))
+
+	return block
 
 
 func _populate_build_route_cards(root: VBoxContainer, hero: Dictionary, accent: Color, compact: bool = false) -> void:
@@ -2245,13 +2331,13 @@ func _make_character_archive_card(hero: Dictionary) -> PanelContainer:
 	build_route_box.add_theme_constant_override("separation", _i(10))
 	build_route_margin.add_child(build_route_box)
 	build_route_box.add_child(_make_label("源稿构筑方向", 18, Color(1.0, 0.92, 0.8, 1.0)))
-	build_route_box.add_child(_make_label("对照 web 原型现有的路线选择，把更贴近这名执笔者的构筑方向保留成前台参考。", 16, Color(0.88, 0.92, 0.96, 0.94)))
+	build_route_box.add_child(_make_label("对照 web 原型现有的路线选择，把更贴近这名执笔者的构筑方向与词技 / 遗物搭配保留成前台参考。", 16, Color(0.88, 0.92, 0.96, 0.94)))
 
 	var build_route_cards_root := VBoxContainer.new()
 	build_route_cards_root.add_theme_constant_override("separation", _i(10))
 	build_route_box.add_child(build_route_cards_root)
 	_populate_build_route_cards(build_route_cards_root, hero, accent)
-	build_route_box.add_child(_make_label("这些卡片当前不直接改战斗数值或掉落权重，只帮助对照 web 原型的构筑意图。", 15, Color(0.82, 0.9, 1.0, 0.88)))
+	build_route_box.add_child(_make_label("这些卡片当前不直接改战斗数值、掉落权重或路线偏向，只帮助对照 web 原型的构筑意图。", 15, Color(0.82, 0.9, 1.0, 0.88)))
 
 	var stats_panel := PanelContainer.new()
 	stats_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
