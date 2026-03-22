@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -euo pipefail
+export GH_TOKEN="$(security find-generic-password -a hanzihero-bot -s codex-gh-bot-token -w)"
+exec /Users/ash/hanzi/.tools/gh/bin/gh "$@"
