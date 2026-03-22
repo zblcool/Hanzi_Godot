@@ -161,6 +161,7 @@ const MENU_EN_TEXT := {
 	"已保存默认署名：%s": "Saved default alias: %s",
 	"已恢复设备默认侠名：%s": "Restored device default alias: %s",
 	"%.2f /秒": "%.2f/s",
+	"%.1f 秒冷却": "%.1fs cooldown",
 	"%s 执笔，落字入卷。": "%s enters the scroll and sets the first glyph."
 }
 var ui_font: Font
@@ -1900,7 +1901,7 @@ func _build_hero_active_skill_headline(hero: Dictionary) -> String:
 	if not name.is_empty():
 		parts.append(name)
 	if cooldown > 0.0:
-		parts.append("%.1fs cooldown" % cooldown if _is_english() else "%.1f 秒冷却" % cooldown)
+		parts.append(_localize_text(String(archive_content.get("active_skill_cooldown_format", "%.1f 秒冷却"))) % cooldown)
 	if parts.is_empty():
 		return _localize_text(String(archive_content.get("active_skill_missing_headline", "当前还没有可对照的源稿字技条目。")))
 	return " · ".join(parts)
@@ -2970,12 +2971,12 @@ func _refresh_selection(trigger_reaction: bool = false) -> void:
 	for tag_text in selected_data["tags"]:
 		detail_tags_row.add_child(_make_tag(String(tag_text), Color(accent.r * 0.16, accent.g * 0.16, accent.b * 0.2, 0.88), Color(0.98, 0.95, 0.9, 0.96)))
 
-	_set_stat_value("move_speed", float(selected_data["move_speed"]), 7.2, "%.1f")
-	_set_stat_value("max_health", float(selected_data["max_health"]), 140.0, "%.0f")
-	_set_stat_value("attack_damage", float(selected_data["attack_damage"]), 24.0, "%.0f")
-	_set_stat_value("attack_range", float(selected_data["attack_range"]), 15.5, "%.1f")
+	_set_stat_value("move_speed", float(selected_data["move_speed"]), 7.2, String(page_content.get("detail_stat_move_speed_value_format", "%.1f")))
+	_set_stat_value("max_health", float(selected_data["max_health"]), 140.0, String(page_content.get("detail_stat_max_health_value_format", "%.0f")))
+	_set_stat_value("attack_damage", float(selected_data["attack_damage"]), 24.0, String(page_content.get("detail_stat_attack_damage_value_format", "%.0f")))
+	_set_stat_value("attack_range", float(selected_data["attack_range"]), 15.5, String(page_content.get("detail_stat_attack_range_value_format", "%.1f")))
 	_set_stat_value("attack_rate", _get_hero_attack_rate(selected_data), 2.0, _localize_text(String(page_content.get("detail_stat_attack_rate_value_format", "%.2f /秒"))))
-	_set_stat_value("pickup_radius", float(selected_data.get("collect_radius", 0.0)), 4.5, "%.1f")
+	_set_stat_value("pickup_radius", float(selected_data.get("collect_radius", 0.0)), 4.5, String(page_content.get("detail_stat_pickup_value_format", "%.1f")))
 	if trigger_reaction:
 		_show_hero_reaction(selected_hero, selected_data)
 	elif detail_reaction_panel != null:
