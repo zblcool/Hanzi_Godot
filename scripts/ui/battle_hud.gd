@@ -1022,6 +1022,8 @@ func _refresh_event_log_views() -> void:
 			event_log_list.add_child(_make_event_log_row(placeholder_text, Color(0.52, 0.64, 0.76, 1.0), false, true))
 		if compact_event_list != null:
 			compact_event_list.add_child(_make_event_log_row(placeholder_text, Color(0.52, 0.64, 0.76, 1.0), true, true))
+		if compact_event_panel != null:
+			compact_event_panel.visible = compact_layout and not _should_hide_compact_event_panel()
 		return
 
 	if event_log_list != null:
@@ -1047,6 +1049,8 @@ func _refresh_event_log_views() -> void:
 					true
 				)
 			)
+	if compact_event_panel != null:
+		compact_event_panel.visible = compact_layout and not _should_hide_compact_event_panel()
 
 
 func _refresh_compact_skill_chips(cards: Array[Dictionary]) -> void:
@@ -1989,8 +1993,11 @@ func _refresh_layout() -> void:
 
 	compact_layout = _should_use_compact_layout()
 	var viewport_rect := get_viewport().get_visible_rect()
+	var viewport_size := viewport_rect.size
 	var safe_insets := _safe_area_insets()
-	var outer_padding := 16.0 if compact_layout else 22.0
+	var web_tight_layout := _should_use_web_tight_layout()
+	var micro_layout := _should_use_micro_layout()
+	var outer_padding := 12.0 if micro_layout else (16.0 if compact_layout else 22.0)
 	if safe_content_root != null:
 		safe_content_root.offset_left = float(safe_insets["left"]) + outer_padding
 		safe_content_root.offset_top = float(safe_insets["top"]) + outer_padding
@@ -2000,7 +2007,7 @@ func _refresh_layout() -> void:
 	if left_column != null:
 		left_column.visible = not compact_layout
 		left_column.position = Vector2.ZERO
-		left_column.size = Vector2(320.0, maxf(360.0, viewport_rect.size.y - 64.0))
+		left_column.size = Vector2(300.0 if micro_layout else 320.0, maxf(336.0 if micro_layout else 360.0, viewport_rect.size.y - (56.0 if micro_layout else 64.0)))
 	if event_log_panel != null:
 		event_log_panel.visible = not compact_layout
 	if compact_summary_panel != null:
@@ -2012,15 +2019,16 @@ func _refresh_layout() -> void:
 	if compact_skill_panel != null:
 		compact_skill_panel.visible = compact_layout
 	if compact_event_panel != null:
-		compact_event_panel.visible = compact_layout
+		compact_event_panel.visible = compact_layout and not _should_hide_compact_event_panel()
 
-	var viewport_size := viewport_rect.size
-	var stack_width := 304.0 if compact_layout else 340.0
+	var stack_width := 288.0 if compact_layout else 340.0
 	if compact_layout:
-		stack_width = clamp((viewport_size.x - float(safe_insets["left"]) - float(safe_insets["right"])) * 0.34, 228.0, 296.0)
+		var usable_width := viewport_size.x - float(safe_insets["left"]) - float(safe_insets["right"])
+		var compact_ratio := 0.3 if micro_layout else (0.32 if web_tight_layout else 0.34)
+		stack_width = clamp(usable_width * compact_ratio, 196.0 if micro_layout else (212.0 if web_tight_layout else 228.0), 244.0 if micro_layout else (272.0 if web_tight_layout else 296.0))
 	var right_margin := 0.0
 	var top_margin := 0.0
-	var stack_top := 62.0 if compact_layout else 72.0
+	var stack_top := 54.0 if micro_layout else (62.0 if compact_layout else 72.0)
 	if top_right_stack != null:
 		top_right_stack.offset_left = -stack_width - right_margin
 		top_right_stack.offset_right = -right_margin
@@ -2028,81 +2036,106 @@ func _refresh_layout() -> void:
 		top_right_stack.offset_bottom = -10.0
 
 	if compact_summary_panel != null:
-		compact_summary_panel.custom_minimum_size = Vector2(stack_width, 218.0)
+		compact_summary_panel.custom_minimum_size = Vector2(stack_width, 182.0 if micro_layout else (198.0 if web_tight_layout else 218.0))
 	if callout_panel != null:
-		callout_panel.custom_minimum_size = Vector2(stack_width, 92.0 if compact_layout else 88.0)
+		callout_panel.custom_minimum_size = Vector2(stack_width, 78.0 if micro_layout else (84.0 if compact_layout else 88.0))
 	if objective_panel != null:
-		objective_panel.custom_minimum_size = Vector2(stack_width, 230.0)
+		objective_panel.custom_minimum_size = Vector2(stack_width, 204.0 if web_tight_layout else 230.0)
 	if skills_panel != null:
 		skills_panel.custom_minimum_size = Vector2(
 			stack_width,
-			maxf(220.0, viewport_size.y - 240.0)
+			maxf(196.0 if micro_layout else 220.0, viewport_size.y - (196.0 if micro_layout else (220.0 if web_tight_layout else 240.0)))
 		)
 	if event_log_panel != null:
-		event_log_panel.custom_minimum_size = Vector2(320.0, clamp(viewport_size.y * 0.24, 176.0, 228.0))
+		event_log_panel.custom_minimum_size = Vector2(300.0 if micro_layout else 320.0, clamp(viewport_size.y * (0.2 if web_tight_layout else 0.24), 148.0 if micro_layout else 176.0, 204.0 if web_tight_layout else 228.0))
 	if compact_skill_panel != null:
-		var side_reserve: float = clampf((viewport_size.x - float(safe_insets["left"]) - float(safe_insets["right"])) * 0.2, 134.0, 260.0)
+		var skill_usable_width := viewport_size.x - float(safe_insets["left"]) - float(safe_insets["right"])
+		var side_reserve: float = clampf(skill_usable_width * (0.12 if micro_layout else (0.18 if web_tight_layout else 0.2)), 104.0 if micro_layout else 134.0, 200.0 if micro_layout else (240.0 if web_tight_layout else 260.0))
 		compact_skill_panel.offset_left = side_reserve
 		compact_skill_panel.offset_right = -side_reserve
-		compact_skill_panel.offset_bottom = -96.0
-		compact_skill_panel.offset_top = compact_skill_panel.offset_bottom - 108.0
+		compact_skill_panel.offset_bottom = -82.0 if micro_layout else -96.0
+		compact_skill_panel.offset_top = compact_skill_panel.offset_bottom - (92.0 if micro_layout else 108.0)
 	if compact_event_panel != null:
-		var event_width := clampf((viewport_size.x - float(safe_insets["left"]) - float(safe_insets["right"])) * 0.26, 220.0, 272.0)
-		compact_event_panel.custom_minimum_size = Vector2(event_width, 132.0)
+		var event_usable_width := viewport_size.x - float(safe_insets["left"]) - float(safe_insets["right"])
+		var event_width := clampf(event_usable_width * (0.24 if micro_layout else 0.26), 188.0 if micro_layout else 220.0, 232.0 if micro_layout else (260.0 if web_tight_layout else 272.0))
+		var event_height := 110.0 if micro_layout else 132.0
+		compact_event_panel.custom_minimum_size = Vector2(event_width, event_height)
 		compact_event_panel.offset_left = 0.0
 		compact_event_panel.offset_right = event_width
-		compact_event_panel.offset_top = 58.0
-		compact_event_panel.offset_bottom = compact_event_panel.offset_top + 132.0
+		compact_event_panel.offset_top = 50.0 if micro_layout else 58.0
+		compact_event_panel.offset_bottom = compact_event_panel.offset_top + event_height
 
-	var pill_height := 48.0 if compact_layout else 52.0
+	var pill_height := 42.0 if micro_layout else (48.0 if compact_layout else 52.0)
+	var pill_font_size := 15 if micro_layout else (16 if compact_layout else 17)
 	if map_button != null:
-		map_button.custom_minimum_size = Vector2(82.0 if compact_layout else 94.0, pill_height)
+		map_button.custom_minimum_size = Vector2(72.0 if micro_layout else (82.0 if compact_layout else 94.0), pill_height)
+		map_button.add_theme_font_size_override("font_size", pill_font_size)
 	if pause_button != null:
-		pause_button.custom_minimum_size = Vector2(82.0 if compact_layout else 94.0, pill_height)
+		pause_button.custom_minimum_size = Vector2(72.0 if micro_layout else (82.0 if compact_layout else 94.0), pill_height)
+		pause_button.add_theme_font_size_override("font_size", pill_font_size)
 	if test_next_wave_button != null:
-		test_next_wave_button.custom_minimum_size = Vector2(94.0 if compact_layout else 112.0, pill_height)
+		test_next_wave_button.custom_minimum_size = Vector2(86.0 if micro_layout else (94.0 if compact_layout else 112.0), pill_height)
+		test_next_wave_button.add_theme_font_size_override("font_size", pill_font_size)
 	if fps_panel != null:
-		fps_panel.custom_minimum_size = Vector2(88.0 if compact_layout else 116.0, pill_height)
+		fps_panel.custom_minimum_size = Vector2(74.0 if micro_layout else (88.0 if compact_layout else 116.0), pill_height)
+	if fps_value_label != null:
+		_set_label_font_size(fps_value_label, pill_font_size)
 	if top_pills != null:
-		var pill_width := maxf(top_pills.get_combined_minimum_size().x, 184.0)
+		top_pills.add_theme_constant_override("separation", 8 if micro_layout else 12)
+		var pill_width := maxf(top_pills.get_combined_minimum_size().x, 160.0 if micro_layout else 184.0)
 		top_pills.offset_left = -pill_width - right_margin
 		top_pills.offset_right = -right_margin
 		top_pills.offset_top = top_margin
 		top_pills.offset_bottom = top_margin + pill_height
 
 	if boss_panel != null:
-		var boss_width := maxf(260.0, minf(520.0, viewport_size.x - (140.0 if compact_layout else 660.0)))
-		var boss_margin := maxf(70.0, (viewport_size.x - boss_width) * 0.5)
+		var boss_width := maxf(220.0 if micro_layout else 260.0, minf(460.0 if web_tight_layout else 520.0, viewport_size.x - (84.0 if micro_layout else (140.0 if compact_layout else 660.0))))
+		var boss_margin := maxf(28.0 if micro_layout else 70.0, (viewport_size.x - boss_width) * 0.5)
 		boss_panel.offset_left = boss_margin
 		boss_panel.offset_right = -boss_margin
-		boss_panel.offset_top = 118.0 if compact_layout else 154.0
+		boss_panel.offset_top = 102.0 if micro_layout else (118.0 if compact_layout else 154.0)
 		boss_panel.offset_bottom = boss_panel.offset_top + 92.0
 
 	if banner_label != null:
-		var banner_margin := 180.0 if compact_layout else 420.0
+		var banner_margin := 116.0 if micro_layout else (180.0 if compact_layout else 420.0)
 		banner_label.offset_left = banner_margin
 		banner_label.offset_right = -banner_margin
-		banner_label.offset_top = 82.0 if compact_layout else 86.0
+		banner_label.offset_top = 72.0 if micro_layout else (82.0 if compact_layout else 86.0)
 		banner_label.offset_bottom = banner_label.offset_top + 64.0
 
 	if reveal_panel != null:
-		var reveal_width := minf(viewport_size.x - 120.0, 720.0 if not compact_layout else 600.0)
+		var reveal_width := minf(viewport_size.x - (72.0 if micro_layout else 120.0), 520.0 if micro_layout else (600.0 if compact_layout else 720.0))
 		var reveal_half_width := reveal_width * 0.5
 		reveal_panel.offset_left = -reveal_half_width
 		reveal_panel.offset_right = reveal_half_width
-		reveal_panel.offset_top = -146.0 if compact_layout else -164.0
-		reveal_panel.offset_bottom = -30.0 if compact_layout else -16.0
+		reveal_panel.offset_top = -124.0 if micro_layout else (-146.0 if compact_layout else -164.0)
+		reveal_panel.offset_bottom = -20.0 if micro_layout else (-30.0 if compact_layout else -16.0)
 
 	if soundtrack_toast != null:
-		var toast_width := 280.0
+		var toast_width := 236.0 if micro_layout else 280.0
 		soundtrack_toast.offset_left = -toast_width
 		soundtrack_toast.offset_right = 0.0
 		soundtrack_toast.offset_top = stack_top + 6.0
 		soundtrack_toast.offset_bottom = soundtrack_toast.offset_top + 92.0
 
+	_set_label_font_size(compact_health_label, 15 if micro_layout else 17)
+	_set_label_font_size(compact_progress_label, 15 if micro_layout else 17)
+	_set_label_font_size(compact_status_label, 14 if micro_layout else 16)
+	_set_label_font_size(compact_radicals_label, 13 if micro_layout else 15)
+	_set_label_font_size(compact_tip_label, 13 if micro_layout else 15)
+	_set_label_font_size(compact_route_label, 12 if micro_layout else 13)
+	_set_label_font_size(callout_title_label, 13 if micro_layout else 14)
+	_set_label_font_size(callout_text_label, 14 if micro_layout else 16)
+	_set_label_font_size(tip_label, 16 if web_tight_layout else 18)
+	_set_label_font_size(objective_route_title_label, 16 if web_tight_layout else 18)
+	_set_label_font_size(objective_route_detail_label, 14 if web_tight_layout else 15)
+	_set_label_font_size(objective_stage_label, 13 if web_tight_layout else 14)
+
 
 func _should_use_compact_layout() -> bool:
 	var viewport_size := get_viewport().get_visible_rect().size
+	if _is_web_platform():
+		return viewport_size.x <= 1680.0 or viewport_size.y <= 920.0
 	return (
 		viewport_size.x <= 1500.0 or
 		viewport_size.y <= 820.0 or
@@ -2113,6 +2146,28 @@ func _should_use_compact_layout() -> bool:
 		OS.has_feature("web_android") or
 		OS.has_feature("web_ios")
 	)
+
+
+func _is_web_platform() -> bool:
+	return OS.has_feature("web") or OS.has_feature("web_android") or OS.has_feature("web_ios")
+
+
+func _should_use_web_tight_layout() -> bool:
+	if not _is_web_platform():
+		return false
+	var viewport_size := get_viewport().get_visible_rect().size
+	return viewport_size.x <= 1366.0 or viewport_size.y <= 760.0
+
+
+func _should_use_micro_layout() -> bool:
+	var viewport_size := get_viewport().get_visible_rect().size
+	if _is_web_platform():
+		return viewport_size.x <= 1180.0 or viewport_size.y <= 700.0
+	return viewport_size.x <= 1080.0 or viewport_size.y <= 640.0
+
+
+func _should_hide_compact_event_panel() -> bool:
+	return _should_use_micro_layout() and event_log_entries.is_empty()
 
 
 func _safe_area_insets() -> Dictionary:
@@ -2722,6 +2777,12 @@ func _make_bar(fill_color: Color) -> ProgressBar:
 	bar.add_theme_stylebox_override("background", _make_fill_style(Color(0.14, 0.16, 0.2, 0.72), 10))
 	bar.add_theme_stylebox_override("fill", _make_fill_style(fill_color, 10))
 	return bar
+
+
+func _set_label_font_size(label: Label, font_size: int) -> void:
+	if label == null or label.label_settings == null:
+		return
+	label.label_settings.font_size = font_size
 
 
 func _make_radical_chip(radical: String, amount: int, override_color: Color = Color(-1.0, -1.0, -1.0, -1.0), override_text: String = "") -> PanelContainer:
