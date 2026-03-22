@@ -4,6 +4,7 @@ const CJKFont := preload("res://scripts/core/cjk_font.gd")
 const ENEMY_SURFACE_SHADER := preload("res://assets/shaders/enemy_surface.gdshader")
 
 signal defeated(world_position: Vector3, enemy_type: String)
+signal damaged(world_position: Vector3, enemy_type: String, hit_radius: float)
 signal request_hazard(target_position: Vector3, radius: float, warning_time: float, active_time: float, damage: float, tint: Color, label: String)
 signal request_line_hazard(origin: Vector3, direction: Vector3, length: float, width: float, warning_time: float, active_time: float, damage: float, tint: Color, label: String, stun_time: float)
 signal request_projectile(origin: Vector3, direction: Vector3, speed: float, damage: float, glyph: String, tint: Color, life_time: float, hit_radius: float, stun_time: float)
@@ -147,6 +148,7 @@ func take_damage(amount: float) -> void:
 		return
 	health = max(0.0, health - amount)
 	hit_flash_time = 0.14
+	damaged.emit(global_position, enemy_type, hit_radius)
 	if health <= 0.0:
 		is_dead = true
 		defeated.emit(global_position, enemy_type)

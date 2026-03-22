@@ -96,8 +96,9 @@ Status legend:
 
 - `[done]` Tree fade-through, bush anti-abuse lockout, banners, and strong telegraph readability. Notes: Godot already carries several of the source combat-polish beats into 3D.
 - `[done]` Lingering slash and hit afterimages. Notes: hanziHero lets melee cuts and combat hits leave short-lived glyph echoes in the air; Godot now adds extra `刂 / 斩` slash trails for close-range swings plus small player-impact afterimages so hits no longer read as only one-frame rings.
+- `[done]` First procedural combat SFX slice for battle parity. Notes: Godot battle now synthesizes distinct scholar-shot / sword-slash cues, separate `休 / 海 / 忍 / 雷 / 炎` skill hits, enemy impact thuds, pickup chimes, and wave / realm-shift / boss stingers through `scripts/core/battle_audio.gd`, closing the silent-combat gap without shipping external audio assets.
 - `[pending]` Procedural music playback and current-track feedback. Notes: Godot now has the HUD-side track card and toast, but actual procedural playback / loop rotation is still missing.
-- `[pending]` Higher-end hit/audio differentiation. Notes: the first lingering afterimage pass for melee slashes and player-hit bursts is now in, but hanziHero still has deeper weapon/skill sound identity and broader impact layering than the current Godot build.
+- `[in progress]` Higher-end hit/audio differentiation follow-through. Notes: the first synth pass now covers attacks, impacts, pickups, and marquee battle beats, but enemy telegraph sounds, broader hurt / death variation, and deeper layering across future word-skill branches are still missing.
 - `[done]` Themeable launcher/menu presentation. Notes: Godot launcher, about overlay, and Zihai menu now share the remembered `夜墨 / 纸墨` presentation; battle/HUD localization and broader downstream parity remain tracked separately.
 - `[in progress]` More stage spectacle for big unlocks and transitions. Notes: Godot battle HUD now adds larger centered reveal cards for new glyphs, phrase arts, `字境相变`, boss arrivals, and chapter-secured beats, but late-run dungeon-room transitions and other flourishes can still be pushed further.
 

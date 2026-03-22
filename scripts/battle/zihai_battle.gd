@@ -13,6 +13,7 @@ const INKSTONE_SCENE := preload("res://scenes/entities/inkstone_altar.tscn")
 const TREASURE_CHEST_SCENE := preload("res://scenes/entities/treasure_chest.tscn")
 const BATTLE_HUD_SCENE := preload("res://scenes/ui/battle_hud.tscn")
 const TOUCH_CONTROLS_OVERLAY := preload("res://scripts/ui/touch_controls_overlay.gd")
+const BattleAudio := preload("res://scripts/core/battle_audio.gd")
 const CJKFont := preload("res://scripts/core/cjk_font.gd")
 const HanziLocalization := preload("res://scripts/core/hanzi_localization.gd")
 const GROUND_SURFACE_SHADER := preload("res://assets/shaders/ink_ground.gdshader")
@@ -383,6 +384,7 @@ var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 var player = null
 var hud = null
 var touch_controls = null
+var battle_audio = null
 
 var elapsed_time: float = 0.0
 var spawn_timer: float = 0.0
@@ -447,6 +449,7 @@ var low_health_callout_ready := true
 var first_recipe_callout_shown := false
 var first_word_callout_shown := false
 var elite_taunt_cooldown := 0.0
+var last_player_health_value: float = 0.0
 
 var level: int = 1
 var experience: int = 0
@@ -952,6 +955,8 @@ func _spawn_phrase_guardian(phrase_event: Dictionary) -> void:
 	if guardian.has_method("set_detail_visible"):
 		guardian.set_detail_visible(_should_show_enemy_detail(guardian))
 	guardian.defeated.connect(_on_enemy_defeated)
+	if guardian.has_signal("damaged"):
+		guardian.damaged.connect(_on_enemy_damaged)
 	guardian.defeated.connect(Callable(self, "_on_phrase_guardian_defeated").bind(String(phrase_event.get("id", ""))))
 	guardian.request_hazard.connect(_on_enemy_request_hazard)
 	guardian.request_line_hazard.connect(_on_enemy_request_line_hazard)
@@ -1150,8 +1155,10 @@ func _ready() -> void:
 	_setup_input_map()
 	_setup_environment()
 	_build_ground()
+	_spawn_battle_audio()
 	_spawn_player()
 	_apply_intro_preset()
+	last_player_health_value = player.health if is_instance_valid(player) else 0.0
 	current_chamber_id = _chamber_id_for_completed_bosses(int(Session.chapter_progress.get("completed_bosses", 0)))
 	_setup_phrase_events()
 	_spawn_props()
@@ -1254,6 +1261,42 @@ func _process(delta: float) -> void:
 
 func _exit_tree() -> void:
 	Engine.time_scale = 1.0
+
+
+func _spawn_battle_audio() -> void:
+	battle_audio = BattleAudio.new()
+	battle_audio.name = "BattleAudio"
+	add_child(battle_audio)
+
+
+func _play_attack_sfx(kind: String, intensity: float = 1.0) -> void:
+	if battle_audio != null and battle_audio.has_method("play_attack"):
+		battle_audio.play_attack(kind, intensity)
+
+
+func _play_enemy_hit_sfx(enemy_type: String, hit_radius: float) -> void:
+	if battle_audio != null and battle_audio.has_method("play_enemy_hit"):
+		battle_audio.play_enemy_hit(enemy_type, hit_radius)
+
+
+func _play_enemy_defeat_sfx(enemy_type: String) -> void:
+	if battle_audio != null and battle_audio.has_method("play_enemy_defeat"):
+		battle_audio.play_enemy_defeat(enemy_type)
+
+
+func _play_pickup_sfx(supply_id: String, amount: float = 0.0) -> void:
+	if battle_audio != null and battle_audio.has_method("play_pickup"):
+		battle_audio.play_pickup(supply_id, amount)
+
+
+func _play_player_hurt_sfx(severity: float = 1.0) -> void:
+	if battle_audio != null and battle_audio.has_method("play_player_hurt"):
+		battle_audio.play_player_hurt(severity)
+
+
+func _play_cue_sfx(kind: String, intensity: float = 1.0) -> void:
+	if battle_audio != null and battle_audio.has_method("play_cue"):
+		battle_audio.play_cue(kind, intensity)
 
 
 func _spawn_player() -> void:
@@ -1528,6 +1571,8 @@ func _spawn_enemy() -> void:
 	if enemy.has_method("set_detail_visible"):
 		enemy.set_detail_visible(_should_show_enemy_detail(enemy))
 	enemy.defeated.connect(_on_enemy_defeated)
+	if enemy.has_signal("damaged"):
+		enemy.damaged.connect(_on_enemy_damaged)
 	enemy.request_hazard.connect(_on_enemy_request_hazard)
 	enemy.request_line_hazard.connect(_on_enemy_request_line_hazard)
 	enemy.request_projectile.connect(_on_enemy_request_projectile)
@@ -1553,6 +1598,8 @@ func _spawn_boss(stage_index: int) -> void:
 	if boss.has_method("set_detail_visible"):
 		boss.set_detail_visible(_should_show_enemy_detail(boss))
 	boss.defeated.connect(_on_enemy_defeated)
+	if boss.has_signal("damaged"):
+		boss.damaged.connect(_on_enemy_damaged)
 	boss.request_hazard.connect(_on_enemy_request_hazard)
 	boss.request_line_hazard.connect(_on_enemy_request_line_hazard)
 	boss.request_projectile.connect(_on_enemy_request_projectile)
@@ -1575,6 +1622,7 @@ func _spawn_boss(stage_index: int) -> void:
 	_log_battle_event(("Boss Appears · %s" if _is_english() else "卷主现身 · %s") % String(boss.enemy_name), tint)
 	_show_enemy_taunt(String(boss.enemy_name), "boss", tint, 3.1)
 	_set_soundtrack("fireflyFootpath", "卷主压阵", true, true)
+	_play_cue_sfx("boss_appear", 1.08)
 	_spawn_wave_effect(boss.global_position, 6.2, tint, String(boss.glyph))
 	_spawn_boss_entrance_effect(boss.global_position, String(boss.glyph), tint)
 
@@ -1879,10 +1927,23 @@ func _on_player_fire_projectile(origin: Vector3, direction: Vector3, damage: flo
 	bolt.configure(origin, direction, damage, speed, glyph, tint)
 	bolt.impact.connect(_on_player_projectile_impact)
 	projectiles_root.add_child(bolt)
+	if glyph == "炎":
+		_play_attack_sfx("flame_burst", 1.0 + damage / 28.0)
+	elif glyph == "月" or glyph == "日":
+		_play_attack_sfx("bright_volley", 0.9 + damage / 30.0)
+	else:
+		_play_attack_sfx("scholar_shot", 0.92 + speed / 28.0)
 
 
 func _on_player_request_wave(origin: Vector3, radius: float, damage: float, tint: Color, label: String) -> void:
 	_spawn_wave_effect(origin, radius, tint, label)
+	match label:
+		"休":
+			_play_attack_sfx("rest_wave", 1.0 + radius / 8.0)
+		"忍":
+			_play_attack_sfx("resolve_guard", 1.0 + damage / 28.0)
+		_:
+			_play_attack_sfx("sea_wave", 0.96 + radius / 10.0)
 	for node in get_tree().get_nodes_in_group("enemy"):
 		if not is_instance_valid(node) or node.is_queued_for_deletion():
 			continue
@@ -1897,6 +1958,10 @@ func _on_player_request_wave(origin: Vector3, radius: float, damage: float, tint
 func _on_player_request_slash(origin: Vector3, forward: Vector3, radius: float, damage: float, arc_dot: float, tint: Color, label: String) -> void:
 	_spawn_wave_effect(origin + forward * radius * 0.35, radius * 0.7, tint, label)
 	_spawn_slash_afterimages(origin, forward, radius, tint, label)
+	if label == "忍":
+		_play_attack_sfx("resolve_guard", 1.0 + damage / 30.0)
+	else:
+		_play_attack_sfx("sword_slash", 0.96 + radius / 8.0)
 	for node in get_tree().get_nodes_in_group("enemy"):
 		if not is_instance_valid(node) or node.is_queued_for_deletion():
 			continue
@@ -1912,6 +1977,7 @@ func _on_player_request_slash(origin: Vector3, forward: Vector3, radius: float, 
 
 
 func _on_player_request_thunder(target_count: int, damage: float, splash_radius: float, splash_damage: float, tint: Color, label: String) -> void:
+	_play_attack_sfx("thunder_strike", 1.0 + float(target_count) * 0.05 + splash_radius * 0.08)
 	var targets: Array = _collect_nearest_enemies(target_count)
 	for target in targets:
 		if not is_instance_valid(target) or target.is_queued_for_deletion():
@@ -1960,6 +2026,7 @@ func _damage_enemies_in_radius(origin: Vector3, radius: float, damage: float, ex
 func _on_enemy_defeated(world_position: Vector3, enemy_type: String) -> void:
 	kills += 1
 	enemy_kills_by_type[enemy_type] = int(enemy_kills_by_type.get(enemy_type, 0)) + 1
+	_play_enemy_defeat_sfx(enemy_type)
 	_spawn_enemy_death_effect(world_position, enemy_type)
 	_spawn_xp_orb(world_position, _xp_value_for_enemy(enemy_type))
 	_spawn_supply_drops(world_position, enemy_type)
@@ -1969,6 +2036,10 @@ func _on_enemy_defeated(world_position: Vector3, enemy_type: String) -> void:
 		_on_boss_defeated(world_position)
 	if kills % 14 == 0:
 		hud.show_banner("The Tide Surges Higher" if _is_english() else "字潮再涨", Color(0.95, 0.62, 0.36, 1.0), 1.7)
+
+
+func _on_enemy_damaged(_world_position: Vector3, enemy_type: String, hit_radius: float) -> void:
+	_play_enemy_hit_sfx(enemy_type, hit_radius)
 
 
 func _xp_value_for_enemy(enemy_type: String) -> int:
@@ -2267,6 +2338,7 @@ func _on_supply_collected(world_position: Vector3, supply_id: String, amount: fl
 
 	if not event_text.is_empty():
 		_log_battle_event(event_text, tint)
+	_play_pickup_sfx(supply_id, amount)
 	_spawn_wave_effect(world_position, pulse_radius, tint, pulse_label)
 	_sync_hud()
 
@@ -2907,6 +2979,9 @@ func _enemy_effect_glyph(enemy_type: String) -> String:
 
 func _on_player_health_changed(current: float, maximum: float) -> void:
 	hud.set_health(current, maximum)
+	if current < last_player_health_value:
+		_play_player_hurt_sfx((last_player_health_value - current) / maxf(maximum, 1.0))
+	last_player_health_value = current
 	var health_ratio: float = current / maxf(maximum, 0.001)
 	if health_ratio <= 0.35 and low_health_callout_ready:
 		low_health_callout_ready = false
@@ -3101,6 +3176,7 @@ func _start_opening_sequence() -> void:
 		soundtrack_track = "fireflyFootpath"
 		soundtrack_cue = "试阵开卷"
 	_set_soundtrack(soundtrack_track, soundtrack_cue, true, true)
+	_play_cue_sfx("run_start", 1.0)
 	_log_battle_event("%s · %s %s" % [intro_title, String(localized_hero["name"]), "enters the scroll" if _is_english() else "入卷"], accent)
 	_spawn_wave_effect(player.global_position, 3.3, accent, String(hero_data["glyph"]))
 	_spawn_intro_symbols(String(hero_data["glyph"]), accent)
@@ -3148,6 +3224,7 @@ func _jump_to_next_wave_for_test() -> void:
 func _on_boss_defeated(world_position: Vector3) -> void:
 	var completed_bosses: int = int(Session.chapter_progress.get("completed_bosses", 0)) + 1
 	Session.chapter_progress["completed_bosses"] = completed_bosses
+	_play_cue_sfx("boss_defeat", 1.0)
 	if chamber_modifier_expires_after_bosses > 0 and completed_bosses >= chamber_modifier_expires_after_bosses:
 		_clear_chamber_modifier()
 	if completed_bosses >= BOSS_SPAWN_TIMES.size():
@@ -3260,6 +3337,7 @@ func _set_field_phase_for_wave(wave: int, announce: bool = true) -> void:
 	var stamp_position: Vector3 = _field_phase_stamp_position()
 	_spawn_field_phase_stamp(stamp_position, next_glyph, next_theme)
 	_spawn_wave_effect(stamp_position, 5.1, Color(next_theme.get("accent", Color(1.0, 1.0, 1.0, 1.0))), next_glyph)
+	_play_cue_sfx("realm_shift", 1.0)
 	if hud != null:
 		var localized_theme := _localized_field_phase_theme(next_theme)
 		hud.show_banner(("Realm Shift · %s" if _is_english() else "字境相变 · %s") % String(localized_theme.get("name", "Realm" if _is_english() else "字境")), Color(next_theme.get("accent", Color(1.0, 1.0, 1.0, 1.0))), 2.6)
@@ -3426,11 +3504,13 @@ func _on_threat_level_advanced(new_threat_level: int) -> void:
 		_log_battle_event(("Wave %d · Major Surge" if _is_english() else "第 %d 波 · 大潮压境") % new_threat_level, tint)
 		spawn_timer = min(spawn_timer, 0.16)
 		_set_soundtrack("fireflyFootpath", "大潮压境", true, true)
+		_play_cue_sfx("wave_major", 1.0 + float(new_threat_level) * 0.02)
 	else:
 		hud.show_banner(("Glyph Tide Wave %d" if _is_english() else "字潮第 %d 波") % new_threat_level, tint, 1.85)
 		_log_battle_event(("Wave %d · Tide Advances" if _is_english() else "第 %d 波 · 字潮推进") % new_threat_level, tint)
 		if new_threat_level == 2:
 			_set_soundtrack("fireflyFootpath", "字潮提速", true, true)
+		_play_cue_sfx("wave_step", 0.92 + float(new_threat_level) * 0.02)
 	hud.set_tip(_threat_level_tip(new_threat_level))
 	_spawn_wave_effect(player.global_position, (6.4 if _is_big_wave(new_threat_level) else 4.6) + float(new_threat_level) * 0.45, tint, wave_glyph)
 	_spawn_intro_symbols(wave_glyph, tint)
