@@ -291,6 +291,24 @@ const CHAMBER_LAYOUTS := {
 		"utility_pickups": [
 			{"position": Vector3(-8.5, 0.0, 2.5), "supply_id": "magnet"},
 			{"position": Vector3(13.5, 0.0, -5.5), "supply_id": "fury"}
+		],
+		"phrase_events": [
+			{
+				"id": "wind_rain_same_boat",
+				"text": "风雨同舟",
+				"english_text": "Same Boat Through Storms",
+				"glyph": "舟",
+				"position": Vector3(10.5, 0.0, -11.0),
+				"guardian_position": Vector3(6.8, 0.0, -9.2),
+				"guardian_glyph": "舟",
+				"guardian_name": "风雨守舟",
+				"english_guardian_name": "Sentence Guardian",
+				"tint": Color(0.76, 0.86, 1.0, 1.0),
+				"guardian_tint": Color(0.58, 0.74, 0.96, 1.0),
+				"reward_type": "heal",
+				"reward_amount": 18.0,
+				"discover_radius": 6.2
+			}
 		]
 	}
 }
@@ -367,6 +385,7 @@ var current_soundtrack_cue: String = ""
 var health_potion_drop_meter: float = 0.0
 var enemy_detail_refresh_timer: float = 0.0
 var callout_history: Dictionary = {}
+var phrase_events: Array[Dictionary] = []
 var low_health_callout_ready := true
 var first_recipe_callout_shown := false
 var first_word_callout_shown := false
@@ -699,6 +718,201 @@ func _advance_room_objective(pickup_ref, tint: Color) -> bool:
 	return true
 
 
+func _setup_phrase_events() -> void:
+	phrase_events.clear()
+	for chamber_id_variant in CHAMBER_ORDER:
+		var chamber_id := String(chamber_id_variant)
+		var chamber_variant: Variant = CHAMBER_LAYOUTS.get(chamber_id, {})
+		if not (chamber_variant is Dictionary):
+			continue
+		var chamber_data := chamber_variant as Dictionary
+		var chamber_phrase_events: Array = chamber_data.get("phrase_events", [])
+		for event_variant in chamber_phrase_events:
+			if not (event_variant is Dictionary):
+				continue
+			var phrase_event := (event_variant as Dictionary).duplicate(true)
+			phrase_event["chamber_id"] = chamber_id
+			phrase_event["discovered"] = false
+			phrase_event["guardian_spawned"] = false
+			phrase_event["guardian_defeated"] = false
+			phrase_event["reward_granted"] = false
+			phrase_events.append(phrase_event)
+
+
+func _phrase_events_for_chamber(chamber_id: String = "") -> Array[Dictionary]:
+	var chamber_events: Array[Dictionary] = []
+	var target_chamber := current_chamber_id if chamber_id.is_empty() else chamber_id
+	for phrase_event in phrase_events:
+		if String(phrase_event.get("chamber_id", "")) == target_chamber:
+			chamber_events.append(phrase_event)
+	return chamber_events
+
+
+func _find_phrase_event(event_id: String) -> Dictionary:
+	for phrase_event in phrase_events:
+		if String(phrase_event.get("id", "")) == event_id:
+			return phrase_event
+	return {}
+
+
+func _phrase_event_display_text(phrase_event: Dictionary) -> String:
+	return String(phrase_event.get("english_text" if _is_english() else "text", phrase_event.get("text", "")))
+
+
+func _phrase_event_reward_copy(phrase_event: Dictionary) -> String:
+	var reward_type := String(phrase_event.get("reward_type", "heal"))
+	var reward_amount := int(round(float(phrase_event.get("reward_amount", 0.0))))
+	match reward_type:
+		"heal":
+			return ("restore %d vitality" if _is_english() else "回复 %d 点气血") % reward_amount
+		"xp":
+			return ("gain %d ink" if _is_english() else "获得 %d 点字墨") % reward_amount
+		"radical":
+			var reward_radical := String(phrase_event.get("reward_radical", "日"))
+			return ("gain radical %s" if _is_english() else "获得偏旁「%s」") % reward_radical
+		_:
+			return "claim the sentence reward" if _is_english() else "领取句阵赏赐"
+
+
+func _update_phrase_events() -> void:
+	if not is_instance_valid(player):
+		return
+
+	for phrase_event in _phrase_events_for_chamber():
+		if bool(phrase_event.get("reward_granted", false)) or bool(phrase_event.get("guardian_defeated", false)):
+			continue
+		if bool(phrase_event.get("discovered", false)):
+			if not bool(phrase_event.get("guardian_spawned", false)):
+				_spawn_phrase_guardian(phrase_event)
+			continue
+
+		var event_position: Vector3 = phrase_event.get("position", Vector3.ZERO)
+		var discover_radius := float(phrase_event.get("discover_radius", 6.2))
+		if player.global_position.distance_to(event_position) > discover_radius:
+			continue
+
+		phrase_event["discovered"] = true
+		var accent := Color(phrase_event.get("tint", Color(0.76, 0.86, 1.0, 1.0)))
+		var phrase_text := _phrase_event_display_text(phrase_event)
+		var reward_copy := _phrase_event_reward_copy(phrase_event)
+		if hud != null:
+			hud.show_banner(
+				("Sentence Guardian · %s" if _is_english() else "句阵守卫 · %s") % phrase_text,
+				accent,
+				1.7
+			)
+			hud.show_reveal(
+				"Guarded Phrase" if _is_english() else "守句现身",
+				phrase_text,
+				("Defeat the guardian to %s." if _is_english() else "击败守句魁首，即可%s。") % reward_copy,
+				accent,
+				String(phrase_event.get("guardian_glyph", phrase_event.get("glyph", "句"))),
+				2.8
+			)
+			hud.set_tip(
+				("The guarded phrase `%s` has surfaced in this chamber. Defeat its guardian to %s." if _is_english() else "这段房间里已经显出「%s」句阵。击败守句魁首后，就能%s。")
+				% [phrase_text, reward_copy]
+			)
+		_log_battle_event(("Phrase Guardian · %s" if _is_english() else "句阵守卫 · %s") % phrase_text, accent)
+		_spawn_phrase_guardian(phrase_event)
+
+
+func _spawn_phrase_guardian(phrase_event: Dictionary) -> void:
+	if bool(phrase_event.get("guardian_spawned", false)) or bool(phrase_event.get("guardian_defeated", false)) or not is_instance_valid(player):
+		return
+
+	var guardian = ENEMY_SCENE.instantiate()
+	var guardian_position: Vector3 = phrase_event.get("guardian_position", Vector3.ZERO)
+	guardian.position = guardian_position
+	guardian.configure("elite", 1.05 + elapsed_time / 78.0, player)
+	guardian.enemy_name = String(
+		phrase_event.get(
+			"english_guardian_name" if _is_english() else "guardian_name",
+			"Sentence Guardian" if _is_english() else "守句魁首"
+		)
+	)
+	guardian.glyph = String(phrase_event.get("guardian_glyph", "句"))
+	guardian.tint = Color(phrase_event.get("guardian_tint", phrase_event.get("tint", Color(0.72, 0.2, 0.34, 1.0))))
+	guardian.max_health *= 0.92
+	guardian.health = guardian.max_health
+	guardian.display_health = guardian.health
+	if guardian.has_method("set_health_bar_visible"):
+		guardian.set_health_bar_visible(bool(battle_settings.get("enemy_health_bars", true)))
+	if guardian.has_method("set_detail_visible"):
+		guardian.set_detail_visible(_should_show_enemy_detail(guardian))
+	guardian.defeated.connect(_on_enemy_defeated)
+	guardian.defeated.connect(Callable(self, "_on_phrase_guardian_defeated").bind(String(phrase_event.get("id", ""))))
+	guardian.request_hazard.connect(_on_enemy_request_hazard)
+	guardian.request_line_hazard.connect(_on_enemy_request_line_hazard)
+	guardian.request_projectile.connect(_on_enemy_request_projectile)
+	enemies_root.add_child(guardian)
+	phrase_event["guardian_spawned"] = true
+	_spawn_wave_effect(
+		guardian.global_position,
+		3.8,
+		Color(phrase_event.get("guardian_tint", phrase_event.get("tint", Color(0.76, 0.86, 1.0, 1.0)))),
+		String(phrase_event.get("guardian_glyph", "句"))
+	)
+
+
+func _on_phrase_guardian_defeated(_world_position: Vector3, _enemy_type: String, event_id: String) -> void:
+	var phrase_event := _find_phrase_event(event_id)
+	if phrase_event.is_empty():
+		return
+	phrase_event["guardian_defeated"] = true
+	phrase_event["guardian_spawned"] = false
+	_grant_phrase_event_reward(phrase_event)
+
+
+func _grant_phrase_event_reward(phrase_event: Dictionary) -> void:
+	if bool(phrase_event.get("reward_granted", false)):
+		return
+	phrase_event["reward_granted"] = true
+
+	var reward_type := String(phrase_event.get("reward_type", "heal"))
+	var reward_amount := float(phrase_event.get("reward_amount", 0.0))
+	var accent := Color(phrase_event.get("tint", Color(0.76, 0.86, 1.0, 1.0)))
+	var phrase_text := _phrase_event_display_text(phrase_event)
+	var reward_copy := _phrase_event_reward_copy(phrase_event)
+
+	match reward_type:
+		"heal":
+			if is_instance_valid(player):
+				player.heal(reward_amount)
+		"xp":
+			_gain_experience(int(round(reward_amount)))
+		"radical":
+			_apply_radical_choice(String(phrase_event.get("reward_radical", _pick_chamber_interlude_radical())))
+
+	var phrase_position: Vector3 = phrase_event.get("position", Vector3.ZERO)
+	_spawn_wave_effect(
+		phrase_position,
+		3.4,
+		accent,
+		String(phrase_event.get("glyph", phrase_event.get("guardian_glyph", "句")))
+	)
+	if hud != null:
+		hud.show_banner(
+			("Phrase Revealed · %s" if _is_english() else "句成异动 · %s") % phrase_text,
+			accent,
+			1.9
+		)
+		hud.show_reveal(
+			"Verse Revealed" if _is_english() else "句成异动",
+			phrase_text,
+			("Reward · %s" if _is_english() else "奖励 · %s") % reward_copy,
+			accent,
+			String(phrase_event.get("glyph", phrase_event.get("guardian_glyph", "句"))),
+			2.7
+		)
+		hud.set_tip(
+			("The guarded phrase `%s` is now yours. The sentence reward will %s." if _is_english() else "「%s」句阵已经显成，句阵赏赐会为你%s。")
+			% [phrase_text, reward_copy]
+		)
+	_log_battle_event(("Phrase Revealed · %s · %s" if _is_english() else "句成异动 · %s · %s") % [phrase_text, reward_copy], accent)
+	_sync_hud()
+
+
 func _next_chamber_id_after_interlude() -> String:
 	var current_index := CHAMBER_ORDER.find(current_chamber_id)
 	if current_index == -1:
@@ -824,6 +1038,7 @@ func _ready() -> void:
 	_spawn_player()
 	_apply_intro_preset()
 	current_chamber_id = _chamber_id_for_completed_bosses(int(Session.chapter_progress.get("completed_bosses", 0)))
+	_setup_phrase_events()
 	_spawn_props()
 	_reveal_map_around_position(player.global_position)
 	_spawn_hud()
@@ -885,6 +1100,7 @@ func _process(delta: float) -> void:
 		return
 
 	_update_inkstone_interaction()
+	_update_phrase_events()
 	_reveal_map_around_position(player.global_position)
 	if _room_objective_active():
 		hud.set_status(elapsed_time, kills, threat_level)
@@ -1119,6 +1335,9 @@ func _spawn_props() -> void:
 	var stela_data: Array = chamber_data.get("stelae", [])
 	for stela_variant in stela_data:
 		_create_stela(stela_variant["position"], String(stela_variant["glyph"]), Color(stela_variant["tint"]))
+
+	for phrase_event in _phrase_events_for_chamber():
+		_create_phrase_stela(phrase_event)
 
 	var scroll_racks: Array = chamber_data.get("scroll_racks", [])
 	for rack_variant in scroll_racks:
@@ -4033,7 +4252,33 @@ func _apply_tree_alpha(entry: Dictionary, alpha: float) -> void:
 			material.emission_energy_multiplier = max(base_energy * alpha, 0.08)
 
 
-func _create_stela(position: Vector3, glyph: String, tint: Color) -> void:
+func _create_phrase_stela(phrase_event: Dictionary) -> void:
+	var phrase_position: Vector3 = phrase_event.get("position", Vector3.ZERO)
+	var stela_root := _create_stela(
+		phrase_position,
+		String(phrase_event.get("glyph", "句")),
+		Color(phrase_event.get("tint", Color(0.76, 0.86, 1.0, 1.0)))
+	)
+	var phrase_label := Label3D.new()
+	phrase_label.text = String(phrase_event.get("text", ""))
+	phrase_label.font = CJKFont.get_font()
+	phrase_label.font_size = 20
+	phrase_label.position = Vector3(0.0, 3.36, 0.0)
+	phrase_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	phrase_label.modulate = Color(1.0, 0.96, 0.88, 0.96)
+	stela_root.add_child(phrase_label)
+
+	var badge_label := Label3D.new()
+	badge_label.text = "Guarded Phrase" if _is_english() else "句阵守卫"
+	badge_label.font = CJKFont.get_font()
+	badge_label.font_size = 12
+	badge_label.position = Vector3(0.0, 3.7, 0.0)
+	badge_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	badge_label.modulate = Color(0.84, 0.92, 1.0, 0.92)
+	stela_root.add_child(badge_label)
+
+
+func _create_stela(position: Vector3, glyph: String, tint: Color) -> Node3D:
 	var stela_root := Node3D.new()
 	stela_root.position = position
 	stela_root.add_to_group("map_stela")
@@ -4132,6 +4377,7 @@ func _create_stela(position: Vector3, glyph: String, tint: Color) -> void:
 	glyph_tween.tween_property(glyph_root, "position:y", 2.38, 1.8)
 	var spin_tween := create_tween().set_loops()
 	spin_tween.tween_property(glyph_root, "rotation_degrees:y", 360.0, 8.0).from(0.0)
+	return stela_root
 
 
 func _create_scroll_rack(position: Vector3, yaw: float) -> void:
