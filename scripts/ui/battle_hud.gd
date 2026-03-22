@@ -419,11 +419,15 @@ var local_leaderboard_view: String = "manual"
 var battle_settings: Dictionary = {}
 var map_overlay: Control
 var map_panel: PanelContainer
+var map_content_box: BoxContainer
 var map_side_panel: PanelContainer
+var map_side_box: VBoxContainer
+var map_side_spacer: Control
 var map_canvas: BattleMapCanvas
 var map_title_label: Label
 var map_summary_label: Label
 var map_zoom_label: Label
+var map_zoom_row: BoxContainer
 var map_zoom_buttons: Array[Button] = []
 var map_close_button: Button
 var map_legend_title_label: Label
@@ -2149,13 +2153,20 @@ func _refresh_layout() -> void:
 
 	var overlay_margin_x := 14.0 if micro_layout else (18.0 if web_tight_layout else 24.0)
 	var overlay_margin_y := 12.0 if micro_layout else (16.0 if web_tight_layout else 24.0)
-	_set_overlay_panel_rect(map_panel, 940.0 if micro_layout else (1080.0 if web_tight_layout else 1240.0), 540.0 if micro_layout else (610.0 if web_tight_layout else 684.0), overlay_margin_x, overlay_margin_y)
+	_set_overlay_panel_rect(map_panel, 940.0 if micro_layout else (1080.0 if web_tight_layout else 1240.0), 620.0 if micro_layout else (610.0 if web_tight_layout else 684.0), overlay_margin_x, overlay_margin_y)
 	_set_overlay_panel_rect(choice_panel, 900.0 if micro_layout else (960.0 if web_tight_layout else 1000.0), 500.0 if micro_layout else (520.0 if web_tight_layout else 500.0), overlay_margin_x, overlay_margin_y)
 	_set_overlay_panel_rect(state_panel, 640.0 if micro_layout else (700.0 if web_tight_layout else 760.0), 460.0 if micro_layout else (520.0 if web_tight_layout else 600.0), overlay_margin_x, overlay_margin_y)
+	if map_content_box != null:
+		map_content_box.vertical = micro_layout
+		map_content_box.add_theme_constant_override("separation", 12 if micro_layout else 18)
 	if map_canvas != null:
-		map_canvas.custom_minimum_size = Vector2(520.0 if micro_layout else (640.0 if web_tight_layout else 760.0), 300.0 if micro_layout else (400.0 if web_tight_layout else 520.0))
+		map_canvas.custom_minimum_size = Vector2(0.0 if micro_layout else (640.0 if web_tight_layout else 760.0), 224.0 if micro_layout else (400.0 if web_tight_layout else 520.0))
 	if map_side_panel != null:
-		map_side_panel.custom_minimum_size = Vector2(252.0 if micro_layout else (272.0 if web_tight_layout else 300.0), 0.0)
+		map_side_panel.custom_minimum_size = Vector2(0.0 if micro_layout else (272.0 if web_tight_layout else 300.0), 176.0 if micro_layout else 0.0)
+	if map_side_box != null:
+		map_side_box.add_theme_constant_override("separation", 10 if micro_layout else 12)
+	if map_side_spacer != null:
+		map_side_spacer.visible = not micro_layout
 	if map_title_label != null:
 		_set_label_font_size(map_title_label, 30 if micro_layout else (34 if web_tight_layout else 38))
 	if map_summary_label != null:
@@ -2169,6 +2180,8 @@ func _refresh_layout() -> void:
 	if map_help_label != null:
 		_set_label_font_size(map_help_label, 14 if micro_layout else (15 if web_tight_layout else 17))
 		map_help_label.text = _build_map_help_text()
+	if map_zoom_row != null:
+		map_zoom_row.add_theme_constant_override("separation", 8 if micro_layout else 10)
 	_refresh_map_legend_density()
 	for zoom_button in map_zoom_buttons:
 		if zoom_button == null:
@@ -2548,6 +2561,10 @@ func _build_map_overlay(root: Control) -> void:
 	map_overlay = Control.new()
 	map_zoom_buttons = []
 	map_close_button = null
+	map_content_box = null
+	map_side_box = null
+	map_side_spacer = null
+	map_zoom_row = null
 	map_legend_rows.clear()
 	map_help_label = null
 	map_legend_title_label = null
@@ -2588,16 +2605,17 @@ func _build_map_overlay(root: Control) -> void:
 	map_summary_label = _make_label("", 18, Color(0.88, 0.92, 0.96, 0.94))
 	shell.add_child(map_summary_label)
 
-	var content_row := HBoxContainer.new()
-	content_row.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	content_row.add_theme_constant_override("separation", 18)
-	shell.add_child(content_row)
+	map_content_box = BoxContainer.new()
+	map_content_box.vertical = false
+	map_content_box.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	map_content_box.add_theme_constant_override("separation", 18)
+	shell.add_child(map_content_box)
 
 	var map_frame := PanelContainer.new()
 	map_frame.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	map_frame.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	map_frame.add_theme_stylebox_override("panel", _make_panel_style(Color(0.03, 0.05, 0.06, 0.94), Color(0.34, 0.44, 0.52, 0.7), 22))
-	content_row.add_child(map_frame)
+	map_content_box.add_child(map_frame)
 
 	var map_margin := MarginContainer.new()
 	map_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -2616,9 +2634,10 @@ func _build_map_overlay(root: Control) -> void:
 
 	var side_panel := PanelContainer.new()
 	map_side_panel = side_panel
+	side_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	side_panel.custom_minimum_size = Vector2(300.0, 0.0)
 	side_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.06, 0.08, 0.1, 0.9), Color(0.34, 0.44, 0.52, 0.58), 22))
-	content_row.add_child(side_panel)
+	map_content_box.add_child(side_panel)
 
 	var side_margin := MarginContainer.new()
 	side_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -2628,12 +2647,12 @@ func _build_map_overlay(root: Control) -> void:
 	side_margin.add_theme_constant_override("margin_bottom", 18)
 	side_panel.add_child(side_margin)
 
-	var side_box := VBoxContainer.new()
-	side_box.add_theme_constant_override("separation", 12)
-	side_margin.add_child(side_box)
+	map_side_box = VBoxContainer.new()
+	map_side_box.add_theme_constant_override("separation", 12)
+	side_margin.add_child(map_side_box)
 
 	map_legend_title_label = _make_label("图例", 24, Color(1.0, 0.92, 0.8, 1.0))
-	side_box.add_child(map_legend_title_label)
+	map_side_box.add_child(map_legend_title_label)
 	for legend_data in [
 		{"symbol": "▲", "title": "执笔者", "detail": "当前角色朝向与位置。", "color": Color(0.98, 0.78, 0.42, 1.0)},
 		{"symbol": "●", "title": "敌群", "detail": "常规敌人正在逼近的位置。", "color": Color(0.92, 0.42, 0.34, 1.0)},
@@ -2649,39 +2668,39 @@ func _build_map_overlay(root: Control) -> void:
 			Color(legend_data["color"])
 		)
 		map_legend_rows.append(legend_row)
-		side_box.add_child(legend_row)
+		map_side_box.add_child(legend_row)
 
-	var spacer := Control.new()
-	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	side_box.add_child(spacer)
+	map_side_spacer = Control.new()
+	map_side_spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	map_side_box.add_child(map_side_spacer)
 
 	map_help_label = _make_label(_build_map_help_text(), 17, Color(0.88, 0.9, 0.93, 0.92))
-	side_box.add_child(map_help_label)
+	map_side_box.add_child(map_help_label)
 	map_zoom_label = _make_label("缩放  1.00x", 17, Color(0.96, 0.82, 0.56, 0.98))
-	side_box.add_child(map_zoom_label)
+	map_side_box.add_child(map_zoom_label)
 
-	var zoom_row := HBoxContainer.new()
-	zoom_row.add_theme_constant_override("separation", 10)
-	side_box.add_child(zoom_row)
+	map_zoom_row = HBoxContainer.new()
+	map_zoom_row.add_theme_constant_override("separation", 10)
+	map_side_box.add_child(map_zoom_row)
 
 	var zoom_out_button := _make_pill_button("缩小", Callable(self, "_on_map_zoom_out_pressed"))
 	zoom_out_button.custom_minimum_size = Vector2(86.0, 48.0)
-	zoom_row.add_child(zoom_out_button)
+	map_zoom_row.add_child(zoom_out_button)
 	map_zoom_buttons.append(zoom_out_button)
 
 	var zoom_in_button := _make_pill_button("放大", Callable(self, "_on_map_zoom_in_pressed"))
 	zoom_in_button.custom_minimum_size = Vector2(86.0, 48.0)
-	zoom_row.add_child(zoom_in_button)
+	map_zoom_row.add_child(zoom_in_button)
 	map_zoom_buttons.append(zoom_in_button)
 
 	var zoom_reset_button := _make_pill_button("重置", Callable(self, "_on_map_zoom_reset_pressed"))
 	zoom_reset_button.custom_minimum_size = Vector2(86.0, 48.0)
-	zoom_row.add_child(zoom_reset_button)
+	map_zoom_row.add_child(zoom_reset_button)
 	map_zoom_buttons.append(zoom_reset_button)
 
 	map_close_button = _make_pill_button("收起地图", Callable(self, "_emit_map_toggle"))
 	map_close_button.custom_minimum_size = Vector2(0.0, 50.0)
-	side_box.add_child(map_close_button)
+	map_side_box.add_child(map_close_button)
 
 
 func _build_choice_overlay(root: Control) -> void:
