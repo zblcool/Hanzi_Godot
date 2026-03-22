@@ -42,7 +42,7 @@ Status legend:
 - `[done]` Runtime settings follow-through for effect/detail parity. Notes: Godot pause overlay now remembers separate `视觉字效` and `远敌细节` toggles alongside the original preset slice, so decorative glyph bursts can be trimmed independently and distant enemy badges / health bars collapse back to a near-only read when detail is lowered.
 - `[done]` Music track toast and soundtrack UI. Notes: hanziHero shows the active procedural track name and mood; Godot battle HUD now carries a matching `战场乐题` card plus a top-right `配乐提示` toast that reuses the source track names and mood text on key battle beats.
 - `[done]` Phrase / event log panel. Notes: Godot battle HUD now keeps a dedicated `战报` panel that records wave pushes, realm shifts, boss beats, recipe/word upgrades, and pickup highlights, with a compact mobile-safe variant for smaller screens.
-- `[pending]` Bilingual HUD copy. Notes: source battle UI can switch zh/en; Godot HUD remains Chinese-only.
+- `[done]` Bilingual HUD copy. Notes: source battle UI can switch zh/en; Godot battle HUD, pause/result overlays, map labels, soundtrack card, and key battle-side banner/tip copy now follow the remembered `中 / EN` runtime language toggle.
 
 ## Combat Systems
 
@@ -92,6 +92,6 @@ Status legend:
 ## Technical Debt
 
 - `[done]` Long-lived migration tracking in repo root. Notes: `MIGRATION_CHECKLIST.md` remains the source of truth and now has a matching long-lived GitHub tracker issue for checklist/body sync instead of one-off progress issues.
-- `[in progress]` Shared localization layer for launcher, menu, and battle UI. Notes: launcher and menu now have a practical remembered zh/en runtime toggle, but the strings still live inline in GDScript and battle/HUD localization remains a separate follow-through item.
+- `[in progress]` Shared localization layer for launcher, menu, and battle UI. Notes: launcher, menu, and battle/HUD now all follow the remembered zh/en runtime toggle, but the strings still live inline in GDScript rather than in a shared data-driven localization layer.
 - `[pending]` Break up `scripts/battle/zihai_battle.gd` into smaller systems. Notes: source JS has already started splitting combat/rendering/data concerns; Godot battle logic is still concentrated in one large script.
 - `[pending]` Move launcher / menu content into data-driven definitions. Notes: current Godot UI is built inline in GDScript; data-backed cards would make future theme and language parity safer.

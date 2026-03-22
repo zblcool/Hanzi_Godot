@@ -56,6 +56,57 @@ const SOUNDTRACK_LIBRARY := {
 		"accent": Color(0.98, 0.76, 0.42, 1.0)
 	}
 }
+const SOUNDTRACK_EN := {
+	"mosslightCanopy": {"title": "Mosslight Canopy", "mood": "16-bit Quiet Forest"},
+	"fireflyFootpath": {"title": "Firefly Footpath", "mood": "16-bit Light Patrol"}
+}
+const RADICAL_EN := {
+	"亻": {"name": "person radical", "description": "Combine with `木` into `休`, leaning toward sustain and recovery."},
+	"木": {"name": "wood radical", "description": "The other half of `休`, and the route that keeps healing lines climbing."},
+	"日": {"name": "sun radical", "description": "Combine with `月` into `明` to strengthen your main damage tempo."},
+	"月": {"name": "moon radical", "description": "Advances the `明` route and pushes the weapon toward phrase arts sooner."},
+	"氵": {"name": "water radical", "description": "Combine with `每` into `海` for wave-based crowd clear."},
+	"每": {"name": "every base", "description": "Completes `海` and helps refine it into stronger sea phrase arts."},
+	"雨": {"name": "rain radical", "description": "Combine with `田` into `雷` for lock-on lightning and mid-field control."},
+	"田": {"name": "field frame", "description": "Completes `雷` and later refines into a lightning-rain field."},
+	"心": {"name": "heart radical", "description": "Combine with `刂` into `忍` and trade low health for fiercer pressure."},
+	"火": {"name": "fire radical", "description": "Two fires form `炎`, turning the area around you into a ring of flame shots."},
+	"刂": {"name": "blade radical", "description": "Both sharpens your weapon and combines with `心` into `忍`."}
+}
+const RECIPE_EN := {
+	"ming": {"title": "Sun-Moon Wheels", "description": "Strengthens your main attack rhythm and periodically releases twin pursuit wheels."},
+	"xiu": {"title": "Forest Rest", "description": "Heals over time and knocks back nearby enemies to stretch survivability."},
+	"hai": {"title": "Sea Tide", "description": "Detonates ink-wave ripples on a timer to clear nearby swarms."},
+	"lei": {"title": "Falling Thunder", "description": "Locks onto the nearest cluster and slams the mid-field with lightning."},
+	"ren": {"title": "Endurance Instinct", "description": "Below half health, gain attack speed, damage, and move speed together."},
+	"yan": {"title": "Flame Surge", "description": "Periodically sprays flame glyph volleys in all directions to burn open space."}
+}
+const WORD_EN := {
+	"ming_guang": {"title": "Moonbright Verse", "description": "Twin wheels add a moon-chasing volley and lift the main weapon with them."},
+	"xiu_yang": {"title": "Restful Phrase", "description": "Turns healing into stable sustain and raises the margin for mistakes."},
+	"hai_xiao": {"title": "Sea Howl", "description": "Refines the tide into a fiercer ink wave with shorter cycles and larger reach."},
+	"lei_yu": {"title": "Rain of Thunder", "description": "Lightning impacts spread into a rain field, turning burst into control."},
+	"ren_xin": {"title": "Ruthless Heart", "description": "When endurance triggers, recover health and cut out periodic aftershocks."},
+	"yan_chao": {"title": "Flame Surge Scroll", "description": "Makes flame volleys denser and faster, with scorching waves erupting on hit."}
+}
+const FIELD_PHASE_EN := {
+	"stelaeGrove": {"name": "Stele Grove", "cue": "Realm Shift · Stele Grove", "tip": "Stone-lit script settles over the arena, leaving carved glyph marks where you were standing."},
+	"inkTide": {"name": "Ink Tide", "cue": "Realm Shift · Ink Tide", "tip": "The field turns toward blue-black ink and the old patterns drift like tide lines."},
+	"thunderScript": {"name": "Thunder Script", "cue": "Realm Shift · Thunder Script", "tip": "Fog turns colder and brighter, and the ambient glyph array becomes easier to read."},
+	"ancientScroll": {"name": "Ancient Scroll", "cue": "Realm Shift · Ancient Scroll", "tip": "Warm parchment tones return and giant glyphs press into the ground like old ink seals."}
+}
+const CUE_EN := {
+	"试阵预热": "Test Warmup",
+	"待入曲": "Awaiting Cue",
+	"卷主压阵": "Boss Pressure",
+	"入卷铺陈": "Scroll Opening",
+	"试阵开卷": "Test Entry",
+	"残卷暂定": "Scroll Secured",
+	"残卷回气": "Breathing Space",
+	"大潮压境": "Major Tide",
+	"字潮提速": "Tide Rising",
+	"字境相变": "Realm Shift"
+}
 const ENEMY_ENTRANCE_TAUNTS := {
 	"elite": [
 		"魇潮已至，退无可退。",
@@ -220,6 +271,117 @@ var level: int = 1
 var experience: int = 0
 var experience_target: int = 4
 var pending_level_choices: int = 0
+
+
+func _is_english() -> bool:
+	return Session.get_launcher_language() == "en"
+
+
+func _localized_hero_data(hero_data: Dictionary) -> Dictionary:
+	var localized := hero_data.duplicate(true)
+	if not _is_english():
+		return localized
+	var hero_id := String(hero_data.get("id", ""))
+	if hero_id == "scholar":
+		localized["name"] = "Scholar"
+	elif hero_id == "xia":
+		localized["name"] = "Xia"
+	return localized
+
+
+func _localized_radical_data(radical: String) -> Dictionary:
+	var radical_data := Session.get_radical_data(radical).duplicate(true)
+	if not _is_english():
+		return radical_data
+	var patch: Dictionary = RADICAL_EN.get(radical, {})
+	for key in patch.keys():
+		radical_data[key] = patch[key]
+	return radical_data
+
+
+func _localized_recipe_data(recipe_id: String) -> Dictionary:
+	var recipe := Session.get_recipe_data(recipe_id).duplicate(true)
+	if not _is_english():
+		return recipe
+	var patch: Dictionary = RECIPE_EN.get(recipe_id, {})
+	for key in patch.keys():
+		recipe[key] = patch[key]
+	return recipe
+
+
+func _localized_word_data(word_id: String) -> Dictionary:
+	var word := Session.get_word_data(word_id).duplicate(true)
+	if not _is_english():
+		return word
+	var patch: Dictionary = WORD_EN.get(word_id, {})
+	for key in patch.keys():
+		word[key] = patch[key]
+	return word
+
+
+func _localized_field_phase_theme(theme: Dictionary) -> Dictionary:
+	var localized := theme.duplicate(true)
+	if not _is_english():
+		return localized
+	var patch: Dictionary = FIELD_PHASE_EN.get(String(theme.get("id", "")), {})
+	for key in patch.keys():
+		localized[key] = patch[key]
+	return localized
+
+
+func _localized_soundtrack_entry(track_id: String) -> Dictionary:
+	var entry: Dictionary = {}
+	var entry_variant: Variant = SOUNDTRACK_LIBRARY.get(track_id, {})
+	if entry_variant is Dictionary:
+		entry = (entry_variant as Dictionary).duplicate(true)
+	if not _is_english():
+		return entry
+	var patch: Dictionary = SOUNDTRACK_EN.get(track_id, {})
+	for key in patch.keys():
+		entry[key] = patch[key]
+	return entry
+
+
+func _localized_soundtrack_cue(cue: String) -> String:
+	if not _is_english():
+		return cue
+	return String(CUE_EN.get(cue, cue))
+
+
+func _default_battle_tip() -> String:
+	if _is_english():
+		return "Defeat glyph spirits to collect ink power and supplies. Choose one of three radicals on level-up, then press E near the inkstone to refine phrases."
+	return DEFAULT_BATTLE_TIP
+
+
+func _weapon_core_label() -> String:
+	if _is_english():
+		return "Blade Arc" if Session.selected_hero == "xia" else "Brush Edge"
+	return "剑势" if Session.selected_hero == "xia" else "笔锋"
+
+
+func _localized_intro_title(start_wave: int, fallback: String) -> String:
+	if not _is_english():
+		return fallback
+	match start_wave:
+		10:
+			return "Scroll X · Test Run"
+		20:
+			return "Scroll XX · Stress Test"
+		_:
+			return "Scroll I · Inkfall"
+
+
+func _localized_intro_tip(start_wave: int, fallback: String) -> String:
+	if not _is_english():
+		return fallback
+	match start_wave:
+		10:
+			return "Start with a midgame build already in motion and focus on mixed waves, warnings, and HUD pacing."
+		20:
+			return "Enter with a more complete late build and use this run to inspect elites, major surges, and HUD rhythm under pressure."
+		_:
+			return "Secure the first radical and form your opening glyph as quickly as possible."
 
 
 func _ready() -> void:
@@ -418,9 +580,16 @@ func _show_hero_callout(context: String, duration: float = 3.2) -> void:
 	var line := _pick_callout_line(pool, "hero_%s" % context)
 	if line.is_empty():
 		return
-	var hero_name := String(hero_data.get("name", "执笔者"))
+	var localized_hero := _localized_hero_data(hero_data)
+	var hero_name := String(localized_hero.get("name", "Scribe" if _is_english() else "执笔者"))
 	var accent: Color = hero_data.get("accent", Color(0.92, 0.76, 0.48, 1.0))
-	_show_battle_callout("%s应声" % hero_name, line, accent, "%s：" % hero_name, duration)
+	_show_battle_callout(
+		("%s Responds" % hero_name) if _is_english() else "%s应声" % hero_name,
+		line,
+		accent,
+		("%s: " % hero_name) if _is_english() else "%s：" % hero_name,
+		duration
+	)
 
 
 func _show_enemy_taunt(enemy_name: String, enemy_type: String, tint: Color, duration: float = 2.9) -> void:
@@ -428,7 +597,13 @@ func _show_enemy_taunt(enemy_name: String, enemy_type: String, tint: Color, dura
 	var line := _pick_callout_line(pool, "enemy_%s" % enemy_type)
 	if line.is_empty():
 		return
-	_show_battle_callout("%s叫阵" % enemy_name, line, tint, "%s：" % enemy_name, duration)
+	_show_battle_callout(
+		("%s Challenges You" % enemy_name) if _is_english() else "%s叫阵" % enemy_name,
+		line,
+		tint,
+		("%s: " % enemy_name) if _is_english() else "%s：" % enemy_name,
+		duration
+	)
 
 
 func _test_tools_enabled() -> bool:
@@ -442,12 +617,12 @@ func _set_soundtrack(track_id: String, cue: String, announce: bool = true, force
 	var should_announce := announce and (force or current_soundtrack_id != track_id or current_soundtrack_cue != cue)
 	current_soundtrack_id = track_id
 	current_soundtrack_cue = cue
-	var track: Dictionary = SOUNDTRACK_LIBRARY[track_id]
+	var track: Dictionary = _localized_soundtrack_entry(track_id)
 	var accent := Color(track.get("accent", Color(1.0, 1.0, 1.0, 1.0)))
 	hud.set_soundtrack(
 		String(track.get("title", track_id)),
 		String(track.get("mood", "")),
-		cue,
+		_localized_soundtrack_cue(cue),
 		accent,
 		should_announce
 	)
@@ -577,7 +752,7 @@ func _spawn_enemy() -> void:
 	enemy.request_projectile.connect(_on_enemy_request_projectile)
 	enemies_root.add_child(enemy)
 	if enemy_type == "elite":
-		hud.show_banner("精英现身", Color(0.94, 0.42, 0.52, 1.0), 2.0)
+		hud.show_banner("Elite Incoming" if _is_english() else "精英现身", Color(0.94, 0.42, 0.52, 1.0), 2.0)
 		if elite_taunt_cooldown <= 0.0:
 			_show_enemy_taunt(String(enemy.enemy_name), enemy_type, Color(enemy.tint), 2.7)
 			elite_taunt_cooldown = 18.0
@@ -605,10 +780,10 @@ func _spawn_boss(stage_index: int) -> void:
 	spawn_timer = max(spawn_timer, 1.4)
 
 	var tint: Color = _boss_banner_color(stage_index)
-	hud.show_banner("卷主现身", tint, 2.4)
+	hud.show_banner("Boss Appears" if _is_english() else "卷主现身", tint, 2.4)
 	hud.set_tip(_boss_stage_tip(stage_index))
 	hud.show_boss(String(boss.enemy_name), String(boss.glyph), tint, boss.max_health)
-	_log_battle_event("卷主现身 · %s" % String(boss.enemy_name), tint)
+	_log_battle_event(("Boss Appears · %s" if _is_english() else "卷主现身 · %s") % String(boss.enemy_name), tint)
 	_show_enemy_taunt(String(boss.enemy_name), "boss", tint, 3.1)
 	_set_soundtrack("fireflyFootpath", "卷主压阵", true, true)
 	_spawn_wave_effect(boss.global_position, 6.2, tint, String(boss.glyph))
@@ -902,7 +1077,11 @@ func _boss_banner_color(stage_index: int) -> Color:
 
 func _boss_stage_tip(stage_index: int) -> String:
 	if stage_index <= 0:
+		if _is_english():
+			return "The scroll lord has entered the inkfield. Dodge the large forbidden arrays first, then punish the gaps after each cast."
 		return "卷主踏入墨阵。先躲大范围禁阵，再抓它施法后的空档。"
+	if _is_english():
+		return "A deeper scroll lord has appeared. It layers volleys, charges, and forbidden arrays into one sequence."
 	return "更深的卷主现身了。它会把弹幕、冲锋和禁阵叠在一起。"
 
 
@@ -999,7 +1178,7 @@ func _on_enemy_defeated(world_position: Vector3, enemy_type: String) -> void:
 		hud.hide_boss()
 		_on_boss_defeated(world_position)
 	if kills % 14 == 0:
-		hud.show_banner("字潮再涨", Color(0.95, 0.62, 0.36, 1.0), 1.7)
+		hud.show_banner("The Tide Surges Higher" if _is_english() else "字潮再涨", Color(0.95, 0.62, 0.36, 1.0), 1.7)
 
 
 func _xp_value_for_enemy(enemy_type: String) -> int:
@@ -1190,59 +1369,59 @@ func _on_supply_collected(world_position: Vector3, supply_id: String, amount: fl
 		"paper":
 			var xp_gain: int = int(round(amount))
 			_gain_experience(xp_gain)
-			hud.show_banner("拾得残纸  +%d 字墨" % xp_gain, tint, 1.45)
-			event_text = "拾得残纸 · +%d 字墨" % xp_gain
+			hud.show_banner(("Paper Scrap  +%d Ink" if _is_english() else "拾得残纸  +%d 字墨") % xp_gain, tint, 1.45)
+			event_text = ("Paper Scrap · +%d Ink" if _is_english() else "拾得残纸 · +%d 字墨") % xp_gain
 		"ink":
 			if is_instance_valid(player):
 				player.heal(amount)
-				hud.show_banner("拾得墨团  回气 %d" % int(round(amount)), tint, 1.5)
-				event_text = "拾得墨团 · 回气 %d" % int(round(amount))
+				hud.show_banner(("Ink Cluster  Heal %d" if _is_english() else "拾得墨团  回气 %d") % int(round(amount)), tint, 1.5)
+				event_text = ("Ink Cluster · Heal %d" if _is_english() else "拾得墨团 · 回气 %d") % int(round(amount))
 			pulse_radius = 1.12
 		"seal":
 			if is_instance_valid(player):
 				var blade_gain: int = max(1, int(round(amount)))
 				player.apply_blade_upgrade(blade_gain)
 				hud.show_banner(
-					"拾得战印  %s +%d" % ["剑势" if Session.selected_hero == "xia" else "笔锋", blade_gain],
+					("%s  %s +%d" % ["Battle Seal", _weapon_core_label(), blade_gain]) if _is_english() else "拾得战印  %s +%d" % [_weapon_core_label(), blade_gain],
 					tint,
 					1.7
 				)
-				event_text = "拾得战印 · %s +%d" % ["剑势" if Session.selected_hero == "xia" else "笔锋", blade_gain]
+				event_text = ("Battle Seal · %s +%d" if _is_english() else "拾得战印 · %s +%d") % [_weapon_core_label(), blade_gain]
 			pulse_radius = 1.22
 		"magnet":
 			var gathered_xp: int = _collect_all_xp_pickups()
 			if gathered_xp > 0:
 				_gain_experience(gathered_xp)
-				hud.show_banner("拾得聚墨符  收束 %d 字墨" % gathered_xp, tint, 1.8)
-				event_text = "拾得聚墨符 · 收束 %d 字墨" % gathered_xp
+				hud.show_banner(("Ink Magnet  Gathered %d Ink" if _is_english() else "拾得聚墨符  收束 %d 字墨") % gathered_xp, tint, 1.8)
+				event_text = ("Ink Magnet · Gathered %d Ink" if _is_english() else "拾得聚墨符 · 收束 %d 字墨") % gathered_xp
 			else:
-				hud.show_banner("拾得聚墨符  场上已无散墨", tint, 1.6)
-				event_text = "拾得聚墨符 · 场上已无散墨"
-			hud.set_tip("聚墨符会把战场上遗落的字墨尽数回收，适合在绕场之后一口气补等级。")
+				hud.show_banner("Ink Magnet  No loose ink remains" if _is_english() else "拾得聚墨符  场上已无散墨", tint, 1.6)
+				event_text = "Ink Magnet · No loose ink remains" if _is_english() else "拾得聚墨符 · 场上已无散墨"
+			hud.set_tip("The ink magnet recalls every loose ink pickup on the field, making it ideal after a long kite around the arena." if _is_english() else "聚墨符会把战场上遗落的字墨尽数回收，适合在绕场之后一口气补等级。")
 			pulse_radius = 1.26
 		"fury":
 			if is_instance_valid(player):
 				var duration: float = max(amount, 10.0)
 				player.apply_fury_haste(duration)
-				hud.show_banner("拾得疾书令  攻速移速提升 %d 秒" % int(round(duration)), tint, 1.85)
-				hud.set_tip("疾书令会短时间拉高攻速与移速，适合强开精英或抢一波散落补给。")
-				event_text = "拾得疾书令 · 提速 %d 秒" % int(round(duration))
+				hud.show_banner(("Swift Edict  Attack and move speed up for %d s" if _is_english() else "拾得疾书令  攻速移速提升 %d 秒") % int(round(duration)), tint, 1.85)
+				hud.set_tip("Swift Edict boosts attack and movement speed for a short burst, which is perfect for forcing elites or sweeping pickups." if _is_english() else "疾书令会短时间拉高攻速与移速，适合强开精英或抢一波散落补给。")
+				event_text = ("Swift Edict · Speed up for %d s" if _is_english() else "拾得疾书令 · 提速 %d 秒") % int(round(duration))
 			pulse_radius = 1.24
 		"potion":
 			if is_instance_valid(player):
 				var heal_ratio := clampf(amount if amount > 0.0 else HEALTH_POTION_HEAL_RATIO, 0.12, 0.9)
 				player.heal(player.max_health * heal_ratio)
-				hud.show_banner("拾得回春丹  回复 %d%% 气血" % int(round(heal_ratio * 100.0)), tint, 1.8)
-				hud.set_tip("回春丹会按最大气血比例回气，适合硬吃一波精英或卷主技能后迅速稳住局势。")
-				event_text = "拾得回春丹 · 回复 %d%% 气血" % int(round(heal_ratio * 100.0))
+				hud.show_banner(("Spring Pill  Restore %d%% Vitality" if _is_english() else "拾得回春丹  回复 %d%% 气血") % int(round(heal_ratio * 100.0)), tint, 1.8)
+				hud.set_tip("Spring Pill heals a percentage of your maximum vitality, making it ideal after tanking an elite or boss pattern." if _is_english() else "回春丹会按最大气血比例回气，适合硬吃一波精英或卷主技能后迅速稳住局势。")
+				event_text = ("Spring Pill · Restore %d%% Vitality" if _is_english() else "拾得回春丹 · 回复 %d%% 气血") % int(round(heal_ratio * 100.0))
 			pulse_radius = 1.22
 		"brush":
 			if is_instance_valid(player):
 				var duration: float = max(amount, 6.0)
 				player.apply_brush_haste(duration)
-				hud.show_banner("拾得文笔  机动提升 %d 秒" % int(round(duration)), tint, 1.7)
-				hud.set_tip("文笔加身，短时间内移动更快，适合拉扯敌群和抢补给。")
-				event_text = "拾得文笔 · 机动提升 %d 秒" % int(round(duration))
+				hud.show_banner(("Writers Brush  Mobility up for %d s" if _is_english() else "拾得文笔  机动提升 %d 秒") % int(round(duration)), tint, 1.7)
+				hud.set_tip("The writer's brush speeds you up for a short window, which is ideal for dragging the crowd or scooping supplies." if _is_english() else "文笔加身，短时间内移动更快，适合拉扯敌群和抢补给。")
+				event_text = ("Writers Brush · Mobility up for %d s" if _is_english() else "拾得文笔 · 机动提升 %d 秒") % int(round(duration))
 			pulse_radius = 1.18
 
 	if not event_text.is_empty():
@@ -1345,41 +1524,41 @@ func _score_radical_choice(radical: String) -> float:
 
 
 func _build_choice_data(radical: String) -> Dictionary:
-	var radical_data: Dictionary = Session.get_radical_data(radical)
+	var radical_data: Dictionary = _localized_radical_data(radical)
 	var color: Color = Session.RADICAL_COLORS[radical]
 	var headline: String = String(radical_data["description"])
 	if radical != "刂" or not Session.get_recipe_id_for_radical(radical).is_empty():
 		var recipe_id: String = Session.get_recipe_id_for_radical(radical)
 		if not recipe_id.is_empty():
-			var recipe: Dictionary = Session.get_recipe_data(recipe_id)
+			var recipe: Dictionary = _localized_recipe_data(recipe_id)
 			var level_value: int = int(skill_levels.get(recipe_id, 0))
 			var max_level: int = int(recipe["max_level"])
 			if level_value <= 0:
 				var partner: String = _get_partner_radical(recipe_id, radical)
 				if int(radical_counts.get(partner, 0)) > 0:
-					headline = "补上最后一笔，立成「%s」。" % String(recipe["display"])
+					headline = ("Complete the final stroke and form `%s` immediately." if _is_english() else "补上最后一笔，立成「%s」。") % String(recipe["display"])
 				else:
-					headline = "收集成字，通往「%s」。" % String(recipe["display"])
+					headline = ("Collect toward `%s` and open this glyph route." if _is_english() else "收集成字，通往「%s」。") % String(recipe["display"])
 			elif level_value < max_level:
-				headline = "提升「%s」 Lv.%d -> Lv.%d。" % [String(recipe["display"]), level_value, level_value + 1]
+				headline = ("Upgrade `%s` Lv.%d -> Lv.%d." if _is_english() else "提升「%s」 Lv.%d -> Lv.%d。") % [String(recipe["display"]), level_value, level_value + 1]
 			else:
-				var word: Dictionary = Session.get_word_data(String(recipe["word_id"]))
+				var word: Dictionary = _localized_word_data(String(recipe["word_id"]))
 				var word_level: int = int(word_skill_levels.get(word["id"], 0))
 				var stock: int = _count_recipe_radicals(recipe["radicals"]) + 1
 				if word_level <= 0:
-					headline = "为「%s」添一枚余材，可去砚台磨词 %d/%d。" % [
+					headline = ("Add one more stock to `%s`, then refine it at the inkstone %d/%d." if _is_english() else "为「%s」添一枚余材，可去砚台磨词 %d/%d。") % [
 						String(word["display"]),
 						min(int(word_progress.get(word["id"], 0)) + 1, int(word["unlock_cost"])),
 						int(word["unlock_cost"])
 					]
 				else:
-					headline = "补充词材，可在砚台将「%s」升到 Lv.%d。当前余材 %d。" % [
+					headline = ("Add more phrase stock to raise `%s` to Lv.%d at the inkstone. Current stock %d." if _is_english() else "补充词材，可在砚台将「%s」升到 Lv.%d。当前余材 %d。") % [
 						String(word["display"]),
 						min(word_level + 1, int(word["max_level"])),
 						stock
 					]
 	if radical == "刂":
-		headline += " 并强化%s。" % ("剑势" if Session.selected_hero == "xia" else "笔锋")
+		headline += (" Also strengthen %s." if _is_english() else " 并强化%s。") % _weapon_core_label()
 
 	return {
 		"radical": radical,
@@ -1408,13 +1587,13 @@ func _apply_radical_choice(radical: String) -> void:
 	if radical == "刂":
 		radical_counts[radical] = int(radical_counts.get(radical, 0)) + 1
 		player.apply_blade_upgrade()
-		hud.show_banner("%s 入%s" % [radical, "剑势" if Session.selected_hero == "xia" else "笔锋"], Session.RADICAL_COLORS[radical], 1.8)
+		hud.show_banner(("%s into %s" if _is_english() else "%s 入%s") % [radical, _weapon_core_label()], Session.RADICAL_COLORS[radical], 1.8)
 		_resolve_growth_chains()
 		_sync_hud()
 		return
 
 	radical_counts[radical] = int(radical_counts.get(radical, 0)) + 1
-	hud.show_banner("领悟 %s" % radical, Session.RADICAL_COLORS[radical], 1.2)
+	hud.show_banner(("Attuned %s" if _is_english() else "领悟 %s") % radical, Session.RADICAL_COLORS[radical], 1.2)
 	_resolve_growth_chains()
 	_sync_hud()
 
@@ -1452,31 +1631,31 @@ func _resolve_growth_chains() -> void:
 func _set_recipe_level(recipe_id: String, new_level: int) -> void:
 	skill_levels[recipe_id] = new_level
 	player.set_skill_level(recipe_id, new_level)
-	var recipe: Dictionary = Session.get_recipe_data(recipe_id)
+	var recipe: Dictionary = _localized_recipe_data(recipe_id)
 	if new_level == 1:
-		hud.show_banner("合字成型  %s" % String(recipe["display"]), recipe["color"], 2.3)
-		_log_battle_event("合字成型 · %s" % String(recipe["display"]), Color(recipe["color"]))
+		hud.show_banner(("Glyph Formed  %s" if _is_english() else "合字成型  %s") % String(recipe["display"]), recipe["color"], 2.3)
+		_log_battle_event(("Glyph Formed · %s" if _is_english() else "合字成型 · %s") % String(recipe["display"]), Color(recipe["color"]))
 		if not first_recipe_callout_shown:
 			first_recipe_callout_shown = true
 			_show_hero_callout("recipe_unlock")
 	else:
-		hud.show_banner("%s 进为 Lv.%d" % [String(recipe["display"]), new_level], recipe["color"], 1.7)
-		_log_battle_event("%s 升至 Lv.%d" % [String(recipe["display"]), new_level], Color(recipe["color"]))
+		hud.show_banner(("%s rises to Lv.%d" if _is_english() else "%s 进为 Lv.%d") % [String(recipe["display"]), new_level], recipe["color"], 1.7)
+		_log_battle_event(("%s reaches Lv.%d" if _is_english() else "%s 升至 Lv.%d") % [String(recipe["display"]), new_level], Color(recipe["color"]))
 
 
 func _set_word_level(word_id: String, new_level: int) -> void:
 	word_skill_levels[word_id] = new_level
 	player.set_word_skill_level(word_id, new_level)
-	var word: Dictionary = Session.get_word_data(word_id)
+	var word: Dictionary = _localized_word_data(word_id)
 	if new_level == 1:
-		hud.show_banner("词技成型  %s" % String(word["display"]), word["color"], 2.5)
-		_log_battle_event("词技成型 · %s" % String(word["display"]), Color(word["color"]))
+		hud.show_banner(("Phrase Art Formed  %s" if _is_english() else "词技成型  %s") % String(word["display"]), word["color"], 2.5)
+		_log_battle_event(("Phrase Art Formed · %s" if _is_english() else "词技成型 · %s") % String(word["display"]), Color(word["color"]))
 		if not first_word_callout_shown:
 			first_word_callout_shown = true
 			_show_hero_callout("word_unlock")
 	else:
-		hud.show_banner("%s 进为 Lv.%d" % [String(word["display"]), new_level], word["color"], 1.8)
-		_log_battle_event("%s 升至 Lv.%d" % [String(word["display"]), new_level], Color(word["color"]))
+		hud.show_banner(("%s rises to Lv.%d" if _is_english() else "%s 进为 Lv.%d") % [String(word["display"]), new_level], word["color"], 1.8)
+		_log_battle_event(("%s reaches Lv.%d" if _is_english() else "%s 升至 Lv.%d") % [String(word["display"]), new_level], Color(word["color"]))
 
 
 func _has_recipe_parts(radicals: Array) -> bool:
@@ -1782,7 +1961,7 @@ func _on_player_defeated() -> void:
 	Engine.time_scale = 0.0
 	hud.hide_map_overlay()
 	hud.hide_boss()
-	hud.show_banner("字海沉没", Color(1.0, 0.76, 0.58, 1.0), 2.0)
+	hud.show_banner("The Ink Sea Sinks" if _is_english() else "字海沉没", Color(1.0, 0.76, 0.58, 1.0), 2.0)
 	Session.last_run_summary = _build_run_summary()
 	var start_wave := maxi(1, int(Session.last_run_summary.get("start_wave", 1)))
 	var recordable := bool(Session.last_run_summary.get("recordable", true))
@@ -1791,7 +1970,7 @@ func _on_player_defeated() -> void:
 		Session.record_local_run(Session.last_run_summary, Session.selected_hero)
 		if leaderboard_view == "test":
 			hud.set_game_over(
-				"试阵记录已写入试阵榜，不会影响主卷榜。按 R 立即重开，或按 Esc 返回二级菜单。",
+				"This test-run result has been written to the test board and will not affect the main-scroll board. Press R to restart immediately, or Esc to return to the sub-menu." if _is_english() else "试阵记录已写入试阵榜，不会影响主卷榜。按 R 立即重开，或按 Esc 返回二级菜单。",
 				elapsed_time,
 				kills,
 				threat_level,
@@ -1800,7 +1979,7 @@ func _on_player_defeated() -> void:
 			)
 		else:
 			hud.set_game_over(
-				"墨潮吞没了你。按 R 立即重开，或按 Esc 返回二级菜单。",
+				"The ink tide swallowed you. Press R to restart immediately, or Esc to return to the sub-menu." if _is_english() else "墨潮吞没了你。按 R 立即重开，或按 Esc 返回二级菜单。",
 				elapsed_time,
 				kills,
 				threat_level,
@@ -1809,7 +1988,7 @@ func _on_player_defeated() -> void:
 			)
 	else:
 		hud.set_game_over(
-			"这次捷径不会写入排行榜。按 R 立即重开，或按 Esc 返回二级菜单。",
+			"This shortcut run will not be written into the leaderboard. Press R to restart immediately, or Esc to return to the sub-menu." if _is_english() else "这次捷径不会写入排行榜。按 R 立即重开，或按 Esc 返回二级菜单。",
 			elapsed_time,
 			kills,
 			threat_level,
@@ -1846,9 +2025,9 @@ func _on_bush_activated(message: String) -> void:
 
 func _on_treasure_chest_opened(world_position: Vector3, drops: Dictionary) -> void:
 	_spawn_supply_bundle(world_position, drops)
-	hud.show_banner("宝箱开启", Color(1.0, 0.84, 0.52, 1.0), 1.7)
-	hud.set_tip("宝箱散出补给。先收残纸与墨团，再决定是压等级还是补状态。")
-	_log_battle_event("宝箱开启 · 补给散落", Color(1.0, 0.84, 0.52, 1.0))
+	hud.show_banner("Chest Opened" if _is_english() else "宝箱开启", Color(1.0, 0.84, 0.52, 1.0), 1.7)
+	hud.set_tip("The chest spills supplies across the field. Grab paper scraps and ink first, then decide whether to push levels or recover." if _is_english() else "宝箱散出补给。先收残纸与墨团，再决定是压等级还是补状态。")
+	_log_battle_event("Chest Opened · Supplies scattered" if _is_english() else "宝箱开启 · 补给散落", Color(1.0, 0.84, 0.52, 1.0))
 
 
 func _sync_hud() -> void:
@@ -1938,13 +2117,21 @@ func _start_opening_sequence() -> void:
 	opening_time = 1.65
 	spawn_timer = 1.2
 	var hero_data: Dictionary = Session.get_selected_hero()
+	var localized_hero: Dictionary = _localized_hero_data(hero_data)
 	var accent: Color = hero_data["accent"]
-	var intro_title: String = "残卷一·入墨"
-	var intro_tip: String = "先收第一枚偏旁，尽快合出首个成字。"
+	var start_wave := 1
+	if not battle_intro.is_empty():
+		start_wave = int(battle_intro.get("start_wave", 1))
+	var intro_title: String = _localized_intro_title(start_wave, "残卷一·入墨")
+	var intro_tip: String = _localized_intro_tip(start_wave, "先收第一枚偏旁，尽快合出首个成字。")
 	if not battle_intro.is_empty():
 		intro_title = String(battle_intro.get("title", intro_title))
 		intro_tip = String(battle_intro.get("tip", intro_tip))
-	hud.show_banner("%s  ·  %s 入卷" % [intro_title, String(hero_data["name"])], accent, 2.6)
+		if _is_english():
+			intro_title = _localized_intro_title(start_wave, intro_title)
+			intro_tip = _localized_intro_tip(start_wave, intro_tip)
+	var intro_suffix := "enters the scroll" if _is_english() else "入卷"
+	hud.show_banner("%s  ·  %s %s" % [intro_title, String(localized_hero["name"]), intro_suffix], accent, 2.6)
 	hud.set_tip(intro_tip)
 	var soundtrack_track := "mosslightCanopy"
 	var soundtrack_cue := "入卷铺陈"
@@ -1952,7 +2139,7 @@ func _start_opening_sequence() -> void:
 		soundtrack_track = "fireflyFootpath"
 		soundtrack_cue = "试阵开卷"
 	_set_soundtrack(soundtrack_track, soundtrack_cue, true, true)
-	_log_battle_event("%s · %s入卷" % [intro_title, String(hero_data["name"])], accent)
+	_log_battle_event("%s · %s %s" % [intro_title, String(localized_hero["name"]), "enters the scroll" if _is_english() else "入卷"], accent)
 	_spawn_wave_effect(player.global_position, 3.3, accent, String(hero_data["glyph"]))
 	_spawn_intro_symbols(String(hero_data["glyph"]), accent)
 	_show_hero_callout("intro", 3.0)
@@ -1991,9 +2178,9 @@ func _jump_to_next_wave_for_test() -> void:
 	_update_boss_flow()
 	_sync_hud()
 	if hud != null:
-		hud.show_banner("试阵跃迁 · 第 %d 波" % next_wave, _threat_level_color(next_wave), 1.95)
-		hud.set_tip("已清空当前敌群并切到第 %d 波，可继续观察刷怪节奏、演出密度和 FPS。" % next_wave)
-		_log_battle_event("试阵跃迁 · 第 %d 波" % next_wave, _threat_level_color(next_wave))
+		hud.show_banner(("Test Jump · Wave %d" if _is_english() else "试阵跃迁 · 第 %d 波") % next_wave, _threat_level_color(next_wave), 1.95)
+		hud.set_tip(("The current enemies, hazards, and projectiles were cleared and the run jumped to wave %d so you can inspect pacing, effect density, and FPS." if _is_english() else "已清空当前敌群并切到第 %d 波，可继续观察刷怪节奏、演出密度和 FPS。") % next_wave)
+		_log_battle_event(("Test Jump · Wave %d" if _is_english() else "试阵跃迁 · 第 %d 波") % next_wave, _threat_level_color(next_wave))
 
 
 func _on_boss_defeated(world_position: Vector3) -> void:
@@ -2001,15 +2188,15 @@ func _on_boss_defeated(world_position: Vector3) -> void:
 	Session.chapter_progress["completed_bosses"] = completed_bosses
 	if completed_bosses >= BOSS_SPAWN_TIMES.size():
 		Session.chapter_progress["chapter_complete"] = true
-		hud.show_banner("残卷一暂定", Color(1.0, 0.88, 0.58, 1.0), 2.6)
-		hud.set_tip("本卷两位卷主都已崩散，章节目标完成。继续战斗可测试成长上限。")
-		_log_battle_event("残卷一暂定 · 卷主尽散", Color(1.0, 0.88, 0.58, 1.0))
+		hud.show_banner("Scroll I Secured" if _is_english() else "残卷一暂定", Color(1.0, 0.88, 0.58, 1.0), 2.6)
+		hud.set_tip("Both scroll lords have collapsed. The chapter goal is complete, and you can keep fighting to test the build ceiling." if _is_english() else "本卷两位卷主都已崩散，章节目标完成。继续战斗可测试成长上限。")
+		_log_battle_event("Scroll I Secured · Bosses gone" if _is_english() else "残卷一暂定 · 卷主尽散", Color(1.0, 0.88, 0.58, 1.0))
 		_set_soundtrack("mosslightCanopy", "残卷暂定", true, true)
 		_show_hero_callout("chapter_complete", 3.2)
 	else:
-		hud.show_banner("卷主退散", Color(1.0, 0.84, 0.52, 1.0), 2.2)
-		hud.set_tip("卷主崩散，残卷继续翻开。抓紧收补给并准备迎接更深的一层。")
-		_log_battle_event("卷主退散 · 残卷继续翻开", Color(1.0, 0.84, 0.52, 1.0))
+		hud.show_banner("Boss Dispersed" if _is_english() else "卷主退散", Color(1.0, 0.84, 0.52, 1.0), 2.2)
+		hud.set_tip("The scroll lord has fallen. Gather the scattered supplies quickly and prepare for the deeper layer ahead." if _is_english() else "卷主崩散，残卷继续翻开。抓紧收补给并准备迎接更深的一层。")
+		_log_battle_event("Boss Dispersed · The scroll unfolds deeper" if _is_english() else "卷主退散 · 残卷继续翻开", Color(1.0, 0.84, 0.52, 1.0))
 		_set_soundtrack("mosslightCanopy", "残卷回气", true, true)
 		_show_hero_callout("boss_defeat", 3.0)
 	_spawn_wave_effect(world_position, 7.2, Color(1.0, 0.74, 0.46, 1.0), "破")
@@ -2069,9 +2256,10 @@ func _set_field_phase_for_wave(wave: int, announce: bool = true) -> void:
 	_spawn_field_phase_stamp(stamp_position, next_glyph, next_theme)
 	_spawn_wave_effect(stamp_position, 5.1, Color(next_theme.get("accent", Color(1.0, 1.0, 1.0, 1.0))), next_glyph)
 	if hud != null:
-		hud.show_banner("字境相变 · %s" % String(next_theme.get("name", "字境")), Color(next_theme.get("accent", Color(1.0, 1.0, 1.0, 1.0))), 2.6)
-		hud.set_tip("第 %d 波切入%s。%s" % [wave, String(next_theme.get("name", "字境")), String(next_theme.get("tip", ""))])
-		_log_battle_event("字境相变 · %s" % String(next_theme.get("name", "字境")), Color(next_theme.get("accent", Color(1.0, 1.0, 1.0, 1.0))))
+		var localized_theme := _localized_field_phase_theme(next_theme)
+		hud.show_banner(("Realm Shift · %s" if _is_english() else "字境相变 · %s") % String(localized_theme.get("name", "Realm" if _is_english() else "字境")), Color(next_theme.get("accent", Color(1.0, 1.0, 1.0, 1.0))), 2.6)
+		hud.set_tip(("Wave %d enters %s. %s" if _is_english() else "第 %d 波切入%s。%s") % [wave, String(localized_theme.get("name", "Realm" if _is_english() else "字境")), String(localized_theme.get("tip", ""))])
+		_log_battle_event(("Realm Shift · %s" if _is_english() else "字境相变 · %s") % String(localized_theme.get("name", "Realm" if _is_english() else "字境")), Color(next_theme.get("accent", Color(1.0, 1.0, 1.0, 1.0))))
 	var soundtrack_track: String = current_soundtrack_id if not current_soundtrack_id.is_empty() else "mosslightCanopy"
 	_set_soundtrack(soundtrack_track, String(next_theme.get("cue", "字境相变")), true, true)
 
@@ -2221,13 +2409,13 @@ func _on_threat_level_advanced(new_threat_level: int) -> void:
 	var tint: Color = _threat_level_color(new_threat_level)
 	var wave_glyph := _threat_level_glyph(new_threat_level)
 	if _is_big_wave(new_threat_level):
-		hud.show_banner("字潮第 %d 波 · 大潮" % new_threat_level, tint, 2.35)
-		_log_battle_event("第 %d 波 · 大潮压境" % new_threat_level, tint)
+		hud.show_banner(("Glyph Tide Wave %d · Major Surge" if _is_english() else "字潮第 %d 波 · 大潮") % new_threat_level, tint, 2.35)
+		_log_battle_event(("Wave %d · Major Surge" if _is_english() else "第 %d 波 · 大潮压境") % new_threat_level, tint)
 		spawn_timer = min(spawn_timer, 0.16)
 		_set_soundtrack("fireflyFootpath", "大潮压境", true, true)
 	else:
-		hud.show_banner("字潮第 %d 波" % new_threat_level, tint, 1.85)
-		_log_battle_event("第 %d 波 · 字潮推进" % new_threat_level, tint)
+		hud.show_banner(("Glyph Tide Wave %d" if _is_english() else "字潮第 %d 波") % new_threat_level, tint, 1.85)
+		_log_battle_event(("Wave %d · Tide Advances" if _is_english() else "第 %d 波 · 字潮推进") % new_threat_level, tint)
 		if new_threat_level == 2:
 			_set_soundtrack("fireflyFootpath", "字潮提速", true, true)
 	hud.set_tip(_threat_level_tip(new_threat_level))
@@ -2267,15 +2455,25 @@ func _threat_level_glyph(new_threat_level: int) -> String:
 
 func _threat_level_tip(new_threat_level: int) -> String:
 	if _is_big_wave(new_threat_level):
+		if _is_english():
+			return "A major surge is here. Spawn rate and enemy cap both rise, so clear the outer ranged threats before spending skills on the center crush."
 		return "大潮压境。刷怪频率和场上敌量上限同时抬高，先清外围远程，再留技能处理中心重压。"
 	match new_threat_level:
 		2:
+			if _is_english():
+				return "The tide rises. Archers start entering the line, so watch for ranged pressure while kiting."
 			return "字潮抬升。弓手开始混入阵线，注意被远程拉扯。"
 		3:
+			if _is_english():
+				return "The tide swells again. Assassins and ritualists join the wave, so dashes and ground arrays will overlap."
 			return "字潮再涨。忍与阵师入场，突刺和地阵会一起施压。"
 		4:
+			if _is_english():
+				return "Ink cavalry has entered the field. Keep moving and do not stand inside the charge line for too long."
 			return "墨骑踏阵。保持走位，不要在冲锋预警线里停太久。"
 		_:
+			if _is_english():
+				return "Elites begin appearing more often, so prepare supplies and phrase timing before the next pressure spike."
 			return "魁首开始现身，补给和成词节奏都要提前准备。"
 
 
@@ -2395,7 +2593,11 @@ func _build_map_snapshot() -> Dictionary:
 		"player_heading": _map_direction(player.look_direction if is_instance_valid(player) else Vector3(0.0, 0.0, -1.0)),
 		"markers": markers,
 		"enemies": enemies,
-		"summary": "敌群 %d  ·  砚台 %d  ·  草丛 %d  ·  地标 %d  ·  探索 %d%%" % [enemies.size(), inkstone_count, bush_count, landmark_count, _map_exploration_percent()]
+		"summary": (
+			"Enemies %d  ·  Inkstones %d  ·  Bushes %d  ·  Landmarks %d  ·  Explored %d%%"
+			if _is_english()
+			else "敌群 %d  ·  砚台 %d  ·  草丛 %d  ·  地标 %d  ·  探索 %d%%"
+		) % [enemies.size(), inkstone_count, bush_count, landmark_count, _map_exploration_percent()]
 	}
 
 
@@ -2529,15 +2731,15 @@ func _update_inkstone_interaction() -> void:
 	active_inkstone = _find_nearby_inkstone()
 	if active_inkstone == null:
 		if previous_inkstone != null:
-			hud.set_tip(DEFAULT_BATTLE_TIP)
+			hud.set_tip(_default_battle_tip())
 		return
 
 	if _has_grindable_words():
-		hud.set_tip("靠近砚台，按 E 磨词。词技只会在这里成型。")
+		hud.set_tip("Move close to the inkstone and press E to refine phrases. Phrase arts can only be formed here." if _is_english() else "靠近砚台，按 E 磨词。词技只会在这里成型。")
 		if Input.is_action_just_pressed("interact"):
 			_handle_inkstone_interact()
 	else:
-		hud.set_tip("砚台静候。先把合字升满，再带着相关偏旁来磨词。")
+		hud.set_tip("The inkstone waits. Max a fused glyph first, then bring its related radicals here for phrase refinement." if _is_english() else "砚台静候。先把合字升满，再带着相关偏旁来磨词。")
 		if Input.is_action_just_pressed("interact"):
 			_handle_inkstone_interact()
 
@@ -2548,7 +2750,7 @@ func _handle_inkstone_interact() -> void:
 	if _has_grindable_words():
 		_present_word_choices()
 	else:
-		hud.show_banner("砚上无字可磨", Color(0.7, 0.84, 1.0, 1.0), 1.5)
+		hud.show_banner("No glyph is ready for the inkstone" if _is_english() else "砚上无字可磨", Color(0.7, 0.84, 1.0, 1.0), 1.5)
 
 
 func _find_nearby_inkstone() -> Node3D:
@@ -2618,26 +2820,26 @@ func _build_word_choices() -> Array[Dictionary]:
 
 
 func _build_word_choice_data(word_id: String) -> Dictionary:
-	var word: Dictionary = Session.get_word_data(word_id)
+	var word: Dictionary = _localized_word_data(word_id)
 	var recipe_id: String = String(word["recipe_id"])
-	var recipe: Dictionary = Session.get_recipe_data(recipe_id)
+	var recipe: Dictionary = _localized_recipe_data(recipe_id)
 	var word_level: int = int(word_skill_levels.get(word_id, 0))
 	var stock: int = _count_recipe_radicals(recipe["radicals"])
 	var headline: String
 	if word_level <= 0:
-		headline = "磨词 %d/%d" % [
+		headline = ("Refine %d/%d" if _is_english() else "磨词 %d/%d") % [
 			min(int(word_progress.get(word_id, 0)) + 1, int(word["unlock_cost"])),
 			int(word["unlock_cost"])
 		]
 	else:
-		headline = "词技升级  Lv.%d -> Lv.%d" % [word_level, min(word_level + 1, int(word["max_level"]))]
+		headline = ("Phrase Upgrade  Lv.%d -> Lv.%d" if _is_english() else "词技升级  Lv.%d -> Lv.%d") % [word_level, min(word_level + 1, int(word["max_level"]))]
 
 	return {
 		"word_id": word_id,
 		"display": String(word["display"]),
 		"title": String(word["title"]),
 		"headline": headline,
-		"description": "%s\n当前余材：%d 枚，来自「%s」。" % [
+		"description": ("%s\nCurrent stock: %d, drawn from `%s`." if _is_english() else "%s\n当前余材：%d 枚，来自「%s」。") % [
 			String(word["description"]),
 			stock,
 			String(recipe["display"])
@@ -2658,11 +2860,11 @@ func _on_word_choice_selected(word_id: String) -> void:
 
 
 func _apply_word_choice(word_id: String) -> void:
-	var word: Dictionary = Session.get_word_data(word_id)
-	var recipe: Dictionary = Session.get_recipe_data(String(word["recipe_id"]))
+	var word: Dictionary = _localized_word_data(word_id)
+	var recipe: Dictionary = _localized_recipe_data(String(word["recipe_id"]))
 	var stored_radical: String = _find_available_recipe_radical(recipe["radicals"])
 	if stored_radical.is_empty():
-		hud.show_banner("余材不足", Color(word["color"]), 1.4)
+		hud.show_banner("Not enough stock" if _is_english() else "余材不足", Color(word["color"]), 1.4)
 		return
 
 	radical_counts[stored_radical] = int(radical_counts.get(stored_radical, 0)) - 1
@@ -2673,7 +2875,7 @@ func _apply_word_choice(word_id: String) -> void:
 			word_progress[word_id] = int(word["unlock_cost"])
 			_set_word_level(word_id, 1)
 		else:
-			hud.show_banner("%s 磨词 %d/%d" % [
+			hud.show_banner(("%s refine %d/%d" if _is_english() else "%s 磨词 %d/%d") % [
 				String(word["display"]),
 				int(word_progress[word_id]),
 				int(word["unlock_cost"])

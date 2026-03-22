@@ -4,6 +4,95 @@ const CJKFont := preload("res://scripts/core/cjk_font.gd")
 const EVENT_LOG_LIMIT := 12
 const EVENT_LOG_DESKTOP_VISIBLE := 6
 const EVENT_LOG_COMPACT_VISIBLE := 3
+const UI_EN := {
+	"待入曲": "Awaiting Cue",
+	"战场乐题": "Battle Track",
+	"战局开始后会同步当前曲名与气氛提示。": "The active track name and mood cue will appear once the battle begins.",
+	"偏旁存量": "Radical Stock",
+	"当前尚未留存偏旁": "No radicals stored yet",
+	"全部化字": "Fully fused",
+	"战场速记": "Battle Notes",
+	"战报": "Battle Log",
+	"地图": "Map",
+	"暂停": "Pause",
+	"下一波": "Next Wave",
+	"卷主降阵": "Boss Descends",
+	"战局摘要": "Run Summary",
+	"偏旁 0 枚  ·  当前全部化字": "Radicals 0  ·  fully fused",
+	"击倒字灵收集字力与补给。": "Defeat glyph spirits to collect ink power and supplies.",
+	"战场呼应": "Battle Callout",
+	"字潮翻动时，呼应会在这里出现。": "Callouts will appear here when the glyph tide shifts.",
+	"当前目标": "Current Objective",
+	"尚未收集，或已经全部化字。": "Nothing left to collect, or everything has already fused.",
+	"已成技能字": "Formed Skill Glyphs",
+	"已成技艺": "Ready Skills",
+	"配乐提示": "Music Cue",
+	"残卷地图": "Scroll Map",
+	"图例": "Legend",
+	"执笔者": "Scribe",
+	"当前角色朝向与位置。": "Your current position and facing.",
+	"敌群": "Enemy Pack",
+	"常规敌人正在逼近的位置。": "Where regular enemies are currently converging.",
+	"卷主 / 砚台 / 宝箱": "Boss / Inkstone / Chest",
+	"方块标出卷主、磨词砚台与可开启宝箱。": "Squares mark bosses, phrase-grinding inkstones, and unopened chests.",
+	"树丛 / 墨池": "Bush / Ink Pool",
+	"圆形轮廓对应草丛与墨池。": "Circular markers represent bushes and ink pools.",
+	"碑刻 / 卷架": "Stele / Scroll Rack",
+	"静态地标，便于定方位。": "Static landmarks that help orientation.",
+	"迷雾": "Fog",
+	"未探索区域会被雾面遮住，走到附近才会展开。": "Unexplored areas stay covered until you move close enough.",
+	"拖拽视野，滚轮或按钮缩放。按 Esc、Tab、M 或再次点地图收起。": "Drag to pan. Use the wheel or buttons to zoom. Press Esc, Tab, M, or the map button again to close.",
+	"缩小": "Zoom Out",
+	"放大": "Zoom In",
+	"重置": "Reset",
+	"收起地图": "Close Map",
+	"字力突破": "Ink Breakthrough",
+	"留空则保留玩家名帖署名": "Leave blank to keep the Player Sigil alias",
+	"保存署名": "Save Alias",
+	"等待成字": "Waiting to Form",
+	"尚未成型": "Not Formed Yet",
+	"先通过偏旁三选一推进合字，再把满级合字带去砚台磨成词技。": "Advance fused glyphs through radical drafts first, then take maxed glyphs to the inkstone for phrase arts.",
+	"预备": "Readying",
+	"更多技能字": "More Skill Glyphs",
+	"WASD / 方向键移动": "Move with WASD / arrow keys",
+	"自动朝最近敌人出手": "Auto-attack the nearest enemy",
+	"升级时三选一偏旁": "Pick one of three radicals on level-up",
+	"靠近砚台按 E 磨词": "Press E near an inkstone to refine phrases",
+	"M / Tab 地图，R 重开，Esc 返回菜单": "M / Tab map, R restart, Esc return to menu",
+	"试阵模式：右上可直接跳到下一波，并实时显示 FPS": "Test mode: jump to the next wave from the top-right and watch FPS live"
+}
+const HERO_EN := {
+	"scholar": {
+		"name": "Scholar",
+		"title": "Ink Volley",
+		"role_label": "Ranged control",
+		"focus": "Collect radicals with steady pacing and bring fused glyphs online earlier.",
+		"tags": ["Lock-on", "Volley", "Stable fusion"]
+	},
+	"xia": {
+		"name": "Xia",
+		"title": "Longblade Assault",
+		"role_label": "Melee breaker",
+		"focus": "Push into the enemy tide and turn `刂` directly into weapon growth.",
+		"tags": ["Point-blank", "Burst", "Blade growth"]
+	}
+}
+const RECIPE_EN := {
+	"ming": {"title": "Sun-Moon Wheels", "description": "Strengthens your main attack rhythm and periodically releases twin pursuit wheels."},
+	"xiu": {"title": "Forest Rest", "description": "Heals over time and knocks back nearby enemies to stretch survivability."},
+	"hai": {"title": "Sea Tide", "description": "Detonates ink-wave ripples on a timer to clear nearby swarms."},
+	"lei": {"title": "Falling Thunder", "description": "Locks onto the nearest cluster and slams the mid-field with lightning."},
+	"ren": {"title": "Endurance Instinct", "description": "Below half health, gain attack speed, damage, and move speed together."},
+	"yan": {"title": "Flame Surge", "description": "Periodically sprays flame glyph volleys in all directions to burn open space."}
+}
+const WORD_EN := {
+	"ming_guang": {"title": "Moonbright Verse", "description": "Twin wheels add a moon-chasing volley and lift the main weapon with them."},
+	"xiu_yang": {"title": "Restful Phrase", "description": "Turns healing into stable sustain and raises the margin for mistakes."},
+	"hai_xiao": {"title": "Sea Howl", "description": "Refines the tide into a fiercer ink wave with shorter cycles and larger reach."},
+	"lei_yu": {"title": "Rain of Thunder", "description": "Lightning impacts spread into a rain field, turning burst into control."},
+	"ren_xin": {"title": "Ruthless Heart", "description": "When endurance triggers, recover health and cut out periodic aftershocks."},
+	"yan_chao": {"title": "Flame Surge Scroll", "description": "Makes flame volleys denser and faster, with scorching waves erupting on hit."}
+}
 
 class BattleMapCanvas:
 	extends Control
@@ -268,6 +357,7 @@ signal test_next_wave_requested
 signal battle_setting_changed(setting_key: String, value: Variant)
 
 var ui_font: Font
+var current_language := "zh"
 var root_control: Control
 var safe_content_root: Control
 var left_column: VBoxContainer
@@ -367,6 +457,7 @@ var event_log_entries: Array[Dictionary] = []
 
 func _ready() -> void:
 	ui_font = CJKFont.get_font()
+	current_language = Session.get_launcher_language()
 	battle_settings = Session.get_battle_settings()
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_build_ui()
@@ -374,6 +465,48 @@ func _ready() -> void:
 	_refresh_layout()
 	call_deferred("_refresh_layout")
 	set_process(true)
+
+
+func _is_english() -> bool:
+	return current_language == "en"
+
+
+func _localize_text(text: String) -> String:
+	if not _is_english():
+		return text
+	if text.begins_with("• "):
+		return "• %s" % _localize_text(text.substr(2))
+	return String(UI_EN.get(text, text))
+
+
+func _localized_hero_data(hero_data: Dictionary) -> Dictionary:
+	var localized := hero_data.duplicate(true)
+	if not _is_english():
+		return localized
+	var patch: Dictionary = HERO_EN.get(String(hero_data.get("id", "")), {})
+	for key in patch.keys():
+		localized[key] = patch[key]
+	return localized
+
+
+func _localized_recipe_data(recipe_id: String) -> Dictionary:
+	var recipe := Session.get_recipe_data(recipe_id).duplicate(true)
+	if not _is_english():
+		return recipe
+	var patch: Dictionary = RECIPE_EN.get(recipe_id, {})
+	for key in patch.keys():
+		recipe[key] = patch[key]
+	return recipe
+
+
+func _localized_word_data(word_id: String) -> Dictionary:
+	var word := Session.get_word_data(word_id).duplicate(true)
+	if not _is_english():
+		return word
+	var patch: Dictionary = WORD_EN.get(word_id, {})
+	for key in patch.keys():
+		word[key] = patch[key]
+	return word
 
 
 func _process(delta: float) -> void:
@@ -415,10 +548,11 @@ func _process(delta: float) -> void:
 
 
 func configure(hero_data: Dictionary) -> void:
-	hero_label.text = "%s" % String(hero_data["name"])
-	hero_title_label.text = "%s  ·  %s" % [String(hero_data["title"]), String(hero_data["role_label"])]
-	hero_focus_label.text = String(hero_data["focus"])
-	_refresh_hero_tags(hero_data)
+	var localized_hero := _localized_hero_data(hero_data)
+	hero_label.text = "%s" % String(localized_hero["name"])
+	hero_title_label.text = "%s  ·  %s" % [String(localized_hero["title"]), String(localized_hero["role_label"])]
+	hero_focus_label.text = String(localized_hero["focus"])
+	_refresh_hero_tags(localized_hero)
 	_refresh_controls_text()
 
 
@@ -450,22 +584,24 @@ func return_to_pause_menu() -> void:
 
 
 func set_health(current: float, maximum: float) -> void:
-	health_label.text = "气血  %d / %d" % [int(ceil(current)), int(ceil(maximum))]
+	var line := ("Vitality  %d / %d" if _is_english() else "气血  %d / %d") % [int(ceil(current)), int(ceil(maximum))]
+	health_label.text = line
 	health_bar.max_value = max(1.0, maximum)
 	health_bar.value = clamp(current, 0.0, maximum)
 	if compact_health_label != null:
-		compact_health_label.text = "气血  %d / %d" % [int(ceil(current)), int(ceil(maximum))]
+		compact_health_label.text = line
 	if compact_health_bar != null:
 		compact_health_bar.max_value = max(1.0, maximum)
 		compact_health_bar.value = clamp(current, 0.0, maximum)
 
 
 func set_progress(level: int, current: int, target: int) -> void:
-	progress_label.text = "字墨  Lv.%d   %d / %d" % [level, current, target]
+	var line := ("Ink  Lv.%d   %d / %d" if _is_english() else "字墨  Lv.%d   %d / %d") % [level, current, target]
+	progress_label.text = line
 	xp_bar.max_value = max(1, target)
 	xp_bar.value = clamp(current, 0, target)
 	if compact_progress_label != null:
-		compact_progress_label.text = "字墨  Lv.%d   %d / %d" % [level, current, target]
+		compact_progress_label.text = line
 	if compact_xp_bar != null:
 		compact_xp_bar.max_value = max(1, target)
 		compact_xp_bar.value = clamp(current, 0, target)
@@ -475,9 +611,14 @@ func set_status(elapsed: float, kills: int, threat: int) -> void:
 	var total_seconds: int = int(floor(elapsed))
 	var minutes: int = int(total_seconds / 60)
 	var seconds: int = total_seconds % 60
-	status_label.text = "存活  %02d:%02d\n波次  %d\n击破  %d" % [minutes, seconds, threat, kills]
+	if _is_english():
+		status_label.text = "Time  %02d:%02d\nWave  %d\nKills  %d" % [minutes, seconds, threat, kills]
+	else:
+		status_label.text = "存活  %02d:%02d\n波次  %d\n击破  %d" % [minutes, seconds, threat, kills]
 	if compact_status_label != null:
-		compact_status_label.text = "存活 %02d:%02d  ·  波次 %d  ·  击破 %d" % [minutes, seconds, threat, kills]
+		compact_status_label.text = (
+			"Time %02d:%02d  ·  Wave %d  ·  Kills %d" if _is_english() else "存活 %02d:%02d  ·  波次 %d  ·  击破 %d"
+		) % [minutes, seconds, threat, kills]
 
 
 func set_radicals(radicals: Dictionary) -> void:
@@ -499,14 +640,20 @@ func set_radicals(radicals: Dictionary) -> void:
 				compact_parts.append("%s×%d" % [radical, amount])
 
 	if total_count <= 0:
-		radicals_label.text = "当前尚未留存偏旁"
+		radicals_label.text = "No radicals are currently stored." if _is_english() else "当前尚未留存偏旁"
 		radical_chip_container.add_child(_make_radical_chip("字", 0, Color(0.4, 0.54, 0.68, 1.0), "全部化字"))
 		if compact_radicals_label != null:
-			compact_radicals_label.text = "偏旁 0 枚  ·  当前全部化字"
+			compact_radicals_label.text = "Radicals 0  ·  fully fused" if _is_english() else "偏旁 0 枚  ·  当前全部化字"
 	else:
-		radicals_label.text = "当前留存 %d 枚偏旁，可继续合字或磨词" % total_count
+		radicals_label.text = (
+			"Stored %d radicals. Keep fusing glyphs or bring them to the inkstone."
+			if _is_english()
+			else "当前留存 %d 枚偏旁，可继续合字或磨词"
+		) % total_count
 		if compact_radicals_label != null:
-			compact_radicals_label.text = "偏旁 %d 枚  ·  %s" % [total_count, "  ".join(compact_parts)]
+			compact_radicals_label.text = (
+				"Radicals %d  ·  %s" if _is_english() else "偏旁 %d 枚  ·  %s"
+			) % [total_count, "  ".join(compact_parts)]
 
 
 func set_skills(recipe_levels: Dictionary, word_levels: Dictionary, word_progress: Dictionary, blade_level: int, hero_id: String) -> void:
@@ -519,15 +666,15 @@ func set_skills(recipe_levels: Dictionary, word_levels: Dictionary, word_progres
 	var cards: Array[Dictionary] = []
 	for recipe_id_variant in Session.RECIPE_ORDER:
 		var recipe_id := String(recipe_id_variant)
-		var recipe: Dictionary = Session.get_recipe_data(recipe_id)
+		var recipe: Dictionary = _localized_recipe_data(recipe_id)
 		var recipe_level: int = int(recipe_levels.get(recipe_id, 0))
 		var word_id: String = String(recipe["word_id"])
-		var word: Dictionary = Session.get_word_data(word_id)
+		var word: Dictionary = _localized_word_data(word_id)
 		var word_level: int = int(word_levels.get(word_id, 0))
 		if word_level > 0:
 			cards.append({
 				"glyph": String(word["display"]),
-				"badge": "成词技能",
+				"badge": "Phrase Art" if _is_english() else "成词技能",
 				"title": String(word["title"]),
 				"detail": String(word["description"]),
 				"recipe": "%s + %s" % [String(recipe["radicals"][0]), String(recipe["radicals"][1])],
@@ -537,10 +684,12 @@ func set_skills(recipe_levels: Dictionary, word_levels: Dictionary, word_progres
 		elif recipe_level > 0:
 			var state_text := "Lv.%d/%d" % [recipe_level, int(recipe["max_level"])]
 			if recipe_level >= int(recipe["max_level"]):
-				state_text = "磨词 %d/%d" % [int(word_progress.get(word_id, 0)), int(word["unlock_cost"])]
+				state_text = (
+					"Refine %d/%d" if _is_english() else "磨词 %d/%d"
+				) % [int(word_progress.get(word_id, 0)), int(word["unlock_cost"])]
 			cards.append({
 				"glyph": String(recipe["display"]),
-				"badge": "成字技能",
+				"badge": "Glyph Skill" if _is_english() else "成字技能",
 				"title": String(recipe["title"]),
 				"detail": String(recipe["description"]),
 				"recipe": "%s + %s" % [String(recipe["radicals"][0]), String(recipe["radicals"][1])],
@@ -550,9 +699,9 @@ func set_skills(recipe_levels: Dictionary, word_levels: Dictionary, word_progres
 
 	cards.append({
 		"glyph": "刀" if hero_id == "xia" else "笔",
-		"badge": "武器核心",
-		"title": "刀势" if hero_id == "xia" else "笔锋",
-		"detail": "独立强化主武器强度，和角色身份直接绑定。",
+		"badge": "Weapon Core" if _is_english() else "武器核心",
+		"title": ("Blade Arc" if hero_id == "xia" else "Brush Edge") if _is_english() else ("刀势" if hero_id == "xia" else "笔锋"),
+		"detail": "Directly strengthens the primary weapon and stays tied to this hero." if _is_english() else "独立强化主武器强度，和角色身份直接绑定。",
 		"recipe": "刂",
 		"level": "Lv.%d" % blade_level,
 		"color": Color(0.96, 0.54, 0.36, 1.0)
@@ -569,9 +718,9 @@ func set_skills(recipe_levels: Dictionary, word_levels: Dictionary, word_progres
 
 
 func set_tip(text: String) -> void:
-	tip_label.text = text
+	tip_label.text = _localize_text(text)
 	if compact_tip_label != null:
-		compact_tip_label.text = text
+		compact_tip_label.text = _localize_text(text)
 
 
 func push_event_log(text: String, color: Color = Color(0.88, 0.92, 0.97, 1.0)) -> void:
@@ -602,7 +751,7 @@ func _refresh_event_log_views() -> void:
 			child.queue_free()
 
 	if event_log_entries.is_empty():
-		var placeholder_text := "波次、卷主、合字和拾取会记在这里。"
+		var placeholder_text := "Wave shifts, bosses, fused glyphs, and pickups will appear here." if _is_english() else "波次、卷主、合字和拾取会记在这里。"
 		if event_log_list != null:
 			event_log_list.add_child(_make_event_log_row(placeholder_text, Color(0.52, 0.64, 0.76, 1.0), false, true))
 		if compact_event_list != null:
@@ -642,7 +791,14 @@ func _refresh_compact_skill_chips(cards: Array[Dictionary]) -> void:
 		child.queue_free()
 
 	if cards.is_empty():
-		compact_skill_chip_container.add_child(_make_compact_skill_chip("字", "待成字", "预备", Color(0.44, 0.58, 0.72, 1.0)))
+		compact_skill_chip_container.add_child(
+			_make_compact_skill_chip(
+				"字",
+				"Waiting" if _is_english() else "待成字",
+				"Ready" if _is_english() else "预备",
+				Color(0.44, 0.58, 0.72, 1.0)
+			)
+		)
 		return
 
 	var visible_count: int = mini(cards.size(), 4)
@@ -659,7 +815,7 @@ func _refresh_compact_skill_chips(cards: Array[Dictionary]) -> void:
 	var hidden_count: int = cards.size() - visible_count
 	if hidden_count > 0:
 		compact_skill_chip_container.add_child(
-			_make_compact_skill_chip("+", "更多技能字", "+%d" % hidden_count, Color(0.62, 0.78, 0.94, 1.0))
+			_make_compact_skill_chip("+", "More Skills" if _is_english() else "更多技能字", "+%d" % hidden_count, Color(0.62, 0.78, 0.94, 1.0))
 		)
 
 
@@ -720,7 +876,7 @@ func show_boss(name: String, glyph: String, tint: Color, maximum: float) -> void
 	boss_panel.visible = true
 	boss_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(tint.r * 0.12, tint.g * 0.12, tint.b * 0.16, 0.96), Color(tint.r, tint.g, tint.b, 0.72), 24))
 	boss_name_label.text = "%s  %s" % [glyph, name]
-	boss_detail_label.text = "卷主降阵"
+	boss_detail_label.text = "Boss Descends" if _is_english() else "卷主降阵"
 	boss_bar.add_theme_stylebox_override("fill", _make_fill_style(tint, 10))
 	boss_bar.max_value = max(1.0, maximum)
 	boss_bar.value = maximum
@@ -732,7 +888,9 @@ func set_boss_health(current: float, maximum: float) -> void:
 	boss_panel.visible = true
 	boss_bar.max_value = max(1.0, maximum)
 	boss_bar.value = clamp(current, 0.0, maximum)
-	boss_detail_label.text = "卷主降阵   %d / %d" % [int(ceil(current)), int(ceil(maximum))]
+	boss_detail_label.text = (
+		"Boss Descends   %d / %d" if _is_english() else "卷主降阵   %d / %d"
+	) % [int(ceil(current)), int(ceil(maximum))]
 
 
 func hide_boss() -> void:
@@ -742,8 +900,12 @@ func hide_boss() -> void:
 
 func show_radical_choices(level: int, choices: Array[Dictionary], pending_count: int) -> void:
 	choice_mode = "radical"
-	choice_title_label.text = "字力突破  Lv.%d" % level
-	choice_hint_label.text = "从三枚偏旁里选一枚。它会推进合字，满级后继续磨成词技。剩余待选：%d" % pending_count
+	choice_title_label.text = ("Ink Breakthrough  Lv.%d" if _is_english() else "字力突破  Lv.%d") % level
+	choice_hint_label.text = (
+		"Pick one of the three radicals. It pushes a glyph route forward and later refines into a phrase art. Remaining picks: %d"
+		if _is_english()
+		else "从三枚偏旁里选一枚。它会推进合字，满级后继续磨成词技。剩余待选：%d"
+	) % pending_count
 	overlay_label.visible = false
 	for index in range(choice_buttons.size()):
 		var button: Button = choice_buttons[index]
@@ -765,8 +927,8 @@ func show_radical_choices(level: int, choices: Array[Dictionary], pending_count:
 
 func show_word_choices(choices: Array[Dictionary]) -> void:
 	choice_mode = "word"
-	choice_title_label.text = "砚台磨词"
-	choice_hint_label.text = "把满级合字的余材磨成更高一层的词技。每次磨词会消耗一枚相关偏旁。"
+	choice_title_label.text = "Inkstone Refinement" if _is_english() else "砚台磨词"
+	choice_hint_label.text = "Use extra maxed-glyph stock to refine a higher phrase art. Each refinement spends one related radical." if _is_english() else "把满级合字的余材磨成更高一层的词技。每次磨词会消耗一枚相关偏旁。"
 	overlay_label.visible = false
 	for index in range(choice_buttons.size()):
 		var button: Button = choice_buttons[index]
@@ -807,17 +969,25 @@ func show_pause_menu(elapsed: float, kills: int, threat: int, level: int) -> voi
 		"level": level
 	}
 	state_mode = "pause"
-	state_title_label.text = "墨阵暂歇"
-	state_body_label.text = "当前进度\n存活 %s\n波次 %d   击破 %d   等级 Lv.%d\n\n按 E 或 Esc 继续，按 R 立即重开。" % [
-		_format_time(elapsed),
-		threat,
-		kills,
-		level
-	]
-	_configure_state_button(state_primary_button, "继续战斗", Callable(self, "_emit_pause_resume"))
-	_configure_state_button(state_secondary_button, "战场布置", Callable(self, "_show_settings_menu"))
-	_configure_state_button(state_tertiary_button, "重新开始", Callable(self, "_emit_restart"))
-	_configure_state_button(state_quaternary_button, "返回菜单", Callable(self, "_emit_return_menu"))
+	state_title_label.text = "Inkfield Interlude" if _is_english() else "墨阵暂歇"
+	if _is_english():
+		state_body_label.text = "Current run\nTime %s\nWave %d   Kills %d   Level Lv.%d\n\nPress E or Esc to resume, or R to restart immediately." % [
+			_format_time(elapsed),
+			threat,
+			kills,
+			level
+		]
+	else:
+		state_body_label.text = "当前进度\n存活 %s\n波次 %d   击破 %d   等级 Lv.%d\n\n按 E 或 Esc 继续，按 R 立即重开。" % [
+			_format_time(elapsed),
+			threat,
+			kills,
+			level
+		]
+	_configure_state_button(state_primary_button, "Resume Battle" if _is_english() else "继续战斗", Callable(self, "_emit_pause_resume"))
+	_configure_state_button(state_secondary_button, "Battle Setup" if _is_english() else "战场布置", Callable(self, "_show_settings_menu"))
+	_configure_state_button(state_tertiary_button, "Restart Run" if _is_english() else "重新开始", Callable(self, "_emit_restart"))
+	_configure_state_button(state_quaternary_button, "Return to Menu" if _is_english() else "返回菜单", Callable(self, "_emit_return_menu"))
 	_hide_state_button(state_quinary_button)
 	_hide_state_button(state_senary_button)
 	state_overlay.visible = true
@@ -831,16 +1001,16 @@ func hide_state_overlay() -> void:
 
 func _show_settings_menu() -> void:
 	state_mode = "settings"
-	state_title_label.text = "战场布置"
+	state_title_label.text = "Battle Setup" if _is_english() else "战场布置"
 	state_body_label.text = _build_settings_body()
 	_hide_state_name_editor()
 	overlay_label.visible = false
-	_configure_state_button(state_primary_button, "演出档：%s" % _performance_mode_label(), Callable(self, "_cycle_performance_mode"))
-	_configure_state_button(state_secondary_button, "视觉字效：%s" % _visual_effects_label(), Callable(self, "_toggle_visual_effects"))
-	_configure_state_button(state_tertiary_button, "敌方血条：%s" % _enemy_health_bar_label(), Callable(self, "_toggle_enemy_health_bars"))
-	_configure_state_button(state_quaternary_button, "环境字影：%s" % _ambient_density_label(), Callable(self, "_cycle_ambient_density"))
-	_configure_state_button(state_quinary_button, "远敌细节：%s" % _enemy_detail_label(), Callable(self, "_toggle_enemy_detail"))
-	_configure_state_button(state_senary_button, "返回暂停", Callable(self, "_return_to_pause_menu"))
+	_configure_state_button(state_primary_button, ("%s: %s" % ["Performance", _performance_mode_label()] if _is_english() else "演出档：%s" % _performance_mode_label()), Callable(self, "_cycle_performance_mode"))
+	_configure_state_button(state_secondary_button, ("%s: %s" % ["Glyph FX", _visual_effects_label()] if _is_english() else "视觉字效：%s" % _visual_effects_label()), Callable(self, "_toggle_visual_effects"))
+	_configure_state_button(state_tertiary_button, ("%s: %s" % ["Enemy Health Bars", _enemy_health_bar_label()] if _is_english() else "敌方血条：%s" % _enemy_health_bar_label()), Callable(self, "_toggle_enemy_health_bars"))
+	_configure_state_button(state_quaternary_button, ("%s: %s" % ["Ambient Glyphs", _ambient_density_label()] if _is_english() else "环境字影：%s" % _ambient_density_label()), Callable(self, "_cycle_ambient_density"))
+	_configure_state_button(state_quinary_button, ("%s: %s" % ["Distant Enemy Detail", _enemy_detail_label()] if _is_english() else "远敌细节：%s" % _enemy_detail_label()), Callable(self, "_toggle_enemy_detail"))
+	_configure_state_button(state_senary_button, "Back to Pause" if _is_english() else "返回暂停", Callable(self, "_return_to_pause_menu"))
 	state_overlay.visible = true
 
 
@@ -864,28 +1034,38 @@ func set_game_over(
 		"level": level,
 		"leaderboard_view": normalized_view
 	}
-	state_title_label.text = "字海沉没"
-	var run_header := "本轮试阵" if normalized_view == "test" else "本轮残卷"
-	state_body_label.text = "%s\n\n%s\n存活 %s\n波次 %d   击破 %d   等级 Lv.%d" % [
-		summary,
-		run_header,
-		_format_time(elapsed),
-		threat,
-		kills,
-		level
-	]
-	var leaderboard_detail := "本轮记录已经写入主卷榜。你可以直接改成想显示的名字；留空则保留玩家名帖里的默认署名。"
+	state_title_label.text = "The Ink Sea Sinks" if _is_english() else "字海沉没"
+	var run_header := ("Test Run" if normalized_view == "test" else "Main Scroll") if _is_english() else ("本轮试阵" if normalized_view == "test" else "本轮残卷")
+	if _is_english():
+		state_body_label.text = "%s\n\n%s\nTime %s\nWave %d   Kills %d   Level Lv.%d" % [
+			summary,
+			run_header,
+			_format_time(elapsed),
+			threat,
+			kills,
+			level
+		]
+	else:
+		state_body_label.text = "%s\n\n%s\n存活 %s\n波次 %d   击破 %d   等级 Lv.%d" % [
+			summary,
+			run_header,
+			_format_time(elapsed),
+			threat,
+			kills,
+			level
+		]
+	var leaderboard_detail := "This run was written into the main-scroll board. You can rename it here, or leave the field blank to keep the default Player Sigil alias." if _is_english() else "本轮记录已经写入主卷榜。你可以直接改成想显示的名字；留空则保留玩家名帖里的默认署名。"
 	if normalized_view == "test":
-		leaderboard_detail = "本轮试阵记录已经写入试阵榜，不会影响主卷榜排序。你可以直接改成想显示的名字；留空则保留玩家名帖里的默认署名。"
+		leaderboard_detail = "This test run was written into the test board and will not affect the main-scroll ranking. You can rename it here, or leave the field blank to keep the default Player Sigil alias." if _is_english() else "本轮试阵记录已经写入试阵榜，不会影响主卷榜排序。你可以直接改成想显示的名字；留空则保留玩家名帖里的默认署名。"
 	_show_state_name_editor(
-		"战绩署名",
+		"Run Alias" if _is_english() else "战绩署名",
 		leaderboard_detail
 	)
-	_configure_state_button(state_primary_button, "重新开始", Callable(self, "_emit_restart"))
-	_configure_state_button(state_secondary_button, "返回菜单", Callable(self, "_emit_return_menu"))
+	_configure_state_button(state_primary_button, "Restart Run" if _is_english() else "重新开始", Callable(self, "_emit_restart"))
+	_configure_state_button(state_secondary_button, "Return to Menu" if _is_english() else "返回菜单", Callable(self, "_emit_return_menu"))
 	_configure_state_button(
 		state_tertiary_button,
-		"查看%s" % ("试阵榜" if normalized_view == "test" else "主卷榜"),
+		("View %s" % ("Test Board" if normalized_view == "test" else "Main Board")) if _is_english() else ("查看%s" % ("试阵榜" if normalized_view == "test" else "主卷榜")),
 		Callable(self, "_show_local_leaderboard")
 	)
 	_hide_state_button(state_quaternary_button)
@@ -932,22 +1112,22 @@ func _refresh_local_leaderboard_overlay() -> void:
 	local_leaderboard_view = _normalize_local_leaderboard_view(local_leaderboard_view)
 	var manual_count := Session.get_local_leaderboard_count("manual")
 	var test_count := Session.get_local_leaderboard_count("test")
-	state_title_label.text = "本地主卷榜" if local_leaderboard_view == "manual" else "本地试阵榜"
+	state_title_label.text = ("Local Main Board" if local_leaderboard_view == "manual" else "Local Test Board") if _is_english() else ("本地主卷榜" if local_leaderboard_view == "manual" else "本地试阵榜")
 	state_body_label.text = _build_local_leaderboard_text(local_leaderboard_view)
-	var leaderboard_detail := "这里显示最近写入主卷榜的那条战绩；如果刚结束的是试阵捷径，可以先切到试阵榜再改名。"
+	var leaderboard_detail := "This view shows the latest entry written into the main-scroll board. If you just finished a shortcut test run, switch to the test board first before renaming it." if _is_english() else "这里显示最近写入主卷榜的那条战绩；如果刚结束的是试阵捷径，可以先切到试阵榜再改名。"
 	if local_leaderboard_view == "test":
-		leaderboard_detail = "这里显示最近写入试阵榜的那条战绩；试阵记录会和主卷榜分开保留。"
+		leaderboard_detail = "This view shows the latest entry written into the test board. Test records stay separate from the main-scroll board." if _is_english() else "这里显示最近写入试阵榜的那条战绩；试阵记录会和主卷榜分开保留。"
 	_show_state_name_editor(
-		"最近一条战绩署名",
+		"Latest Entry Alias" if _is_english() else "最近一条战绩署名",
 		leaderboard_detail
 	)
 	if local_leaderboard_view == "manual":
-		_configure_state_button(state_primary_button, "切到试阵榜 · %d" % test_count, Callable(self, "_show_test_leaderboard"))
+		_configure_state_button(state_primary_button, ("Switch to Test Board · %d" if _is_english() else "切到试阵榜 · %d") % test_count, Callable(self, "_show_test_leaderboard"))
 	else:
-		_configure_state_button(state_primary_button, "切到主卷榜 · %d" % manual_count, Callable(self, "_show_manual_leaderboard"))
-	_configure_state_button(state_secondary_button, "返回结算", Callable(self, "_show_game_over_summary"))
-	_configure_state_button(state_tertiary_button, "重新开始", Callable(self, "_emit_restart"))
-	_configure_state_button(state_quaternary_button, "返回菜单", Callable(self, "_emit_return_menu"))
+		_configure_state_button(state_primary_button, ("Switch to Main Board · %d" if _is_english() else "切到主卷榜 · %d") % manual_count, Callable(self, "_show_manual_leaderboard"))
+	_configure_state_button(state_secondary_button, "Back to Summary" if _is_english() else "返回结算", Callable(self, "_show_game_over_summary"))
+	_configure_state_button(state_tertiary_button, "Restart Run" if _is_english() else "重新开始", Callable(self, "_emit_restart"))
+	_configure_state_button(state_quaternary_button, "Return to Menu" if _is_english() else "返回菜单", Callable(self, "_emit_return_menu"))
 	_hide_state_button(state_quinary_button)
 	_hide_state_button(state_senary_button)
 	overlay_label.visible = false
@@ -967,6 +1147,14 @@ func _return_to_pause_menu() -> void:
 
 
 func _build_settings_body() -> String:
+	if _is_english():
+		return "Mirroring the hanziHero Performance / LOD panel, the Godot battlefield now keeps a complete first-pass set of safe presentation toggles. Changes apply immediately and are saved locally.\n\nCurrent\nPerformance: %s\nGlyph FX: %s\nEnemy Health Bars: %s\nAmbient Glyphs: %s\nDistant Enemy Detail: %s" % [
+			_performance_mode_label(),
+			_visual_effects_label(),
+			_enemy_health_bar_label(),
+			_ambient_density_label(),
+			_enemy_detail_label()
+		]
 	return "对照 hanziHero 的 Performance / LOD 面板，当前战场布置已经补齐完整的低风险首轮矩阵。改动会立即生效，并写入本地运行设置。\n\n当前\n演出档：%s\n视觉字效：%s\n敌方血条：%s\n环境字影：%s\n远敌细节：%s" % [
 		_performance_mode_label(),
 		_visual_effects_label(),
@@ -979,33 +1167,33 @@ func _build_settings_body() -> String:
 func _performance_mode_label() -> String:
 	match String(battle_settings.get("performance_mode", "balanced")):
 		"performance":
-			return "轻量"
+			return "Performance" if _is_english() else "轻量"
 		"quality":
-			return "质感"
+			return "Quality" if _is_english() else "质感"
 		_:
-			return "平衡"
+			return "Balanced" if _is_english() else "平衡"
 
 
 func _enemy_health_bar_label() -> String:
-	return "显示" if bool(battle_settings.get("enemy_health_bars", true)) else "隐藏"
+	return ("Show" if _is_english() else "显示") if bool(battle_settings.get("enemy_health_bars", true)) else ("Hide" if _is_english() else "隐藏")
 
 
 func _visual_effects_label() -> String:
-	return "开启" if bool(battle_settings.get("visual_effects", true)) else "收束"
+	return ("Enabled" if _is_english() else "开启") if bool(battle_settings.get("visual_effects", true)) else ("Reduced" if _is_english() else "收束")
 
 
 func _ambient_density_label() -> String:
 	match String(battle_settings.get("ambient_glyph_density", "medium")):
 		"off":
-			return "关闭"
+			return "Off" if _is_english() else "关闭"
 		"high":
-			return "浓"
+			return "Dense" if _is_english() else "浓"
 		_:
-			return "疏"
+			return "Sparse" if _is_english() else "疏"
 
 
 func _enemy_detail_label() -> String:
-	return "完整" if bool(battle_settings.get("enemy_detail", true)) else "近距"
+	return ("Full" if _is_english() else "完整") if bool(battle_settings.get("enemy_detail", true)) else ("Near Only" if _is_english() else "近距")
 
 
 func _cycle_performance_mode() -> void:
@@ -1056,28 +1244,36 @@ func _build_local_leaderboard_text(view: String = "manual") -> String:
 	var entries: Array[Dictionary] = Session.get_local_leaderboard(5, normalized_view)
 	if entries.is_empty():
 		if normalized_view == "test":
-			return "当前还没有试阵记录。用第 10 / 20 波捷径打一轮后，这里会单独留下试阵榜。"
-		return "当前还没有可展示的主卷战绩。下一次从第 1 波开卷后，这里会留下你的残卷记录。"
+			return "There are no test-run records yet. Use the wave 10 or wave 20 shortcut once and this board will fill in separately." if _is_english() else "当前还没有试阵记录。用第 10 / 20 波捷径打一轮后，这里会单独留下试阵榜。"
+		return "There are no main-scroll results to show yet. Finish a true run from wave 1 and your record will appear here." if _is_english() else "当前还没有可展示的主卷战绩。下一次从第 1 波开卷后，这里会留下你的残卷记录。"
 
 	var lines: Array[String] = []
 	if normalized_view == "test":
-		lines.append("试阵榜会单独记录第 10 / 20 波捷径，不与主卷榜混排。")
+		lines.append("Test runs keep wave 10 and wave 20 shortcuts on a separate board." if _is_english() else "试阵榜会单独记录第 10 / 20 波捷径，不与主卷榜混排。")
 	else:
-		lines.append("主卷榜只统计从第 1 波真正开卷的正式战绩。")
+		lines.append("The main-scroll board only tracks full runs that begin at wave 1." if _is_english() else "主卷榜只统计从第 1 波真正开卷的正式战绩。")
 	lines.append("")
 	for index in range(entries.size()):
 		var entry: Dictionary = entries[index]
-		var run_label := "试阵 W%d" % int(entry.get("start_wave", 1))
+		var run_label := ("Test W%d" if _is_english() else "试阵 W%d") % int(entry.get("start_wave", 1))
 		if normalized_view == "manual":
-			run_label = "定卷" if bool(entry.get("chapter_complete", false)) else "残卷"
+			run_label = ("Completed" if bool(entry.get("chapter_complete", false)) else "Scroll") if _is_english() else ("定卷" if bool(entry.get("chapter_complete", false)) else "残卷")
+		var bosses_label := "Bosses" if _is_english() else "卷主"
+		var threat_label := "Wave" if _is_english() else "波次"
+		var kills_label := "Kills" if _is_english() else "击破"
+		var elapsed_label := "Time" if _is_english() else "存活"
 		lines.append(
-			"%d. %s  %s  卷主 %d  波次 %d  击破 %d  存活 %s" % [
+			"%d. %s  %s  %s %d  %s %d  %s %d  %s %s" % [
 				index + 1,
 				_format_leaderboard_identity(entry),
 				run_label,
+				bosses_label,
 				int(entry.get("bosses", 0)),
+				threat_label,
 				int(entry.get("threat", 1)),
+				kills_label,
 				int(entry.get("kills", 0)),
+				elapsed_label,
 				_format_time(float(entry.get("elapsed", 0.0)))
 			]
 		)
@@ -1092,30 +1288,33 @@ func _build_local_leaderboard_detail_line(entry: Dictionary) -> String:
 
 	var radicals_text := _summarize_run_counts(entry.get("radicals", {}), Session.RADICAL_ORDER, "radical")
 	if not radicals_text.is_empty():
-		segments.append("偏旁 %s" % radicals_text)
+		segments.append("Radicals %s" % radicals_text if _is_english() else "偏旁 %s" % radicals_text)
 
 	var recipes_text := _summarize_run_counts(entry.get("recipes", {}), Session.RECIPE_ORDER, "recipe")
 	if not recipes_text.is_empty():
-		segments.append("成字 %s" % recipes_text)
+		segments.append("Glyphs %s" % recipes_text if _is_english() else "成字 %s" % recipes_text)
 
 	var words_text := _summarize_run_counts(entry.get("words", {}), Session.WORD_ORDER, "word")
 	if not words_text.is_empty():
-		segments.append("词技 %s" % words_text)
+		segments.append("Phrases %s" % words_text if _is_english() else "词技 %s" % words_text)
 
 	var blade_level: int = int(entry.get("blade_level", 0))
 	if blade_level > 0:
-		segments.append("%s Lv.%d" % ["剑势" if String(entry.get("hero_id", "scholar")) == "xia" else "笔锋", blade_level])
+		var blade_label := "Blade Arc" if String(entry.get("hero_id", "scholar")) == "xia" else "Brush Edge"
+		if not _is_english():
+			blade_label = "剑势" if String(entry.get("hero_id", "scholar")) == "xia" else "笔锋"
+		segments.append("%s Lv.%d" % [blade_label, blade_level])
 
 	var enemy_text := _summarize_enemy_kills(entry.get("enemy_kills", {}))
 	if not enemy_text.is_empty():
-		segments.append("击倒 %s" % enemy_text)
+		segments.append("Takedowns %s" % enemy_text if _is_english() else "击倒 %s" % enemy_text)
 
 	return " | ".join(segments)
 
 
 func _format_leaderboard_identity(entry: Dictionary) -> String:
 	var player_name := String(entry.get("player_name", "")).strip_edges()
-	var hero_name := String(entry.get("hero_name", "书生")).strip_edges()
+	var hero_name := _localize_text(String(entry.get("hero_name", "书生")).strip_edges())
 	if player_name.is_empty():
 		return hero_name
 	if hero_name.is_empty():
@@ -1605,7 +1804,7 @@ func show_map_overlay(snapshot: Dictionary) -> void:
 		return
 	overlay_label.visible = false
 	map_canvas.set_snapshot(snapshot)
-	map_summary_label.text = String(snapshot.get("summary", "敌群 0  ·  砚台 0  ·  草丛 0"))
+	map_summary_label.text = _localize_text(String(snapshot.get("summary", "敌群 0  ·  砚台 0  ·  草丛 0")))
 	_update_map_zoom_label()
 	map_overlay.visible = true
 
@@ -1841,7 +2040,7 @@ func _build_state_overlay(root: Control) -> void:
 	state_name_input = LineEdit.new()
 	state_name_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	state_name_input.custom_minimum_size = Vector2(0.0, 48.0)
-	state_name_input.placeholder_text = "留空则保留玩家名帖署名"
+	state_name_input.placeholder_text = _localize_text("留空则保留玩家名帖署名")
 	state_name_input.clear_button_enabled = true
 	state_name_input.add_theme_font_override("font", ui_font)
 	state_name_input.add_theme_font_size_override("font_size", 20)
@@ -1850,7 +2049,7 @@ func _build_state_overlay(root: Control) -> void:
 
 	state_name_button = _make_state_button()
 	state_name_button.custom_minimum_size = Vector2(160.0, 48.0)
-	state_name_button.text = "保存署名"
+	state_name_button.text = _localize_text("保存署名")
 	state_name_button.add_theme_stylebox_override("normal", _make_button_style(Color(0.92, 0.62, 0.28, 1.0), 18))
 	state_name_button.add_theme_stylebox_override("hover", _make_button_style(Color(0.98, 0.7, 0.34, 1.0), 18))
 	state_name_button.add_theme_stylebox_override("pressed", _make_button_style(Color(0.84, 0.54, 0.22, 1.0), 18))
@@ -1995,7 +2194,7 @@ func _on_map_canvas_zoom_changed(_zoom_value: float) -> void:
 func _update_map_zoom_label() -> void:
 	if map_zoom_label == null or map_canvas == null:
 		return
-	map_zoom_label.text = "缩放  %.2fx" % map_canvas.zoom
+	map_zoom_label.text = ("Zoom  %.2fx" if _is_english() else "缩放  %.2fx") % map_canvas.zoom
 
 
 func _show_state_name_editor(title_text: String, detail_text: String) -> void:
@@ -2015,7 +2214,7 @@ func _show_state_name_editor(title_text: String, detail_text: String) -> void:
 	state_name_button.visible = true
 	state_name_button.disabled = false
 	state_name_status_label.visible = true
-	state_name_status_label.text = "当前署名：%s" % String(last_entry.get("player_name", ""))
+	state_name_status_label.text = ("Current alias: %s" if _is_english() else "当前署名：%s") % String(last_entry.get("player_name", ""))
 
 
 func _hide_state_name_editor() -> void:
@@ -2052,9 +2251,9 @@ func _save_state_name() -> void:
 		return
 
 	state_name_input.text = resolved_name
-	state_name_status_label.text = "当前署名：%s" % resolved_name
+	state_name_status_label.text = ("Current alias: %s" if _is_english() else "当前署名：%s") % resolved_name
 	if state_mode == "leaderboard":
-		state_body_label.text = _build_local_leaderboard_text()
+		state_body_label.text = _build_local_leaderboard_text(local_leaderboard_view)
 
 
 func _refresh_controls_text() -> void:
@@ -2070,6 +2269,8 @@ func _refresh_controls_text() -> void:
 	]
 	if test_tools_enabled:
 		lines.append("试阵模式：右上可直接跳到下一波，并实时显示 FPS")
+	for index in range(lines.size()):
+		lines[index] = _localize_text(lines[index])
 	controls_label.text = "\n".join(lines)
 
 
@@ -2170,7 +2371,7 @@ func _make_pill_button(text: String, callback: Callable) -> Button:
 	button.add_theme_stylebox_override("hover", hover_style)
 	button.add_theme_stylebox_override("pressed", pressed_style)
 	button.add_theme_stylebox_override("focus", hover_style)
-	button.text = text
+	button.text = _localize_text(text)
 	button.pressed.connect(callback)
 	return button
 
@@ -2342,7 +2543,7 @@ func _make_placeholder_card() -> PanelContainer:
 
 func _make_label(text: String, font_size: int, color: Color, spacing: float = 0.0) -> Label:
 	var label := Label.new()
-	label.text = text
+	label.text = _localize_text(text)
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 
 	var settings := LabelSettings.new()
