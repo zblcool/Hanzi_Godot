@@ -417,9 +417,15 @@ var last_pause_summary: Dictionary = {}
 var local_leaderboard_view: String = "manual"
 var battle_settings: Dictionary = {}
 var map_overlay: Control
+var map_panel: PanelContainer
+var map_side_panel: PanelContainer
 var map_canvas: BattleMapCanvas
 var map_summary_label: Label
 var map_zoom_label: Label
+var map_zoom_buttons: Array[Button] = []
+var map_close_button: Button
+var choice_panel: PanelContainer
+var state_panel: PanelContainer
 
 var banner_time := 0.0
 var banner_color: Color = Color(1.0, 0.95, 0.84, 1.0)
@@ -2118,6 +2124,56 @@ func _refresh_layout() -> void:
 		soundtrack_toast.offset_top = stack_top + 6.0
 		soundtrack_toast.offset_bottom = soundtrack_toast.offset_top + 92.0
 
+	var overlay_margin_x := 14.0 if micro_layout else (18.0 if web_tight_layout else 24.0)
+	var overlay_margin_y := 12.0 if micro_layout else (16.0 if web_tight_layout else 24.0)
+	_set_overlay_panel_rect(map_panel, 940.0 if micro_layout else (1080.0 if web_tight_layout else 1240.0), 540.0 if micro_layout else (610.0 if web_tight_layout else 684.0), overlay_margin_x, overlay_margin_y)
+	_set_overlay_panel_rect(choice_panel, 860.0 if micro_layout else (920.0 if web_tight_layout else 1000.0), 420.0 if micro_layout else (460.0 if web_tight_layout else 500.0), overlay_margin_x, overlay_margin_y)
+	_set_overlay_panel_rect(state_panel, 640.0 if micro_layout else (700.0 if web_tight_layout else 760.0), 460.0 if micro_layout else (520.0 if web_tight_layout else 600.0), overlay_margin_x, overlay_margin_y)
+	if map_canvas != null:
+		map_canvas.custom_minimum_size = Vector2(520.0 if micro_layout else (640.0 if web_tight_layout else 760.0), 300.0 if micro_layout else (400.0 if web_tight_layout else 520.0))
+	if map_side_panel != null:
+		map_side_panel.custom_minimum_size = Vector2(252.0 if micro_layout else (272.0 if web_tight_layout else 300.0), 0.0)
+	if map_summary_label != null:
+		_set_label_font_size(map_summary_label, 16 if micro_layout else 18)
+	if map_zoom_label != null:
+		_set_label_font_size(map_zoom_label, 15 if micro_layout else 17)
+	for zoom_button in map_zoom_buttons:
+		if zoom_button == null:
+			continue
+		zoom_button.custom_minimum_size = Vector2(64.0 if micro_layout else (74.0 if web_tight_layout else 86.0), 42.0 if micro_layout else 48.0)
+		zoom_button.add_theme_font_size_override("font_size", 14 if micro_layout else 16)
+	if map_close_button != null:
+		map_close_button.custom_minimum_size = Vector2(0.0, 46.0 if micro_layout else 50.0)
+		map_close_button.add_theme_font_size_override("font_size", 15 if micro_layout else 17)
+	if choice_title_label != null:
+		_set_label_font_size(choice_title_label, 32 if micro_layout else (34 if web_tight_layout else 38))
+	if choice_hint_label != null:
+		_set_label_font_size(choice_hint_label, 16 if micro_layout else 18)
+	for choice_button in choice_buttons:
+		if choice_button == null:
+			continue
+		choice_button.custom_minimum_size = Vector2(0.0, 220.0 if micro_layout else (246.0 if web_tight_layout else 278.0))
+		choice_button.add_theme_font_size_override("font_size", 18 if micro_layout else 20)
+	if state_title_label != null:
+		_set_label_font_size(state_title_label, 34 if micro_layout else (38 if web_tight_layout else 42))
+	if state_body_label != null:
+		_set_label_font_size(state_body_label, 17 if micro_layout else (18 if web_tight_layout else 20))
+	if state_name_hint_label != null:
+		_set_label_font_size(state_name_hint_label, 14 if micro_layout else 16)
+	if state_name_status_label != null:
+		_set_label_font_size(state_name_status_label, 13 if micro_layout else 15)
+	if state_name_input != null:
+		state_name_input.custom_minimum_size = Vector2(0.0, 44.0 if micro_layout else 48.0)
+		state_name_input.add_theme_font_size_override("font_size", 17 if micro_layout else (18 if web_tight_layout else 20))
+	if state_name_button != null:
+		state_name_button.custom_minimum_size = Vector2(132.0 if micro_layout else (146.0 if web_tight_layout else 160.0), 44.0 if micro_layout else 48.0)
+		state_name_button.add_theme_font_size_override("font_size", 16 if micro_layout else 18)
+	for state_button in [state_primary_button, state_secondary_button, state_tertiary_button, state_quaternary_button, state_quinary_button, state_senary_button]:
+		if state_button == null:
+			continue
+		state_button.custom_minimum_size = Vector2(0.0, 44.0 if micro_layout else (48.0 if web_tight_layout else 52.0))
+		state_button.add_theme_font_size_override("font_size", 18 if micro_layout else (20 if web_tight_layout else 22))
+
 	_set_label_font_size(compact_health_label, 15 if micro_layout else 17)
 	_set_label_font_size(compact_progress_label, 15 if micro_layout else 17)
 	_set_label_font_size(compact_status_label, 14 if micro_layout else 16)
@@ -2189,6 +2245,25 @@ func _safe_area_insets() -> Dictionary:
 	return {"left": left, "top": top, "right": right, "bottom": bottom}
 
 
+func _set_overlay_panel_rect(panel: Control, design_width: float, design_height: float, margin_x: float, margin_y: float) -> void:
+	if panel == null:
+		return
+	var safe_insets := _safe_area_insets()
+	var viewport_size := get_viewport().get_visible_rect().size
+	var usable_position := Vector2(float(safe_insets["left"]) + margin_x, float(safe_insets["top"]) + margin_y)
+	var usable_size := Vector2(
+		maxf(240.0, viewport_size.x - float(safe_insets["left"]) - float(safe_insets["right"]) - margin_x * 2.0),
+		maxf(220.0, viewport_size.y - float(safe_insets["top"]) - float(safe_insets["bottom"]) - margin_y * 2.0)
+	)
+	var panel_size := Vector2(minf(design_width, usable_size.x), minf(design_height, usable_size.y))
+	panel.anchor_left = 0.0
+	panel.anchor_top = 0.0
+	panel.anchor_right = 0.0
+	panel.anchor_bottom = 0.0
+	panel.position = usable_position + (usable_size - panel_size) * 0.5
+	panel.size = panel_size
+
+
 func show_map_overlay(snapshot: Dictionary) -> void:
 	if map_overlay == null or map_canvas == null:
 		return
@@ -2210,6 +2285,8 @@ func hide_map_overlay() -> void:
 
 func _build_map_overlay(root: Control) -> void:
 	map_overlay = Control.new()
+	map_zoom_buttons = []
+	map_close_button = null
 	map_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
 	map_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	map_overlay.visible = false
@@ -2221,6 +2298,7 @@ func _build_map_overlay(root: Control) -> void:
 	map_overlay.add_child(scrim)
 
 	var panel := PanelContainer.new()
+	map_panel = panel
 	panel.set_anchors_preset(Control.PRESET_CENTER)
 	panel.offset_left = -620.0
 	panel.offset_top = -342.0
@@ -2272,6 +2350,7 @@ func _build_map_overlay(root: Control) -> void:
 	map_margin.add_child(map_canvas)
 
 	var side_panel := PanelContainer.new()
+	map_side_panel = side_panel
 	side_panel.custom_minimum_size = Vector2(300.0, 0.0)
 	side_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.06, 0.08, 0.1, 0.9), Color(0.34, 0.44, 0.52, 0.58), 22))
 	content_row.add_child(side_panel)
@@ -2311,18 +2390,21 @@ func _build_map_overlay(root: Control) -> void:
 	var zoom_out_button := _make_pill_button("缩小", Callable(self, "_on_map_zoom_out_pressed"))
 	zoom_out_button.custom_minimum_size = Vector2(86.0, 48.0)
 	zoom_row.add_child(zoom_out_button)
+	map_zoom_buttons.append(zoom_out_button)
 
 	var zoom_in_button := _make_pill_button("放大", Callable(self, "_on_map_zoom_in_pressed"))
 	zoom_in_button.custom_minimum_size = Vector2(86.0, 48.0)
 	zoom_row.add_child(zoom_in_button)
+	map_zoom_buttons.append(zoom_in_button)
 
 	var zoom_reset_button := _make_pill_button("重置", Callable(self, "_on_map_zoom_reset_pressed"))
 	zoom_reset_button.custom_minimum_size = Vector2(86.0, 48.0)
 	zoom_row.add_child(zoom_reset_button)
+	map_zoom_buttons.append(zoom_reset_button)
 
-	var close_button := _make_pill_button("收起地图", Callable(self, "_emit_map_toggle"))
-	close_button.custom_minimum_size = Vector2(0.0, 50.0)
-	side_box.add_child(close_button)
+	map_close_button = _make_pill_button("收起地图", Callable(self, "_emit_map_toggle"))
+	map_close_button.custom_minimum_size = Vector2(0.0, 50.0)
+	side_box.add_child(map_close_button)
 
 
 func _build_choice_overlay(root: Control) -> void:
@@ -2338,6 +2420,7 @@ func _build_choice_overlay(root: Control) -> void:
 	choice_overlay.add_child(scrim)
 
 	var panel := PanelContainer.new()
+	choice_panel = panel
 	panel.set_anchors_preset(Control.PRESET_CENTER)
 	panel.offset_left = -500.0
 	panel.offset_top = -250.0
@@ -2396,6 +2479,7 @@ func _build_state_overlay(root: Control) -> void:
 	state_overlay.add_child(scrim)
 
 	var panel := PanelContainer.new()
+	state_panel = panel
 	panel.set_anchors_preset(Control.PRESET_CENTER)
 	panel.offset_left = -380.0
 	panel.offset_top = -300.0
