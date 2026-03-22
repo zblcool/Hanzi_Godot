@@ -105,7 +105,26 @@ const MENU_EN_TEXT := {
 	"入卷建议：%s": "Entry hint: %s",
 	"当前只在人物志里保留对照预览，实际战斗输入仍待迁移。": "This archive keeps the source-skill preview only as a reference. Actual battle input is still pending migration.",
 	"把这名执笔者的前几步 build 顺序先看清，再入卷会更容易顺着掉落继续写。": "Review this hero's early build order first so it is easier to follow later drops once the run begins.",
-	"当前先保留 web 原型的 build 顺序与路线提示，Godot 战斗内还没有真正的路线权重修正与额外掉落偏向。": "The current build still keeps the source route order only as a preview. Godot battle has not yet restored route bias or extra drop weighting."
+	"当前先保留 web 原型的 build 顺序与路线提示，Godot 战斗内还没有真正的路线权重修正与额外掉落偏向。": "The current build still keeps the source route order only as a preview. Godot battle has not yet restored route bias or extra drop weighting.",
+	"偏旁先补齐成字，成字满级后再去砚台磨成词技。": "Complete radicals into formed glyphs first, then refine them into phrase arts at the inkstone once they are maxed.",
+	"进入残卷前先看一眼路线，升级三选一时会更容易判断当前该补哪一笔。": "Review the route before entering battle so each three-choice level-up is easier to judge.",
+	"成字：%s  Lv.%d": "Glyph: %s  Lv.%d",
+	"磨词：%s  Lv.%d  砚台消耗 %d": "Phrase: %s  Lv.%d  Inkstone cost %d",
+	"独立偏旁": "Independent Radical",
+	"当前还没有试阵记录。用第 10 / 20 波捷径打一轮后，这里会单独留下试阵榜。": "There are no test-run records yet. Use the wave 10 or wave 20 shortcut once and this board will fill in separately.",
+	"当前还没有可展示的主卷战绩。下一次从第 1 波真正开卷后，这里会留下你的记录。": "There are no main-scroll results to show yet. Finish a true run from wave 1 and your record will appear here.",
+	"试阵榜会单独记录第 10 / 20 波捷径，不与主卷榜混排。": "Test runs keep wave 10 and wave 20 shortcuts on a separate board.",
+	"主卷榜只统计从第 1 波真正开卷的正式战绩。": "The main-scroll board only tracks full runs that begin at wave 1.",
+	"当前排序：%s。": "Sorted by %s.",
+	"试阵榜单独收录第 10 / 20 波捷径，方便检查敌潮、build 与 HUD；现在也能在波次 / 击破 / 存活三种排序之间切换，更接近 source 榜单的回看方式。": "The test board keeps wave 10 and wave 20 shortcuts separate so you can inspect enemy mixes, builds, and HUD behavior. It now also pivots between wave, kills, and survival-time ordering so route checks read closer to the source leaderboard.",
+	"主卷榜只收从第 1 波真正开卷的战绩；现在也能在波次 / 击破 / 存活三种排序之间切换，开局前可以从不同角度回看 route 成果。": "The main-scroll board only keeps real runs that start from wave 1. It now also pivots between wave, kills, and survival-time ordering so you can review route outcomes from different angles before the next run.",
+	"主卷榜": "Main Board",
+	"试阵榜": "Test Board",
+	"按波次": "Wave",
+	"按击破": "Kills",
+	"按存活": "Time",
+	"定卷": "Completed",
+	"残卷": "Scroll"
 }
 var ui_font: Font
 var ui_scale := 1.0
@@ -1738,19 +1757,12 @@ func _localized_enemy_data(enemy_id: String) -> Dictionary:
 
 
 func _build_recipe_atlas_text() -> String:
-	var lines: Array[String]
-	if _is_english():
-		lines = [
-			"Complete radicals into formed glyphs first, then refine them into phrase arts at the inkstone once they are maxed.",
-			"Review the route before entering battle so each three-choice level-up is easier to judge.",
-			""
-		]
-	else:
-		lines = [
-			"偏旁先补齐成字，成字满级后再去砚台磨成词技。",
-			"进入残卷前先看一眼路线，升级三选一时会更容易判断当前该补哪一笔。",
-			""
-		]
+	var recipe_content := FrontEndContent.menu_recipe_content()
+	var lines: Array[String] = [
+		_localize_text(String(recipe_content.get("intro_line_1", "偏旁先补齐成字，成字满级后再去砚台磨成词技。"))),
+		_localize_text(String(recipe_content.get("intro_line_2", "进入残卷前先看一眼路线，升级三选一时会更容易判断当前该补哪一笔。"))),
+		""
+	]
 	for recipe_id_variant in Session.RECIPE_ORDER:
 		var recipe_id := String(recipe_id_variant)
 		var recipe: Dictionary = _localized_recipe_data(recipe_id)
@@ -1767,21 +1779,15 @@ func _build_recipe_atlas_text() -> String:
 			word = _localized_word_data(word_id)
 
 		lines.append("%s  %s" % [String(recipe.get("display", "")), " + ".join(radical_texts)])
-		if _is_english():
-			lines.append("Glyph: %s  Lv.%d" % [String(recipe.get("title", "")), int(recipe.get("max_level", 1))])
-		else:
-			lines.append("成字：%s  Lv.%d" % [String(recipe.get("title", "")), int(recipe.get("max_level", 1))])
+		lines.append(_localize_text(String(recipe_content.get("glyph_format", "成字：%s  Lv.%d"))) % [String(recipe.get("title", "")), int(recipe.get("max_level", 1))])
 		lines.append("  %s" % String(recipe.get("description", "")))
 		if not word.is_empty():
-			if _is_english():
-				lines.append("Phrase: %s  Lv.%d  Inkstone cost %d" % [String(word.get("title", "")), int(word.get("max_level", 1)), int(word.get("unlock_cost", 0))])
-			else:
-				lines.append("磨词：%s  Lv.%d  砚台消耗 %d" % [String(word.get("title", "")), int(word.get("max_level", 1)), int(word.get("unlock_cost", 0))])
+			lines.append(_localize_text(String(recipe_content.get("phrase_format", "磨词：%s  Lv.%d  砚台消耗 %d"))) % [String(word.get("title", "")), int(word.get("max_level", 1)), int(word.get("unlock_cost", 0))])
 			lines.append("  %s" % String(word.get("description", "")))
 		lines.append("")
 
 	var blade_data: Dictionary = _localized_radical_data("刂")
-	lines.append("Independent Radical" if _is_english() else "独立偏旁")
+	lines.append(_localize_text(String(recipe_content.get("independent_title", "独立偏旁"))))
 	lines.append("刂  %s" % String(blade_data.get("name", "")))
 	lines.append("  %s" % String(blade_data.get("description", "")))
 	return "\n".join(lines)
@@ -2264,26 +2270,27 @@ func _populate_character_archive_cards() -> void:
 
 
 func _build_local_leaderboard_text(view: String = "manual", limit: int = 8, sort: String = "wave") -> String:
+	var leaderboard_content := FrontEndContent.menu_leaderboard_content()
 	var normalized_view := _normalize_leaderboard_view(view)
 	var normalized_sort := _normalize_leaderboard_sort(sort)
 	var entries: Array[Dictionary] = _get_local_leaderboard_overlay_entries(normalized_view, normalized_sort, limit)
 	if entries.is_empty():
 		if normalized_view == "test":
-			return "There are no test-run records yet. Use the wave 10 or wave 20 shortcut once and this board will fill in separately." if _is_english() else "当前还没有试阵记录。用第 10 / 20 波捷径打一轮后，这里会单独留下试阵榜。"
-		return "There are no main-scroll results to show yet. Finish a true run from wave 1 and your record will appear here." if _is_english() else "当前还没有可展示的主卷战绩。下一次从第 1 波真正开卷后，这里会留下你的记录。"
+			return _localize_text(String(leaderboard_content.get("empty_test", "当前还没有试阵记录。用第 10 / 20 波捷径打一轮后，这里会单独留下试阵榜。")))
+		return _localize_text(String(leaderboard_content.get("empty_manual", "当前还没有可展示的主卷战绩。下一次从第 1 波真正开卷后，这里会留下你的记录。")))
 
 	var lines: Array[String] = []
 	if normalized_view == "test":
-		lines.append("Test runs keep wave 10 and wave 20 shortcuts on a separate board." if _is_english() else "试阵榜会单独记录第 10 / 20 波捷径，不与主卷榜混排。")
+		lines.append(_localize_text(String(leaderboard_content.get("intro_test", "试阵榜会单独记录第 10 / 20 波捷径，不与主卷榜混排。"))))
 	else:
-		lines.append("The main-scroll board only tracks full runs that begin at wave 1." if _is_english() else "主卷榜只统计从第 1 波真正开卷的正式战绩。")
-	lines.append("Sorted by %s." % _get_leaderboard_sort_summary_label(normalized_sort) if _is_english() else "当前排序：%s。" % _get_leaderboard_sort_summary_label(normalized_sort))
+		lines.append(_localize_text(String(leaderboard_content.get("intro_manual", "主卷榜只统计从第 1 波真正开卷的正式战绩。"))))
+	lines.append(_localize_text(String(leaderboard_content.get("sorted_format", "当前排序：%s。"))) % _get_leaderboard_sort_summary_label(normalized_sort))
 	lines.append("")
 	for index in range(entries.size()):
 		var entry: Dictionary = entries[index]
-		var run_label := "Test W%d" % int(entry.get("start_wave", 1)) if _is_english() else "试阵 W%d" % int(entry.get("start_wave", 1))
+		var run_label := _localize_text(String(leaderboard_content.get("test_run_format", "试阵 W%d"))) % int(entry.get("start_wave", 1))
 		if normalized_view == "manual":
-			run_label = ("Completed" if bool(entry.get("chapter_complete", false)) else "Scroll") if _is_english() else ("定卷" if bool(entry.get("chapter_complete", false)) else "残卷")
+			run_label = _localize_text(String(leaderboard_content.get("manual_completed", "定卷"))) if bool(entry.get("chapter_complete", false)) else _localize_text(String(leaderboard_content.get("manual_scroll", "残卷")))
 		var bosses_label := "Bosses" if _is_english() else "卷主"
 		var threat_label := "Wave" if _is_english() else "波次"
 		var kills_label := "Kills" if _is_english() else "击破"
@@ -2318,6 +2325,7 @@ func _build_local_leaderboard_text(view: String = "manual", limit: int = 8, sort
 func _refresh_leaderboard_overlay() -> void:
 	if leaderboard_body_label == null or leaderboard_summary_label == null:
 		return
+	var leaderboard_content := FrontEndContent.menu_leaderboard_content()
 
 	var manual_count := Session.get_local_leaderboard_count("manual")
 	var test_count := Session.get_local_leaderboard_count("test")
@@ -2330,16 +2338,16 @@ func _refresh_leaderboard_overlay() -> void:
 	leaderboard_sort = _normalize_leaderboard_sort(leaderboard_sort)
 
 	if leaderboard_view == "test":
-		leaderboard_summary_label.text = "The test board keeps wave 10 and wave 20 shortcuts separate so you can inspect enemy mixes, builds, and HUD behavior. It now also pivots between wave, kills, and survival-time ordering so route checks read closer to the source leaderboard." if _is_english() else "试阵榜单独收录第 10 / 20 波捷径，方便检查敌潮、build 与 HUD；现在也能在波次 / 击破 / 存活三种排序之间切换，更接近 source 榜单的回看方式。"
+		leaderboard_summary_label.text = _localize_text(String(leaderboard_content.get("summary_test", "试阵榜单独收录第 10 / 20 波捷径，方便检查敌潮、build 与 HUD；现在也能在波次 / 击破 / 存活三种排序之间切换，更接近 source 榜单的回看方式。")))
 	else:
-		leaderboard_summary_label.text = "The main-scroll board only keeps real runs that start from wave 1. It now also pivots between wave, kills, and survival-time ordering so you can review route outcomes from different angles before the next run." if _is_english() else "主卷榜只收从第 1 波真正开卷的战绩；现在也能在波次 / 击破 / 存活三种排序之间切换，开局前可以从不同角度回看 route 成果。"
+		leaderboard_summary_label.text = _localize_text(String(leaderboard_content.get("summary_manual", "主卷榜只收从第 1 波真正开卷的战绩；现在也能在波次 / 击破 / 存活三种排序之间切换，开局前可以从不同角度回看 route 成果。")))
 
 	leaderboard_body_label.text = _build_local_leaderboard_text(leaderboard_view, 8, leaderboard_sort)
-	_apply_leaderboard_view_button(leaderboard_manual_button, "Main Board" if _is_english() else "主卷榜", manual_count, leaderboard_view == "manual")
-	_apply_leaderboard_view_button(leaderboard_test_button, "Test Board" if _is_english() else "试阵榜", test_count, leaderboard_view == "test")
-	_apply_leaderboard_sort_button(leaderboard_sort_wave_button, "Wave" if _is_english() else "按波次", leaderboard_sort == "wave")
-	_apply_leaderboard_sort_button(leaderboard_sort_kills_button, "Kills" if _is_english() else "按击破", leaderboard_sort == "kills")
-	_apply_leaderboard_sort_button(leaderboard_sort_time_button, "Time" if _is_english() else "按存活", leaderboard_sort == "time")
+	_apply_leaderboard_view_button(leaderboard_manual_button, _localize_text(String(leaderboard_content.get("main_board", "主卷榜"))), manual_count, leaderboard_view == "manual")
+	_apply_leaderboard_view_button(leaderboard_test_button, _localize_text(String(leaderboard_content.get("test_board", "试阵榜"))), test_count, leaderboard_view == "test")
+	_apply_leaderboard_sort_button(leaderboard_sort_wave_button, _localize_text(String(leaderboard_content.get("sort_wave", "按波次"))), leaderboard_sort == "wave")
+	_apply_leaderboard_sort_button(leaderboard_sort_kills_button, _localize_text(String(leaderboard_content.get("sort_kills", "按击破"))), leaderboard_sort == "kills")
+	_apply_leaderboard_sort_button(leaderboard_sort_time_button, _localize_text(String(leaderboard_content.get("sort_time", "按存活"))), leaderboard_sort == "time")
 
 
 func _apply_leaderboard_view_button(button: Button, title: String, count: int, active: bool) -> void:

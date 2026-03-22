@@ -382,6 +382,32 @@ const MENU_ARCHIVE_CONTENT := {
 	"stats_title": "战斗轮廓"
 }
 
+const MENU_RECIPE_CONTENT := {
+	"intro_line_1": "偏旁先补齐成字，成字满级后再去砚台磨成词技。",
+	"intro_line_2": "进入残卷前先看一眼路线，升级三选一时会更容易判断当前该补哪一笔。",
+	"glyph_format": "成字：%s  Lv.%d",
+	"phrase_format": "磨词：%s  Lv.%d  砚台消耗 %d",
+	"independent_title": "独立偏旁"
+}
+
+const MENU_LEADERBOARD_CONTENT := {
+	"empty_test": "当前还没有试阵记录。用第 10 / 20 波捷径打一轮后，这里会单独留下试阵榜。",
+	"empty_manual": "当前还没有可展示的主卷战绩。下一次从第 1 波真正开卷后，这里会留下你的记录。",
+	"intro_test": "试阵榜会单独记录第 10 / 20 波捷径，不与主卷榜混排。",
+	"intro_manual": "主卷榜只统计从第 1 波真正开卷的正式战绩。",
+	"sorted_format": "当前排序：%s。",
+	"summary_test": "试阵榜单独收录第 10 / 20 波捷径，方便检查敌潮、build 与 HUD；现在也能在波次 / 击破 / 存活三种排序之间切换，更接近 source 榜单的回看方式。",
+	"summary_manual": "主卷榜只收从第 1 波真正开卷的战绩；现在也能在波次 / 击破 / 存活三种排序之间切换，开局前可以从不同角度回看 route 成果。",
+	"main_board": "主卷榜",
+	"test_board": "试阵榜",
+	"sort_wave": "按波次",
+	"sort_kills": "按击破",
+	"sort_time": "按存活",
+	"test_run_format": "试阵 W%d",
+	"manual_completed": "定卷",
+	"manual_scroll": "残卷"
+}
+
 
 static func launcher_top_actions() -> Array:
 	return LAUNCHER_TOP_ACTIONS.duplicate(true)
@@ -445,3 +471,11 @@ static func menu_transition_content() -> Dictionary:
 
 static func menu_archive_content() -> Dictionary:
 	return MENU_ARCHIVE_CONTENT.duplicate(true)
+
+
+static func menu_recipe_content() -> Dictionary:
+	return MENU_RECIPE_CONTENT.duplicate(true)
+
+
+static func menu_leaderboard_content() -> Dictionary:
+	return MENU_LEADERBOARD_CONTENT.duplicate(true)
