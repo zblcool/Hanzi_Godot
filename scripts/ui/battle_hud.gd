@@ -424,8 +424,12 @@ var map_summary_label: Label
 var map_zoom_label: Label
 var map_zoom_buttons: Array[Button] = []
 var map_close_button: Button
+var map_legend_title_label: Label
+var map_legend_rows: Array[Control] = []
+var map_help_label: Label
 var choice_panel: PanelContainer
 var state_panel: PanelContainer
+var choice_pending_count := 0
 
 var banner_time := 0.0
 var banner_color: Color = Color(1.0, 0.95, 0.84, 1.0)
@@ -810,40 +814,53 @@ func _build_route_focus_summary(hero_data: Dictionary) -> Dictionary:
 
 func _build_pause_state_body(elapsed: float, kills: int, threat: int, level: int) -> String:
 	var lines: Array[String] = []
-	if _is_english():
-		lines.append("Current run")
-		lines.append("Time %s" % _format_time(elapsed))
-		lines.append("Wave %d   Kills %d   Level Lv.%d" % [threat, kills, level])
+	var compact_copy := _should_use_micro_layout() or _should_use_web_tight_layout()
+	if compact_copy:
+		lines.append("Current run" if _is_english() else "当前进度")
+		lines.append(
+			("Time %s  ·  W%d  ·  K%d  ·  Lv.%d" if _is_english() else "存活 %s  ·  波次 %d  ·  击破 %d  ·  Lv.%d")
+			% [_format_time(elapsed), threat, kills, level]
+		)
 	else:
-		lines.append("当前进度")
-		lines.append("存活 %s" % _format_time(elapsed))
-		lines.append("波次 %d   击破 %d   等级 Lv.%d" % [threat, kills, level])
-	var route_lines := _build_route_focus_state_lines()
+		if _is_english():
+			lines.append("Current run")
+			lines.append("Time %s" % _format_time(elapsed))
+			lines.append("Wave %d   Kills %d   Level Lv.%d" % [threat, kills, level])
+		else:
+			lines.append("当前进度")
+			lines.append("存活 %s" % _format_time(elapsed))
+			lines.append("波次 %d   击破 %d   等级 Lv.%d" % [threat, kills, level])
+	var route_lines := _build_route_focus_state_lines(compact_copy)
 	if not route_lines.is_empty():
 		lines.append("")
 		lines.append_array(route_lines)
 	lines.append("")
-	lines.append("Press E or Esc to resume, or R to restart immediately." if _is_english() else "按 E 或 Esc 继续，按 R 立即重开。")
+	lines.append("E / Esc resume · R restart" if _is_english() and compact_copy else ("按 E / Esc 继续，R 重开" if compact_copy else ("Press E or Esc to resume, or R to restart immediately." if _is_english() else "按 E 或 Esc 继续，按 R 立即重开。")))
 	return "\n".join(lines)
 
 
 func _build_game_over_state_body(summary: String, elapsed: float, kills: int, threat: int, level: int, leaderboard_view: String) -> String:
 	var lines: Array[String] = []
+	var compact_copy := _should_use_micro_layout() or _should_use_web_tight_layout()
 	var trimmed_summary := summary.strip_edges()
 	if not trimmed_summary.is_empty():
 		lines.append(trimmed_summary)
 		lines.append("")
 	lines.append(("Test Run" if leaderboard_view == "test" else "Main Scroll") if _is_english() else ("本轮试阵" if leaderboard_view == "test" else "本轮残卷"))
-	lines.append(("Time %s" if _is_english() else "存活 %s") % _format_time(elapsed))
-	lines.append(("Wave %d   Kills %d   Level Lv.%d" if _is_english() else "波次 %d   击破 %d   等级 Lv.%d") % [threat, kills, level])
-	var route_lines := _build_route_focus_state_lines()
+	lines.append(
+		("Time %s  ·  W%d  ·  K%d  ·  Lv.%d" if _is_english() and compact_copy else ("存活 %s  ·  波次 %d  ·  击破 %d  ·  Lv.%d" if compact_copy else ("Time %s" if _is_english() else "存活 %s")))
+		% ([_format_time(elapsed), threat, kills, level] if compact_copy else [_format_time(elapsed)])
+	)
+	if not compact_copy:
+		lines.append(("Wave %d   Kills %d   Level Lv.%d" if _is_english() else "波次 %d   击破 %d   等级 Lv.%d") % [threat, kills, level])
+	var route_lines := _build_route_focus_state_lines(compact_copy)
 	if not route_lines.is_empty():
 		lines.append("")
 		lines.append_array(route_lines)
 	return "\n".join(lines)
 
 
-func _build_route_focus_state_lines() -> Array[String]:
+func _build_route_focus_state_lines(compact_copy: bool = false) -> Array[String]:
 	if configured_hero_data.is_empty():
 		var empty_lines: Array[String] = []
 		return empty_lines
@@ -851,9 +868,13 @@ func _build_route_focus_state_lines() -> Array[String]:
 	var summary := _build_route_focus_summary(localized_hero)
 	var lines: Array[String] = []
 	lines.append("Route Focus" if _is_english() else "路线参考")
-	var title := String(summary.get("title", "")).strip_edges()
+	var title_key := "compact" if compact_copy else "title"
+	var title := String(summary.get(title_key, "")).strip_edges()
 	if not title.is_empty():
-		lines.append(title)
+		lines.append(_truncate_overlay_text(title, 54 if _is_english() else 24))
+	if compact_copy:
+		lines.append(_build_route_progress_text())
+		return lines
 	var stage := String(summary.get("stage", "")).strip_edges()
 	if not stage.is_empty():
 		lines.append(stage)
@@ -1208,12 +1229,9 @@ func hide_boss() -> void:
 
 func show_radical_choices(level: int, choices: Array[Dictionary], pending_count: int) -> void:
 	choice_mode = "radical"
+	choice_pending_count = pending_count
 	choice_title_label.text = ("Ink Breakthrough  Lv.%d" if _is_english() else "字力突破  Lv.%d") % level
-	choice_hint_label.text = (
-		"Pick one of the three radicals. It pushes a glyph route forward and later refines into a phrase art. Remaining picks: %d"
-		if _is_english()
-		else "从三枚偏旁里选一枚。它会推进合字，满级后继续磨成词技。剩余待选：%d"
-	) % pending_count
+	choice_hint_label.text = _build_radical_choice_hint(pending_count)
 	overlay_label.visible = false
 	_hide_reveal()
 	for index in range(choice_buttons.size()):
@@ -1236,8 +1254,9 @@ func show_radical_choices(level: int, choices: Array[Dictionary], pending_count:
 
 func show_word_choices(choices: Array[Dictionary]) -> void:
 	choice_mode = "word"
+	choice_pending_count = 0
 	choice_title_label.text = "Inkstone Refinement" if _is_english() else "砚台磨词"
-	choice_hint_label.text = "Use extra maxed-glyph stock to refine a higher phrase art. Each refinement spends one related radical." if _is_english() else "把满级合字的余材磨成更高一层的词技。每次磨词会消耗一枚相关偏旁。"
+	choice_hint_label.text = _build_word_choice_hint()
 	overlay_label.visible = false
 	_hide_reveal()
 	for index in range(choice_buttons.size()):
@@ -1264,6 +1283,7 @@ func hide_radical_choices() -> void:
 
 func hide_choice_overlay() -> void:
 	choice_mode = ""
+	choice_pending_count = 0
 	choice_overlay.visible = false
 
 
@@ -2135,8 +2155,14 @@ func _refresh_layout() -> void:
 		map_side_panel.custom_minimum_size = Vector2(252.0 if micro_layout else (272.0 if web_tight_layout else 300.0), 0.0)
 	if map_summary_label != null:
 		_set_label_font_size(map_summary_label, 16 if micro_layout else 18)
+	if map_legend_title_label != null:
+		_set_label_font_size(map_legend_title_label, 20 if micro_layout else (22 if web_tight_layout else 24))
 	if map_zoom_label != null:
 		_set_label_font_size(map_zoom_label, 15 if micro_layout else 17)
+	if map_help_label != null:
+		_set_label_font_size(map_help_label, 14 if micro_layout else (15 if web_tight_layout else 17))
+		map_help_label.text = _build_map_help_text()
+	_refresh_map_legend_density()
 	for zoom_button in map_zoom_buttons:
 		if zoom_button == null:
 			continue
@@ -2149,11 +2175,21 @@ func _refresh_layout() -> void:
 		_set_label_font_size(choice_title_label, 32 if micro_layout else (34 if web_tight_layout else 38))
 	if choice_hint_label != null:
 		_set_label_font_size(choice_hint_label, 16 if micro_layout else 18)
+		if choice_mode == "radical":
+			choice_hint_label.text = _build_radical_choice_hint(choice_pending_count)
+		elif choice_mode == "word":
+			choice_hint_label.text = _build_word_choice_hint()
 	for choice_button in choice_buttons:
 		if choice_button == null:
 			continue
 		choice_button.custom_minimum_size = Vector2(0.0, 220.0 if micro_layout else (246.0 if web_tight_layout else 278.0))
 		choice_button.add_theme_font_size_override("font_size", 18 if micro_layout else 20)
+		if choice_button.has_meta("choice_title"):
+			choice_button.text = _format_choice_button_text(
+				String(choice_button.get_meta("choice_title", "")),
+				String(choice_button.get_meta("choice_headline", "")),
+				String(choice_button.get_meta("choice_description", ""))
+			)
 	if state_title_label != null:
 		_set_label_font_size(state_title_label, 34 if micro_layout else (38 if web_tight_layout else 42))
 	if state_body_label != null:
@@ -2226,6 +2262,86 @@ func _should_hide_compact_event_panel() -> bool:
 	return _should_use_micro_layout() and event_log_entries.is_empty()
 
 
+func _truncate_overlay_text(text: String, limit: int) -> String:
+	var clean_text := text.strip_edges().replace("\n", " ")
+	if limit <= 0 or clean_text.length() <= limit:
+		return clean_text
+	return "%s..." % clean_text.substr(0, maxi(limit - 3, 0))
+
+
+func _build_radical_choice_hint(pending_count: int) -> String:
+	if _should_use_micro_layout():
+		return ("Pick 1 radical. Left: %d" if _is_english() else "三选一偏旁。剩余：%d") % pending_count
+	if _should_use_web_tight_layout():
+		return ("Pick 1 radical to advance a glyph route. Left: %d" if _is_english() else "三选一偏旁，推进合字路线。剩余：%d") % pending_count
+	return (
+		"Pick one of the three radicals. It pushes a glyph route forward and later refines into a phrase art. Remaining picks: %d"
+		if _is_english()
+		else "从三枚偏旁里选一枚。它会推进合字，满级后继续磨成词技。剩余待选：%d"
+	) % pending_count
+
+
+func _build_word_choice_hint() -> String:
+	if _should_use_micro_layout():
+		return "Spend 1 linked radical to refine a phrase art." if _is_english() else "消耗 1 枚相关偏旁，磨成词技。"
+	if _should_use_web_tight_layout():
+		return "Spend one linked radical to refine a maxed glyph into a phrase art." if _is_english() else "消耗 1 枚相关偏旁，把满级合字磨成词技。"
+	return "Use extra maxed-glyph stock to refine a higher phrase art. Each refinement spends one related radical." if _is_english() else "把满级合字的余材磨成更高一层的词技。每次磨词会消耗一枚相关偏旁。"
+
+
+func _format_choice_button_text(title: String, headline: String, description: String) -> String:
+	var clean_title := title.strip_edges()
+	var clean_headline := headline.strip_edges()
+	var clean_description := description.strip_edges()
+	if _should_use_micro_layout():
+		var micro_line := clean_headline if not clean_headline.is_empty() else clean_description
+		micro_line = _truncate_overlay_text(micro_line, 38 if _is_english() else 20)
+		return "%s\n%s" % [clean_title, micro_line] if not micro_line.is_empty() else clean_title
+	if _should_use_web_tight_layout():
+		var parts: Array[String] = [clean_title]
+		if not clean_headline.is_empty():
+			parts.append(_truncate_overlay_text(clean_headline, 46 if _is_english() else 24))
+		if not clean_description.is_empty():
+			parts.append(_truncate_overlay_text(clean_description, 66 if _is_english() else 30))
+		return "\n".join(parts)
+	return "%s\n%s\n%s" % [clean_title, clean_headline, clean_description]
+
+
+func _build_map_help_text() -> String:
+	if _should_use_micro_layout():
+		return "Drag to pan. Buttons zoom. Esc / M closes." if _is_english() else "拖拽查看，按钮缩放。Esc / M 收起。"
+	if _should_use_web_tight_layout():
+		return "Drag to pan. Wheel or buttons zoom. Esc / Tab / M closes." if _is_english() else "拖拽查看，滚轮或按钮缩放。Esc / Tab / M 收起。"
+	return "Drag to pan. Mouse wheel or buttons zoom. Press Esc, Tab, M, or tap the map button again to close." if _is_english() else "拖拽视野，滚轮或按钮缩放。按 Esc、Tab、M 或再次点地图收起。"
+
+
+func _refresh_map_legend_density() -> void:
+	var micro_layout := _should_use_micro_layout()
+	var web_tight_layout := _should_use_web_tight_layout()
+	var visible_rows := 4 if micro_layout else map_legend_rows.size()
+	var detail_rows := 3 if micro_layout else (4 if web_tight_layout else map_legend_rows.size())
+	for index in range(map_legend_rows.size()):
+		var row := map_legend_rows[index]
+		if row == null:
+			continue
+		row.visible = index < visible_rows
+		if row is HBoxContainer:
+			(row as HBoxContainer).add_theme_constant_override("separation", 8 if micro_layout else 10)
+		var icon_panel := row.get_meta("legend_icon_panel", null) as Control
+		if icon_panel != null:
+			icon_panel.custom_minimum_size = Vector2(40.0 if micro_layout else (42.0 if web_tight_layout else 46.0), 40.0 if micro_layout else (42.0 if web_tight_layout else 46.0))
+		var icon_label := row.get_meta("legend_icon_label", null) as Label
+		if icon_label != null:
+			_set_label_font_size(icon_label, 18 if micro_layout else (20 if web_tight_layout else 22))
+		var title_label := row.get_meta("legend_title_label", null) as Label
+		if title_label != null:
+			_set_label_font_size(title_label, 15 if micro_layout else (16 if web_tight_layout else 18))
+		var detail_label := row.get_meta("legend_detail_label", null) as Label
+		if detail_label != null:
+			detail_label.visible = index < detail_rows
+			_set_label_font_size(detail_label, 13 if micro_layout else 14)
+
+
 func _safe_area_insets() -> Dictionary:
 	var visible_rect := get_viewport().get_visible_rect()
 	var safe_area: Rect2 = Rect2(DisplayServer.get_display_safe_area())
@@ -2287,6 +2403,9 @@ func _build_map_overlay(root: Control) -> void:
 	map_overlay = Control.new()
 	map_zoom_buttons = []
 	map_close_button = null
+	map_legend_rows.clear()
+	map_help_label = null
+	map_legend_title_label = null
 	map_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
 	map_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	map_overlay.visible = false
@@ -2367,19 +2486,31 @@ func _build_map_overlay(root: Control) -> void:
 	side_box.add_theme_constant_override("separation", 12)
 	side_margin.add_child(side_box)
 
-	side_box.add_child(_make_label("图例", 24, Color(1.0, 0.92, 0.8, 1.0)))
-	side_box.add_child(_make_map_legend_row("▲", "执笔者", "当前角色朝向与位置。", Color(0.98, 0.78, 0.42, 1.0)))
-	side_box.add_child(_make_map_legend_row("●", "敌群", "常规敌人正在逼近的位置。", Color(0.92, 0.42, 0.34, 1.0)))
-	side_box.add_child(_make_map_legend_row("■", "卷主 / 砚台 / 宝箱", "方块标出卷主、磨词砚台与可开启宝箱。", Color(0.98, 0.76, 0.54, 1.0)))
-	side_box.add_child(_make_map_legend_row("○", "树丛 / 墨池", "圆形轮廓对应草丛与墨池。", Color(0.56, 0.84, 0.66, 1.0)))
-	side_box.add_child(_make_map_legend_row("◆", "碑刻 / 卷架", "静态地标，便于定方位。", Color(0.62, 0.84, 1.0, 1.0)))
-	side_box.add_child(_make_map_legend_row("▩", "迷雾", "未探索区域会被雾面遮住，走到附近才会展开。", Color(0.58, 0.66, 0.76, 1.0)))
+	map_legend_title_label = _make_label("图例", 24, Color(1.0, 0.92, 0.8, 1.0))
+	side_box.add_child(map_legend_title_label)
+	for legend_data in [
+		{"symbol": "▲", "title": "执笔者", "detail": "当前角色朝向与位置。", "color": Color(0.98, 0.78, 0.42, 1.0)},
+		{"symbol": "●", "title": "敌群", "detail": "常规敌人正在逼近的位置。", "color": Color(0.92, 0.42, 0.34, 1.0)},
+		{"symbol": "■", "title": "卷主 / 砚台 / 宝箱", "detail": "方块标出卷主、磨词砚台与可开启宝箱。", "color": Color(0.98, 0.76, 0.54, 1.0)},
+		{"symbol": "○", "title": "树丛 / 墨池", "detail": "圆形轮廓对应草丛与墨池。", "color": Color(0.56, 0.84, 0.66, 1.0)},
+		{"symbol": "◆", "title": "碑刻 / 卷架", "detail": "静态地标，便于定方位。", "color": Color(0.62, 0.84, 1.0, 1.0)},
+		{"symbol": "▩", "title": "迷雾", "detail": "未探索区域会被雾面遮住，走到附近才会展开。", "color": Color(0.58, 0.66, 0.76, 1.0)}
+	]:
+		var legend_row := _make_map_legend_row(
+			String(legend_data["symbol"]),
+			String(legend_data["title"]),
+			String(legend_data["detail"]),
+			Color(legend_data["color"])
+		)
+		map_legend_rows.append(legend_row)
+		side_box.add_child(legend_row)
 
 	var spacer := Control.new()
 	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	side_box.add_child(spacer)
 
-	side_box.add_child(_make_label("拖拽视野，滚轮或按钮缩放。按 Esc、Tab、M 或再次点地图收起。", 17, Color(0.88, 0.9, 0.93, 0.92)))
+	map_help_label = _make_label(_build_map_help_text(), 17, Color(0.88, 0.9, 0.93, 0.92))
+	side_box.add_child(map_help_label)
 	map_zoom_label = _make_label("缩放  1.00x", 17, Color(0.96, 0.82, 0.56, 0.98))
 	side_box.add_child(map_zoom_label)
 
@@ -2571,7 +2702,10 @@ func _on_choice_button_pressed(index: int) -> void:
 
 func _configure_choice_button(button: Button, title: String, headline: String, description: String, color: Color, meta_key: String, meta_value: String) -> void:
 	button.visible = true
-	button.text = "%s\n%s\n%s" % [title, headline, description]
+	button.set_meta("choice_title", title)
+	button.set_meta("choice_headline", headline)
+	button.set_meta("choice_description", description)
+	button.text = _format_choice_button_text(title, headline, description)
 	button.modulate = Color(1.0, 1.0, 1.0, 1.0)
 	button.set_meta(meta_key, meta_value)
 	button.disabled = false
@@ -2636,8 +2770,14 @@ func _make_map_legend_row(symbol_text: String, title: String, detail: String, co
 	text_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	text_box.add_theme_constant_override("separation", 4)
 	row.add_child(text_box)
-	text_box.add_child(_make_label(title, 18, Color(1.0, 0.94, 0.86, 0.98)))
-	text_box.add_child(_make_label(detail, 15, Color(0.86, 0.9, 0.94, 0.9)))
+	var title_label := _make_label(title, 18, Color(1.0, 0.94, 0.86, 0.98))
+	var detail_label := _make_label(detail, 15, Color(0.86, 0.9, 0.94, 0.9))
+	text_box.add_child(title_label)
+	text_box.add_child(detail_label)
+	row.set_meta("legend_icon_panel", icon)
+	row.set_meta("legend_icon_label", icon_label)
+	row.set_meta("legend_title_label", title_label)
+	row.set_meta("legend_detail_label", detail_label)
 	return row
 
 
