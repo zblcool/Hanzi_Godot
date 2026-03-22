@@ -280,6 +280,7 @@ const MENU_PAGE_CONTENT := {
 	"header_title": "字海残卷",
 	"header_summary": "先进入残卷，再决定谁来执笔。每名角色都会把同一套偏旁系统，写成完全不同的战斗节奏。",
 	"hero_section_title": "可选执笔者",
+	"hero_card_title_format": "%s  ·  %s",
 	"detail_heading": "当前执笔",
 	"detail_title": "执笔者档案",
 	"detail_archive_hint": "长说明和 build 路线请看人物志与图谱。",
@@ -301,6 +302,16 @@ const MENU_PAGE_CONTENT := {
 	"secondary_access_title": "二级入口与试阵",
 	"secondary_access_note": "长说明移到人物志与图谱；这里保留快速进入与测试入口。",
 	"selection_note": "选择界面只保留短摘要和关键属性，更长的角色说明移到次级菜单。",
+	"secondary_archive_button": "人物志",
+	"secondary_atlas_button": "合字图谱",
+	"detail_stat_mobility": "机动",
+	"detail_stat_vitality": "气血",
+	"detail_stat_damage": "伤害",
+	"detail_stat_range": "射程",
+	"detail_stat_attack_rate": "攻速",
+	"detail_stat_pickup": "拾取",
+	"detail_stat_attack_rate_value_format": "%.2f /秒",
+	"reaction_quote_format": "“%s”",
 	"selected_badge": "已选中",
 	"selected_button": "正在展示",
 	"select_button": "进入主舞台"
@@ -373,7 +384,9 @@ const MENU_TRANSITION_CONTENT := {
 	"glyph": "书",
 	"title": "残卷一·入墨",
 	"subtitle": "执笔者正落字入卷。",
-	"note": "墨线正在收束，字潮即将开启。"
+	"note": "墨线正在收束，字潮即将开启。",
+	"runtime_title": "残卷一·入墨",
+	"runtime_subtitle_format": "%s 执笔，落字入卷。"
 }
 
 const MENU_ARCHIVE_CONTENT := {

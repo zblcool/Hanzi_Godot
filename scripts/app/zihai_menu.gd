@@ -158,7 +158,8 @@ const MENU_EN_TEXT := {
 	"清空或恢复默认后，会重新回退到本机默认侠名：%s": "Clear or reset it to fall back to the device default again: %s",
 	"已保存默认署名：%s": "Saved default alias: %s",
 	"已恢复设备默认侠名：%s": "Restored device default alias: %s",
-	"%.2f /秒": "%.2f/s"
+	"%.2f /秒": "%.2f/s",
+	"%s 执笔，落字入卷。": "%s enters the scroll and sets the first glyph."
 }
 var ui_font: Font
 var ui_scale := 1.0
@@ -799,12 +800,12 @@ func _build_ui() -> void:
 	stats_box.add_theme_constant_override("separation", _i(8))
 	stats_margin.add_child(stats_box)
 	stats_box.add_child(_make_label(String(page_content.get("stats_title", "")), 20, Color(1.0, 0.92, 0.8, 1.0)))
-	detail_stat_widgets["move_speed"] = _make_stat_row(stats_box, "机动")
-	detail_stat_widgets["max_health"] = _make_stat_row(stats_box, "气血")
-	detail_stat_widgets["attack_damage"] = _make_stat_row(stats_box, "伤害")
-	detail_stat_widgets["attack_range"] = _make_stat_row(stats_box, "射程")
-	detail_stat_widgets["attack_rate"] = _make_stat_row(stats_box, "攻速")
-	detail_stat_widgets["pickup_radius"] = _make_stat_row(stats_box, "拾取")
+	detail_stat_widgets["move_speed"] = _make_stat_row(stats_box, _localize_text(String(page_content.get("detail_stat_mobility", "机动"))))
+	detail_stat_widgets["max_health"] = _make_stat_row(stats_box, _localize_text(String(page_content.get("detail_stat_vitality", "气血"))))
+	detail_stat_widgets["attack_damage"] = _make_stat_row(stats_box, _localize_text(String(page_content.get("detail_stat_damage", "伤害"))))
+	detail_stat_widgets["attack_range"] = _make_stat_row(stats_box, _localize_text(String(page_content.get("detail_stat_range", "射程"))))
+	detail_stat_widgets["attack_rate"] = _make_stat_row(stats_box, _localize_text(String(page_content.get("detail_stat_attack_rate", "攻速"))))
+	detail_stat_widgets["pickup_radius"] = _make_stat_row(stats_box, _localize_text(String(page_content.get("detail_stat_pickup", "拾取"))))
 
 	var quick_start_panel := PanelContainer.new()
 	quick_start_panel.custom_minimum_size = _v(0.0 if portrait_layout else 228.0, 0.0)
@@ -841,8 +842,8 @@ func _build_ui() -> void:
 	quick_start_row.add_theme_constant_override("separation", _i(10))
 	quick_start_box.add_child(quick_start_row)
 	var entry_buttons: Array[Button] = [
-		_make_pill_button("人物志", _v(0.0, 44.0), Callable(self, "_on_character_archive_pressed")),
-		_make_pill_button("合字图谱", _v(0.0, 44.0), Callable(self, "_on_recipe_atlas_pressed"))
+		_make_pill_button(_localize_text(String(page_content.get("secondary_archive_button", "人物志"))), _v(0.0, 44.0), Callable(self, "_on_character_archive_pressed")),
+		_make_pill_button(_localize_text(String(page_content.get("secondary_atlas_button", "合字图谱"))), _v(0.0, 44.0), Callable(self, "_on_recipe_atlas_pressed"))
 	]
 	for entry_button in entry_buttons:
 		entry_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -900,7 +901,8 @@ func _make_hero_card(hero_id: String, hero_data: Dictionary) -> PanelContainer:
 	title_row.add_theme_constant_override("separation", _i(10))
 	text_col.add_child(title_row)
 
-	var title_label := _make_label("%s  ·  %s" % [_localize_text(String(hero_data["name"])), _localize_text(String(hero_data["title"]))], 27, Color(1.0, 0.95, 0.86, 1.0))
+	var page_content := FrontEndContent.menu_page_content()
+	var title_label := _make_label(String(page_content.get("hero_card_title_format", "%s  ·  %s")) % [_localize_text(String(hero_data["name"])), _localize_text(String(hero_data["title"]))], 27, Color(1.0, 0.95, 0.86, 1.0))
 	title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title_row.add_child(title_label)
 
@@ -929,7 +931,7 @@ func _make_hero_card(hero_id: String, hero_data: Dictionary) -> PanelContainer:
 	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	text_col.add_child(spacer)
 
-	var select_label := "Take the stage" if _is_english() else "进入主舞台"
+	var select_label := _localize_text(String(page_content.get("select_button", "进入主舞台")))
 	var select_button := _make_action_button(select_label, accent)
 	select_button.custom_minimum_size = _v(0.0, 46.0)
 	select_button.add_theme_font_size_override("font_size", _i(18))
@@ -1578,7 +1580,7 @@ func _build_profile_overlay() -> void:
 	avatar_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.1, 0.14, 0.18, 0.86), Color(0.52, 0.8, 1.0, 0.28)))
 	preview_box.add_child(avatar_panel)
 
-	profile_preview_glyph_label = _make_label("侠", 46, Color(1.0, 0.95, 0.86, 1.0))
+	profile_preview_glyph_label = _make_label(String(overlay_content.get("fallback_glyph", "侠")), 46, Color(1.0, 0.95, 0.86, 1.0))
 	profile_preview_glyph_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	profile_preview_glyph_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	profile_preview_glyph_label.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -2960,7 +2962,7 @@ func _refresh_selection(trigger_reaction: bool = false) -> void:
 	_set_stat_value("max_health", float(selected_data["max_health"]), 140.0, "%.0f")
 	_set_stat_value("attack_damage", float(selected_data["attack_damage"]), 24.0, "%.0f")
 	_set_stat_value("attack_range", float(selected_data["attack_range"]), 15.5, "%.1f")
-	_set_stat_value("attack_rate", _get_hero_attack_rate(selected_data), 2.0, "%.2f/s" if _is_english() else "%.2f /秒")
+	_set_stat_value("attack_rate", _get_hero_attack_rate(selected_data), 2.0, _localize_text(String(page_content.get("detail_stat_attack_rate_value_format", "%.2f /秒"))))
 	_set_stat_value("pickup_radius", float(selected_data.get("collect_radius", 0.0)), 4.5, "%.1f")
 	if trigger_reaction:
 		_show_hero_reaction(selected_hero, selected_data)
@@ -2997,7 +2999,7 @@ func _show_card_reaction(hero_id: String, quote: String, accent: Color) -> void:
 	if reaction_panel == null or reaction_label == null:
 		return
 	reaction_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.12, accent.g * 0.12, accent.b * 0.16, 0.84), Color(accent.r, accent.g, accent.b, 0.24)))
-	reaction_label.text = "“%s”" % _localize_text(quote)
+	reaction_label.text = String(FrontEndContent.menu_page_content().get("reaction_quote_format", "“%s”")) % _localize_text(quote)
 	reaction_panel.visible = true
 	active_card_reaction_hero = hero_id
 
@@ -3040,9 +3042,10 @@ func _start_battle_transition() -> void:
 	transition_busy = true
 	_hide_secondary_overlays()
 	var hero_data: Dictionary = _localized_hero_data(selected_hero)
+	var transition_content := FrontEndContent.menu_transition_content()
 	transition_glyph_label.text = String(hero_data["glyph"])
-	transition_title_label.text = "Scroll I · Inkfall" if _is_english() else "残卷一·入墨"
-	transition_subtitle_label.text = "%s enters the scroll and sets the first glyph." % String(hero_data["name"]) if _is_english() else "%s 执笔，落字入卷。" % String(hero_data["name"])
+	transition_title_label.text = _localize_text(String(transition_content.get("runtime_title", "残卷一·入墨")))
+	transition_subtitle_label.text = _localize_text(String(transition_content.get("runtime_subtitle_format", "%s 执笔，落字入卷。"))) % String(hero_data["name"])
 	transition_overlay.visible = true
 	transition_overlay.modulate = Color(1.0, 1.0, 1.0, 0.0)
 	var tween := create_tween()
