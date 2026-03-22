@@ -463,6 +463,7 @@ const MENU_LEADERBOARD_CONTENT := {
 	"summary_manual": "主卷榜只收从第 1 波真正开卷的战绩；现在也能在波次 / 击破 / 存活三种排序之间切换，开局前可以从不同角度回看 route 成果。",
 	"main_board": "主卷榜",
 	"test_board": "试阵榜",
+	"view_button_count_format": "%s · %d",
 	"sort_wave": "按波次",
 	"sort_kills": "按击破",
 	"sort_time": "按存活",

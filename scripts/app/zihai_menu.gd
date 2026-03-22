@@ -2410,7 +2410,8 @@ func _apply_leaderboard_view_button(button: Button, title: String, count: int, a
 	if button == null:
 		return
 
-	button.text = "%s · %d" % [title, count]
+	var leaderboard_content := FrontEndContent.menu_leaderboard_content()
+	button.text = _localize_text(String(leaderboard_content.get("view_button_count_format", "%s · %d"))) % [title, count]
 	if active:
 		button.add_theme_color_override("font_color", _resolve_label_color(Color(0.08, 0.07, 0.07, 1.0)))
 		button.add_theme_stylebox_override("normal", _make_button_style(Color(0.92, 0.62, 0.28, 1.0)))
