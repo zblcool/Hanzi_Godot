@@ -283,6 +283,8 @@ const MENU_PAGE_CONTENT := {
 	"detail_heading": "当前执笔",
 	"detail_title": "执笔者档案",
 	"detail_archive_hint": "长说明和 build 路线请看人物志与图谱。",
+	"detail_role_format": "%s  ·  %s",
+	"detail_weapon_format": "当前执笔节奏：%s",
 	"reaction_title": "执笔回应",
 	"opening_title": "起笔落点",
 	"source_skill_title": "源稿字技（待迁移）",
@@ -298,7 +300,10 @@ const MENU_PAGE_CONTENT := {
 	"quick_start_summary": "对照 web 原型保留第 10 / 20 波捷径，便于快速检查 HUD、混编敌潮与角色 build。试阵入口会单独写入试阵榜，不影响主卷榜。",
 	"secondary_access_title": "二级入口与试阵",
 	"secondary_access_note": "长说明移到人物志与图谱；这里保留快速进入与测试入口。",
-	"selection_note": "选择界面只保留短摘要和关键属性，更长的角色说明移到次级菜单。"
+	"selection_note": "选择界面只保留短摘要和关键属性，更长的角色说明移到次级菜单。",
+	"selected_badge": "已选中",
+	"selected_button": "正在展示",
+	"select_button": "进入主舞台"
 }
 
 const MENU_TOP_ACTIONS := [
@@ -348,10 +353,17 @@ const MENU_OVERLAY_CONTENT := {
 		"title": "玩家名帖",
 		"summary": "像 source web 原型一样，先在菜单里维护这台设备的默认排行榜署名。结算页留空时，会自动复用这里的名字。",
 		"preview_title": "当前署名",
+		"fallback_glyph": "侠",
+		"device_default_copy": "设备默认侠名仍在生效；保存自定义署名后，之后的战绩会切到这个名字。",
+		"device_default_hint_format": "如果不另外保存自定义署名，系统会继续沿用本机默认侠名：%s",
+		"saved_copy": "当前默认署名会自动复用到之后的本地排行榜记录里。",
+		"saved_hint_format": "清空或恢复默认后，会重新回退到本机默认侠名：%s",
 		"name_field_title": "默认排行榜署名",
 		"name_field_placeholder": "输入想显示的名字",
 		"random_text": "随机侠名",
 		"save_text": "保存署名",
+		"status_saved_format": "已保存默认署名：%s",
+		"status_restored_format": "已恢复设备默认侠名：%s",
 		"reset_text": "恢复默认",
 		"close_text": "返回菜单"
 	}
@@ -366,7 +378,9 @@ const MENU_TRANSITION_CONTENT := {
 
 const MENU_ARCHIVE_CONTENT := {
 	"focus_format": "执笔焦点：%s",
+	"summary_title_format": "%s  ·  %s",
 	"quote_title": "卷中文字",
+	"quote_excerpt_format": "“%s”",
 	"record_fallback_title": "人物札记",
 	"opening_title": "起笔落点",
 	"opening_empty_summary": "当前 Godot 保持无固定起手偏旁，第一批掉落更适合顺势决定这一局往哪条合字线转。",
@@ -388,7 +402,14 @@ const MENU_ARCHIVE_CONTENT := {
 	"build_route_note": "这些卡片当前不直接改战斗数值、掉落权重或路线偏向，只帮助对照 web 原型的构筑意图。",
 	"build_route_relic_title": "源稿遗物偏向",
 	"build_route_word_title": "源稿词技偏向",
-	"stats_title": "战斗轮廓"
+	"stats_title": "战斗轮廓",
+	"stat_mobility": "机动",
+	"stat_vitality": "气血",
+	"stat_damage": "伤害",
+	"stat_range": "射程",
+	"stat_attack_rate": "攻速",
+	"stat_pickup": "拾取",
+	"stat_attack_rate_value_format": "%.2f /秒"
 }
 
 const MENU_RECIPE_CONTENT := {

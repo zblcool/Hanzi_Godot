@@ -148,7 +148,17 @@ const MENU_EN_TEXT := {
 	"起手自带 %s。": "Starts with %s.",
 	"无固定起手": "No fixed opener",
 	"当前还没有可对照的源稿字技条目。": "There is no matching source skill entry for this hero yet.",
-	"当前这名执笔者还没有额外记录到独立字技说明。": "This hero does not yet have an extra source-skill note."
+	"当前这名执笔者还没有额外记录到独立字技说明。": "This hero does not yet have an extra source-skill note.",
+	"已选中": "Selected",
+	"正在展示": "On Stage",
+	"进入主舞台": "Take the stage",
+	"设备默认侠名仍在生效；保存自定义署名后，之后的战绩会切到这个名字。": "The device is still using its default wuxia alias. Saving a custom alias will switch later records to this name.",
+	"如果不另外保存自定义署名，系统会继续沿用本机默认侠名：%s": "If you do not save a custom alias, the system keeps using the device default: %s",
+	"当前默认署名会自动复用到之后的本地排行榜记录里。": "The saved alias will be reused automatically for later local leaderboard records.",
+	"清空或恢复默认后，会重新回退到本机默认侠名：%s": "Clear or reset it to fall back to the device default again: %s",
+	"已保存默认署名：%s": "Saved default alias: %s",
+	"已恢复设备默认侠名：%s": "Restored device default alias: %s",
+	"%.2f /秒": "%.2f/s"
 }
 var ui_font: Font
 var ui_scale := 1.0
@@ -2103,7 +2113,7 @@ func _make_character_archive_card(hero: Dictionary) -> PanelContainer:
 	summary_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	summary_box.add_theme_constant_override("separation", _i(8))
 	head_row.add_child(summary_box)
-	summary_box.add_child(_make_label("%s  ·  %s" % [_localize_text(String(hero.get("name", ""))), _localize_text(String(hero.get("title", "")))], 30, Color(1.0, 0.95, 0.86, 1.0)))
+	summary_box.add_child(_make_label(String(archive_content.get("summary_title_format", "%s  ·  %s")) % [_localize_text(String(hero.get("name", ""))), _localize_text(String(hero.get("title", "")))], 30, Color(1.0, 0.95, 0.86, 1.0)))
 	summary_box.add_child(_make_label(String(hero.get("role_label", "")), 18, accent))
 	summary_box.add_child(_make_label(String(hero.get("description", "")), 17, Color(0.9, 0.92, 0.95, 0.96)))
 	summary_box.add_child(_make_label(_localize_text(String(archive_content.get("focus_format", "执笔焦点：%s"))) % String(hero.get("focus", "")), 16, Color(0.82, 0.9, 1.0, 0.94)))
@@ -2131,7 +2141,7 @@ func _make_character_archive_card(hero: Dictionary) -> PanelContainer:
 	quote_box.add_theme_constant_override("separation", _i(6))
 	quote_margin.add_child(quote_box)
 	quote_box.add_child(_make_label(String(archive_content.get("quote_title", "卷中文字")), 16, Color(0.96, 0.82, 0.54, 0.88)))
-	quote_box.add_child(_make_label("“%s”" % String(hero.get("record_excerpt", String(hero.get("focus", "")))), 18, Color(0.98, 0.95, 0.9, 0.98)))
+	quote_box.add_child(_make_label(String(archive_content.get("quote_excerpt_format", "“%s”")) % String(hero.get("record_excerpt", String(hero.get("focus", "")))), 18, Color(0.98, 0.95, 0.9, 0.98)))
 	quote_box.add_child(_make_label(String(hero.get("record_source", "")), 15, Color(0.82, 0.9, 1.0, 0.92)))
 
 	var record_panel := PanelContainer.new()
@@ -2277,12 +2287,12 @@ func _make_character_archive_card(hero: Dictionary) -> PanelContainer:
 	stats_grid.add_theme_constant_override("h_separation", _i(10))
 	stats_grid.add_theme_constant_override("v_separation", _i(10))
 	stats_box.add_child(stats_grid)
-	stats_grid.add_child(_make_archive_stat_item("机动", "%.1f" % float(hero.get("move_speed", 0.0)), accent))
-	stats_grid.add_child(_make_archive_stat_item("气血", "%.0f" % float(hero.get("max_health", 0.0)), accent))
-	stats_grid.add_child(_make_archive_stat_item("伤害", "%.0f" % float(hero.get("attack_damage", 0.0)), accent))
-	stats_grid.add_child(_make_archive_stat_item("射程", "%.1f" % float(hero.get("attack_range", 0.0)), accent))
-	stats_grid.add_child(_make_archive_stat_item("攻速", "%.2f/s" % _get_hero_attack_rate(hero) if _is_english() else "%.2f /秒" % _get_hero_attack_rate(hero), accent))
-	stats_grid.add_child(_make_archive_stat_item("拾取", "%.1f" % float(hero.get("collect_radius", 0.0)), accent))
+	stats_grid.add_child(_make_archive_stat_item(_localize_text(String(archive_content.get("stat_mobility", "机动"))), "%.1f" % float(hero.get("move_speed", 0.0)), accent))
+	stats_grid.add_child(_make_archive_stat_item(_localize_text(String(archive_content.get("stat_vitality", "气血"))), "%.0f" % float(hero.get("max_health", 0.0)), accent))
+	stats_grid.add_child(_make_archive_stat_item(_localize_text(String(archive_content.get("stat_damage", "伤害"))), "%.0f" % float(hero.get("attack_damage", 0.0)), accent))
+	stats_grid.add_child(_make_archive_stat_item(_localize_text(String(archive_content.get("stat_range", "射程"))), "%.1f" % float(hero.get("attack_range", 0.0)), accent))
+	stats_grid.add_child(_make_archive_stat_item(_localize_text(String(archive_content.get("stat_attack_rate", "攻速"))), _localize_text(String(archive_content.get("stat_attack_rate_value_format", "%.2f /秒"))) % _get_hero_attack_rate(hero), accent))
+	stats_grid.add_child(_make_archive_stat_item(_localize_text(String(archive_content.get("stat_pickup", "拾取"))), "%.1f" % float(hero.get("collect_radius", 0.0)), accent))
 
 	return panel
 
@@ -2746,6 +2756,7 @@ func _refresh_profile_overlay(status_text: String = "") -> void:
 func _refresh_profile_preview_from_input() -> void:
 	if profile_name_input == null or profile_preview_name_label == null or profile_preview_glyph_label == null or profile_preview_copy_label == null or profile_hint_label == null:
 		return
+	var overlay_content: Dictionary = FrontEndContent.menu_overlay_content().get("profile", {})
 	var draft_name := Session.sanitize_leaderboard_name(profile_name_input.text)
 	if profile_name_input.text != draft_name:
 		profile_name_input.text = draft_name
@@ -2757,19 +2768,11 @@ func _refresh_profile_preview_from_input() -> void:
 	profile_preview_name_label.text = preview_name
 	profile_preview_glyph_label.text = _get_profile_monogram(preview_name)
 	if custom_name.is_empty():
-		if _is_english():
-			profile_preview_copy_label.text = "The device is still using its default wuxia alias. Saving a custom alias will switch later records to this name."
-			profile_hint_label.text = "If you do not save a custom alias, the system keeps using the device default: %s" % device_alias
-		else:
-			profile_preview_copy_label.text = "当前仍使用设备默认侠名；保存自定义署名后，之后的战绩会直接切到这个名字。"
-			profile_hint_label.text = "如果不另外保存自定义署名，系统会继续沿用本机默认侠名：%s" % device_alias
+		profile_preview_copy_label.text = _localize_text(String(overlay_content.get("device_default_copy", "设备默认侠名仍在生效；保存自定义署名后，之后的战绩会切到这个名字。")))
+		profile_hint_label.text = _localize_text(String(overlay_content.get("device_default_hint_format", "如果不另外保存自定义署名，系统会继续沿用本机默认侠名：%s"))) % device_alias
 	else:
-		if _is_english():
-			profile_preview_copy_label.text = "The saved alias will be reused automatically for later local leaderboard records."
-			profile_hint_label.text = "Clear or reset it to fall back to the device default again: %s" % device_alias
-		else:
-			profile_preview_copy_label.text = "当前默认署名会自动复用到之后的本地排行榜记录里。"
-			profile_hint_label.text = "清空或恢复默认后，会重新回退到本机默认侠名：%s" % device_alias
+		profile_preview_copy_label.text = _localize_text(String(overlay_content.get("saved_copy", "当前默认署名会自动复用到之后的本地排行榜记录里。")))
+		profile_hint_label.text = _localize_text(String(overlay_content.get("saved_hint_format", "清空或恢复默认后，会重新回退到本机默认侠名：%s"))) % device_alias
 
 
 func _on_profile_random_pressed() -> void:
@@ -2782,26 +2785,29 @@ func _on_profile_random_pressed() -> void:
 func _on_profile_save_pressed() -> void:
 	if profile_name_input == null:
 		return
+	var overlay_content: Dictionary = FrontEndContent.menu_overlay_content().get("profile", {})
 	var resolved_name := Session.set_preferred_leaderboard_name(profile_name_input.text)
 	var identity: Dictionary = Session.get_leaderboard_identity()
 	profile_name_input.text = String(identity.get("custom_name", ""))
-	var status_text := "Saved default alias: %s" % resolved_name if _is_english() else "已保存默认署名：%s" % resolved_name
+	var status_text := _localize_text(String(overlay_content.get("status_saved_format", "已保存默认署名：%s"))) % resolved_name
 	if String(identity.get("custom_name", "")).is_empty():
-		status_text = "Restored device default alias: %s" % resolved_name if _is_english() else "已恢复设备默认侠名：%s" % resolved_name
+		status_text = _localize_text(String(overlay_content.get("status_restored_format", "已恢复设备默认侠名：%s"))) % resolved_name
 	_refresh_profile_overlay(status_text)
 
 
 func _on_profile_reset_pressed() -> void:
 	if profile_name_input != null:
 		profile_name_input.text = ""
+	var overlay_content: Dictionary = FrontEndContent.menu_overlay_content().get("profile", {})
 	var resolved_name := Session.clear_preferred_leaderboard_name()
-	_refresh_profile_overlay("Restored device default alias: %s" % resolved_name if _is_english() else "已恢复设备默认侠名：%s" % resolved_name)
+	_refresh_profile_overlay(_localize_text(String(overlay_content.get("status_restored_format", "已恢复设备默认侠名：%s"))) % resolved_name)
 
 
 func _get_profile_monogram(name: String) -> String:
 	var trimmed_name := name.strip_edges()
 	if trimmed_name.is_empty():
-		return "侠"
+		var overlay_content: Dictionary = FrontEndContent.menu_overlay_content().get("profile", {})
+		return String(overlay_content.get("fallback_glyph", "侠"))
 	return trimmed_name.substr(0, 1)
 
 
@@ -2914,6 +2920,7 @@ func _on_toggle_language_pressed() -> void:
 
 func _refresh_selection(trigger_reaction: bool = false) -> void:
 	Session.select_hero(selected_hero)
+	var page_content := FrontEndContent.menu_page_content()
 	for hero_id_variant in hero_panels.keys():
 		var hero_id := String(hero_id_variant)
 		var panel: PanelContainer = hero_panels[hero_id]
@@ -2923,23 +2930,22 @@ func _refresh_selection(trigger_reaction: bool = false) -> void:
 		var status_badge_label: Label = panel.get_meta("status_badge_label", null) as Label
 		var select_button: Button = panel.get_meta("select_button", null) as Button
 		if status_badge_label != null:
-			status_badge_label.text = "Selected" if _is_english() else "已选中"
+			status_badge_label.text = _localize_text(String(page_content.get("selected_badge", "已选中")))
 		if status_badge != null:
 			status_badge.visible = hero_id == selected_hero
 		if select_button != null:
 			if hero_id == selected_hero:
-				select_button.text = "On Stage" if _is_english() else "正在展示"
+				select_button.text = _localize_text(String(page_content.get("selected_button", "正在展示")))
 			else:
-				select_button.text = "Take the stage" if _is_english() else "进入主舞台"
+				select_button.text = _localize_text(String(page_content.get("select_button", "进入主舞台")))
 
 	var selected_data: Dictionary = _localized_hero_data(selected_hero)
 	var accent: Color = selected_data["accent"]
 	detail_name_label.text = String(selected_data["name"])
-	detail_role_label.text = "%s  ·  %s" % [String(selected_data["title"]), String(selected_data["role_label"])]
-	detail_weapon_label.text = "Current combat rhythm: %s" % String(selected_data["weapon"]) if _is_english() else "当前执笔节奏：%s" % String(selected_data["weapon"])
+	detail_role_label.text = String(page_content.get("detail_role_format", "%s  ·  %s")) % [String(selected_data["title"]), String(selected_data["role_label"])]
+	detail_weapon_label.text = _localize_text(String(page_content.get("detail_weapon_format", "当前执笔节奏：%s"))) % String(selected_data["weapon"])
 	detail_desc_label.text = String(selected_data["focus"])
 	detail_focus_label.text = _build_hero_stage_summary(selected_data)
-	var page_content := FrontEndContent.menu_page_content()
 	detail_dossier_label.text = _localize_text(String(page_content.get("detail_archive_hint", "长说明和 build 路线请看人物志与图谱。")))
 
 	detail_preview_core.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.24, accent.g * 0.2, accent.b * 0.16, 0.94), Color(accent.r, accent.g, accent.b, 0.26)))
