@@ -27,9 +27,9 @@ var ui_font: Font
 var ui_scale := 1.0
 var floating_symbols: Array[Dictionary] = []
 var preview_motifs: Array[Dictionary] = []
-var current_theme := "night-ink"
 var selected_hero := "scholar"
 var hero_quote_indices: Dictionary = {}
+var current_theme := "night-ink"
 
 var hero_panels: Dictionary = {}
 var detail_name_label: Label
@@ -72,8 +72,8 @@ var reaction_time_remaining := 0.0
 
 func _ready() -> void:
 	ui_font = CJKFont.get_font()
-	current_theme = Session.get_launcher_theme()
 	selected_hero = Session.selected_hero
+	current_theme = Session.get_launcher_theme()
 	_build_floating_symbols()
 	get_viewport().size_changed.connect(_on_viewport_size_changed)
 	_rebuild_ui()
@@ -143,14 +143,20 @@ func _draw() -> void:
 
 
 func _rebuild_ui() -> void:
-	var restore_character_archive := character_archive_overlay != null and character_archive_overlay.visible
-	var restore_recipe_atlas := recipe_atlas_overlay != null and recipe_atlas_overlay.visible
-	var restore_enemy_archive := enemy_archive_overlay != null and enemy_archive_overlay.visible
-	var restore_leaderboard := leaderboard_overlay != null and leaderboard_overlay.visible
-	var restore_profile := profile_overlay != null and profile_overlay.visible
+	var open_overlay := ""
 	var profile_draft := ""
-	if restore_profile and profile_name_input != null:
-		profile_draft = profile_name_input.text
+	if character_archive_overlay != null and character_archive_overlay.visible:
+		open_overlay = "character"
+	elif recipe_atlas_overlay != null and recipe_atlas_overlay.visible:
+		open_overlay = "recipe"
+	elif enemy_archive_overlay != null and enemy_archive_overlay.visible:
+		open_overlay = "enemy"
+	elif leaderboard_overlay != null and leaderboard_overlay.visible:
+		open_overlay = "leaderboard"
+	elif profile_overlay != null and profile_overlay.visible:
+		open_overlay = "profile"
+		if profile_name_input != null:
+			profile_draft = profile_name_input.text
 	ui_scale = _compute_ui_scale()
 	preview_motifs.clear()
 	hero_panels.clear()
@@ -192,20 +198,20 @@ func _rebuild_ui() -> void:
 		child.queue_free()
 	_build_ui()
 	_refresh_selection(true)
-	if restore_character_archive:
-		_show_character_archive_overlay()
-	elif restore_recipe_atlas:
-		_show_recipe_atlas_overlay()
-	elif restore_enemy_archive:
-		_show_enemy_archive_overlay()
-	elif restore_leaderboard:
-		_show_leaderboard_overlay()
-	elif restore_profile:
-		if profile_overlay != null:
-			profile_overlay.visible = true
-		if profile_name_input != null:
-			profile_name_input.text = profile_draft
-		_refresh_profile_overlay()
+	match open_overlay:
+		"character":
+			_show_character_archive_overlay()
+		"recipe":
+			_show_recipe_atlas_overlay()
+		"enemy":
+			_show_enemy_archive_overlay()
+		"leaderboard":
+			_show_leaderboard_overlay()
+		"profile":
+			if profile_overlay != null and profile_name_input != null:
+				profile_name_input.text = profile_draft
+				_refresh_profile_overlay()
+				profile_overlay.visible = true
 
 
 func _on_viewport_size_changed() -> void:
@@ -704,7 +710,7 @@ func _make_action_button(text: String, accent: Color) -> Button:
 	button.custom_minimum_size = _v(0.0, 52.0)
 	button.add_theme_font_override("font", ui_font)
 	button.add_theme_font_size_override("font_size", _i(21))
-	button.add_theme_color_override("font_color", Color(0.08, 0.07, 0.07, 1.0))
+	button.add_theme_color_override("font_color", _resolve_label_color(Color(0.08, 0.07, 0.07, 1.0)))
 	button.add_theme_stylebox_override("normal", _make_button_style(accent))
 	button.add_theme_stylebox_override("hover", _make_button_style(accent.lightened(0.1)))
 	button.add_theme_stylebox_override("pressed", _make_button_style(accent.darkened(0.08)))
@@ -796,7 +802,7 @@ func _make_button_style(accent: Color) -> StyleBoxFlat:
 
 func _make_fill_style(fill_color: Color, radius: int) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
-	style.bg_color = fill_color
+	style.bg_color = _resolve_button_fill(fill_color)
 	style.corner_radius_top_left = _i(radius)
 	style.corner_radius_top_right = _i(radius)
 	style.corner_radius_bottom_left = _i(radius)
@@ -1734,12 +1740,6 @@ func _on_start_wave_20_pressed() -> void:
 	_start_with_wave(20)
 
 
-func _on_toggle_theme_pressed() -> void:
-	current_theme = "paper-ink" if current_theme == "night-ink" else "night-ink"
-	Session.set_launcher_theme(current_theme)
-	_rebuild_ui()
-
-
 func _start_with_wave(start_wave: int) -> void:
 	if transition_busy:
 		return
@@ -1754,6 +1754,12 @@ func _on_back_pressed() -> void:
 		return
 	_hide_secondary_overlays()
 	get_tree().change_scene_to_file(Session.LAUNCHER_SCENE)
+
+
+func _on_toggle_theme_pressed() -> void:
+	current_theme = "paper-ink" if current_theme == "night-ink" else "night-ink"
+	Session.set_launcher_theme(current_theme)
+	_rebuild_ui()
 
 
 func _refresh_selection(trigger_reaction: bool = false) -> void:

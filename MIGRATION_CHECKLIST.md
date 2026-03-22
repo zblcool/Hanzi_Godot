@@ -23,8 +23,8 @@ Status legend:
 - `[done]` Quick-start wave shortcuts for menu-side test entry. Notes: hanziHero keeps dedicated test starts for wave 10 / 20; Godot now exposes equivalent menu buttons and routes those shortcut runs into a separate local test board.
 - `[done]` Character reaction flavor on selection. Notes: hanziHero role cards trigger short personality lines; Godot now rotates short in-character response quotes in the detail panel whenever a hero is picked.
 - `[done]` Player Sigil default-name flow in launcher and menu. Notes: hanziHero lets the launcher / portal maintain a device signature reused by leaderboard entries; Godot now mirrors that with a persistent `玩家名帖` overlay backed by `user://leaderboard_identity.json`.
-- `[done]` Theme toggle parity inside the menu layer. Notes: hanziHero shares a remembered paper-ink switch across launcher and front menu; Godot Zihai menu now reuses the same persisted `夜墨 / 纸墨` preference as the launcher and keeps it available inside the menu top bar.
-- `[pending]` Language toggle inside the menu layer. Notes: source launcher/menu surfaces also share zh/en switching; Godot menu still shows a placeholder `EN` pill without behavior.
+- `[done]` Theme toggle parity inside the menu layer. Notes: source launcher/menu surfaces share the remembered paper-ink theme; Godot Zihai menu and its overlays now inherit the same `夜墨 / 纸墨` preference and expose a matching top-bar toggle.
+- `[pending]` Language toggle parity inside the menu layer. Notes: source menu can switch zh/en on the front portal; Godot menu still keeps the placeholder `EN` pill without runtime behavior.
 - `[pending]` More menu-side build and progression surfacing. Notes: source menu surfaces richer descriptive cards and front-end polish; Godot menu remains more utilitarian.
 
 ## Battle HUD
@@ -46,7 +46,7 @@ Status legend:
 - `[done]` World-prop baseline for trees, bushes, inkstones, chests, stelae, scroll racks, and ink pools. Notes: the source battlefield is no longer an empty field; Godot already supports a comparable landmark layer.
 - `[pending]` Phrase / idiom guardian encounters. Notes: hanziHero uses discovered sentences guarded by elites and tied rewards; Godot still uses static landmarks instead of guarded phrase events.
 - `[pending]` Relic / artifact system. Notes: hanziHero treats relics as a second growth lane parallel to radicals; Godot chests currently drop only direct pickups.
-- `[pending]` Stage phase-shift themes. Notes: hanziHero rotates battlefield atmosphere through 字境 themes like 碑林 / 墨潮 / 雷纹 / 残卷; Godot battle ambience is static.
+- `[done]` Stage phase-shift themes. Notes: Godot now rotates every 4 waves through `碑林 / 墨潮 / 雷纹 / 残卷`, blends fog/ground/backdrop mood, and stamps giant lingering hanzi near the player when the realm shifts.
 - `[pending]` Wider radical / recipe / word pool. Notes: hanziHero already has a broader content set; Godot currently centers on 明 / 休 / 海 plus blade growth.
 - `[done]` Static `聚墨符 / 疾书令` battlefield pickups. Notes: hanziHero ships one-shot utility pickups for full-map ink recall and burst haste; Godot now has fixed battlefield placements with matching core effects.
 - `[pending]` Enemy-dropped utility pickup routing and `回春丹` parity. Notes: source key enemies / bosses can also drop utility pickups and recovery drops; Godot still keeps the safer static-only slice today.
@@ -72,7 +72,7 @@ Status legend:
 - `[done]` Tree fade-through, bush anti-abuse lockout, banners, and strong telegraph readability. Notes: Godot already carries several of the source combat-polish beats into 3D.
 - `[pending]` Procedural music playback and current-track feedback. Notes: Godot now has the HUD-side track card and toast, but actual procedural playback / loop rotation is still missing.
 - `[pending]` Higher-end hit/audio differentiation. Notes: hanziHero has more layered weapon/skill sound identity and lingering glyph afterimages; Godot feedback can be pushed further.
-- `[pending]` Themeable launcher/menu presentation. Notes: Godot launcher and Zihai menu now share the remembered `夜墨 / 纸墨` switch, but downstream battle scenes still keep one locked art direction.
+- `[done]` Themeable launcher/menu presentation. Notes: Godot launcher, about overlay, and Zihai menu now share the remembered `夜墨 / 纸墨` presentation; battle/HUD localization and broader downstream parity remain tracked separately.
 - `[pending]` More stage spectacle for big unlocks and transitions. Notes: source leans harder into large character/word reveal moments and evolving battlefield mood.
 
 ## Export
