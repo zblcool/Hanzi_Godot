@@ -421,6 +421,7 @@ var map_overlay: Control
 var map_panel: PanelContainer
 var map_side_panel: PanelContainer
 var map_canvas: BattleMapCanvas
+var map_title_label: Label
 var map_summary_label: Label
 var map_zoom_label: Label
 var map_zoom_buttons: Array[Button] = []
@@ -429,6 +430,7 @@ var map_legend_title_label: Label
 var map_legend_rows: Array[Control] = []
 var map_help_label: Label
 var choice_panel: PanelContainer
+var choice_cards_grid: GridContainer
 var state_panel: PanelContainer
 var choice_pending_count := 0
 
@@ -2148,14 +2150,18 @@ func _refresh_layout() -> void:
 	var overlay_margin_x := 14.0 if micro_layout else (18.0 if web_tight_layout else 24.0)
 	var overlay_margin_y := 12.0 if micro_layout else (16.0 if web_tight_layout else 24.0)
 	_set_overlay_panel_rect(map_panel, 940.0 if micro_layout else (1080.0 if web_tight_layout else 1240.0), 540.0 if micro_layout else (610.0 if web_tight_layout else 684.0), overlay_margin_x, overlay_margin_y)
-	_set_overlay_panel_rect(choice_panel, 860.0 if micro_layout else (920.0 if web_tight_layout else 1000.0), 420.0 if micro_layout else (460.0 if web_tight_layout else 500.0), overlay_margin_x, overlay_margin_y)
+	_set_overlay_panel_rect(choice_panel, 900.0 if micro_layout else (960.0 if web_tight_layout else 1000.0), 500.0 if micro_layout else (520.0 if web_tight_layout else 500.0), overlay_margin_x, overlay_margin_y)
 	_set_overlay_panel_rect(state_panel, 640.0 if micro_layout else (700.0 if web_tight_layout else 760.0), 460.0 if micro_layout else (520.0 if web_tight_layout else 600.0), overlay_margin_x, overlay_margin_y)
 	if map_canvas != null:
 		map_canvas.custom_minimum_size = Vector2(520.0 if micro_layout else (640.0 if web_tight_layout else 760.0), 300.0 if micro_layout else (400.0 if web_tight_layout else 520.0))
 	if map_side_panel != null:
 		map_side_panel.custom_minimum_size = Vector2(252.0 if micro_layout else (272.0 if web_tight_layout else 300.0), 0.0)
+	if map_title_label != null:
+		_set_label_font_size(map_title_label, 30 if micro_layout else (34 if web_tight_layout else 38))
 	if map_summary_label != null:
 		_set_label_font_size(map_summary_label, 16 if micro_layout else 18)
+		if map_summary_label.has_meta("map_full_text"):
+			map_summary_label.text = _format_map_summary_text(String(map_summary_label.get_meta("map_full_text", "")))
 	if map_legend_title_label != null:
 		_set_label_font_size(map_legend_title_label, 20 if micro_layout else (22 if web_tight_layout else 24))
 	if map_zoom_label != null:
@@ -2180,11 +2186,15 @@ func _refresh_layout() -> void:
 			choice_hint_label.text = _build_radical_choice_hint(choice_pending_count)
 		elif choice_mode == "word":
 			choice_hint_label.text = _build_word_choice_hint()
+	if choice_cards_grid != null:
+		choice_cards_grid.columns = 2 if (micro_layout or web_tight_layout) else 3
+		choice_cards_grid.add_theme_constant_override("h_separation", 10 if micro_layout else (12 if web_tight_layout else 16))
+		choice_cards_grid.add_theme_constant_override("v_separation", 10 if micro_layout else 12)
 	for choice_button in choice_buttons:
 		if choice_button == null:
 			continue
-		choice_button.custom_minimum_size = Vector2(0.0, 220.0 if micro_layout else (246.0 if web_tight_layout else 278.0))
-		choice_button.add_theme_font_size_override("font_size", 18 if micro_layout else 20)
+		choice_button.custom_minimum_size = Vector2(0.0, 136.0 if micro_layout else (156.0 if web_tight_layout else 278.0))
+		choice_button.add_theme_font_size_override("font_size", 16 if micro_layout else (18 if web_tight_layout else 20))
 		if choice_button.has_meta("choice_title"):
 			choice_button.text = _format_choice_button_text(
 				String(choice_button.get_meta("choice_title", "")),
@@ -2307,16 +2317,52 @@ func _format_choice_button_text(title: String, headline: String, description: St
 	var clean_description := description.strip_edges()
 	if _should_use_micro_layout():
 		var micro_line := clean_headline if not clean_headline.is_empty() else clean_description
-		micro_line = _truncate_overlay_text(micro_line, 38 if _is_english() else 20)
+		micro_line = _truncate_overlay_text(micro_line, 30 if _is_english() else 14)
 		return "%s\n%s" % [clean_title, micro_line] if not micro_line.is_empty() else clean_title
 	if _should_use_web_tight_layout():
 		var parts: Array[String] = [clean_title]
 		if not clean_headline.is_empty():
-			parts.append(_truncate_overlay_text(clean_headline, 46 if _is_english() else 24))
+			parts.append(_truncate_overlay_text(clean_headline, 34 if _is_english() else 18))
 		if not clean_description.is_empty():
-			parts.append(_truncate_overlay_text(clean_description, 66 if _is_english() else 30))
+			parts.append(_truncate_overlay_text(clean_description, 44 if _is_english() else 22))
 		return "\n".join(parts)
 	return "%s\n%s\n%s" % [clean_title, clean_headline, clean_description]
+
+
+func _format_map_summary_text(summary: String) -> String:
+	var full_summary := summary.strip_edges()
+	if full_summary.is_empty():
+		return full_summary
+	if not (_should_use_micro_layout() or _should_use_web_tight_layout()):
+		return full_summary
+	var compact_segments: Array[String] = []
+	for segment_variant in full_summary.split("  ·  "):
+		var segment := String(segment_variant).strip_edges()
+		if segment.is_empty():
+			continue
+		compact_segments.append(_compact_map_summary_segment(segment))
+	return "  ·  ".join(compact_segments)
+
+
+func _compact_map_summary_segment(segment: String) -> String:
+	var patterns := [
+		["Enemies ", "E"],
+		["Inkstones ", "I"],
+		["Bushes ", "B"],
+		["Landmarks ", "L"],
+		["Explored ", "X"],
+		["敌群 ", "敌"],
+		["砚台 ", "砚"],
+		["草丛 ", "草"],
+		["地标 ", "标"],
+		["探索 ", "探"]
+	]
+	for pattern in patterns:
+		var prefix := String(pattern[0])
+		var replacement := String(pattern[1])
+		if segment.begins_with(prefix):
+			return "%s%s" % [replacement, segment.trim_prefix(prefix)]
+	return _truncate_overlay_text(segment, 12 if _should_use_micro_layout() else 18)
 
 
 func _build_map_help_text() -> String:
@@ -2482,7 +2528,10 @@ func show_map_overlay(snapshot: Dictionary) -> void:
 	overlay_label.visible = false
 	_hide_reveal()
 	map_canvas.set_snapshot(snapshot)
-	map_summary_label.text = _localize_text(String(snapshot.get("summary", "敌群 0  ·  砚台 0  ·  草丛 0")))
+	var full_summary := _localize_text(String(snapshot.get("summary", "敌群 0  ·  砚台 0  ·  草丛 0")))
+	map_summary_label.set_meta("map_full_text", full_summary)
+	map_summary_label.tooltip_text = full_summary
+	map_summary_label.text = _format_map_summary_text(full_summary)
 	_update_map_zoom_label()
 	map_overlay.visible = true
 
@@ -2534,7 +2583,8 @@ func _build_map_overlay(root: Control) -> void:
 	shell.add_theme_constant_override("separation", 16)
 	margin.add_child(shell)
 
-	shell.add_child(_make_label("残卷地图", 38, Color(1.0, 0.95, 0.86, 1.0)))
+	map_title_label = _make_label("残卷地图", 38, Color(1.0, 0.95, 0.86, 1.0))
+	shell.add_child(map_title_label)
 	map_summary_label = _make_label("", 18, Color(0.88, 0.92, 0.96, 0.94))
 	shell.add_child(map_summary_label)
 
@@ -2673,10 +2723,12 @@ func _build_choice_overlay(root: Control) -> void:
 	box.add_child(choice_title_label)
 	box.add_child(choice_hint_label)
 
-	var cards_row := HBoxContainer.new()
-	cards_row.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	cards_row.add_theme_constant_override("separation", 16)
-	box.add_child(cards_row)
+	choice_cards_grid = GridContainer.new()
+	choice_cards_grid.columns = 3
+	choice_cards_grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	choice_cards_grid.add_theme_constant_override("h_separation", 16)
+	choice_cards_grid.add_theme_constant_override("v_separation", 12)
+	box.add_child(choice_cards_grid)
 
 	for index in range(3):
 		var button := Button.new()
@@ -2690,7 +2742,7 @@ func _build_choice_overlay(root: Control) -> void:
 		button.add_theme_color_override("font_color", Color(0.08, 0.08, 0.08, 1.0))
 		button.pressed.connect(_on_choice_button_pressed.bind(index))
 		choice_buttons.append(button)
-		cards_row.add_child(button)
+		choice_cards_grid.add_child(button)
 
 
 func _build_state_overlay(root: Control) -> void:
