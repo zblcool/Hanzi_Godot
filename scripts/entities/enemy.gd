@@ -64,6 +64,7 @@ var rear_right_leg_node: MeshInstance3D
 var gait_amount: float = 0.0
 var health_bar_width: float = 1.08
 var health_bars_enabled: bool = true
+var detail_visible: bool = true
 var surface_material_entries: Array = []
 
 
@@ -159,7 +160,15 @@ func get_hit_radius() -> float:
 func set_health_bar_visible(should_show: bool) -> void:
 	health_bars_enabled = should_show
 	if health_bar_root != null:
-		health_bar_root.visible = should_show
+		health_bar_root.visible = should_show and detail_visible
+
+
+func set_detail_visible(should_show: bool) -> void:
+	detail_visible = should_show
+	if glyph_root != null:
+		glyph_root.visible = should_show
+	if health_bar_root != null:
+		health_bar_root.visible = should_show and health_bars_enabled
 
 
 func _apply_type_stats() -> void:
@@ -751,6 +760,7 @@ func _build_glyph_badge() -> void:
 	label_node.modulate = Color(0.98, 0.94, 0.84, 0.98)
 	label_node.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	badge_root.add_child(label_node)
+	badge_root.visible = detail_visible
 
 
 func _add_box_part(size: Vector3, position: Vector3, material: Material) -> MeshInstance3D:
@@ -772,6 +782,7 @@ func _update_visual_state() -> void:
 		visual_root.position.y = sin(bob_phase) * (0.04 + gait_amount * 0.04) + (0.06 if dash_time > 0.0 else 0.0)
 
 	if glyph_root != null:
+		glyph_root.visible = detail_visible
 		var badge_height: float = 2.5
 		if enemy_type == "cavalry":
 			badge_height = 2.76
@@ -779,10 +790,11 @@ func _update_visual_state() -> void:
 			badge_height = 2.72
 		elif enemy_type == "boss":
 			badge_height = 3.04
-		glyph_root.position.y = badge_height + sin(drift_time * 1.8 + 0.6) * 0.05
-	if glyph_ring_node != null:
+		if detail_visible:
+			glyph_root.position.y = badge_height + sin(drift_time * 1.8 + 0.6) * 0.05
+	if glyph_ring_node != null and detail_visible:
 		glyph_ring_node.rotation_degrees.y = wrapf(glyph_ring_node.rotation_degrees.y + 1.4 + gait_amount * 2.6, 0.0, 360.0)
-	if label_node != null:
+	if label_node != null and detail_visible:
 		label_node.modulate = Color(0.98, 0.94, 0.84, 0.92 + sin(drift_time * 2.0) * 0.05)
 
 	var gait: float = sin(drift_time * 7.0) * 16.0 * gait_amount
@@ -890,6 +902,8 @@ func _update_surface_materials() -> void:
 		if material == null:
 			continue
 		var base_glow: float = float(entry.get("glow_strength", 0.32))
+		if not detail_visible:
+			base_glow *= 0.52
 		material.set_shader_parameter("flash_strength", flash_strength)
 		material.set_shader_parameter("windup_strength", windup_strength)
 		material.set_shader_parameter("dash_strength", dash_strength)
@@ -927,14 +941,14 @@ func _build_health_bar() -> void:
 	health_bar_fill_node.position = Vector3(0.0, 0.0, -0.01)
 	health_bar_fill_node.material_override = health_bar_fill_material
 	health_bar_root.add_child(health_bar_fill_node)
-	health_bar_root.visible = health_bars_enabled
+	health_bar_root.visible = health_bars_enabled and detail_visible
 
 
 func _update_health_bar(delta: float) -> void:
 	if health_bar_root == null or health_bar_fill_node == null or health_bar_fill_material == null or health_bar_back_material == null:
 		return
 
-	if not health_bars_enabled:
+	if not health_bars_enabled or not detail_visible:
 		health_bar_root.visible = false
 		return
 
