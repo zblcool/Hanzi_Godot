@@ -110,6 +110,63 @@ const LAUNCHER_CHANGELOG_HISTORY := [
 		]
 	}
 ]
+const CANGJIE_PORTAL_SECTIONS := [
+	{
+		"id": "overview",
+		"title": "仓颉之路",
+		"eyebrow": "Deckbuilder Climb",
+		"summary": "原项目里的《仓颉之路》已经不是空概念，而是一条可玩的 deckbuilder 爬塔原型。当前 Godot 仓库还没有把这条战斗/地图基础迁进来，所以这里先把它做成正式入口页，而不是继续停在“后续接入”。",
+		"points": [
+			"核心节奏是爬塔、抽牌、出牌和字形组合，不走字海残卷那套自动攻击幸存者循环。",
+			"战斗舞台会把卡牌信息直接浮在场中，强调“字形 + 动作 + 语义”的同时反馈。",
+			"当前最适合在 Godot 里先迁的是入口层、图谱层和长期设计说明，再等真正的卡牌战斗基础跟上。"
+		]
+	},
+	{
+		"id": "card_codex",
+		"title": "卡牌字库",
+		"eyebrow": "Card Codex",
+		"summary": "web 原型已经把牌分成偏旁基牌、合字牌和引擎牌三层，不是单一数值卡堆。",
+		"points": [
+			"偏旁牌负责起手和过渡，是后续合字路线的材料层。",
+			"合字牌会把结构真正写成战斗效果，让“组字”变成卡组成长的一部分。",
+			"引擎牌继续推进抽牌、留牌、回气或连锁，让 deckbuilder 身份成立。"
+		]
+	},
+	{
+		"id": "fusion_atlas",
+		"title": "合字图谱",
+		"eyebrow": "Fusion Atlas",
+		"summary": "《仓颉之路》不是只把汉字当皮肤，而是把合字路线直接做成牌组构筑图谱。",
+		"points": [
+			"不同合字路线会决定你这次爬塔偏向爆发、连锁、续航还是控制。",
+			"图谱层会比字海残卷更强调“先收什么，再往哪条组合线转”。",
+			"Godot 当前已经有字海的偏旁 -> 合字 -> 词技主线，后面可以把这套图谱思路反向迁回来。"
+		]
+	},
+	{
+		"id": "relic_shelf",
+		"title": "遗物架",
+		"eyebrow": "Relic Shelf",
+		"summary": "web 原型里《仓颉之路》有独立遗物层，负责给整套牌组和路线额外偏转。",
+		"points": [
+			"遗物不会只加一点基础数值，而是会改变抽牌、留牌、字形连锁和节点选择价值。",
+			"这条系统也正是 Godot 《字海残卷》当前还缺的第二成长线之一。",
+			"后续如果先在启动器把遗物架说明、样例和目标整理好，会更适合衔接真正的系统迁移。"
+		]
+	},
+	{
+		"id": "tower_guide",
+		"title": "塔路导览",
+		"eyebrow": "Tower Guide",
+		"summary": "原型里塔路节点和敌人意图已经是独立设计，不只是打完一场接一场的线性战斗。",
+		"points": [
+			"路线会混合战斗、恢复、事件和构筑节点，逼你在短期强度和长期牌组之间做取舍。",
+			"敌人不是字海那种大群追击，而是更接近回合制对局里的意图压迫和节奏管理。",
+			"Godot 端现在先用这层 portal 把路线、节点和敌意图整理清楚，避免第二项目继续只剩一张静态卡片。"
+		]
+	}
+]
 
 var title_font: Font
 var ui_scale := 1.0
@@ -117,6 +174,11 @@ var floating_symbols: Array[Dictionary] = []
 var preview_motifs: Array[Dictionary] = []
 var current_theme := "night-ink"
 var about_overlay: Control
+var cangjie_overlay: Control
+var cangjie_section_title_label: Label
+var cangjie_section_body_label: Label
+var cangjie_nav_buttons: Dictionary = {}
+var cangjie_section := "overview"
 var changelog_overlay: Control
 var profile_overlay: Control
 var profile_name_input: LineEdit
@@ -218,6 +280,7 @@ func _draw() -> void:
 
 func _rebuild_ui() -> void:
 	var restore_about := about_overlay != null and about_overlay.visible
+	var restore_cangjie := cangjie_overlay != null and cangjie_overlay.visible
 	var restore_changelog := changelog_overlay != null and changelog_overlay.visible
 	var restore_profile := profile_overlay != null and profile_overlay.visible
 	var profile_draft := ""
@@ -226,6 +289,10 @@ func _rebuild_ui() -> void:
 	ui_scale = _compute_ui_scale()
 	preview_motifs.clear()
 	about_overlay = null
+	cangjie_overlay = null
+	cangjie_section_title_label = null
+	cangjie_section_body_label = null
+	cangjie_nav_buttons.clear()
 	changelog_overlay = null
 	profile_overlay = null
 	profile_name_input = null
@@ -240,6 +307,8 @@ func _rebuild_ui() -> void:
 	_build_ui()
 	if restore_about and about_overlay != null:
 		about_overlay.visible = true
+	if restore_cangjie and cangjie_overlay != null:
+		_show_cangjie_portal()
 	if restore_changelog and changelog_overlay != null:
 		changelog_overlay.visible = true
 	if restore_profile and profile_overlay != null and profile_name_input != null:
@@ -492,9 +561,9 @@ func _build_ui() -> void:
 		["卡牌构筑", "字形拼装", "后续迁移"],
 		Color(0.38, 0.58, 0.9, 1.0),
 		"cangjie",
-		"后续接入",
-		Callable(),
-		false
+		"进入仓颉入口",
+		Callable(self, "_show_cangjie_portal"),
+		true
 	))
 
 	layout.add_child(_make_update_spotlight_panel())
@@ -523,6 +592,7 @@ func _build_ui() -> void:
 	))
 
 	_build_about_overlay()
+	_build_cangjie_overlay()
 	_build_changelog_overlay()
 	_build_profile_overlay()
 
@@ -834,6 +904,140 @@ func _build_about_overlay() -> void:
 	close_button.add_theme_stylebox_override("pressed", _make_button_style(Color(0.84, 0.54, 0.22, 1.0), 16))
 	close_button.pressed.connect(_hide_about)
 	footer_row.add_child(close_button)
+
+
+func _build_cangjie_overlay() -> void:
+	var portrait_layout := _is_portrait_layout()
+	cangjie_overlay = Control.new()
+	cangjie_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	cangjie_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	cangjie_overlay.visible = false
+	add_child(cangjie_overlay)
+
+	var scrim := ColorRect.new()
+	scrim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	scrim.color = Color(0.01, 0.02, 0.03, 0.78)
+	cangjie_overlay.add_child(scrim)
+
+	var panel := PanelContainer.new()
+	_set_center_overlay_panel(panel, 1080.0, 780.0 if portrait_layout else 640.0)
+	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.05, 0.08, 0.1, 0.96), Color(0.44, 0.68, 0.94, 0.88)))
+	cangjie_overlay.add_child(panel)
+
+	var margin := MarginContainer.new()
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left", _i(28))
+	margin.add_theme_constant_override("margin_top", _i(24))
+	margin.add_theme_constant_override("margin_right", _i(28))
+	margin.add_theme_constant_override("margin_bottom", _i(24))
+	panel.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", _i(16))
+	margin.add_child(box)
+
+	box.add_child(_make_tag("Cangjie Portal", Color(0.12, 0.18, 0.24, 0.88), Color(0.78, 0.9, 1.0, 0.98)))
+	box.add_child(_make_label("仓颉之路入口", 42, Color(1.0, 0.95, 0.86, 1.0)))
+	box.add_child(_make_label("先把 deckbuilder 原型的核心结构、迁移状态和后续切入点收进同一层入口里，避免第二项目继续停在一张静态卡片。", 18, Color(0.9, 0.92, 0.96, 0.95)))
+
+	var nav_container: Container
+	if portrait_layout:
+		var nav_grid := GridContainer.new()
+		nav_grid.columns = 2
+		nav_grid.add_theme_constant_override("h_separation", _i(10))
+		nav_grid.add_theme_constant_override("v_separation", _i(10))
+		nav_container = nav_grid
+	else:
+		var nav_row := HBoxContainer.new()
+		nav_row.add_theme_constant_override("separation", _i(10))
+		nav_container = nav_row
+	box.add_child(nav_container)
+
+	cangjie_nav_buttons.clear()
+	for section in CANGJIE_PORTAL_SECTIONS:
+		var section_id := String(section.get("id", "overview"))
+		var button := _make_pill_button(String(section.get("title", section_id)), _v(0.0, 48.0), Callable(self, "_on_cangjie_section_pressed").bind(section_id))
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		nav_container.add_child(button)
+		cangjie_nav_buttons[section_id] = button
+
+	var content_panel := PanelContainer.new()
+	content_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	content_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.08, 0.12, 0.16, 0.82), Color(0.38, 0.62, 0.9, 0.38)))
+	box.add_child(content_panel)
+
+	var content_margin := MarginContainer.new()
+	content_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	content_margin.add_theme_constant_override("margin_left", _i(22))
+	content_margin.add_theme_constant_override("margin_top", _i(20))
+	content_margin.add_theme_constant_override("margin_right", _i(22))
+	content_margin.add_theme_constant_override("margin_bottom", _i(20))
+	content_panel.add_child(content_margin)
+
+	var content_box := VBoxContainer.new()
+	content_box.add_theme_constant_override("separation", _i(10))
+	content_margin.add_child(content_box)
+
+	cangjie_section_title_label = _make_label("", 32, Color(1.0, 0.95, 0.86, 1.0))
+	content_box.add_child(cangjie_section_title_label)
+
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	content_box.add_child(scroll)
+
+	cangjie_section_body_label = _make_label("", 18, Color(0.9, 0.92, 0.96, 0.96))
+	cangjie_section_body_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	cangjie_section_body_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.add_child(cangjie_section_body_label)
+
+	var footer_row: BoxContainer = VBoxContainer.new() if portrait_layout else HBoxContainer.new()
+	footer_row.add_theme_constant_override("separation", _i(10))
+	box.add_child(footer_row)
+
+	var theme_button := _make_theme_toggle_button(_v(0.0, 52.0))
+	theme_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	footer_row.add_child(theme_button)
+
+	var close_button := Button.new()
+	close_button.text = "返回游戏选择"
+	close_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	close_button.custom_minimum_size = _v(0.0, 52.0)
+	close_button.add_theme_font_override("font", title_font)
+	close_button.add_theme_font_size_override("font_size", _i(22))
+	close_button.add_theme_color_override("font_color", _resolve_label_color(Color(0.08, 0.07, 0.07, 1.0)))
+	close_button.add_theme_stylebox_override("normal", _make_button_style(Color(0.38, 0.58, 0.9, 1.0), 16))
+	close_button.add_theme_stylebox_override("hover", _make_button_style(Color(0.46, 0.66, 0.98, 1.0), 16))
+	close_button.add_theme_stylebox_override("pressed", _make_button_style(Color(0.3, 0.5, 0.84, 1.0), 16))
+	close_button.pressed.connect(_hide_cangjie_portal)
+	footer_row.add_child(close_button)
+
+	_refresh_cangjie_portal()
+
+
+func _refresh_cangjie_portal() -> void:
+	if cangjie_section_title_label == null or cangjie_section_body_label == null:
+		return
+
+	var active_section: Dictionary = CANGJIE_PORTAL_SECTIONS[0]
+	for section in CANGJIE_PORTAL_SECTIONS:
+		if String(section.get("id", "")) == cangjie_section:
+			active_section = section
+			break
+
+	cangjie_section_title_label.text = "%s  ·  %s" % [String(active_section.get("title", "")), String(active_section.get("eyebrow", ""))]
+	var lines: Array[String] = [String(active_section.get("summary", ""))]
+	for point in active_section.get("points", []):
+		lines.append("• %s" % String(point))
+	cangjie_section_body_label.text = "\n\n".join(lines)
+
+	for section_id in cangjie_nav_buttons.keys():
+		var button: Button = cangjie_nav_buttons[section_id]
+		var active: bool = String(section_id) == cangjie_section
+		var accent := Color(0.38, 0.58, 0.9, 1.0) if active else Color(0.16, 0.22, 0.3, 0.86)
+		button.add_theme_stylebox_override("normal", _make_panel_style(accent if active else Color(0.04, 0.06, 0.08, 0.78), Color(0.44, 0.68, 0.94, 0.46)))
+		button.add_theme_stylebox_override("hover", _make_panel_style(Color(0.46, 0.66, 0.98, 1.0) if active else Color(0.08, 0.1, 0.12, 0.84), Color(0.44, 0.68, 0.94, 0.54)))
+		button.add_theme_stylebox_override("pressed", _make_panel_style(Color(0.3, 0.5, 0.84, 1.0) if active else Color(0.08, 0.1, 0.12, 0.9), Color(0.44, 0.68, 0.94, 0.62)))
 
 
 func _build_changelog_overlay() -> void:
@@ -1320,6 +1524,7 @@ func _on_toggle_theme_pressed() -> void:
 
 func _show_about() -> void:
 	if about_overlay != null:
+		_hide_cangjie_portal()
 		_hide_changelog()
 		_hide_profile()
 		about_overlay.visible = true
@@ -1332,6 +1537,7 @@ func _hide_about() -> void:
 
 func _show_changelog() -> void:
 	if changelog_overlay != null:
+		_hide_cangjie_portal()
 		_hide_about()
 		_hide_profile()
 		changelog_overlay.visible = true
@@ -1342,9 +1548,29 @@ func _hide_changelog() -> void:
 		changelog_overlay.visible = false
 
 
+func _show_cangjie_portal() -> void:
+	if cangjie_overlay != null:
+		_hide_about()
+		_hide_changelog()
+		_hide_profile()
+		cangjie_overlay.visible = true
+		_refresh_cangjie_portal()
+
+
+func _hide_cangjie_portal() -> void:
+	if cangjie_overlay != null:
+		cangjie_overlay.visible = false
+
+
+func _on_cangjie_section_pressed(section_id: String) -> void:
+	cangjie_section = section_id
+	_refresh_cangjie_portal()
+
+
 func _show_profile() -> void:
 	if profile_overlay == null or profile_name_input == null:
 		return
+	_hide_cangjie_portal()
 	_hide_about()
 	_hide_changelog()
 	var identity: Dictionary = Session.get_leaderboard_identity()
@@ -1422,6 +1648,10 @@ func _get_profile_monogram(name: String) -> String:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not event.is_action_pressed("ui_cancel"):
+		return
+	if cangjie_overlay != null and cangjie_overlay.visible:
+		_hide_cangjie_portal()
+		get_viewport().set_input_as_handled()
 		return
 	if profile_overlay != null and profile_overlay.visible:
 		_hide_profile()
