@@ -266,6 +266,7 @@ signal battle_setting_changed(setting_key: String, value: Variant)
 
 var ui_font: Font
 var root_control: Control
+var safe_content_root: Control
 var left_column: VBoxContainer
 var top_pills: HBoxContainer
 var top_right_stack: VBoxContainer
@@ -309,6 +310,8 @@ var compact_health_bar: ProgressBar
 var compact_xp_bar: ProgressBar
 var objective_panel: PanelContainer
 var skills_panel: PanelContainer
+var compact_skill_panel: PanelContainer
+var compact_skill_chip_container: HFlowContainer
 
 var choice_overlay: Control
 var choice_title_label: Label
@@ -533,16 +536,47 @@ func set_skills(recipe_levels: Dictionary, word_levels: Dictionary, word_progres
 
 	if cards.is_empty():
 		skill_cards_box.add_child(_make_placeholder_card())
+		_refresh_compact_skill_chips([])
 		return
 
 	for card in cards:
 		skill_cards_box.add_child(_make_skill_card(card))
+	_refresh_compact_skill_chips(cards)
 
 
 func set_tip(text: String) -> void:
 	tip_label.text = text
 	if compact_tip_label != null:
 		compact_tip_label.text = text
+
+
+func _refresh_compact_skill_chips(cards: Array[Dictionary]) -> void:
+	if compact_skill_chip_container == null:
+		return
+
+	for child in compact_skill_chip_container.get_children():
+		child.queue_free()
+
+	if cards.is_empty():
+		compact_skill_chip_container.add_child(_make_compact_skill_chip("字", "待成字", "预备", Color(0.44, 0.58, 0.72, 1.0)))
+		return
+
+	var visible_count: int = mini(cards.size(), 4)
+	for index in range(visible_count):
+		var card := cards[index]
+		compact_skill_chip_container.add_child(
+			_make_compact_skill_chip(
+				String(card.get("glyph", "字")),
+				String(card.get("title", "")),
+				String(card.get("level", "")),
+				Color(card.get("color", Color(0.44, 0.58, 0.72, 1.0)))
+			)
+		)
+	var hidden_count: int = cards.size() - visible_count
+	if hidden_count > 0:
+		compact_skill_chip_container.add_child(
+			_make_compact_skill_chip("+", "更多技能字", "+%d" % hidden_count, Color(0.62, 0.78, 0.94, 1.0))
+		)
 
 
 func show_banner(text: String, color: Color, duration: float = 2.4) -> void:
@@ -1030,66 +1064,71 @@ func _build_ui() -> void:
 	root_control.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(root_control)
 
-	left_column = VBoxContainer.new()
-	left_column.position = Vector2(24.0, 24.0)
-	left_column.size = Vector2(410.0, 940.0)
-	left_column.add_theme_constant_override("separation", 16)
-	root_control.add_child(left_column)
+	safe_content_root = Control.new()
+	safe_content_root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	safe_content_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root_control.add_child(safe_content_root)
 
-	var intro_panel := _make_panel(Color(0.05, 0.08, 0.1, 0.76), Color(0.93, 0.69, 0.38, 0.84), Vector2(410.0, 430.0))
+	left_column = VBoxContainer.new()
+	left_column.position = Vector2.ZERO
+	left_column.size = Vector2(320.0, 540.0)
+	left_column.add_theme_constant_override("separation", 12)
+	safe_content_root.add_child(left_column)
+
+	var intro_panel := _make_panel(Color(0.05, 0.08, 0.1, 0.8), Color(0.93, 0.69, 0.38, 0.78), Vector2(320.0, 254.0))
 	left_column.add_child(intro_panel)
 	var intro_box := _panel_box(intro_panel)
 	intro_box.add_child(_make_label("INK-BORN ROGUELITE DEMO", 17, Color(0.96, 0.82, 0.52, 0.86), 4.0))
-	hero_label = _make_label("书生", 56, Color(1.0, 0.95, 0.86, 1.0))
+	hero_label = _make_label("书生", 42, Color(1.0, 0.95, 0.86, 1.0))
 	intro_box.add_child(hero_label)
-	hero_title_label = _make_label("", 18, Color(0.96, 0.82, 0.54, 0.96))
+	hero_title_label = _make_label("", 16, Color(0.96, 0.82, 0.54, 0.96))
 	intro_box.add_child(hero_title_label)
-	hero_focus_label = _make_label("", 17, Color(0.86, 0.91, 0.98, 0.94))
+	hero_focus_label = _make_label("", 15, Color(0.86, 0.91, 0.98, 0.94))
 	intro_box.add_child(hero_focus_label)
 
 	hero_tag_row = HBoxContainer.new()
-	hero_tag_row.add_theme_constant_override("separation", 10)
+	hero_tag_row.add_theme_constant_override("separation", 8)
 	intro_box.add_child(hero_tag_row)
 
-	health_label = _make_label("气血  0 / 0", 18, Color(0.96, 0.92, 0.87, 0.98))
+	health_label = _make_label("气血  0 / 0", 16, Color(0.96, 0.92, 0.87, 0.98))
 	intro_box.add_child(health_label)
 	health_bar = _make_bar(Color(0.82, 0.38, 0.31, 0.96))
 	intro_box.add_child(health_bar)
-	progress_label = _make_label("字墨  Lv.1   0 / 4", 18, Color(0.98, 0.91, 0.72, 1.0))
+	progress_label = _make_label("字墨  Lv.1   0 / 4", 16, Color(0.98, 0.91, 0.72, 1.0))
 	intro_box.add_child(progress_label)
 	xp_bar = _make_bar(Color(0.56, 0.84, 0.82, 0.96))
 	intro_box.add_child(xp_bar)
-	status_label = _make_label("存活  00:00\n波次  1\n击破  0", 20, Color(0.86, 0.92, 0.98, 0.98))
+	status_label = _make_label("存活  00:00\n波次  1\n击破  0", 17, Color(0.86, 0.92, 0.98, 0.98))
 	intro_box.add_child(status_label)
 
-	soundtrack_panel = _make_panel(Color(0.06, 0.09, 0.1, 0.92), Color(0.42, 0.66, 0.78, 0.44), Vector2(0.0, 100.0))
+	soundtrack_panel = _make_panel(Color(0.06, 0.09, 0.1, 0.92), Color(0.42, 0.66, 0.78, 0.44), Vector2(0.0, 82.0))
 	soundtrack_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	intro_box.add_child(soundtrack_panel)
 	var soundtrack_box := _panel_box(soundtrack_panel)
 	soundtrack_box.add_theme_constant_override("separation", 4)
 	soundtrack_box.add_child(_make_label("战场乐题", 14, Color(0.88, 0.94, 0.96, 0.72), 3.0))
-	soundtrack_title_label = _make_label("待入曲", 24, Color(1.0, 0.95, 0.86, 1.0))
+	soundtrack_title_label = _make_label("待入曲", 18, Color(1.0, 0.95, 0.86, 1.0))
 	soundtrack_box.add_child(soundtrack_title_label)
-	soundtrack_detail_label = _make_label("战局开始后会同步当前曲名与气氛提示。", 15, Color(0.84, 0.9, 0.94, 0.92))
+	soundtrack_detail_label = _make_label("战局开始后会同步当前曲名与气氛提示。", 14, Color(0.84, 0.9, 0.94, 0.92))
 	soundtrack_box.add_child(soundtrack_detail_label)
 	_apply_soundtrack_style(soundtrack_panel, Color(0.42, 0.66, 0.78, 1.0), 0.92, 0.44)
 
-	var radicals_panel := _make_panel(Color(0.05, 0.07, 0.09, 0.72), Color(0.38, 0.72, 0.78, 0.72), Vector2(410.0, 184.0))
+	var radicals_panel := _make_panel(Color(0.05, 0.07, 0.09, 0.74), Color(0.38, 0.72, 0.78, 0.62), Vector2(320.0, 154.0))
 	left_column.add_child(radicals_panel)
 	var radicals_box := _panel_box(radicals_panel)
-	radicals_box.add_child(_make_label("待合偏旁", 22, Color(0.96, 0.9, 0.8, 1.0)))
-	radicals_label = _make_label("当前尚未留存偏旁", 17, Color(0.86, 0.9, 0.92, 0.94))
+	radicals_box.add_child(_make_label("偏旁存量", 20, Color(0.96, 0.9, 0.8, 1.0)))
+	radicals_label = _make_label("当前尚未留存偏旁", 15, Color(0.86, 0.9, 0.92, 0.94))
 	radicals_box.add_child(radicals_label)
 	radical_chip_container = HFlowContainer.new()
-	radical_chip_container.add_theme_constant_override("h_separation", 10)
-	radical_chip_container.add_theme_constant_override("v_separation", 10)
+	radical_chip_container.add_theme_constant_override("h_separation", 8)
+	radical_chip_container.add_theme_constant_override("v_separation", 8)
 	radicals_box.add_child(radical_chip_container)
 
-	var controls_panel := _make_panel(Color(0.05, 0.07, 0.09, 0.72), Color(0.92, 0.69, 0.38, 0.58), Vector2(410.0, 220.0))
+	var controls_panel := _make_panel(Color(0.05, 0.07, 0.09, 0.66), Color(0.92, 0.69, 0.38, 0.42), Vector2(320.0, 132.0))
 	left_column.add_child(controls_panel)
 	var controls_box := _panel_box(controls_panel)
-	controls_box.add_child(_make_label("操作", 22, Color(0.96, 0.9, 0.8, 1.0)))
-	controls_label = _make_label("", 18, Color(0.88, 0.9, 0.93, 0.94))
+	controls_box.add_child(_make_label("战场速记", 18, Color(0.96, 0.9, 0.8, 1.0)))
+	controls_label = _make_label("", 15, Color(0.88, 0.9, 0.93, 0.94))
 	controls_box.add_child(controls_label)
 
 	top_pills = HBoxContainer.new()
@@ -1098,7 +1137,7 @@ func _build_ui() -> void:
 	top_pills.anchor_top = 0.0
 	top_pills.anchor_bottom = 0.0
 	top_pills.add_theme_constant_override("separation", 12)
-	root_control.add_child(top_pills)
+	safe_content_root.add_child(top_pills)
 	map_button = _make_pill_button("地图", Callable(self, "_emit_map_toggle"))
 	top_pills.add_child(map_button)
 	pause_button = _make_pill_button("暂停", Callable(self, "_emit_pause"))
@@ -1123,7 +1162,7 @@ func _build_ui() -> void:
 	boss_panel = _make_panel(Color(0.08, 0.06, 0.06, 0.88), Color(0.84, 0.34, 0.24, 0.72), Vector2(520.0, 92.0))
 	boss_panel.set_anchors_preset(Control.PRESET_TOP_WIDE)
 	boss_panel.visible = false
-	root_control.add_child(boss_panel)
+	safe_content_root.add_child(boss_panel)
 	var boss_box := _panel_box(boss_panel)
 	boss_name_label = _make_label("卷  卷主", 28, Color(1.0, 0.94, 0.86, 1.0))
 	boss_detail_label = _make_label("卷主降阵", 16, Color(0.92, 0.84, 0.78, 0.92))
@@ -1138,7 +1177,7 @@ func _build_ui() -> void:
 	top_right_stack.anchor_top = 0.0
 	top_right_stack.anchor_bottom = 1.0
 	top_right_stack.add_theme_constant_override("separation", 12)
-	root_control.add_child(top_right_stack)
+	safe_content_root.add_child(top_right_stack)
 
 	compact_summary_panel = _make_panel(Color(0.05, 0.07, 0.09, 0.84), Color(0.42, 0.74, 0.84, 0.62), Vector2(340.0, 188.0))
 	compact_summary_panel.visible = false
@@ -1193,6 +1232,26 @@ func _build_ui() -> void:
 	skill_cards_box.add_theme_constant_override("separation", 12)
 	scroll.add_child(skill_cards_box)
 
+	compact_skill_panel = _make_panel(Color(0.05, 0.07, 0.09, 0.82), Color(0.38, 0.74, 0.82, 0.54), Vector2(560.0, 102.0))
+	compact_skill_panel.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+	compact_skill_panel.visible = false
+	safe_content_root.add_child(compact_skill_panel)
+	var compact_skill_margin := MarginContainer.new()
+	compact_skill_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	compact_skill_margin.add_theme_constant_override("margin_left", 16)
+	compact_skill_margin.add_theme_constant_override("margin_top", 14)
+	compact_skill_margin.add_theme_constant_override("margin_right", 16)
+	compact_skill_margin.add_theme_constant_override("margin_bottom", 14)
+	compact_skill_panel.add_child(compact_skill_margin)
+	var compact_skill_box := VBoxContainer.new()
+	compact_skill_box.add_theme_constant_override("separation", 8)
+	compact_skill_margin.add_child(compact_skill_box)
+	compact_skill_box.add_child(_make_label("已成技艺", 16, Color(0.96, 0.9, 0.8, 0.96)))
+	compact_skill_chip_container = HFlowContainer.new()
+	compact_skill_chip_container.add_theme_constant_override("h_separation", 8)
+	compact_skill_chip_container.add_theme_constant_override("v_separation", 8)
+	compact_skill_box.add_child(compact_skill_chip_container)
+
 	banner_label = _make_label("", 44, Color(1.0, 0.92, 0.78, 1.0))
 	banner_label.set_anchors_preset(Control.PRESET_TOP_WIDE)
 	banner_label.offset_left = 420.0
@@ -1221,7 +1280,7 @@ func _build_ui() -> void:
 	soundtrack_toast.offset_right = -390.0
 	soundtrack_toast.offset_bottom = 188.0
 	soundtrack_toast.visible = false
-	root_control.add_child(soundtrack_toast)
+	safe_content_root.add_child(soundtrack_toast)
 	var soundtrack_toast_box := _panel_box(soundtrack_toast)
 	soundtrack_toast_box.add_theme_constant_override("separation", 4)
 	soundtrack_toast_box.add_child(_make_label("配乐提示", 14, Color(0.96, 0.9, 0.82, 0.76), 3.0))
@@ -1241,45 +1300,66 @@ func _refresh_layout() -> void:
 		return
 
 	compact_layout = _should_use_compact_layout()
+	var viewport_rect := get_viewport().get_visible_rect()
+	var safe_insets := _safe_area_insets()
+	var outer_padding := 16.0 if compact_layout else 22.0
+	if safe_content_root != null:
+		safe_content_root.offset_left = float(safe_insets["left"]) + outer_padding
+		safe_content_root.offset_top = float(safe_insets["top"]) + outer_padding
+		safe_content_root.offset_right = -(float(safe_insets["right"]) + outer_padding)
+		safe_content_root.offset_bottom = -(float(safe_insets["bottom"]) + outer_padding)
+
 	if left_column != null:
 		left_column.visible = not compact_layout
+		left_column.position = Vector2.ZERO
+		left_column.size = Vector2(320.0, maxf(360.0, viewport_rect.size.y - 64.0))
 	if compact_summary_panel != null:
 		compact_summary_panel.visible = compact_layout
 	if objective_panel != null:
 		objective_panel.visible = not compact_layout
+	if skills_panel != null:
+		skills_panel.visible = not compact_layout
+	if compact_skill_panel != null:
+		compact_skill_panel.visible = compact_layout
 
-	var viewport_size := get_viewport().get_visible_rect().size
+	var viewport_size := viewport_rect.size
 	var stack_width := 304.0 if compact_layout else 340.0
 	if compact_layout:
-		stack_width = clamp(viewport_size.x * 0.38, 232.0, 304.0)
-	var right_margin := 18.0
-	var top_margin := 18.0 if compact_layout else 24.0
-	var stack_top := 84.0 if compact_layout else 92.0
+		stack_width = clamp((viewport_size.x - float(safe_insets["left"]) - float(safe_insets["right"])) * 0.34, 228.0, 296.0)
+	var right_margin := 0.0
+	var top_margin := 0.0
+	var stack_top := 62.0 if compact_layout else 72.0
 	if top_right_stack != null:
 		top_right_stack.offset_left = -stack_width - right_margin
 		top_right_stack.offset_right = -right_margin
 		top_right_stack.offset_top = stack_top
-		top_right_stack.offset_bottom = -18.0
+		top_right_stack.offset_bottom = -10.0
 
 	if compact_summary_panel != null:
-		compact_summary_panel.custom_minimum_size = Vector2(stack_width, 196.0)
+		compact_summary_panel.custom_minimum_size = Vector2(stack_width, 188.0)
 	if objective_panel != null:
-		objective_panel.custom_minimum_size = Vector2(stack_width, 150.0)
+		objective_panel.custom_minimum_size = Vector2(stack_width, 136.0)
 	if skills_panel != null:
 		skills_panel.custom_minimum_size = Vector2(
 			stack_width,
-			maxf(260.0, viewport_size.y - (320.0 if compact_layout else 236.0))
+			maxf(220.0, viewport_size.y - 240.0)
 		)
+	if compact_skill_panel != null:
+		var side_reserve: float = clampf((viewport_size.x - float(safe_insets["left"]) - float(safe_insets["right"])) * 0.2, 134.0, 260.0)
+		compact_skill_panel.offset_left = side_reserve
+		compact_skill_panel.offset_right = -side_reserve
+		compact_skill_panel.offset_bottom = -96.0
+		compact_skill_panel.offset_top = compact_skill_panel.offset_bottom - 108.0
 
 	var pill_height := 48.0 if compact_layout else 52.0
 	if map_button != null:
-		map_button.custom_minimum_size = Vector2(84.0 if compact_layout else 94.0, pill_height)
+		map_button.custom_minimum_size = Vector2(82.0 if compact_layout else 94.0, pill_height)
 	if pause_button != null:
-		pause_button.custom_minimum_size = Vector2(84.0 if compact_layout else 94.0, pill_height)
+		pause_button.custom_minimum_size = Vector2(82.0 if compact_layout else 94.0, pill_height)
 	if test_next_wave_button != null:
-		test_next_wave_button.custom_minimum_size = Vector2(100.0 if compact_layout else 112.0, pill_height)
+		test_next_wave_button.custom_minimum_size = Vector2(94.0 if compact_layout else 112.0, pill_height)
 	if fps_panel != null:
-		fps_panel.custom_minimum_size = Vector2(92.0 if compact_layout else 116.0, pill_height)
+		fps_panel.custom_minimum_size = Vector2(88.0 if compact_layout else 116.0, pill_height)
 	if top_pills != null:
 		var pill_width := maxf(top_pills.get_combined_minimum_size().x, 184.0)
 		top_pills.offset_left = -pill_width - right_margin
@@ -1302,6 +1382,13 @@ func _refresh_layout() -> void:
 		banner_label.offset_top = 82.0 if compact_layout else 86.0
 		banner_label.offset_bottom = banner_label.offset_top + 64.0
 
+	if soundtrack_toast != null:
+		var toast_width := 280.0
+		soundtrack_toast.offset_left = -toast_width
+		soundtrack_toast.offset_right = 0.0
+		soundtrack_toast.offset_top = stack_top + 6.0
+		soundtrack_toast.offset_bottom = soundtrack_toast.offset_top + 92.0
+
 
 func _should_use_compact_layout() -> bool:
 	var viewport_size := get_viewport().get_visible_rect().size
@@ -1315,6 +1402,25 @@ func _should_use_compact_layout() -> bool:
 		OS.has_feature("web_android") or
 		OS.has_feature("web_ios")
 	)
+
+
+func _safe_area_insets() -> Dictionary:
+	var visible_rect := get_viewport().get_visible_rect()
+	var safe_area: Rect2 = Rect2(DisplayServer.get_display_safe_area())
+	if safe_area.size.x <= 0.0 or safe_area.size.y <= 0.0:
+		return {"left": 0.0, "top": 0.0, "right": 0.0, "bottom": 0.0}
+
+	var left := maxf(safe_area.position.x - visible_rect.position.x, 0.0)
+	var top := maxf(safe_area.position.y - visible_rect.position.y, 0.0)
+	var right := maxf(
+		(visible_rect.position.x + visible_rect.size.x) - (safe_area.position.x + safe_area.size.x),
+		0.0
+	)
+	var bottom := maxf(
+		(visible_rect.position.y + visible_rect.size.y) - (safe_area.position.y + safe_area.size.y),
+		0.0
+	)
+	return {"left": left, "top": top, "right": right, "bottom": bottom}
 
 
 func show_map_overlay(snapshot: Dictionary) -> void:
@@ -1919,6 +2025,35 @@ func _make_radical_chip(radical: String, amount: int, override_color: Color = Co
 	var label := _make_label("%s  %s" % [radical, override_text if not override_text.is_empty() else "×%d" % amount], 16, Color(0.98, 0.95, 0.88, 0.98))
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	margin.add_child(label)
+	return chip
+
+
+func _make_compact_skill_chip(glyph: String, title: String, level: String, color: Color) -> PanelContainer:
+	var chip := PanelContainer.new()
+	chip.custom_minimum_size = Vector2(90.0, 34.0)
+	chip.tooltip_text = title if level.is_empty() else "%s · %s" % [title, level]
+	chip.add_theme_stylebox_override("panel", _make_panel_style(Color(color.r * 0.16, color.g * 0.16, color.b * 0.18, 0.9), Color(color.r, color.g, color.b, 0.4), 16))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 8)
+	margin.add_theme_constant_override("margin_top", 4)
+	margin.add_theme_constant_override("margin_right", 8)
+	margin.add_theme_constant_override("margin_bottom", 4)
+	chip.add_child(margin)
+
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 6)
+	margin.add_child(row)
+
+	var glyph_label := _make_label(glyph, 18, Color(0.98, 0.95, 0.88, 0.98))
+	glyph_label.custom_minimum_size = Vector2(18.0, 0.0)
+	glyph_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	row.add_child(glyph_label)
+
+	var level_label := _make_label(level, 12, Color(0.92, 0.94, 0.98, 0.9))
+	level_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	level_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	row.add_child(level_label)
 	return chip
 
 

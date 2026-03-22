@@ -140,6 +140,8 @@ func _ready() -> void:
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(root)
 	_build_controls()
+	get_viewport().size_changed.connect(_apply_safe_area_layout)
+	_apply_safe_area_layout()
 	_update_visibility()
 	set_process_input(true)
 	set_process_unhandled_input(true)
@@ -234,6 +236,18 @@ func _build_controls() -> void:
 	root.add_child(interact_button)
 
 
+func _apply_safe_area_layout() -> void:
+	if interact_button == null:
+		return
+	var safe_insets := _safe_area_insets()
+	var right_inset: float = float(safe_insets["right"])
+	var bottom_inset: float = float(safe_insets["bottom"])
+	interact_button.offset_left = -(184.0 + 28.0 + right_inset)
+	interact_button.offset_top = -(76.0 + 28.0 + bottom_inset)
+	interact_button.offset_right = -(28.0 + right_inset)
+	interact_button.offset_bottom = -(28.0 + bottom_inset)
+
+
 func _update_visibility() -> void:
 	visible = (
 		OS.has_feature("web") or
@@ -261,12 +275,20 @@ func _release_joystick(pointer_id: int) -> void:
 
 
 func _place_joystick(screen_position: Vector2) -> void:
+	var safe_insets := _safe_area_insets()
 	var desired_position := screen_position - JOYSTICK_SIZE * 0.5
 	var viewport_size := get_viewport().get_visible_rect().size
-	var max_position := viewport_size - JOYSTICK_SIZE - Vector2(JOYSTICK_MARGIN, JOYSTICK_MARGIN)
+	var min_position := Vector2(
+		JOYSTICK_MARGIN + float(safe_insets["left"]),
+		JOYSTICK_MARGIN + float(safe_insets["top"])
+	)
+	var max_position := viewport_size - JOYSTICK_SIZE - Vector2(
+		JOYSTICK_MARGIN + float(safe_insets["right"]),
+		JOYSTICK_MARGIN + float(safe_insets["bottom"])
+	)
 	joystick.position = Vector2(
-		clamp(desired_position.x, JOYSTICK_MARGIN, max(JOYSTICK_MARGIN, max_position.x)),
-		clamp(desired_position.y, JOYSTICK_MARGIN, max(JOYSTICK_MARGIN, max_position.y))
+		clamp(desired_position.x, min_position.x, max(min_position.x, max_position.x)),
+		clamp(desired_position.y, min_position.y, max(min_position.y, max_position.y))
 	)
 
 
@@ -305,3 +327,22 @@ func _make_panel_style(fill_color: Color, border_color: Color, corner_radius: in
 	style.corner_radius_bottom_right = corner_radius
 	style.corner_radius_bottom_left = corner_radius
 	return style
+
+
+func _safe_area_insets() -> Dictionary:
+	var visible_rect := get_viewport().get_visible_rect()
+	var safe_area: Rect2 = Rect2(DisplayServer.get_display_safe_area())
+	if safe_area.size.x <= 0.0 or safe_area.size.y <= 0.0:
+		return {"left": 0.0, "top": 0.0, "right": 0.0, "bottom": 0.0}
+
+	var left: float = maxf(safe_area.position.x - visible_rect.position.x, 0.0)
+	var top: float = maxf(safe_area.position.y - visible_rect.position.y, 0.0)
+	var right: float = maxf(
+		(visible_rect.position.x + visible_rect.size.x) - (safe_area.position.x + safe_area.size.x),
+		0.0
+	)
+	var bottom: float = maxf(
+		(visible_rect.position.y + visible_rect.size.y) - (safe_area.position.y + safe_area.size.y),
+		0.0
+	)
+	return {"left": left, "top": top, "right": right, "bottom": bottom}
