@@ -1093,7 +1093,10 @@ func _build_ui() -> void:
 	controls_box.add_child(controls_label)
 
 	top_pills = HBoxContainer.new()
-	top_pills.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	top_pills.anchor_left = 1.0
+	top_pills.anchor_right = 1.0
+	top_pills.anchor_top = 0.0
+	top_pills.anchor_bottom = 0.0
 	top_pills.add_theme_constant_override("separation", 12)
 	root_control.add_child(top_pills)
 	map_button = _make_pill_button("地图", Callable(self, "_emit_map_toggle"))
@@ -1130,7 +1133,10 @@ func _build_ui() -> void:
 	boss_box.add_child(boss_bar)
 
 	top_right_stack = VBoxContainer.new()
-	top_right_stack.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	top_right_stack.anchor_left = 1.0
+	top_right_stack.anchor_right = 1.0
+	top_right_stack.anchor_top = 0.0
+	top_right_stack.anchor_bottom = 1.0
 	top_right_stack.add_theme_constant_override("separation", 12)
 	root_control.add_child(top_right_stack)
 
@@ -1244,8 +1250,16 @@ func _refresh_layout() -> void:
 
 	var viewport_size := get_viewport().get_visible_rect().size
 	var stack_width := 304.0 if compact_layout else 340.0
+	if compact_layout:
+		stack_width = clamp(viewport_size.x * 0.38, 232.0, 304.0)
+	var right_margin := 18.0
+	var top_margin := 18.0 if compact_layout else 24.0
+	var stack_top := 84.0 if compact_layout else 92.0
 	if top_right_stack != null:
-		top_right_stack.position = Vector2(-stack_width - 18.0, 84.0 if compact_layout else 92.0)
+		top_right_stack.offset_left = -stack_width - right_margin
+		top_right_stack.offset_right = -right_margin
+		top_right_stack.offset_top = stack_top
+		top_right_stack.offset_bottom = -18.0
 
 	if compact_summary_panel != null:
 		compact_summary_panel.custom_minimum_size = Vector2(stack_width, 196.0)
@@ -1267,7 +1281,11 @@ func _refresh_layout() -> void:
 	if fps_panel != null:
 		fps_panel.custom_minimum_size = Vector2(92.0 if compact_layout else 116.0, pill_height)
 	if top_pills != null:
-		top_pills.position = Vector2(-top_pills.get_combined_minimum_size().x - 18.0, 18.0 if compact_layout else 24.0)
+		var pill_width := maxf(top_pills.get_combined_minimum_size().x, 184.0)
+		top_pills.offset_left = -pill_width - right_margin
+		top_pills.offset_right = -right_margin
+		top_pills.offset_top = top_margin
+		top_pills.offset_bottom = top_margin + pill_height
 
 	if boss_panel != null:
 		var boss_width := maxf(260.0, minf(520.0, viewport_size.x - (140.0 if compact_layout else 660.0)))
