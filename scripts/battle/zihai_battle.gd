@@ -308,6 +308,24 @@ const CHAMBER_LAYOUTS := {
 				"reward_type": "heal",
 				"reward_amount": 18.0,
 				"discover_radius": 6.2
+			},
+			{
+				"id": "sea_moon_rises",
+				"text": "海上生明月",
+				"english_text": "Moon Rises Over Sea",
+				"glyph": "月",
+				"position": Vector3(-5.5, 0.0, 12.8),
+				"guardian_position": Vector3(-0.8, 0.0, 10.6),
+				"guardian_type": "archer",
+				"guardian_health_scale": 1.34,
+				"guardian_glyph": "月",
+				"guardian_name": "海月守望",
+				"english_guardian_name": "Moonwatch Archer",
+				"tint": Color(0.9, 0.93, 1.0, 1.0),
+				"guardian_tint": Color(0.58, 0.68, 0.96, 1.0),
+				"reward_type": "xp",
+				"reward_amount": 16.0,
+				"discover_radius": 6.4
 			}
 		]
 	}
@@ -823,8 +841,9 @@ func _spawn_phrase_guardian(phrase_event: Dictionary) -> void:
 
 	var guardian = ENEMY_SCENE.instantiate()
 	var guardian_position: Vector3 = phrase_event.get("guardian_position", Vector3.ZERO)
+	var guardian_type := String(phrase_event.get("guardian_type", "elite"))
 	guardian.position = guardian_position
-	guardian.configure("elite", 1.05 + elapsed_time / 78.0, player)
+	guardian.configure(guardian_type, 1.05 + elapsed_time / 78.0, player)
 	guardian.enemy_name = String(
 		phrase_event.get(
 			"english_guardian_name" if _is_english() else "guardian_name",
@@ -833,7 +852,7 @@ func _spawn_phrase_guardian(phrase_event: Dictionary) -> void:
 	)
 	guardian.glyph = String(phrase_event.get("guardian_glyph", "句"))
 	guardian.tint = Color(phrase_event.get("guardian_tint", phrase_event.get("tint", Color(0.72, 0.2, 0.34, 1.0))))
-	guardian.max_health *= 0.92
+	guardian.max_health *= maxf(float(phrase_event.get("guardian_health_scale", 0.92)), 0.35)
 	guardian.health = guardian.max_health
 	guardian.display_health = guardian.health
 	if guardian.has_method("set_health_bar_visible"):
