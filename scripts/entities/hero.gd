@@ -256,6 +256,13 @@ func is_stunned() -> bool:
 	return stun_time > 0.0
 
 
+func clear_stun() -> void:
+	if is_dead:
+		return
+	stun_time = 0.0
+	_update_visual_state()
+
+
 func heal(amount: float) -> void:
 	if is_dead:
 		return

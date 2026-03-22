@@ -32,6 +32,9 @@ const ENEMY_UTILITY_ACTIVE_LIMIT := 2
 const ENEMY_POTION_ACTIVE_LIMIT := 2
 const HEALTH_POTION_DROP_METER_STEP := 0.05
 const HEALTH_POTION_HEAL_RATIO := 0.3
+const CHAMBER_INTERLUDE_EVENT_FURY_DURATION := 12.0
+const CHAMBER_INTERLUDE_REST_HEAL_RATIO := 0.24
+const CHAMBER_INTERLUDE_REST_BRUSH_DURATION := 8.0
 const TREE_FADE_RADIUS := 2.65
 const TREE_FADE_ALPHA := 0.28
 const TREE_FADE_SPEED := 4.8
@@ -181,6 +184,7 @@ var last_announced_threat_level: int = 1
 var boss_spawn_index: int = 0
 var active_boss = null
 var chamber_break_pending := false
+var chamber_interlude_offer: Dictionary = {}
 
 var radical_counts: Dictionary = {}
 var skill_levels: Dictionary = {}
@@ -326,17 +330,57 @@ func _chamber_break_title() -> String:
 	return "%s · %s" % [_current_scroll_label(), "Chamber Break" if _is_english() else "卷间缓冲"]
 
 
-func _chamber_break_body(next_wave: int) -> String:
+func _chamber_interlude_options() -> Array[Dictionary]:
+	var reward_radical := String(chamber_interlude_offer.get("reward_radical", "日"))
+	if _is_english():
+		return [
+			{"id": "reward", "label": "Reward · Radical %s" % reward_radical},
+			{"id": "event", "label": "Event · Scroll Echo"},
+			{"id": "recovery", "label": "Recovery · Short Rest"}
+		]
+	return [
+		{"id": "reward", "label": "奖励 · 偏旁「%s」" % reward_radical},
+		{"id": "event", "label": "异事 · 残卷回响"},
+		{"id": "recovery", "label": "修整 · 歇笔回气"}
+	]
+
+
+func _pick_chamber_interlude_radical() -> String:
+	var candidates: Array[String] = []
+	for radical_variant in Session.RADICAL_ORDER:
+		var radical := String(radical_variant)
+		if radical.is_empty():
+			continue
+		candidates.append(radical)
+	if candidates.is_empty():
+		return "日"
+	return candidates[rng.randi_range(0, candidates.size() - 1)]
+
+
+func _chamber_interlude_title() -> String:
+	return "%s · %s" % [_current_scroll_label(), "Between Chambers" if _is_english() else "卷间抉择"]
+
+
+func _chamber_interlude_body(next_wave: int) -> String:
 	var localized_next_theme := _localized_field_phase_theme(_field_phase_theme_for_wave(next_wave))
 	var next_theme_name := String(localized_next_theme.get("name", "Inkfield" if _is_english() else "字境"))
+	var reward_radical := String(chamber_interlude_offer.get("reward_radical", "日"))
 	if _is_english():
-		return "The first scroll lord is gone and the chamber has gone quiet. Treat this as the first room-break stop before the run pushes deeper.\n\nNext pressure: Wave %d\nNext realm cue: %s\nContinue when you are ready to reopen the scroll." % [
+		return "The first scroll lord is gone and the chamber has gone quiet. Treat this as the first room-break stop before the run pushes deeper.\n\nNext pressure: Wave %d\nNext realm cue: %s\n\nChoose one before continuing:\nReward · Radical Supply: take %s into the next chamber.\nEvent · Scroll Echo: relic routing is not ported yet, so this fallback grants %d s of Swift Edict.\nRecovery · Short Rest: restore %d%% vitality, clear stun, and gain %d s of brush haste." % [
 			next_wave,
-			next_theme_name
+			next_theme_name,
+			reward_radical,
+			int(round(CHAMBER_INTERLUDE_EVENT_FURY_DURATION)),
+			int(round(CHAMBER_INTERLUDE_REST_HEAL_RATIO * 100.0)),
+			int(round(CHAMBER_INTERLUDE_REST_BRUSH_DURATION))
 		]
-	return "首位卷主已散，当前房间也暂时清空。这一步先做成进入更深残卷前的停顿。\n\n下一段压力：第 %d 波\n下一层字境：%s\n准备好后再续卷入深层。" % [
+	return "首位卷主已散，当前房间也暂时清空。这一步先做成进入更深残卷前的停顿。\n\n下一段压力：第 %d 波\n下一层字境：%s\n\n继续深入前先定一项：\n奖励 · 偏旁补给：带走偏旁「%s」，为下一段先添一笔。\n异事 · 残卷回响：遗物路线还没迁回 Godot，这一步先给 %d 秒疾书令做低风险替代。\n修整 · 歇笔回气：回复 %d%% 气血，解除眩晕，并获得 %d 秒文笔提速。" % [
 		next_wave,
-		next_theme_name
+		next_theme_name,
+		reward_radical,
+		int(round(CHAMBER_INTERLUDE_EVENT_FURY_DURATION)),
+		int(round(CHAMBER_INTERLUDE_REST_HEAL_RATIO * 100.0)),
+		int(round(CHAMBER_INTERLUDE_REST_BRUSH_DURATION))
 	]
 
 
@@ -474,6 +518,7 @@ func _spawn_hud() -> void:
 	hud.word_choice_selected.connect(_on_word_choice_selected)
 	hud.pause_requested.connect(_on_hud_pause_requested)
 	hud.pause_resume_requested.connect(_on_hud_pause_resume_requested)
+	hud.chamber_interlude_selected.connect(_on_hud_chamber_interlude_selected)
 	hud.restart_requested.connect(_on_hud_restart_requested)
 	hud.return_menu_requested.connect(_on_hud_return_menu_requested)
 	hud.map_toggle_requested.connect(_on_hud_map_toggle_requested)
@@ -2315,14 +2360,15 @@ func _open_chamber_break_gate() -> void:
 	if game_over or not chamber_break_pending:
 		return
 	chamber_break_pending = false
+	chamber_interlude_offer = {"reward_radical": _pick_chamber_interlude_radical()}
 	if map_overlay_active:
 		_set_map_overlay(false)
 	paused = true
 	Engine.time_scale = 0.0
-	if hud != null and hud.has_method("show_chamber_transition"):
+	if hud != null and hud.has_method("show_chamber_interlude"):
 		var next_wave := maxi(threat_level + 1, 2)
-		hud.show_chamber_transition(_chamber_break_title(), _chamber_break_body(next_wave))
-	_log_battle_event("Chamber Break · Continue when ready" if _is_english() else "卷间缓冲 · 整顿后再续卷", Color(0.96, 0.82, 0.54, 1.0))
+		hud.show_chamber_interlude(_chamber_interlude_title(), _chamber_interlude_body(next_wave), _chamber_interlude_options())
+	_log_battle_event("Between Chambers · Choose one route" if _is_english() else "卷间抉择 · 先定一条路", Color(0.96, 0.82, 0.54, 1.0))
 
 
 func _field_phase_theme_for_wave(wave: int) -> Dictionary:
@@ -2809,6 +2855,54 @@ func _map_exploration_percent() -> int:
 
 
 func _on_hud_pause_resume_requested() -> void:
+	_set_paused(false)
+
+
+func _on_hud_chamber_interlude_selected(choice_id: String) -> void:
+	if game_over or not paused:
+		return
+
+	match choice_id:
+		"reward":
+			var reward_radical := String(chamber_interlude_offer.get("reward_radical", "日"))
+			var reward_color := Color(Session.RADICAL_COLORS.get(reward_radical, Color(0.94, 0.72, 0.4, 1.0)))
+			_apply_radical_choice(reward_radical)
+			hud.set_tip(("Radical supply secured. `%s` now enters the next chamber with you." if _is_english() else "偏旁补给已经带上，「%s」会跟着你继续入深层。") % reward_radical)
+			_log_battle_event(("Between Chambers · Radical supply %s" if _is_english() else "卷间抉择 · 偏旁补给 %s") % reward_radical, reward_color)
+		"event":
+			if is_instance_valid(player):
+				player.apply_fury_haste(CHAMBER_INTERLUDE_EVENT_FURY_DURATION)
+			hud.show_banner(
+				("Scroll Echo  Swift Edict for %d s" if _is_english() else "残卷回响  疾书令持续 %d 秒") % int(round(CHAMBER_INTERLUDE_EVENT_FURY_DURATION)),
+				Color(0.96, 0.62, 0.34, 1.0),
+				1.9
+			)
+			hud.set_tip("The first interlude event uses a safe fallback for now: a temporary offensive surge instead of the source relic route." if _is_english() else "当前首个卷间异事先用低风险替代：暂不给遗物，改成一次短时烈笔提速。")
+			_log_battle_event(
+				("Between Chambers · Scroll Echo %d s" if _is_english() else "卷间抉择 · 残卷回响 %d 秒") % int(round(CHAMBER_INTERLUDE_EVENT_FURY_DURATION)),
+				Color(0.96, 0.62, 0.34, 1.0)
+			)
+		"recovery":
+			if is_instance_valid(player):
+				player.heal(player.max_health * CHAMBER_INTERLUDE_REST_HEAL_RATIO)
+				if player.has_method("clear_stun"):
+					player.clear_stun()
+				player.apply_brush_haste(CHAMBER_INTERLUDE_REST_BRUSH_DURATION)
+			hud.show_banner(
+				("Short Rest  Restore %d%% Vitality" if _is_english() else "歇笔回气  回复 %d%% 气血") % int(round(CHAMBER_INTERLUDE_REST_HEAL_RATIO * 100.0)),
+				Color(0.62, 0.9, 0.74, 1.0),
+				1.9
+			)
+			hud.set_tip(("Short rest restores vitality, clears stun, and gives %d s of brush haste for the next push." if _is_english() else "歇笔修整会回气、解眩晕，并补上 %d 秒文笔提速，适合接着推进下一段。") % int(round(CHAMBER_INTERLUDE_REST_BRUSH_DURATION)))
+			_log_battle_event(
+				("Between Chambers · Short Rest %d%%" if _is_english() else "卷间抉择 · 歇笔回气 %d%%") % int(round(CHAMBER_INTERLUDE_REST_HEAL_RATIO * 100.0)),
+				Color(0.62, 0.9, 0.74, 1.0)
+			)
+		_:
+			return
+
+	chamber_interlude_offer.clear()
+	_sync_hud()
 	_set_paused(false)
 
 

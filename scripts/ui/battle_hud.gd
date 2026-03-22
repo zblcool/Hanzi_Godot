@@ -319,6 +319,7 @@ signal radical_choice_selected(radical: String)
 signal word_choice_selected(word_id: String)
 signal pause_requested
 signal pause_resume_requested
+signal chamber_interlude_selected(choice_id: String)
 signal restart_requested
 signal return_menu_requested
 signal map_toggle_requested
@@ -1335,6 +1336,35 @@ func show_chamber_transition(title: String, body: String) -> void:
 	_configure_state_button(state_tertiary_button, "Return to Menu" if _is_english() else "返回菜单", Callable(self, "_emit_return_menu"))
 	_hide_state_button(state_quaternary_button)
 	_hide_state_button(state_quinary_button)
+	_hide_state_button(state_senary_button)
+	state_overlay.visible = true
+
+
+func show_chamber_interlude(title: String, body: String, options: Array[Dictionary]) -> void:
+	hide_choice_overlay()
+	hide_map_overlay()
+	overlay_label.visible = false
+	_hide_state_name_editor()
+	state_mode = "chamber_interlude"
+	state_title_label.text = title
+	state_body_label.text = body
+
+	var option_buttons := [state_primary_button, state_secondary_button, state_tertiary_button]
+	for index in range(option_buttons.size()):
+		var option_button: Button = option_buttons[index]
+		if index < options.size():
+			var option: Dictionary = options[index]
+			var option_id := String(option.get("id", ""))
+			_configure_state_button(
+				option_button,
+				String(option.get("label", "")),
+				Callable(self, "_emit_chamber_interlude_selection").bind(option_id)
+			)
+		else:
+			_hide_state_button(option_button)
+
+	_configure_state_button(state_quaternary_button, "Restart Run" if _is_english() else "重新开始", Callable(self, "_emit_restart"))
+	_configure_state_button(state_quinary_button, "Return to Menu" if _is_english() else "返回菜单", Callable(self, "_emit_return_menu"))
 	_hide_state_button(state_senary_button)
 	state_overlay.visible = true
 
@@ -3149,6 +3179,11 @@ func _refresh_controls_text() -> void:
 func _emit_pause_resume() -> void:
 	hide_state_overlay()
 	pause_resume_requested.emit()
+
+
+func _emit_chamber_interlude_selection(choice_id: String) -> void:
+	hide_state_overlay()
+	chamber_interlude_selected.emit(choice_id)
 
 
 func _emit_map_toggle() -> void:
