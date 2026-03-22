@@ -44,9 +44,11 @@ var detail_reaction_label: Label
 var detail_preview_core: PanelContainer
 var detail_preview_glyph: Label
 var detail_tags_row: Container
+var detail_opening_label: Label
+var detail_opening_radicals_row: Container
 var detail_stat_widgets: Dictionary = {}
 var character_archive_overlay: Control
-var character_archive_body_label: Label
+var character_archive_cards_root: VBoxContainer
 var recipe_atlas_overlay: Control
 var recipe_atlas_body_label: Label
 var enemy_archive_overlay: Control
@@ -175,8 +177,10 @@ func _rebuild_ui() -> void:
 	detail_preview_core = null
 	detail_preview_glyph = null
 	detail_tags_row = null
+	detail_opening_label = null
+	detail_opening_radicals_row = null
 	character_archive_overlay = null
-	character_archive_body_label = null
+	character_archive_cards_root = null
 	recipe_atlas_overlay = null
 	recipe_atlas_body_label = null
 	enemy_archive_overlay = null
@@ -520,6 +524,32 @@ func _build_ui() -> void:
 	detail_tags_row.add_theme_constant_override("h_separation", _i(10))
 	detail_tags_row.add_theme_constant_override("v_separation", _i(10))
 	detail_box.add_child(detail_tags_row)
+
+	var opening_panel := PanelContainer.new()
+	opening_panel.custom_minimum_size = _v(0.0, 146.0)
+	opening_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.08, 0.12, 0.16, 0.72), Color(0.42, 0.68, 0.86, 0.34)))
+	detail_box.add_child(opening_panel)
+
+	var opening_margin := MarginContainer.new()
+	opening_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	opening_margin.add_theme_constant_override("margin_left", _i(16))
+	opening_margin.add_theme_constant_override("margin_top", _i(16))
+	opening_margin.add_theme_constant_override("margin_right", _i(16))
+	opening_margin.add_theme_constant_override("margin_bottom", _i(16))
+	opening_panel.add_child(opening_margin)
+
+	var opening_box := VBoxContainer.new()
+	opening_box.add_theme_constant_override("separation", _i(8))
+	opening_margin.add_child(opening_box)
+	opening_box.add_child(_make_label("起笔落点", 22, Color(1.0, 0.92, 0.8, 1.0)))
+
+	detail_opening_label = _make_label("", 16, Color(0.88, 0.92, 0.96, 0.94))
+	opening_box.add_child(detail_opening_label)
+
+	detail_opening_radicals_row = HFlowContainer.new()
+	detail_opening_radicals_row.add_theme_constant_override("h_separation", _i(10))
+	detail_opening_radicals_row.add_theme_constant_override("v_separation", _i(10))
+	opening_box.add_child(detail_opening_radicals_row)
 
 	var stats_panel := PanelContainer.new()
 	stats_panel.custom_minimum_size = _v(0.0, 232.0)
@@ -1050,17 +1080,18 @@ func _build_character_archive_overlay() -> void:
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	box.add_child(scroll)
 
-	character_archive_body_label = _make_label("", 18, Color(0.9, 0.92, 0.95, 0.96))
-	character_archive_body_label.custom_minimum_size = _v(740.0, 0.0)
-	character_archive_body_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	character_archive_body_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.add_child(character_archive_body_label)
+	character_archive_cards_root = VBoxContainer.new()
+	character_archive_cards_root.custom_minimum_size = _v(740.0, 0.0)
+	character_archive_cards_root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	character_archive_cards_root.add_theme_constant_override("separation", _i(16))
+	scroll.add_child(character_archive_cards_root)
 
 	var action_row := HBoxContainer.new()
 	action_row.alignment = BoxContainer.ALIGNMENT_END
 	action_row.add_theme_constant_override("separation", _i(12))
 	box.add_child(action_row)
 	action_row.add_child(_make_pill_button("收起人物志", _v(170.0, 52.0), Callable(self, "_hide_character_archive_overlay")))
+	_populate_character_archive_cards()
 
 
 func _build_leaderboard_overlay() -> void:
@@ -1429,42 +1460,205 @@ func _build_recipe_atlas_text() -> String:
 	return "\n".join(lines)
 
 
-func _build_character_archive_text() -> String:
-	var lines: Array[String] = [
-		"当前人物志对应已经接入的两名执笔者，除了基础面板，也补上了人物来路、角色特性与入卷建议，方便在真正落字前先决定这一轮更适合哪种写法。",
-		""
-	]
+func _build_hero_opening_summary(hero: Dictionary) -> String:
+	var hero_id := String(hero.get("id", "scholar"))
+	var starting_radicals: Array[String] = Session.get_hero_starting_radicals(hero_id)
+	if starting_radicals.is_empty():
+		return "当前 Godot 保持无固定起手偏旁，第一批掉落更适合顺势决定这一局往哪条合字线转。"
+	var radical_labels: Array[String] = []
+	for radical in starting_radicals:
+		var radical_data: Dictionary = Session.get_radical_data(radical)
+		radical_labels.append("%s %s" % [radical, String(radical_data.get("name", ""))])
+	return "当前 Godot 会带着 %s 入卷，让这名执笔者更早摸到自己的开场路线。" % " / ".join(radical_labels)
+
+
+func _build_hero_starting_tags(hero: Dictionary) -> Array[String]:
+	var hero_id := String(hero.get("id", "scholar"))
+	var starting_radicals: Array[String] = Session.get_hero_starting_radicals(hero_id)
+	if starting_radicals.is_empty():
+		return ["无固定起手"]
+	var tags: Array[String] = []
+	for radical in starting_radicals:
+		var radical_data: Dictionary = Session.get_radical_data(radical)
+		tags.append("%s %s" % [radical, String(radical_data.get("name", ""))])
+	return tags
+
+
+func _make_archive_stat_item(title: String, value: String, accent: Color) -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.12, accent.g * 0.12, accent.b * 0.16, 0.58), Color(accent.r, accent.g, accent.b, 0.2)))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", _i(14))
+	margin.add_theme_constant_override("margin_top", _i(12))
+	margin.add_theme_constant_override("margin_right", _i(14))
+	margin.add_theme_constant_override("margin_bottom", _i(12))
+	panel.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", _i(4))
+	margin.add_child(box)
+	box.add_child(_make_label(title, 14, Color(0.96, 0.82, 0.54, 0.88)))
+	box.add_child(_make_label(value, 20, Color(0.98, 0.95, 0.9, 0.98)))
+	return panel
+
+
+func _make_character_archive_card(hero: Dictionary) -> PanelContainer:
+	var portrait_layout := _is_portrait_layout()
+	var accent: Color = hero["accent"]
+	var panel := PanelContainer.new()
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.add_theme_stylebox_override("panel", _make_card_style(false, accent))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", _i(20))
+	margin.add_theme_constant_override("margin_top", _i(20))
+	margin.add_theme_constant_override("margin_right", _i(20))
+	margin.add_theme_constant_override("margin_bottom", _i(20))
+	panel.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", _i(14))
+	margin.add_child(box)
+
+	var head_row: BoxContainer = VBoxContainer.new() if portrait_layout else HBoxContainer.new()
+	head_row.add_theme_constant_override("separation", _i(16))
+	box.add_child(head_row)
+
+	var preview := PanelContainer.new()
+	preview.custom_minimum_size = _v(0.0, 132.0 if portrait_layout else 0.0)
+	preview.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.14, accent.g * 0.14, accent.b * 0.16, 0.58), Color(accent.r, accent.g, accent.b, 0.24)))
+	head_row.add_child(preview)
+	_build_card_preview(preview, hero)
+
+	var summary_box := VBoxContainer.new()
+	summary_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	summary_box.add_theme_constant_override("separation", _i(8))
+	head_row.add_child(summary_box)
+	summary_box.add_child(_make_label("%s  ·  %s" % [String(hero.get("name", "")), String(hero.get("title", ""))], 30, Color(1.0, 0.95, 0.86, 1.0)))
+	summary_box.add_child(_make_label(String(hero.get("role_label", "")), 18, accent))
+	summary_box.add_child(_make_label(String(hero.get("description", "")), 17, Color(0.9, 0.92, 0.95, 0.96)))
+	summary_box.add_child(_make_label("执笔焦点：%s" % String(hero.get("focus", "")), 16, Color(0.82, 0.9, 1.0, 0.94)))
+
+	var tag_row := HFlowContainer.new()
+	tag_row.add_theme_constant_override("h_separation", _i(10))
+	tag_row.add_theme_constant_override("v_separation", _i(10))
+	summary_box.add_child(tag_row)
+	for tag_variant in hero.get("tags", []):
+		tag_row.add_child(_make_tag(String(tag_variant), Color(accent.r * 0.16, accent.g * 0.16, accent.b * 0.2, 0.88), Color(0.98, 0.95, 0.9, 0.96)))
+
+	var quote_panel := PanelContainer.new()
+	quote_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	quote_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.12, accent.g * 0.12, accent.b * 0.16, 0.68), Color(accent.r, accent.g, accent.b, 0.24)))
+	box.add_child(quote_panel)
+
+	var quote_margin := MarginContainer.new()
+	quote_margin.add_theme_constant_override("margin_left", _i(16))
+	quote_margin.add_theme_constant_override("margin_top", _i(16))
+	quote_margin.add_theme_constant_override("margin_right", _i(16))
+	quote_margin.add_theme_constant_override("margin_bottom", _i(16))
+	quote_panel.add_child(quote_margin)
+
+	var quote_box := VBoxContainer.new()
+	quote_box.add_theme_constant_override("separation", _i(6))
+	quote_margin.add_child(quote_box)
+	quote_box.add_child(_make_label("卷中文字", 16, Color(0.96, 0.82, 0.54, 0.88)))
+	quote_box.add_child(_make_label("“%s”" % String(hero.get("record_excerpt", String(hero.get("focus", "")))), 18, Color(0.98, 0.95, 0.9, 0.98)))
+	quote_box.add_child(_make_label(String(hero.get("record_source", "")), 15, Color(0.82, 0.9, 1.0, 0.92)))
+
+	var record_panel := PanelContainer.new()
+	record_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	record_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.08, 0.12, 0.16, 0.72), Color(0.28, 0.36, 0.42, 0.46)))
+	box.add_child(record_panel)
+
+	var record_margin := MarginContainer.new()
+	record_margin.add_theme_constant_override("margin_left", _i(16))
+	record_margin.add_theme_constant_override("margin_top", _i(16))
+	record_margin.add_theme_constant_override("margin_right", _i(16))
+	record_margin.add_theme_constant_override("margin_bottom", _i(16))
+	record_panel.add_child(record_margin)
+
+	var record_box := VBoxContainer.new()
+	record_box.add_theme_constant_override("separation", _i(6))
+	record_margin.add_child(record_box)
+	record_box.add_child(_make_label(String(hero.get("record_title", "人物札记")), 20, Color(1.0, 0.92, 0.8, 1.0)))
+	record_box.add_child(_make_label(String(hero.get("record_body", String(hero.get("description", "")))), 17, Color(0.9, 0.92, 0.95, 0.96)))
+
+	var route_panel := PanelContainer.new()
+	route_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	route_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.08, 0.12, 0.16, 0.72), Color(0.42, 0.68, 0.86, 0.34)))
+	box.add_child(route_panel)
+
+	var route_margin := MarginContainer.new()
+	route_margin.add_theme_constant_override("margin_left", _i(16))
+	route_margin.add_theme_constant_override("margin_top", _i(16))
+	route_margin.add_theme_constant_override("margin_right", _i(16))
+	route_margin.add_theme_constant_override("margin_bottom", _i(16))
+	route_panel.add_child(route_margin)
+
+	var route_box := VBoxContainer.new()
+	route_box.add_theme_constant_override("separation", _i(8))
+	route_margin.add_child(route_box)
+	route_box.add_child(_make_label("起笔落点", 18, Color(1.0, 0.92, 0.8, 1.0)))
+	route_box.add_child(_make_label(_build_hero_opening_summary(hero), 16, Color(0.88, 0.92, 0.96, 0.94)))
+
+	var route_tags := HFlowContainer.new()
+	route_tags.add_theme_constant_override("h_separation", _i(10))
+	route_tags.add_theme_constant_override("v_separation", _i(10))
+	route_box.add_child(route_tags)
+	for tag_text in _build_hero_starting_tags(hero):
+		route_tags.add_child(_make_tag(tag_text, Color(accent.r * 0.16, accent.g * 0.16, accent.b * 0.2, 0.88), Color(0.98, 0.95, 0.9, 0.96)))
+
+	var trait_label := String(hero.get("trait_label", "")).strip_edges()
+	var trait_description := String(hero.get("trait_description", "")).strip_edges()
+	var route_hint := String(hero.get("route_hint", "")).strip_edges()
+	if not trait_label.is_empty():
+		route_box.add_child(_make_label("角色特性：%s" % trait_label, 16, Color(0.96, 0.82, 0.54, 0.9)))
+	if not trait_description.is_empty():
+		route_box.add_child(_make_label(trait_description, 16, Color(0.9, 0.92, 0.95, 0.94)))
+	if not route_hint.is_empty():
+		route_box.add_child(_make_label("入卷建议：%s" % route_hint, 16, Color(0.82, 0.9, 1.0, 0.94)))
+
+	var stats_panel := PanelContainer.new()
+	stats_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	stats_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.08, 0.12, 0.16, 0.72), Color(0.28, 0.36, 0.42, 0.46)))
+	box.add_child(stats_panel)
+
+	var stats_margin := MarginContainer.new()
+	stats_margin.add_theme_constant_override("margin_left", _i(16))
+	stats_margin.add_theme_constant_override("margin_top", _i(16))
+	stats_margin.add_theme_constant_override("margin_right", _i(16))
+	stats_margin.add_theme_constant_override("margin_bottom", _i(16))
+	stats_panel.add_child(stats_margin)
+
+	var stats_box := VBoxContainer.new()
+	stats_box.add_theme_constant_override("separation", _i(10))
+	stats_margin.add_child(stats_box)
+	stats_box.add_child(_make_label("战斗轮廓", 18, Color(1.0, 0.92, 0.8, 1.0)))
+
+	var stats_grid := GridContainer.new()
+	stats_grid.columns = 2
+	stats_grid.add_theme_constant_override("h_separation", _i(10))
+	stats_grid.add_theme_constant_override("v_separation", _i(10))
+	stats_box.add_child(stats_grid)
+	stats_grid.add_child(_make_archive_stat_item("机动", "%.1f" % float(hero.get("move_speed", 0.0)), accent))
+	stats_grid.add_child(_make_archive_stat_item("气血", "%.0f" % float(hero.get("max_health", 0.0)), accent))
+	stats_grid.add_child(_make_archive_stat_item("伤害", "%.0f" % float(hero.get("attack_damage", 0.0)), accent))
+	stats_grid.add_child(_make_archive_stat_item("射程", "%.1f" % float(hero.get("attack_range", 0.0)), accent))
+
+	return panel
+
+
+func _populate_character_archive_cards() -> void:
+	if character_archive_cards_root == null:
+		return
+	for child in character_archive_cards_root.get_children():
+		child.queue_free()
 	for hero_id_variant in Session.HERO_ORDER:
 		var hero_id := String(hero_id_variant)
 		var hero: Dictionary = Session.get_hero_data(hero_id)
-		var tag_texts: Array[String] = []
-		for tag_variant in hero.get("tags", []):
-			tag_texts.append(String(tag_variant))
-		lines.append("%s  %s  ·  %s" % [
-			String(hero.get("glyph", "")),
-			String(hero.get("name", "")),
-			String(hero.get("title", ""))
-		])
-		lines.append("  身份：%s" % String(hero.get("role_label", "")))
-		lines.append("  武器：%s" % String(hero.get("weapon", "")))
-		lines.append("  人物来路：%s" % String(hero.get("record_title", "")))
-		lines.append("  %s" % String(hero.get("record_body", "")))
-		lines.append("  摘句：%s" % String(hero.get("record_excerpt", "")))
-		lines.append("  出处：%s" % String(hero.get("record_source", "")))
-		lines.append("  战斗轮廓：%s" % String(hero.get("description", "")))
-		lines.append("  执笔焦点：%s" % String(hero.get("focus", "")))
-		lines.append("  角色特性：%s" % String(hero.get("trait_label", "")))
-		lines.append("  %s" % String(hero.get("trait_description", "")))
-		lines.append("  入卷建议：%s" % String(hero.get("route_hint", "")))
-		lines.append("  标签：%s" % " / ".join(tag_texts))
-		lines.append("  面板：机动 %.1f  气血 %.0f  伤害 %.0f  射程 %.1f" % [
-			float(hero.get("move_speed", 0.0)),
-			float(hero.get("max_health", 0.0)),
-			float(hero.get("attack_damage", 0.0)),
-			float(hero.get("attack_range", 0.0))
-		])
-		lines.append("")
-	return "\n".join(lines)
+		character_archive_cards_root.add_child(_make_character_archive_card(hero))
 
 
 func _build_local_leaderboard_text(view: String = "manual", limit: int = 8) -> String:
@@ -1697,7 +1891,6 @@ func _show_character_archive_overlay() -> void:
 	_hide_recipe_atlas_overlay()
 	_hide_enemy_archive_overlay()
 	_hide_leaderboard_overlay()
-	character_archive_body_label.text = _build_character_archive_text()
 	character_archive_overlay.visible = true
 
 
@@ -1926,16 +2119,33 @@ func _refresh_selection(trigger_reaction: bool = false) -> void:
 	detail_role_label.text = "%s  ·  %s" % [String(selected_data["role_label"]), String(selected_data["weapon"])]
 	detail_weapon_label.text = "主战描述：%s" % String(selected_data["description"])
 	detail_desc_label.text = "战斗焦点：%s" % String(selected_data["focus"])
-	detail_focus_label.text = "人物来路：%s" % String(selected_data.get("record_title", ""))
-	detail_dossier_label.text = "角色特性：%s · %s" % [
-		String(selected_data.get("trait_label", "")),
-		String(selected_data.get("trait_description", ""))
-	]
-	detail_quote_label.text = "入卷建议：%s\n摘句：%s · %s" % [
-		String(selected_data.get("route_hint", "")),
-		String(selected_data.get("record_excerpt", "")),
-		String(selected_data.get("record_source", ""))
-	]
+	var record_title := String(selected_data.get("record_title", "")).strip_edges()
+	var record_excerpt := String(selected_data.get("record_excerpt", "")).strip_edges()
+	var record_source := String(selected_data.get("record_source", "")).strip_edges()
+	var trait_label := String(selected_data.get("trait_label", "")).strip_edges()
+	var trait_description := String(selected_data.get("trait_description", "")).strip_edges()
+	var route_hint := String(selected_data.get("route_hint", "")).strip_edges()
+	if record_title.is_empty():
+		detail_focus_label.text = "进入残卷后，同样的偏旁路线会因为角色武器而产生不同输出手感。"
+	else:
+		detail_focus_label.text = "人物来路：%s" % record_title
+	if trait_label.is_empty() and trait_description.is_empty():
+		detail_dossier_label.text = ""
+	elif trait_description.is_empty():
+		detail_dossier_label.text = "角色特性：%s" % trait_label
+	elif trait_label.is_empty():
+		detail_dossier_label.text = "角色特性：%s" % trait_description
+	else:
+		detail_dossier_label.text = "角色特性：%s · %s" % [trait_label, trait_description]
+	var quote_lines: Array[String] = []
+	if not route_hint.is_empty():
+		quote_lines.append("入卷建议：%s" % route_hint)
+	if not record_excerpt.is_empty():
+		if record_source.is_empty():
+			quote_lines.append("摘句：%s" % record_excerpt)
+		else:
+			quote_lines.append("摘句：%s · %s" % [record_excerpt, record_source])
+	detail_quote_label.text = "\n".join(quote_lines)
 
 	detail_preview_core.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.24, accent.g * 0.2, accent.b * 0.16, 0.94), Color(accent.r, accent.g, accent.b, 0.26)))
 	detail_preview_glyph.text = String(selected_data["glyph"])
@@ -1944,6 +2154,11 @@ func _refresh_selection(trigger_reaction: bool = false) -> void:
 		child.queue_free()
 	for tag_text in selected_data["tags"]:
 		detail_tags_row.add_child(_make_tag(String(tag_text), Color(accent.r * 0.16, accent.g * 0.16, accent.b * 0.2, 0.88), Color(0.98, 0.95, 0.9, 0.96)))
+	detail_opening_label.text = _build_hero_opening_summary(selected_data)
+	for child in detail_opening_radicals_row.get_children():
+		child.queue_free()
+	for tag_text in _build_hero_starting_tags(selected_data):
+		detail_opening_radicals_row.add_child(_make_tag(tag_text, Color(accent.r * 0.16, accent.g * 0.16, accent.b * 0.2, 0.88), Color(0.98, 0.95, 0.9, 0.96)))
 
 	_set_stat_value("move_speed", float(selected_data["move_speed"]), 7.2, "%.1f")
 	_set_stat_value("max_health", float(selected_data["max_health"]), 140.0, "%.0f")

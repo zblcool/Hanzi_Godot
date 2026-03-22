@@ -52,6 +52,7 @@ const HEROES := {
 		"trait_label": "白纸起卷",
 		"trait_description": "没有近战压阵负担，更适合从第一枚偏旁开始把任意成字路线慢慢养大，稳稳磨到词技。",
 		"route_hint": "先凑出第一枚成字，再决定往续航、范围还是锁敌路线继续磨词；书生最擅长把中盘 build 写稳。",
+		"starting_radicals": [],
 		"select_quotes": [
 			"先落一笔，再看残卷怎么回我。",
 			"偏旁会自己说话，我只负责把它们写出来。",
@@ -111,6 +112,7 @@ const HEROES := {
 		"trait_label": "近战压阵",
 		"trait_description": "更高气血与贴脸斩击让他适合站在敌潮正面，把 `刂`、忍意和范围清场路线直接转成场面控制。",
 		"route_hint": "优先补足能稳住近身空间的成字线，再用剑势与波纹类技能把贴脸风险反转成压制。",
+		"starting_radicals": ["亻", "心"],
 		"select_quotes": [
 			"靠近一点，我替你把这一局劈开。",
 			"侠字不躲在后面，先把人群压回去再说。",
@@ -634,6 +636,18 @@ func get_hero_data(hero_id: String) -> Dictionary:
 	if HEROES.has(hero_id):
 		return HEROES[hero_id].duplicate(true)
 	return fallback.duplicate(true)
+
+
+func get_hero_starting_radicals(hero_id: String = selected_hero) -> Array[String]:
+	var hero_data: Dictionary = get_hero_data(hero_id)
+	var radicals: Array[String] = []
+	var raw_radicals: Variant = hero_data.get("starting_radicals", [])
+	if raw_radicals is Array:
+		for radical_variant in raw_radicals:
+			var radical := String(radical_variant)
+			if RADICALS.has(radical):
+				radicals.append(radical)
+	return radicals
 
 
 func get_recipe_data(recipe_id: String) -> Dictionary:

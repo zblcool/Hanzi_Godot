@@ -1889,6 +1889,10 @@ func _apply_intro_preset() -> void:
 	for radical_variant in preset_radicals.keys():
 		var radical := String(radical_variant)
 		radical_counts[radical] = maxi(0, int(preset_radicals[radical_variant]))
+	for radical in Session.get_hero_starting_radicals():
+		radical_counts[radical] = int(radical_counts.get(radical, 0)) + 1
+		if radical == "刂":
+			player.apply_blade_upgrade()
 
 	for recipe_id in skill_levels.keys():
 		skill_levels[recipe_id] = 0
