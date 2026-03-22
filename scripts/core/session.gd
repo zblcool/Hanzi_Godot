@@ -18,7 +18,9 @@ const BATTLE_AMBIENT_DENSITIES := ["off", "medium", "high"]
 const DEFAULT_BATTLE_SETTINGS := {
 	"performance_mode": "balanced",
 	"enemy_health_bars": true,
-	"ambient_glyph_density": "medium"
+	"ambient_glyph_density": "medium",
+	"visual_effects": true,
+	"enemy_detail": true
 }
 const BATTLE_INPUT_BINDINGS := {
 	"move_forward": [KEY_W, KEY_UP],
@@ -1084,6 +1086,8 @@ func _sanitize_battle_settings(raw_settings: Variant) -> Dictionary:
 	sanitized["performance_mode"] = performance_mode
 	sanitized["enemy_health_bars"] = bool(data.get("enemy_health_bars", sanitized["enemy_health_bars"]))
 	sanitized["ambient_glyph_density"] = ambient_density
+	sanitized["visual_effects"] = bool(data.get("visual_effects", sanitized["visual_effects"]))
+	sanitized["enemy_detail"] = bool(data.get("enemy_detail", sanitized["enemy_detail"]))
 	return sanitized
 
 

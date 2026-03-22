@@ -330,6 +330,8 @@ var state_primary_button: Button
 var state_secondary_button: Button
 var state_tertiary_button: Button
 var state_quaternary_button: Button
+var state_quinary_button: Button
+var state_senary_button: Button
 var state_mode: String = ""
 var last_game_over_data: Dictionary = {}
 var last_pause_summary: Dictionary = {}
@@ -718,6 +720,8 @@ func show_pause_menu(elapsed: float, kills: int, threat: int, level: int) -> voi
 	_configure_state_button(state_secondary_button, "战场布置", Callable(self, "_show_settings_menu"))
 	_configure_state_button(state_tertiary_button, "重新开始", Callable(self, "_emit_restart"))
 	_configure_state_button(state_quaternary_button, "返回菜单", Callable(self, "_emit_return_menu"))
+	_hide_state_button(state_quinary_button)
+	_hide_state_button(state_senary_button)
 	state_overlay.visible = true
 
 
@@ -734,9 +738,11 @@ func _show_settings_menu() -> void:
 	_hide_state_name_editor()
 	overlay_label.visible = false
 	_configure_state_button(state_primary_button, "演出档：%s" % _performance_mode_label(), Callable(self, "_cycle_performance_mode"))
-	_configure_state_button(state_secondary_button, "敌方血条：%s" % _enemy_health_bar_label(), Callable(self, "_toggle_enemy_health_bars"))
-	_configure_state_button(state_tertiary_button, "环境字影：%s" % _ambient_density_label(), Callable(self, "_cycle_ambient_density"))
-	_configure_state_button(state_quaternary_button, "返回暂停", Callable(self, "_return_to_pause_menu"))
+	_configure_state_button(state_secondary_button, "视觉字效：%s" % _visual_effects_label(), Callable(self, "_toggle_visual_effects"))
+	_configure_state_button(state_tertiary_button, "敌方血条：%s" % _enemy_health_bar_label(), Callable(self, "_toggle_enemy_health_bars"))
+	_configure_state_button(state_quaternary_button, "环境字影：%s" % _ambient_density_label(), Callable(self, "_cycle_ambient_density"))
+	_configure_state_button(state_quinary_button, "远敌细节：%s" % _enemy_detail_label(), Callable(self, "_toggle_enemy_detail"))
+	_configure_state_button(state_senary_button, "返回暂停", Callable(self, "_return_to_pause_menu"))
 	state_overlay.visible = true
 
 
@@ -785,6 +791,8 @@ func set_game_over(
 		Callable(self, "_show_local_leaderboard")
 	)
 	_hide_state_button(state_quaternary_button)
+	_hide_state_button(state_quinary_button)
+	_hide_state_button(state_senary_button)
 	overlay_label.visible = false
 	state_overlay.visible = true
 
@@ -842,6 +850,8 @@ func _refresh_local_leaderboard_overlay() -> void:
 	_configure_state_button(state_secondary_button, "返回结算", Callable(self, "_show_game_over_summary"))
 	_configure_state_button(state_tertiary_button, "重新开始", Callable(self, "_emit_restart"))
 	_configure_state_button(state_quaternary_button, "返回菜单", Callable(self, "_emit_return_menu"))
+	_hide_state_button(state_quinary_button)
+	_hide_state_button(state_senary_button)
 	overlay_label.visible = false
 	state_overlay.visible = true
 
@@ -859,10 +869,12 @@ func _return_to_pause_menu() -> void:
 
 
 func _build_settings_body() -> String:
-	return "对照 hanziHero 的 Performance / LOD 面板，当前先接入一组低风险战场选项。改动会立即生效，并写入本地运行设置。\n\n当前\n演出档：%s\n敌方血条：%s\n环境字影：%s" % [
+	return "对照 hanziHero 的 Performance / LOD 面板，当前战场布置已经补齐完整的低风险首轮矩阵。改动会立即生效，并写入本地运行设置。\n\n当前\n演出档：%s\n视觉字效：%s\n敌方血条：%s\n环境字影：%s\n远敌细节：%s" % [
 		_performance_mode_label(),
+		_visual_effects_label(),
 		_enemy_health_bar_label(),
-		_ambient_density_label()
+		_ambient_density_label(),
+		_enemy_detail_label()
 	]
 
 
@@ -880,6 +892,10 @@ func _enemy_health_bar_label() -> String:
 	return "显示" if bool(battle_settings.get("enemy_health_bars", true)) else "隐藏"
 
 
+func _visual_effects_label() -> String:
+	return "开启" if bool(battle_settings.get("visual_effects", true)) else "收束"
+
+
 func _ambient_density_label() -> String:
 	match String(battle_settings.get("ambient_glyph_density", "medium")):
 		"off":
@@ -890,6 +906,10 @@ func _ambient_density_label() -> String:
 			return "疏"
 
 
+func _enemy_detail_label() -> String:
+	return "完整" if bool(battle_settings.get("enemy_detail", true)) else "近距"
+
+
 func _cycle_performance_mode() -> void:
 	var current_mode := String(battle_settings.get("performance_mode", "balanced"))
 	var current_index: int = Session.BATTLE_PERFORMANCE_MODES.find(current_mode)
@@ -898,6 +918,13 @@ func _cycle_performance_mode() -> void:
 	var next_mode := String(Session.BATTLE_PERFORMANCE_MODES[(current_index + 1) % Session.BATTLE_PERFORMANCE_MODES.size()])
 	battle_settings = Session.set_battle_setting("performance_mode", next_mode)
 	battle_setting_changed.emit("performance_mode", next_mode)
+	_show_settings_menu()
+
+
+func _toggle_visual_effects() -> void:
+	var next_visible := not bool(battle_settings.get("visual_effects", true))
+	battle_settings = Session.set_battle_setting("visual_effects", next_visible)
+	battle_setting_changed.emit("visual_effects", next_visible)
 	_show_settings_menu()
 
 
@@ -916,6 +943,13 @@ func _cycle_ambient_density() -> void:
 	var next_density := String(Session.BATTLE_AMBIENT_DENSITIES[(current_index + 1) % Session.BATTLE_AMBIENT_DENSITIES.size()])
 	battle_settings = Session.set_battle_setting("ambient_glyph_density", next_density)
 	battle_setting_changed.emit("ambient_glyph_density", next_density)
+	_show_settings_menu()
+
+
+func _toggle_enemy_detail() -> void:
+	var next_enabled := not bool(battle_settings.get("enemy_detail", true))
+	battle_settings = Session.set_battle_setting("enemy_detail", next_enabled)
+	battle_setting_changed.emit("enemy_detail", next_enabled)
 	_show_settings_menu()
 
 
@@ -1695,10 +1729,14 @@ func _build_state_overlay(root: Control) -> void:
 	state_secondary_button = _make_state_button()
 	state_tertiary_button = _make_state_button()
 	state_quaternary_button = _make_state_button()
+	state_quinary_button = _make_state_button()
+	state_senary_button = _make_state_button()
 	buttons_box.add_child(state_primary_button)
 	buttons_box.add_child(state_secondary_button)
 	buttons_box.add_child(state_tertiary_button)
 	buttons_box.add_child(state_quaternary_button)
+	buttons_box.add_child(state_quinary_button)
+	buttons_box.add_child(state_senary_button)
 
 
 func _on_choice_button_pressed(index: int) -> void:

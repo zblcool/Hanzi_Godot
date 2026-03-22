@@ -42,6 +42,8 @@ const PERFORMANCE_GROUND_DETAIL_COUNTS := {"performance": 6, "balanced": 12, "qu
 const PERFORMANCE_WAVE_SHARDS := {"performance": 2, "balanced": 4, "quality": 6}
 const PERFORMANCE_INTRO_SYMBOLS := {"performance": 3, "balanced": 4, "quality": 6}
 const PERFORMANCE_BOSS_SYMBOLS := {"performance": 4, "balanced": 6, "quality": 8}
+const ENEMY_DETAIL_DISTANCE := {"performance": 18.0, "balanced": 22.0, "quality": 26.0}
+const ENEMY_DETAIL_REFRESH_INTERVAL := 0.12
 const SOUNDTRACK_LIBRARY := {
 	"mosslightCanopy": {
 		"title": "苔月幽林",
@@ -175,6 +177,7 @@ var battle_intro: Dictionary = {}
 var explored_map_cells: Dictionary = {}
 var enemy_kills_by_type: Dictionary = {}
 var battle_settings: Dictionary = {}
+var decorative_effects_root: Node3D
 var ambient_glyph_root: Node3D
 var ambient_glyph_entries: Array[Dictionary] = []
 var ground_detail_nodes: Array[Node3D] = []
@@ -194,6 +197,7 @@ var field_phase_stamp_entries: Array[Dictionary] = []
 var current_soundtrack_id: String = ""
 var current_soundtrack_cue: String = ""
 var health_potion_drop_meter: float = 0.0
+var enemy_detail_refresh_timer: float = 0.0
 
 var level: int = 1
 var experience: int = 0
@@ -217,6 +221,7 @@ func _ready() -> void:
 	_reveal_map_around_position(player.global_position)
 	_spawn_props()
 	_spawn_hud()
+	_ensure_decorative_effects_root()
 	_apply_intro_preset()
 	_reset_field_phase_state(threat_level)
 	_apply_battle_settings()
@@ -293,6 +298,11 @@ func _process(delta: float) -> void:
 			_spawn_enemy()
 		spawn_interval = _current_spawn_interval()
 		spawn_timer = spawn_interval
+
+	enemy_detail_refresh_timer = max(enemy_detail_refresh_timer - delta, 0.0)
+	if enemy_detail_refresh_timer <= 0.0:
+		_refresh_enemy_detail_visibility()
+		enemy_detail_refresh_timer = ENEMY_DETAIL_REFRESH_INTERVAL
 
 	hud.set_status(elapsed_time, kills, threat_level)
 
@@ -476,6 +486,8 @@ func _spawn_enemy() -> void:
 	enemy.configure(enemy_type, 1.0 + elapsed_time / 75.0, player)
 	if enemy.has_method("set_health_bar_visible"):
 		enemy.set_health_bar_visible(bool(battle_settings.get("enemy_health_bars", true)))
+	if enemy.has_method("set_detail_visible"):
+		enemy.set_detail_visible(_should_show_enemy_detail(enemy))
 	enemy.defeated.connect(_on_enemy_defeated)
 	enemy.request_hazard.connect(_on_enemy_request_hazard)
 	enemy.request_line_hazard.connect(_on_enemy_request_line_hazard)
@@ -496,6 +508,8 @@ func _spawn_boss(stage_index: int) -> void:
 	boss.configure("boss", 1.35 + elapsed_time / 68.0 + float(stage_index) * 0.2, player)
 	if boss.has_method("set_health_bar_visible"):
 		boss.set_health_bar_visible(bool(battle_settings.get("enemy_health_bars", true)))
+	if boss.has_method("set_detail_visible"):
+		boss.set_detail_visible(_should_show_enemy_detail(boss))
 	boss.defeated.connect(_on_enemy_defeated)
 	boss.request_hazard.connect(_on_enemy_request_hazard)
 	boss.request_line_hazard.connect(_on_enemy_request_line_hazard)
@@ -518,6 +532,8 @@ func _apply_battle_settings() -> void:
 		hud.set_battle_settings(battle_settings)
 	_apply_performance_mode_visuals()
 	_apply_enemy_health_bar_setting()
+	_apply_visual_effect_setting()
+	_apply_enemy_detail_setting()
 	_rebuild_ambient_glyphs()
 	if not field_phase_target_theme.is_empty():
 		_apply_field_phase_theme_blend(field_phase_previous_theme, field_phase_target_theme, _field_phase_blend_value())
@@ -540,6 +556,66 @@ func _apply_enemy_health_bar_setting() -> void:
 	for enemy in get_tree().get_nodes_in_group("enemy"):
 		if is_instance_valid(enemy) and enemy.has_method("set_health_bar_visible"):
 			enemy.set_health_bar_visible(should_show)
+
+
+func _apply_visual_effect_setting() -> void:
+	_ensure_decorative_effects_root()
+	if decorative_effects_root != null:
+		decorative_effects_root.visible = _visual_effects_enabled()
+	if field_phase_stamp_root != null:
+		field_phase_stamp_root.visible = _visual_effects_enabled()
+	if not _visual_effects_enabled():
+		_clear_decorative_effects()
+
+
+func _apply_enemy_detail_setting() -> void:
+	enemy_detail_refresh_timer = 0.0
+	_refresh_enemy_detail_visibility()
+
+
+func _ensure_decorative_effects_root() -> void:
+	if decorative_effects_root != null and is_instance_valid(decorative_effects_root):
+		return
+	decorative_effects_root = Node3D.new()
+	decorative_effects_root.name = "DecorativeEffects"
+	add_child(decorative_effects_root)
+
+
+func _clear_decorative_effects() -> void:
+	if decorative_effects_root != null and is_instance_valid(decorative_effects_root):
+		for child in decorative_effects_root.get_children():
+			if is_instance_valid(child) and not child.is_queued_for_deletion():
+				child.queue_free()
+	if field_phase_stamp_root != null and is_instance_valid(field_phase_stamp_root):
+		for child in field_phase_stamp_root.get_children():
+			if is_instance_valid(child) and not child.is_queued_for_deletion():
+				child.queue_free()
+	field_phase_stamp_entries.clear()
+
+
+func _visual_effects_enabled() -> bool:
+	return bool(battle_settings.get("visual_effects", true))
+
+
+func _enemy_detail_enabled() -> bool:
+	return bool(battle_settings.get("enemy_detail", true))
+
+
+func _enemy_detail_distance() -> float:
+	return float(ENEMY_DETAIL_DISTANCE.get(_performance_mode(), ENEMY_DETAIL_DISTANCE["balanced"]))
+
+
+func _should_show_enemy_detail(enemy: Node3D) -> bool:
+	if _enemy_detail_enabled() or not is_instance_valid(player):
+		return true
+	var detail_distance: float = _enemy_detail_distance()
+	return player.global_position.distance_squared_to(enemy.global_position) <= detail_distance * detail_distance
+
+
+func _refresh_enemy_detail_visibility() -> void:
+	for enemy in get_tree().get_nodes_in_group("enemy"):
+		if is_instance_valid(enemy) and enemy.has_method("set_detail_visible"):
+			enemy.set_detail_visible(_should_show_enemy_detail(enemy))
 
 
 func _rebuild_ambient_glyphs() -> void:
@@ -1357,9 +1433,12 @@ func _on_projectile_impact(world_position: Vector3, tint: Color, label: String) 
 
 
 func _spawn_wave_effect(origin: Vector3, radius: float, tint: Color, label: String) -> void:
+	if not _visual_effects_enabled():
+		return
+	_ensure_decorative_effects_root()
 	var effect_root := Node3D.new()
 	effect_root.position = Vector3(origin.x, 0.05, origin.z)
-	effects_root.add_child(effect_root)
+	decorative_effects_root.add_child(effect_root)
 	var performance_mode := _performance_mode()
 
 	var outer_ring := MeshInstance3D.new()
@@ -1428,11 +1507,14 @@ func _spawn_wave_effect(origin: Vector3, radius: float, tint: Color, label: Stri
 
 
 func _spawn_enemy_death_effect(world_position: Vector3, enemy_type: String) -> void:
+	if not _visual_effects_enabled():
+		return
+	_ensure_decorative_effects_root()
 	var tint: Color = _enemy_effect_color(enemy_type)
 	var glyph_text: String = _enemy_effect_glyph(enemy_type)
 	var effect_root := Node3D.new()
 	effect_root.position = world_position + Vector3(0.0, 0.16, 0.0)
-	effects_root.add_child(effect_root)
+	decorative_effects_root.add_child(effect_root)
 
 	var ring := MeshInstance3D.new()
 	var ring_mesh := CylinderMesh.new()
@@ -1481,9 +1563,12 @@ func _spawn_enemy_death_effect(world_position: Vector3, enemy_type: String) -> v
 
 
 func _spawn_boss_entrance_effect(world_position: Vector3, glyph_text: String, tint: Color) -> void:
+	if not _visual_effects_enabled():
+		return
+	_ensure_decorative_effects_root()
 	var effect_root := Node3D.new()
 	effect_root.position = world_position + Vector3(0.0, 0.2, 0.0)
-	effects_root.add_child(effect_root)
+	decorative_effects_root.add_child(effect_root)
 	var symbol_count: int = int(PERFORMANCE_BOSS_SYMBOLS.get(_performance_mode(), PERFORMANCE_BOSS_SYMBOLS["balanced"]))
 
 	for index in range(symbol_count):
@@ -1766,6 +1851,7 @@ func _clear_active_wave_for_test_jump() -> void:
 	for child in effects_root.get_children():
 		if is_instance_valid(child) and not child.is_queued_for_deletion():
 			child.queue_free()
+	_clear_decorative_effects()
 
 
 func _jump_to_next_wave_for_test() -> void:
@@ -1888,6 +1974,8 @@ func _field_phase_stamp_position() -> Vector3:
 
 
 func _spawn_field_phase_stamp(world_position: Vector3, glyph_text: String, theme: Dictionary) -> void:
+	if not _visual_effects_enabled():
+		return
 	if field_phase_stamp_root == null:
 		field_phase_stamp_root = Node3D.new()
 		field_phase_stamp_root.name = "FieldPhaseStamps"
@@ -2062,9 +2150,12 @@ func _threat_level_tip(new_threat_level: int) -> String:
 
 
 func _spawn_intro_symbols(glyph: String, tint: Color) -> void:
+	if not _visual_effects_enabled():
+		return
+	_ensure_decorative_effects_root()
 	var root := Node3D.new()
 	root.position = player.global_position + Vector3(0.0, 0.4, 0.0)
-	effects_root.add_child(root)
+	decorative_effects_root.add_child(root)
 	var symbol_count: int = int(PERFORMANCE_INTRO_SYMBOLS.get(_performance_mode(), PERFORMANCE_INTRO_SYMBOLS["balanced"]))
 
 	for index in range(symbol_count):
