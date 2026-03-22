@@ -120,6 +120,7 @@ func configure(hero_data: Dictionary) -> void:
 
 
 func _ready() -> void:
+	Session.ensure_battle_input_actions()
 	add_to_group("player")
 	_build_visuals()
 	_apply_skill_levels()

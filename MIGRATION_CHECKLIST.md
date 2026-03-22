@@ -77,7 +77,7 @@ Status legend:
 
 - `[done]` Godot Web export script, export presets, and Vercel deployment path. Notes: the Godot repo already has a direct replacement for the web repo's static hosting flow.
 - `[done]` Root README documentation for export overrides and deployment expectations. Notes: recent README maintenance now matches the current `scripts/export_web.sh` behavior.
-- `[pending]` Automated scene smoke checks in repo scripts. Notes: export validation is currently command-driven and manual rather than wrapped in a repeatable local check command.
+- `[done]` Automated scene smoke checks in repo scripts. Notes: `scripts/smoke_test_scenes.sh` now imports assets, runs every `scenes/*.tscn` headlessly with an isolated temp runtime/log path, and catches startup-time errors before export.
 
 ## Technical Debt
 

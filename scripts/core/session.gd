@@ -17,6 +17,16 @@ const DEFAULT_BATTLE_SETTINGS := {
 	"enemy_health_bars": true,
 	"ambient_glyph_density": "medium"
 }
+const BATTLE_INPUT_BINDINGS := {
+	"move_forward": [KEY_W, KEY_UP],
+	"move_back": [KEY_S, KEY_DOWN],
+	"move_left": [KEY_A, KEY_LEFT],
+	"move_right": [KEY_D, KEY_RIGHT],
+	"interact": [KEY_E],
+	"toggle_map": [KEY_M, KEY_TAB],
+	"restart_run": [KEY_R],
+	"return_menu": [KEY_ESCAPE]
+}
 
 const HERO_ORDER := ["scholar", "xia"]
 const HEROES := {
@@ -73,6 +83,21 @@ const HEROES := {
 		"collect_radius": 3.9
 	}
 }
+
+
+func ensure_battle_input_actions() -> void:
+	for action_name in BATTLE_INPUT_BINDINGS.keys():
+		_ensure_input_action(action_name, BATTLE_INPUT_BINDINGS[action_name])
+
+
+func _ensure_input_action(action_name: StringName, keycodes: Array) -> void:
+	if not InputMap.has_action(action_name):
+		InputMap.add_action(action_name)
+	if InputMap.action_get_events(action_name).is_empty():
+		for keycode in keycodes:
+			var event := InputEventKey.new()
+			event.physical_keycode = keycode
+			InputMap.action_add_event(action_name, event)
 
 const RECIPE_ORDER := ["ming", "xiu", "hai", "lei", "ren", "yan"]
 const RECIPES := {
