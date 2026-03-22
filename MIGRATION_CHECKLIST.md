@@ -29,7 +29,7 @@ Status legend:
 - `[done]` Theme toggle parity inside the menu layer. Notes: source launcher/menu surfaces share the remembered paper-ink theme; Godot Zihai menu and its overlays now inherit the same `夜墨 / 纸墨` preference and expose a matching top-bar toggle.
 - `[pending]` Language toggle parity inside the menu layer. Notes: source menu can switch zh/en on the front portal; Godot menu still keeps the placeholder `EN` pill without runtime behavior.
 - `[done]` Menu-side leaderboard build snapshots. Notes: hanziHero's menu leaderboard cards surface build lanes and kill mix; Godot menu leaderboard now appends `偏旁 / 成字 / 词技 / 击倒` 摘要 under each entry instead of stopping at flat score lines.
-- `[in progress]` More menu-side build and progression surfacing beyond leaderboard snapshots. Notes: Godot now combines the richer hero dossier with actual `起笔落点` cues in the menu detail panel and人物志, including the xia's real `亻 / 心` opening loadout; the source portal still carries active-skill sections, broader progression cards, and bilingual framing beyond this slice.
+- `[in progress]` More menu-side build and progression surfacing beyond leaderboard snapshots. Notes: Godot now combines the richer hero dossier with actual `起笔落点` cues plus a source-side `源稿字技` preview in the menu detail panel and 人物志, including the xia's real `亻 / 心` opening loadout; broader progression cards and bilingual framing still remain beyond this slice.
 
 ## Battle HUD
 

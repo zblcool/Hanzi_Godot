@@ -51,6 +51,10 @@ const HEROES := {
 		"record_source": "残卷札记",
 		"trait_label": "白纸起卷",
 		"trait_description": "没有近战压阵负担，更适合从第一枚偏旁开始把任意成字路线慢慢养大，稳稳磨到词技。",
+		"active_skill_glyph": "阵",
+		"active_skill_name": "镇纸阵",
+		"active_skill_description": "对照 hanziHero web 原型，书生会在身前压下一道纸阵，推开敌人，并留下兼具伤害、减速与站位护持的字阵区域。",
+		"active_skill_cooldown": 13.5,
 		"route_hint": "先凑出第一枚成字，再决定往续航、范围还是锁敌路线继续磨词；书生最擅长把中盘 build 写稳。",
 		"starting_radicals": [],
 		"select_quotes": [
@@ -111,6 +115,10 @@ const HEROES := {
 		"record_source": "《史记·游侠列传》",
 		"trait_label": "近战压阵",
 		"trait_description": "更高气血与贴脸斩击让他适合站在敌潮正面，把 `刂`、忍意和范围清场路线直接转成场面控制。",
+		"active_skill_glyph": "斩",
+		"active_skill_name": "断行斩",
+		"active_skill_description": "对照 hanziHero web 原型，侠会沿当前方向疾斩突进，途中短暂无伤，并把路径上的敌人一并劈开。",
+		"active_skill_cooldown": 8.8,
 		"route_hint": "优先补足能稳住近身空间的成字线，再用剑势与波纹类技能把贴脸风险反转成压制。",
 		"starting_radicals": ["亻", "心"],
 		"select_quotes": [

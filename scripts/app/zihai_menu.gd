@@ -46,6 +46,8 @@ var detail_preview_glyph: Label
 var detail_tags_row: Container
 var detail_opening_label: Label
 var detail_opening_radicals_row: Container
+var detail_source_skill_title_label: Label
+var detail_source_skill_body_label: Label
 var detail_stat_widgets: Dictionary = {}
 var character_archive_overlay: Control
 var character_archive_cards_root: VBoxContainer
@@ -179,6 +181,8 @@ func _rebuild_ui() -> void:
 	detail_tags_row = null
 	detail_opening_label = null
 	detail_opening_radicals_row = null
+	detail_source_skill_title_label = null
+	detail_source_skill_body_label = null
 	character_archive_overlay = null
 	character_archive_cards_root = null
 	recipe_atlas_overlay = null
@@ -550,6 +554,32 @@ func _build_ui() -> void:
 	detail_opening_radicals_row.add_theme_constant_override("h_separation", _i(10))
 	detail_opening_radicals_row.add_theme_constant_override("v_separation", _i(10))
 	opening_box.add_child(detail_opening_radicals_row)
+
+	var source_skill_panel := PanelContainer.new()
+	source_skill_panel.custom_minimum_size = _v(0.0, 166.0)
+	source_skill_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.08, 0.12, 0.16, 0.72), Color(0.9, 0.66, 0.36, 0.3)))
+	detail_box.add_child(source_skill_panel)
+
+	var source_skill_margin := MarginContainer.new()
+	source_skill_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	source_skill_margin.add_theme_constant_override("margin_left", _i(16))
+	source_skill_margin.add_theme_constant_override("margin_top", _i(16))
+	source_skill_margin.add_theme_constant_override("margin_right", _i(16))
+	source_skill_margin.add_theme_constant_override("margin_bottom", _i(16))
+	source_skill_panel.add_child(source_skill_margin)
+
+	var source_skill_box := VBoxContainer.new()
+	source_skill_box.add_theme_constant_override("separation", _i(8))
+	source_skill_margin.add_child(source_skill_box)
+	source_skill_box.add_child(_make_label("源稿字技（待迁移）", 22, Color(1.0, 0.92, 0.8, 1.0)))
+
+	detail_source_skill_title_label = _make_label("", 17, Color(0.96, 0.82, 0.54, 0.96))
+	source_skill_box.add_child(detail_source_skill_title_label)
+
+	detail_source_skill_body_label = _make_label("", 16, Color(0.9, 0.92, 0.95, 0.94))
+	source_skill_box.add_child(detail_source_skill_body_label)
+
+	source_skill_box.add_child(_make_label("当前只在菜单里保留 hanziHero 的字技预览，Godot 战斗内仍未接入独立主动输入。", 15, Color(0.82, 0.9, 1.0, 0.9)))
 
 	var stats_panel := PanelContainer.new()
 	stats_panel.custom_minimum_size = _v(0.0, 232.0)
@@ -1484,6 +1514,29 @@ func _build_hero_starting_tags(hero: Dictionary) -> Array[String]:
 	return tags
 
 
+func _build_hero_active_skill_headline(hero: Dictionary) -> String:
+	var glyph := String(hero.get("active_skill_glyph", "")).strip_edges()
+	var name := String(hero.get("active_skill_name", "")).strip_edges()
+	var cooldown := float(hero.get("active_skill_cooldown", 0.0))
+	var parts: Array[String] = []
+	if not glyph.is_empty():
+		parts.append(glyph)
+	if not name.is_empty():
+		parts.append(name)
+	if cooldown > 0.0:
+		parts.append("%.1f 秒冷却" % cooldown)
+	if parts.is_empty():
+		return "当前还没有可对照的源稿字技条目。"
+	return " · ".join(parts)
+
+
+func _build_hero_active_skill_body(hero: Dictionary) -> String:
+	var description := String(hero.get("active_skill_description", "")).strip_edges()
+	if description.is_empty():
+		return "当前这名执笔者还没有额外记录到独立字技说明。"
+	return description
+
+
 func _make_archive_stat_item(title: String, value: String, accent: Color) -> PanelContainer:
 	var panel := PanelContainer.new()
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -1619,6 +1672,26 @@ func _make_character_archive_card(hero: Dictionary) -> PanelContainer:
 		route_box.add_child(_make_label(trait_description, 16, Color(0.9, 0.92, 0.95, 0.94)))
 	if not route_hint.is_empty():
 		route_box.add_child(_make_label("入卷建议：%s" % route_hint, 16, Color(0.82, 0.9, 1.0, 0.94)))
+
+	var active_panel := PanelContainer.new()
+	active_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	active_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.08, 0.12, 0.16, 0.72), Color(0.9, 0.66, 0.36, 0.3)))
+	box.add_child(active_panel)
+
+	var active_margin := MarginContainer.new()
+	active_margin.add_theme_constant_override("margin_left", _i(16))
+	active_margin.add_theme_constant_override("margin_top", _i(16))
+	active_margin.add_theme_constant_override("margin_right", _i(16))
+	active_margin.add_theme_constant_override("margin_bottom", _i(16))
+	active_panel.add_child(active_margin)
+
+	var active_box := VBoxContainer.new()
+	active_box.add_theme_constant_override("separation", _i(8))
+	active_margin.add_child(active_box)
+	active_box.add_child(_make_label("源稿字技（待迁移）", 18, Color(1.0, 0.92, 0.8, 1.0)))
+	active_box.add_child(_make_label(_build_hero_active_skill_headline(hero), 16, Color(0.96, 0.82, 0.54, 0.96)))
+	active_box.add_child(_make_label(_build_hero_active_skill_body(hero), 16, Color(0.9, 0.92, 0.95, 0.94)))
+	active_box.add_child(_make_label("当前只在人物志里保留对照预览，实际战斗输入仍待迁移。", 15, Color(0.82, 0.9, 1.0, 0.9)))
 
 	var stats_panel := PanelContainer.new()
 	stats_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -2159,6 +2232,8 @@ func _refresh_selection(trigger_reaction: bool = false) -> void:
 		child.queue_free()
 	for tag_text in _build_hero_starting_tags(selected_data):
 		detail_opening_radicals_row.add_child(_make_tag(tag_text, Color(accent.r * 0.16, accent.g * 0.16, accent.b * 0.2, 0.88), Color(0.98, 0.95, 0.9, 0.96)))
+	detail_source_skill_title_label.text = _build_hero_active_skill_headline(selected_data)
+	detail_source_skill_body_label.text = _build_hero_active_skill_body(selected_data)
 
 	_set_stat_value("move_speed", float(selected_data["move_speed"]), 7.2, "%.1f")
 	_set_stat_value("max_health", float(selected_data["max_health"]), 140.0, "%.0f")
