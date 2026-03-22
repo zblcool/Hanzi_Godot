@@ -232,8 +232,13 @@
 6. `仓颉` 的“字形组合直接进入卡牌构筑”的核心
 7. 双语 / 学习向定位
 
+## Godot 迁移追踪
+- 当前目标不是做一个全新题材，而是把 `hanziHero` 网页原型里已经验证过的核心体验稳步迁移到 Godot 版本的 `字海残卷`。
+- 长期迁移清单见 [MIGRATION_CHECKLIST.md](./MIGRATION_CHECKLIST.md)。
+- 每次迁移优先落一个小到中等、低风险条目，并同步更新清单、README 和验证脚本。
+
 ## Vercel 预览部署
 - 仓库现在带了 `vercel.json`，把 GitHub 仓库接到 Vercel 之后，每次 push 都会自动触发一次 web 导出和部署。
 - 构建命令是 `./scripts/export_web.sh`，会先导入资源，再导出到 `build/index.html`，所以不需要把 `build/` 产物提交进仓库。
 - 在 Linux / Vercel 环境里，脚本会自动下载 `Godot 4.6.1` 编辑器和 export templates；本地如果已经装了 Godot，则直接复用本机安装。
-- 本地手动验证也可以直接跑同一条命令：`./scripts/export_web.sh`
+- 本地手动验证可以先跑 `./scripts/check_scenes.sh` 做场景冒烟，再跑 `./scripts/export_web.sh` 做完整 web 导出。

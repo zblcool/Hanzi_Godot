@@ -1,0 +1,86 @@
+# Godot Parity Tracker
+
+This tracker captures source parity for migrating the `hanziHero` web prototype into the Godot `字海残卷` project. The repository copy at `MIGRATION_CHECKLIST.md` is the source of truth.
+
+Last refreshed: 2026-03-22
+
+Legend: `[done]`, `[in progress]`, `[pending]`, `[blocked]`
+
+## Launcher
+
+- [done] Godot launcher home with two game cards, floating glyph ambience, and mobile browser guidance. Notes: hanziHero uses a launcher homepage with portal cards; Godot now preserves the same top-level game-selection role.
+- [done] About overlay upgraded to a richer story/article layout with two game summaries and migration notes. Notes: hanziHero's launcher has an about portal with story paragraphs, game cards, and note cards; Godot now carries that structure in-code.
+- [pending] Theme toggle parity for launcher and about surface. Notes: hanziHero supports a paper-ink theme switch; Godot is still fixed to one dark-ink presentation.
+- [pending] Bilingual launcher copy and runtime language toggle. Notes: hanziHero ships zh/en launcher strings; Godot still shows placeholder `EN` pills without behavior.
+- [pending] Cangjie portal follow-through. Notes: hanziHero can open the deckbuilder prototype directly; Godot still stops at a non-interactive `后续接入` button.
+
+## Menus
+
+- [done] Zihai second-layer menu with hero selection and archive overlays. Notes: Godot has dedicated overlays for 人物志、合字图谱、怪物图鉴、本地排行榜, matching the source menu depth.
+- [done] Character selection flow with scholar / xia split and direct battle entry. Notes: source menu moved to `start -> choose hero -> battle`; Godot keeps that same hierarchy.
+- [done] Quick-start wave shortcuts for menu-side test entry. Notes: hanziHero keeps dedicated test starts for wave 10 / 20; Godot now exposes equivalent menu buttons and routes those shortcut runs into a separate local test board.
+- [done] Character reaction flavor on selection. Notes: hanziHero role cards trigger short personality lines; Godot now rotates short in-character response quotes in the detail panel whenever a hero is picked.
+- [done] Player Sigil default-name flow in launcher and menu. Notes: hanziHero lets the launcher / portal maintain a device signature reused by leaderboard entries; Godot now mirrors that with a persistent `玩家名帖` overlay backed by `user://leaderboard_identity.json`.
+- [pending] Theme / language parity inside the menu layer. Notes: source launcher/menu surfaces share theme and language toggles; Godot menu copy is still single-language.
+- [pending] More menu-side build and progression surfacing. Notes: source menu surfaces richer descriptive cards and front-end polish; Godot menu remains more utilitarian.
+
+## Battle HUD
+
+- [done] Pause overlay, restart / return actions, and local leaderboard access. Notes: hanziHero exposes pause plus result-side leaderboard views; Godot already supports pause and post-run naming/editing for local records.
+- [done] Map modal with fog-of-war, drag, zoom, legend, and exploration summary. Notes: source has a modal map with zoom/drag/legend; Godot now has a close equivalent.
+- [done] Mobile joystick, touch interact, pause button, and landscape guard. Notes: hanziHero mobile battle flow depends on these protections; Godot already has matching control coverage.
+- [done] First runtime settings / LOD panel slice. Notes: Godot pause overlay now exposes a low-risk `战场布置` panel with remembered performance preset, enemy health bar toggle, and ambient glyph density controls, covering the first practical slice of hanziHero's settings modal.
+- [pending] Runtime settings follow-through for effect/detail parity. Notes: hanziHero still exposes separate visual-effects and far-enemy-detail toggles; Godot currently covers the first preset slice but not the full matrix yet.
+- [done] Music track toast and soundtrack UI. Notes: hanziHero shows the active procedural track name and mood; Godot battle HUD now carries a matching `战场乐题` card plus a top-right `配乐提示` toast that reuses the source track names and mood text on key battle beats.
+- [pending] Phrase / event log panel. Notes: hanziHero records discovered sentence events in a dedicated log; Godot battle UI does not yet surface event history.
+- [pending] Bilingual HUD copy. Notes: source battle UI can switch zh/en; Godot HUD remains Chinese-only.
+
+## Combat Systems
+
+- [done] Auto-attack survival loop with radical draft, recipe formation, and inkstone word grinding. Notes: source progression is `偏旁 -> 成字 -> 词技`; Godot already preserves that core loop.
+- [done] Two-role hero split between ranged scholar and melee xia. Notes: hanziHero gives xia a close-range sword identity; Godot mirrors that distinction.
+- [done] Enemy roster baseline with clear telegraphs. Notes: Godot already includes basic, swift, tank, archer, assassin, cavalry, ritualist, elite, and boss enemies with warning zones.
+- [done] World-prop baseline for trees, bushes, inkstones, chests, stelae, scroll racks, and ink pools. Notes: the source battlefield is no longer an empty field; Godot already supports a comparable landmark layer.
+- [pending] Phrase / idiom guardian encounters. Notes: hanziHero uses discovered sentences guarded by elites and tied rewards; Godot still uses static landmarks instead of guarded phrase events.
+- [pending] Relic / artifact system. Notes: hanziHero treats relics as a second growth lane parallel to radicals; Godot chests currently drop only direct pickups.
+- [pending] Stage phase-shift themes. Notes: hanziHero rotates battlefield atmosphere through 字境 themes like 碑林 / 墨潮 / 雷纹 / 残卷; Godot battle ambience is static.
+- [pending] Wider radical / recipe / word pool. Notes: hanziHero already has a broader content set; Godot currently centers on 明 / 休 / 海 plus blade growth.
+- [pending] Source pickup taxonomy parity. Notes: hanziHero includes pickups like 聚墨符 and 疾书令; Godot currently ships a smaller supply set.
+
+## Progression
+
+- [done] Local leaderboard persistence with player naming, hero, bosses, kills, radicals, recipes, words, and enemy counts. Notes: hanziHero already records local runs; Godot mirrors that in `user://local_leaderboard.json`.
+- [done] Word-grind gating at the inkstone rather than passive auto-unlock. Notes: the source moved word skills behind an explicit station interaction; Godot follows that rule.
+- [done] Dedicated test-run leaderboard view. Notes: hanziHero keeps separate main/test boards; Godot now records wave 10 / 20 shortcuts into a dedicated `试阵榜` while keeping wave 1 runs on the main board.
+- [pending] Cloud leaderboard sync. Notes: hanziHero has online leaderboard plumbing; Godot only keeps local records today.
+- [pending] Relic-aware build summary. Notes: source pause / result views include owned relic context; Godot cannot yet show that lane because relics are not ported.
+- [pending] More map-event reward routing. Notes: source sentence discoveries can branch into different reward types; Godot progression currently stays in the core combat loop.
+
+## Content
+
+- [done] Character archive, recipe atlas, and enemy codex text live in shared session data. Notes: source uses compendium-style front panels; Godot already ships equivalent text-driven overlays.
+- [pending] More hero flavor text, taunts, and reactive presentation. Notes: hanziHero has more voiced/written character reactions on the front end and battlefield.
+- [pending] More narrative and educational copy parity from the launcher / about surface. Notes: source continues to frame the cultural motivation and bilingual-learning angle more broadly than Godot elsewhere.
+- [blocked] Full `仓颉之路` Godot port. Notes: the web prototype is playable, but the Godot repo does not yet have the deckbuilder combat/map foundation needed for a safe direct migration.
+
+## Polish
+
+- [done] Tree fade-through, bush anti-abuse lockout, banners, and strong telegraph readability. Notes: Godot already carries several of the source combat-polish beats into 3D.
+- [pending] Procedural music playback and current-track feedback. Notes: Godot now has the HUD-side track card and toast, but actual procedural playback / loop rotation is still missing.
+- [pending] Higher-end hit/audio differentiation. Notes: hanziHero has more layered weapon/skill sound identity and lingering glyph afterimages; Godot feedback can be pushed further.
+- [pending] Themeable launcher/menu presentation. Notes: source supports stronger visual mode switching; Godot keeps one locked art direction so far.
+- [pending] More stage spectacle for big unlocks and transitions. Notes: source leans harder into large character/word reveal moments and evolving battlefield mood.
+
+## Export
+
+- [done] Godot Web export script, export presets, and Vercel deployment path. Notes: the Godot repo already has a direct replacement for the web repo's static hosting flow.
+- [done] Root README documentation for export overrides and deployment expectations. Notes: README covers the export path, deployment flow, and now links this migration tracker.
+- [done] Automated scene smoke checks in repo scripts. Notes: `./scripts/check_scenes.sh` now imports the project and headlessly boots the launcher, menu, and battle scenes with `--scene` smoke passes.
+
+## Technical Debt
+
+- [done] Long-lived migration tracking in repo root. Notes: `MIGRATION_CHECKLIST.md` is restored in the repository root and should stay aligned with the GitHub parity tracker issue.
+- [done] README migration goal and checklist link. Notes: the root README now explicitly calls out the web-to-Godot migration goal and points contributors to this file.
+- [pending] Shared localization layer for launcher, menu, and battle UI. Notes: hanziHero already centralizes zh/en strings; Godot will need a similar data layer before toggles are practical.
+- [pending] Break up `scripts/battle/zihai_battle.gd` into smaller systems. Notes: source JS has already started splitting combat/rendering/data concerns; Godot battle logic is still concentrated in one large script.
+- [pending] Move launcher / menu content into data-driven definitions. Notes: current Godot UI is built inline in GDScript; data-backed cards would make future theme and language parity safer.
