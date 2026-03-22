@@ -216,7 +216,20 @@ const CHAMBER_LAYOUTS := {
 		"utility_pickups": [
 			{"position": Vector3(-11.5, 0.0, 0.5), "supply_id": "magnet"},
 			{"position": Vector3(14.5, 0.0, 4.5), "supply_id": "fury"}
-		]
+		],
+		"exit_objective": {
+			"id": "seal_cleanup",
+			"name": "封门清印",
+			"english_name": "Seal Cleanup",
+			"glyph": "封",
+			"tip": "卷主退散后，还要先收束散落的三枚封印，卷间抉择才会真正打开。",
+			"english_tip": "Once the scroll lord falls, gather the three ward seals scattered across Entry Court before the between-chambers choice can open.",
+			"pickup_positions": [
+				Vector3(-15.0, 0.0, -2.5),
+				Vector3(1.5, 0.0, 16.0),
+				Vector3(14.0, 0.0, -12.5)
+			]
+		}
 	},
 	"slip_archive": {
 		"name": "简库中庭",
@@ -317,6 +330,9 @@ var chamber_break_pending := false
 var chamber_interlude_offer: Dictionary = {}
 var chamber_modifier_id: String = ""
 var chamber_modifier_expires_after_bosses: int = 0
+var room_objective_id: String = ""
+var room_objective_total: int = 0
+var room_objective_remaining: int = 0
 
 var radical_counts: Dictionary = {}
 var skill_levels: Dictionary = {}
@@ -558,6 +574,131 @@ func _current_chamber_glyph() -> String:
 	return String(chamber_data.get("glyph", "界"))
 
 
+func _current_chamber_exit_objective() -> Dictionary:
+	var chamber_data := _current_chamber_data()
+	var objective_variant: Variant = chamber_data.get("exit_objective", {})
+	if objective_variant is Dictionary:
+		return objective_variant as Dictionary
+	return {}
+
+
+func _localized_room_objective_name(objective: Dictionary) -> String:
+	return String(objective.get("english_name" if _is_english() else "name", ""))
+
+
+func _room_objective_active() -> bool:
+	return not room_objective_id.is_empty() and room_objective_remaining > 0
+
+
+func _room_objective_status_text(objective: Dictionary, remaining: int) -> String:
+	var objective_name := _localized_room_objective_name(objective)
+	var base_tip := String(objective.get("english_tip" if _is_english() else "tip", _current_chamber_tip()))
+	if _is_english():
+		return "%s · %s Remaining seals %d/%d." % [objective_name, base_tip, remaining, room_objective_total]
+	return "%s · %s 当前还差 %d / %d 枚封印。" % [objective_name, base_tip, remaining, room_objective_total]
+
+
+func _clear_room_objective_state() -> void:
+	room_objective_id = ""
+	room_objective_total = 0
+	room_objective_remaining = 0
+
+
+func _try_start_chamber_exit_objective() -> bool:
+	if _room_objective_active():
+		return true
+	var objective := _current_chamber_exit_objective()
+	var objective_id := String(objective.get("id", ""))
+	var pickup_positions: Array = objective.get("pickup_positions", [])
+	if objective_id.is_empty() or pickup_positions.is_empty():
+		return false
+	room_objective_id = objective_id
+	room_objective_total = pickup_positions.size()
+	room_objective_remaining = room_objective_total
+	var accent := _current_chamber_accent()
+	var glyph := String(objective.get("glyph", "封"))
+	for position_variant in pickup_positions:
+		if position_variant is Vector3:
+			_spawn_world_supply_pickup(
+				position_variant,
+				"seal",
+				0.0,
+				{
+					"room_objective_id": objective_id,
+					"room_objective_glyph": glyph
+				}
+			)
+	if hud != null:
+		hud.show_banner(
+			("Room Objective  %s" if _is_english() else "房间目标  %s") % _localized_room_objective_name(objective),
+			accent,
+			1.9
+		)
+		hud.show_reveal(
+			"Room Objective" if _is_english() else "房间目标",
+			_localized_room_objective_name(objective),
+			_room_objective_status_text(objective, room_objective_remaining),
+			accent,
+			glyph,
+			2.6
+		)
+		hud.set_tip(_room_objective_status_text(objective, room_objective_remaining))
+	_log_battle_event(
+		("Room Objective · %s" if _is_english() else "房间目标 · %s") % _localized_room_objective_name(objective),
+		accent
+	)
+	return true
+
+
+func _advance_room_objective(pickup_ref, tint: Color) -> bool:
+	if pickup_ref == null or not is_instance_valid(pickup_ref):
+		return false
+	var objective_id := String(pickup_ref.get_meta("room_objective_id", ""))
+	if objective_id.is_empty() or objective_id != room_objective_id:
+		return false
+	var objective := _current_chamber_exit_objective()
+	var objective_name := _localized_room_objective_name(objective)
+	var accent := _current_chamber_accent().lerp(tint, 0.4)
+	room_objective_remaining = max(room_objective_remaining - 1, 0)
+	if room_objective_remaining > 0:
+		if hud != null:
+			hud.show_banner(
+				("%s  %d seals remain" if _is_english() else "%s  还差 %d 枚") % [objective_name, room_objective_remaining],
+				accent,
+				1.45
+			)
+			hud.set_tip(_room_objective_status_text(objective, room_objective_remaining))
+		_log_battle_event(
+			("%s · %d seals remain" if _is_english() else "%s · 尚余 %d 枚封印") % [objective_name, room_objective_remaining],
+			accent
+		)
+		return true
+
+	var glyph := String(pickup_ref.get_meta("room_objective_glyph", objective.get("glyph", "封")))
+	_clear_room_objective_state()
+	if hud != null:
+		hud.show_banner(
+			("%s  Chamber break unlocked" if _is_english() else "%s  卷间抉择开启") % objective_name,
+			accent,
+			1.8
+		)
+		hud.show_reveal(
+			"Seal Unlocked" if _is_english() else "封门已开",
+			objective_name,
+			"The chamber break is now open." if _is_english() else "三枚封印已收束，卷间抉择现已开启。",
+			accent,
+			glyph,
+			2.3
+		)
+		hud.set_tip("The chamber break is now open. Resolve one between-chambers choice before going deeper." if _is_english() else "卷间抉择已经开启，先定下一条路，再继续入深层。")
+	_log_battle_event(
+		("%s complete · Chamber break unlocked" if _is_english() else "%s完成 · 卷间抉择开启") % objective_name,
+		accent
+	)
+	_open_chamber_break_gate()
+	return true
+
+
 func _next_chamber_id_after_interlude() -> String:
 	var current_index := CHAMBER_ORDER.find(current_chamber_id)
 	if current_index == -1:
@@ -745,6 +886,9 @@ func _process(delta: float) -> void:
 
 	_update_inkstone_interaction()
 	_reveal_map_around_position(player.global_position)
+	if _room_objective_active():
+		hud.set_status(elapsed_time, kills, threat_level)
+		return
 
 	elapsed_time += delta
 	var new_threat_level: int = 1 + int(elapsed_time / 30.0)
@@ -754,8 +898,9 @@ func _process(delta: float) -> void:
 	threat_level = new_threat_level
 	_update_boss_flow()
 	if chamber_break_pending and active_boss == null and _enemy_count() == 0:
-		_open_chamber_break_gate()
-		return
+		if not _try_start_chamber_exit_objective():
+			_open_chamber_break_gate()
+			return
 
 	if not chamber_break_pending:
 		spawn_timer -= delta
@@ -996,6 +1141,7 @@ func _spawn_props() -> void:
 func _transition_to_chamber(next_chamber_id: String) -> void:
 	if next_chamber_id.is_empty() or next_chamber_id == current_chamber_id:
 		return
+	_clear_room_objective_state()
 	current_chamber_id = next_chamber_id
 	_clear_chamber_scene(true)
 	_spawn_props()
@@ -1519,11 +1665,16 @@ func _spawn_xp_orb(world_position: Vector3, xp_value: int) -> void:
 	pickups_root.add_child(orb)
 
 
-func _spawn_world_supply_pickup(world_position: Vector3, supply_id: String, amount: float = -1.0) -> void:
+func _spawn_world_supply_pickup(world_position: Vector3, supply_id: String, amount: float = -1.0, pickup_meta: Dictionary = {}) -> void:
 	var pickup = SUPPLY_PICKUP_SCENE.instantiate()
 	pickup.position = world_position + Vector3(0.0, 0.45, 0.0)
 	pickup.configure(player, supply_id, amount)
-	pickup.collected.connect(_on_supply_collected)
+	for meta_key_variant in pickup_meta.keys():
+		var meta_key := String(meta_key_variant)
+		if meta_key.is_empty():
+			continue
+		pickup.set_meta(meta_key, pickup_meta[meta_key_variant])
+	pickup.collected.connect(_on_supply_collected.bind(pickup))
 	pickups_root.add_child(pickup)
 
 
@@ -1546,7 +1697,7 @@ func _spawn_supply_bundle(world_position: Vector3, drops: Dictionary) -> void:
 		var radius: float = 0.55 + rng.randf_range(0.0, 0.34)
 		pickup.position = world_position + Vector3(cos(angle) * radius, 0.45, sin(angle) * radius)
 		pickup.configure(player, supply_id, float(drops[supply_id]))
-		pickup.collected.connect(_on_supply_collected)
+		pickup.collected.connect(_on_supply_collected.bind(pickup))
 		pickups_root.add_child(pickup)
 
 
@@ -1701,9 +1852,17 @@ func _collect_all_xp_pickups() -> int:
 	return total_xp
 
 
-func _on_supply_collected(world_position: Vector3, supply_id: String, amount: float, tint: Color, label: String) -> void:
+func _on_supply_collected(world_position: Vector3, supply_id: String, amount: float, tint: Color, label: String, pickup_ref = null) -> void:
 	var pulse_radius: float = 1.05
 	var event_text := ""
+	var pulse_label := label
+	var objective_pickup_consumed := _advance_room_objective(pickup_ref, tint)
+	if objective_pickup_consumed and pickup_ref != null and is_instance_valid(pickup_ref):
+		pulse_label = String(pickup_ref.get_meta("room_objective_glyph", label))
+	if objective_pickup_consumed and is_equal_approx(amount, 0.0):
+		_spawn_wave_effect(world_position, 1.18, tint, pulse_label)
+		_sync_hud()
+		return
 	match supply_id:
 		"paper":
 			var xp_gain: int = int(round(amount))
@@ -1765,7 +1924,7 @@ func _on_supply_collected(world_position: Vector3, supply_id: String, amount: fl
 
 	if not event_text.is_empty():
 		_log_battle_event(event_text, tint)
-	_spawn_wave_effect(world_position, pulse_radius, tint, label)
+	_spawn_wave_effect(world_position, pulse_radius, tint, pulse_label)
 	_sync_hud()
 
 
@@ -3303,6 +3462,9 @@ func _on_hud_return_menu_requested() -> void:
 
 
 func _update_inkstone_interaction() -> void:
+	if _room_objective_active():
+		active_inkstone = null
+		return
 	var previous_inkstone: Node3D = active_inkstone
 	active_inkstone = _find_nearby_inkstone()
 	if active_inkstone == null:
