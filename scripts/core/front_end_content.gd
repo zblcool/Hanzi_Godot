@@ -72,6 +72,43 @@ const LAUNCHER_ROADMAP_INFO_PANELS := [
 	}
 ]
 
+const LAUNCHER_ABOUT_CONTENT := {
+	"tag": "About The Games",
+	"title": "关于汉字工坊",
+	"summary": "这里先讲清这款游戏为什么会被做出来，再继续介绍当前已经迁进 Godot 的部分，以及还留在 web 原型里的目标。",
+	"story_title": "为什么做这两款游戏",
+	"story_paragraphs": [
+		"作为生活在海外的中国人，多种文化之间的碰撞与交流，让我重新看见自己的母语。汉字像古老而仍然鲜活的图画，从甲骨文到小篆、从繁体到简体，每一次演变都藏着故事，也延续着几千年的文化脉络。",
+		"一直以来，我都想做一款和中文有关的游戏。直到孩子出生，这个念头变得更具体了。身处英语环境，我开始更认真地想：能不能用游戏去点燃他，也点燃更多孩子，对汉字与中华文化的兴趣？对我来说，这既是一次实验，也是一个父亲的愿望。",
+		"这个项目会持续借助 AI 参与开发，但归根结底，它更像是一封写给汉字、写给中文文化的情书。现在 Godot 主线先把《字海残卷》的启动器、二级菜单和 3D 战斗接牢，再继续把 web 原型里更完整的内容一项项迁回来。"
+	],
+	"games": [
+		{
+			"kicker": "Action Roguelite",
+			"title": "字海残卷",
+			"copy": "自动攻击、生存走位、偏旁合字、词技磨成与字阵地图。像幸存者类，但核心成长来自汉字结构和语义。",
+			"points": ["偏旁收集、合字成技、词技进阶", "波次、关键怪、卷主、地图地标", "移动端横屏保护与战斗适配"],
+			"accent": Color(0.92, 0.54, 0.28, 1.0),
+			"preview_kind": "zihai"
+		},
+		{
+			"kicker": "Deckbuilder Climb",
+			"title": "仓颉之路",
+			"copy": "类杀戮尖塔的卡牌爬塔原型。每张牌同时是战斗动作与汉字学习卡，字形、语义和组合路线都能进入构筑。",
+			"points": ["地图节点、卡牌战斗、奖励选牌", "中英双语辅助，更适合非中文母语玩家", "当前仍在 web 原型，等待 Godot 迁入"],
+			"accent": Color(0.38, 0.58, 0.9, 1.0),
+			"preview_kind": "cangjie"
+		}
+	],
+	"notes": [
+		{"title": "面向谁", "body": "不仅面向中文母语者，也面向中文学习者、教育者，以及想通过游戏认识汉字结构、字义和词感的玩家。", "accent": Color(0.92, 0.68, 0.4, 1.0)},
+		{"title": "适合传播", "body": "先保留浏览器可试玩 demo，更适合在中文学习社区、独立游戏圈和语言社群里直接分享与验证。", "accent": Color(0.74, 0.56, 0.94, 1.0)},
+		{"title": "迁移重点", "body": "Godot 主线优先补齐启动器、菜单、HUD 和战斗成长链，再追赶 web 端的音乐、设置、双语和仓颉玩法。", "accent": Color(0.38, 0.74, 0.84, 1.0)},
+		{"title": "下一步产品化", "body": "先把 Godot 版做成稳定可展示的 vertical slice，验证玩法和学习体验，再决定哪些角色、卡组、塔层与字阵系统进入完整版本。", "accent": Color(0.58, 0.84, 0.62, 1.0)}
+	],
+	"close_text": "返回启动器"
+}
+
 const LAUNCHER_UPDATE_SPOTLIGHT := {
 	"eyebrow": "Update History",
 	"title": "启动器更新日志入口已补齐",
@@ -219,6 +256,46 @@ const CANGJIE_PORTAL_SECTIONS := [
 	}
 ]
 
+const LAUNCHER_CHANGELOG_CONTENT := {
+	"tag": "Update History",
+	"title": "更新日志",
+	"summary": "首页最近更新卡现在会把近期 Godot 迁移里程碑一并展开，方便直接对照前台推进节奏。",
+	"footnote": "完整变更记录仍保留在仓库根目录 CHANGELOG.md；长期迁移状态仍以 MIGRATION_CHECKLIST.md 为准。",
+	"close_text": "返回启动器"
+}
+
+const LAUNCHER_PROFILE_CONTENT := {
+	"tag": "Player Sigil",
+	"title": "玩家名帖",
+	"summary": "像 web 原型那样，为这台设备保存默认排行榜署名。结算页里留空时，后续战绩会直接复用这里的名字。",
+	"preview_title": "当前署名",
+	"name_field_title": "默认排行榜署名",
+	"save_text": "保存署名",
+	"reset_text": "恢复默认",
+	"close_text": "返回启动器"
+}
+
+const MENU_PAGE_CONTENT := {
+	"header_eyebrow": "INK-BORN ROGUELITE",
+	"header_title": "字海残卷",
+	"header_summary": "先进入残卷，再决定谁来执笔。每名角色都会把同一套偏旁系统，写成完全不同的战斗节奏。",
+	"hero_section_title": "可选执笔者",
+	"detail_title": "执笔者档案",
+	"reaction_title": "执笔回应",
+	"opening_title": "起笔落点",
+	"source_skill_title": "源稿字技（待迁移）",
+	"source_skill_note": "当前只在菜单里保留 hanziHero 的字技预览，Godot 战斗内仍未接入独立主动输入。",
+	"progression_title": "残卷路线",
+	"progression_summary": "把开卷补笔、中盘续写与砚台磨词顺序先记住，进入战斗后更容易判断本轮 build 该补哪一笔。",
+	"progression_note": "当前只先保留 web 原型的 build 顺序与路线提示，Godot 战斗内还没有真正的路线权重修正。",
+	"build_route_title": "源稿构筑方向",
+	"build_route_summary": "把 web 原型里更偏向的构筑方向先压缩成菜单预览，连同源稿词技 / 遗物搭配一起放在开局前参考。",
+	"build_route_note": "当前只负责前台提示：源稿词技 / 遗物搭配还没有接回 Godot 战斗掉落或路线权重。",
+	"stats_title": "战斗轮廓",
+	"quick_start_title": "快速试阵",
+	"quick_start_summary": "对照 web 原型保留第 10 / 20 波捷径，便于快速检查 HUD、混编敌潮与角色 build。试阵入口会单独写入试阵榜，不影响主卷榜。"
+}
+
 const MENU_TOP_ACTIONS := [
 	{"kind": "action", "title": "返回启动器", "size": Vector2(168.0, 54.0), "action": "back"},
 	{"kind": "action", "title": "人物志", "size": Vector2(148.0, 54.0), "action": "character_archive"},
@@ -254,6 +331,10 @@ static func launcher_roadmap_info_panels() -> Array:
 	return LAUNCHER_ROADMAP_INFO_PANELS.duplicate(true)
 
 
+static func launcher_about_content() -> Dictionary:
+	return LAUNCHER_ABOUT_CONTENT.duplicate(true)
+
+
 static func launcher_update_spotlight() -> Dictionary:
 	return LAUNCHER_UPDATE_SPOTLIGHT.duplicate(true)
 
@@ -264,6 +345,18 @@ static func launcher_changelog_history() -> Array:
 
 static func cangjie_portal_sections() -> Array:
 	return CANGJIE_PORTAL_SECTIONS.duplicate(true)
+
+
+static func launcher_changelog_content() -> Dictionary:
+	return LAUNCHER_CHANGELOG_CONTENT.duplicate(true)
+
+
+static func launcher_profile_content() -> Dictionary:
+	return LAUNCHER_PROFILE_CONTENT.duplicate(true)
+
+
+static func menu_page_content() -> Dictionary:
+	return MENU_PAGE_CONTENT.duplicate(true)
 
 
 static func menu_top_actions() -> Array:

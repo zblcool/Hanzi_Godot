@@ -504,6 +504,7 @@ func _make_menu_top_button(button_data: Dictionary) -> Button:
 
 func _build_ui() -> void:
 	var portrait_layout := _is_portrait_layout()
+	var page_content := FrontEndContent.menu_page_content()
 	var root := MarginContainer.new()
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_apply_root_safe_margins(
@@ -577,9 +578,9 @@ func _build_ui() -> void:
 	var header_box := VBoxContainer.new()
 	header_box.add_theme_constant_override("separation", _i(8))
 	header_margin.add_child(header_box)
-	header_box.add_child(_make_label("INK-BORN ROGUELITE", 18, Color(0.96, 0.82, 0.54, 0.86)))
-	header_box.add_child(_make_label("字海残卷", 70, Color(1.0, 0.95, 0.86, 1.0)))
-	header_box.add_child(_make_label("先进入残卷，再决定谁来执笔。每名角色都会把同一套偏旁系统，写成完全不同的战斗节奏。", 19, Color(0.88, 0.91, 0.96, 0.95)))
+	header_box.add_child(_make_label(String(page_content.get("header_eyebrow", "")), 18, Color(0.96, 0.82, 0.54, 0.86)))
+	header_box.add_child(_make_label(String(page_content.get("header_title", "")), 70, Color(1.0, 0.95, 0.86, 1.0)))
+	header_box.add_child(_make_label(String(page_content.get("header_summary", "")), 19, Color(0.88, 0.91, 0.96, 0.95)))
 
 	var content_row: BoxContainer = VBoxContainer.new() if portrait_layout else HBoxContainer.new()
 	content_row.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -591,7 +592,7 @@ func _build_ui() -> void:
 	cards_column.add_theme_constant_override("separation", _i(14))
 	content_row.add_child(cards_column)
 
-	var section_label := _make_label("可选执笔者", 28, Color(1.0, 0.92, 0.8, 1.0))
+	var section_label := _make_label(String(page_content.get("hero_section_title", "")), 28, Color(1.0, 0.92, 0.8, 1.0))
 	cards_column.add_child(section_label)
 
 	for hero_variant in Session.HERO_ORDER:
@@ -616,7 +617,7 @@ func _build_ui() -> void:
 	var detail_box := VBoxContainer.new()
 	detail_box.add_theme_constant_override("separation", _i(12))
 	detail_margin.add_child(detail_box)
-	detail_box.add_child(_make_label("执笔者档案", 26, Color(1.0, 0.92, 0.8, 1.0)))
+	detail_box.add_child(_make_label(String(page_content.get("detail_title", "")), 26, Color(1.0, 0.92, 0.8, 1.0)))
 
 	var preview_panel := PanelContainer.new()
 	preview_panel.custom_minimum_size = _v(0.0, 220.0)
@@ -655,7 +656,7 @@ func _build_ui() -> void:
 	var reaction_box := VBoxContainer.new()
 	reaction_box.add_theme_constant_override("separation", _i(6))
 	reaction_margin.add_child(reaction_box)
-	reaction_box.add_child(_make_label("执笔回应", 15, Color(0.96, 0.82, 0.54, 0.88)))
+	reaction_box.add_child(_make_label(String(page_content.get("reaction_title", "")), 15, Color(0.96, 0.82, 0.54, 0.88)))
 	detail_reaction_label = _make_label("", 18, Color(0.96, 0.95, 0.9, 0.98))
 	reaction_box.add_child(detail_reaction_label)
 
@@ -680,7 +681,7 @@ func _build_ui() -> void:
 	var opening_box := VBoxContainer.new()
 	opening_box.add_theme_constant_override("separation", _i(8))
 	opening_margin.add_child(opening_box)
-	opening_box.add_child(_make_label("起笔落点", 22, Color(1.0, 0.92, 0.8, 1.0)))
+	opening_box.add_child(_make_label(String(page_content.get("opening_title", "")), 22, Color(1.0, 0.92, 0.8, 1.0)))
 
 	detail_opening_label = _make_label("", 16, Color(0.88, 0.92, 0.96, 0.94))
 	opening_box.add_child(detail_opening_label)
@@ -706,7 +707,7 @@ func _build_ui() -> void:
 	var source_skill_box := VBoxContainer.new()
 	source_skill_box.add_theme_constant_override("separation", _i(8))
 	source_skill_margin.add_child(source_skill_box)
-	source_skill_box.add_child(_make_label("源稿字技（待迁移）", 22, Color(1.0, 0.92, 0.8, 1.0)))
+	source_skill_box.add_child(_make_label(String(page_content.get("source_skill_title", "")), 22, Color(1.0, 0.92, 0.8, 1.0)))
 
 	detail_source_skill_title_label = _make_label("", 17, Color(0.96, 0.82, 0.54, 0.96))
 	source_skill_box.add_child(detail_source_skill_title_label)
@@ -714,7 +715,7 @@ func _build_ui() -> void:
 	detail_source_skill_body_label = _make_label("", 16, Color(0.9, 0.92, 0.95, 0.94))
 	source_skill_box.add_child(detail_source_skill_body_label)
 
-	source_skill_box.add_child(_make_label("当前只在菜单里保留 hanziHero 的字技预览，Godot 战斗内仍未接入独立主动输入。", 15, Color(0.82, 0.9, 1.0, 0.9)))
+	source_skill_box.add_child(_make_label(String(page_content.get("source_skill_note", "")), 15, Color(0.82, 0.9, 1.0, 0.9)))
 
 	var progression_panel := PanelContainer.new()
 	progression_panel.custom_minimum_size = _v(0.0, 224.0)
@@ -732,13 +733,13 @@ func _build_ui() -> void:
 	var progression_box := VBoxContainer.new()
 	progression_box.add_theme_constant_override("separation", _i(10))
 	progression_margin.add_child(progression_box)
-	progression_box.add_child(_make_label("残卷路线", 22, Color(1.0, 0.92, 0.8, 1.0)))
-	progression_box.add_child(_make_label("把开卷补笔、中盘续写与砚台磨词顺序先记住，进入战斗后更容易判断本轮 build 该补哪一笔。", 16, Color(0.88, 0.92, 0.96, 0.94)))
+	progression_box.add_child(_make_label(String(page_content.get("progression_title", "")), 22, Color(1.0, 0.92, 0.8, 1.0)))
+	progression_box.add_child(_make_label(String(page_content.get("progression_summary", "")), 16, Color(0.88, 0.92, 0.96, 0.94)))
 
 	detail_progression_cards_root = VBoxContainer.new()
 	detail_progression_cards_root.add_theme_constant_override("separation", _i(10))
 	progression_box.add_child(detail_progression_cards_root)
-	progression_box.add_child(_make_label("当前只先保留 web 原型的 build 顺序与路线提示，Godot 战斗内还没有真正的路线权重修正。", 15, Color(0.82, 0.9, 1.0, 0.88)))
+	progression_box.add_child(_make_label(String(page_content.get("progression_note", "")), 15, Color(0.82, 0.9, 1.0, 0.88)))
 
 	var build_route_panel := PanelContainer.new()
 	build_route_panel.custom_minimum_size = _v(0.0, 224.0)
@@ -756,13 +757,13 @@ func _build_ui() -> void:
 	var build_route_box := VBoxContainer.new()
 	build_route_box.add_theme_constant_override("separation", _i(10))
 	build_route_margin.add_child(build_route_box)
-	build_route_box.add_child(_make_label("源稿构筑方向", 22, Color(1.0, 0.92, 0.8, 1.0)))
-	build_route_box.add_child(_make_label("把 web 原型里更偏向的构筑方向先压缩成菜单预览，连同源稿词技 / 遗物搭配一起放在开局前参考。", 16, Color(0.88, 0.92, 0.96, 0.94)))
+	build_route_box.add_child(_make_label(String(page_content.get("build_route_title", "")), 22, Color(1.0, 0.92, 0.8, 1.0)))
+	build_route_box.add_child(_make_label(String(page_content.get("build_route_summary", "")), 16, Color(0.88, 0.92, 0.96, 0.94)))
 
 	detail_build_route_cards_root = VBoxContainer.new()
 	detail_build_route_cards_root.add_theme_constant_override("separation", _i(10))
 	build_route_box.add_child(detail_build_route_cards_root)
-	build_route_box.add_child(_make_label("当前只负责前台提示：源稿词技 / 遗物搭配还没有接回 Godot 战斗掉落或路线权重。", 15, Color(0.82, 0.9, 1.0, 0.88)))
+	build_route_box.add_child(_make_label(String(page_content.get("build_route_note", "")), 15, Color(0.82, 0.9, 1.0, 0.88)))
 
 	var stats_panel := PanelContainer.new()
 	stats_panel.custom_minimum_size = _v(0.0, 312.0)
@@ -780,7 +781,7 @@ func _build_ui() -> void:
 	var stats_box := VBoxContainer.new()
 	stats_box.add_theme_constant_override("separation", _i(10))
 	stats_margin.add_child(stats_box)
-	stats_box.add_child(_make_label("战斗轮廓", 22, Color(1.0, 0.92, 0.8, 1.0)))
+	stats_box.add_child(_make_label(String(page_content.get("stats_title", "")), 22, Color(1.0, 0.92, 0.8, 1.0)))
 	detail_stat_widgets["move_speed"] = _make_stat_row(stats_box, "机动")
 	detail_stat_widgets["max_health"] = _make_stat_row(stats_box, "气血")
 	detail_stat_widgets["attack_damage"] = _make_stat_row(stats_box, "伤害")
@@ -804,8 +805,8 @@ func _build_ui() -> void:
 	var quick_start_box := VBoxContainer.new()
 	quick_start_box.add_theme_constant_override("separation", _i(10))
 	quick_start_margin.add_child(quick_start_box)
-	quick_start_box.add_child(_make_label("快速试阵", 22, Color(1.0, 0.92, 0.8, 1.0)))
-	quick_start_box.add_child(_make_label("对照 web 原型保留第 10 / 20 波捷径，便于快速检查 HUD、混编敌潮与角色 build。试阵入口会单独写入试阵榜，不影响主卷榜。", 16, Color(0.88, 0.92, 0.96, 0.94)))
+	quick_start_box.add_child(_make_label(String(page_content.get("quick_start_title", "")), 22, Color(1.0, 0.92, 0.8, 1.0)))
+	quick_start_box.add_child(_make_label(String(page_content.get("quick_start_summary", "")), 16, Color(0.88, 0.92, 0.96, 0.94)))
 
 	var quick_start_row: BoxContainer = VBoxContainer.new() if portrait_layout else HBoxContainer.new()
 	quick_start_row.add_theme_constant_override("separation", _i(10))

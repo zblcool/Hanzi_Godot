@@ -778,6 +778,7 @@ func _make_update_spotlight_panel() -> PanelContainer:
 
 func _build_about_overlay() -> void:
 	var portrait_layout := _is_portrait_layout()
+	var about_content := FrontEndContent.launcher_about_content()
 	about_overlay = Control.new()
 	about_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
 	about_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -806,9 +807,9 @@ func _build_about_overlay() -> void:
 	box.add_theme_constant_override("separation", _i(16))
 	margin.add_child(box)
 
-	box.add_child(_make_tag("About The Games", Color(0.14, 0.18, 0.24, 0.88), Color(0.96, 0.82, 0.56, 0.98)))
-	box.add_child(_make_label("关于汉字工坊", 44, Color(1.0, 0.95, 0.86, 1.0)))
-	box.add_child(_make_label("这里先讲清这款游戏为什么会被做出来，再继续介绍当前已经迁进 Godot 的部分，以及还留在 web 原型里的目标。", 18, Color(0.9, 0.92, 0.96, 0.95)))
+	box.add_child(_make_tag(String(about_content.get("tag", "")), Color(0.14, 0.18, 0.24, 0.88), Color(0.96, 0.82, 0.56, 0.98)))
+	box.add_child(_make_label(String(about_content.get("title", "")), 44, Color(1.0, 0.95, 0.86, 1.0)))
+	box.add_child(_make_label(String(about_content.get("summary", "")), 18, Color(0.9, 0.92, 0.96, 0.95)))
 
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -820,11 +821,10 @@ func _build_about_overlay() -> void:
 	content.add_theme_constant_override("separation", _i(18))
 	scroll.add_child(content)
 
-	content.add_child(_make_about_story_panel([
-		"作为生活在海外的中国人，多种文化之间的碰撞与交流，让我重新看见自己的母语。汉字像古老而仍然鲜活的图画，从甲骨文到小篆、从繁体到简体，每一次演变都藏着故事，也延续着几千年的文化脉络。",
-		"一直以来，我都想做一款和中文有关的游戏。直到孩子出生，这个念头变得更具体了。身处英语环境，我开始更认真地想：能不能用游戏去点燃他，也点燃更多孩子，对汉字与中华文化的兴趣？对我来说，这既是一次实验，也是一个父亲的愿望。",
-		"这个项目会持续借助 AI 参与开发，但归根结底，它更像是一封写给汉字、写给中文文化的情书。现在 Godot 主线先把《字海残卷》的启动器、二级菜单和 3D 战斗接牢，再继续把 web 原型里更完整的内容一项项迁回来。"
-	]))
+	content.add_child(_make_about_story_panel(
+		String(about_content.get("story_title", "")),
+		_to_string_array(about_content.get("story_paragraphs", []))
+	))
 
 	var game_grid := GridContainer.new()
 	game_grid.columns = 1 if portrait_layout else 2
@@ -832,22 +832,17 @@ func _build_about_overlay() -> void:
 	game_grid.add_theme_constant_override("v_separation", _i(16))
 	content.add_child(game_grid)
 
-	game_grid.add_child(_make_about_game_card(
-		"Action Roguelite",
-		"字海残卷",
-		"自动攻击、生存走位、偏旁合字、词技磨成与字阵地图。像幸存者类，但核心成长来自汉字结构和语义。",
-		["偏旁收集、合字成技、词技进阶", "波次、关键怪、卷主、地图地标", "移动端横屏保护与战斗适配"],
-		Color(0.92, 0.54, 0.28, 1.0),
-		"zihai"
-	))
-	game_grid.add_child(_make_about_game_card(
-		"Deckbuilder Climb",
-		"仓颉之路",
-		"类杀戮尖塔的卡牌爬塔原型。每张牌同时是战斗动作与汉字学习卡，字形、语义和组合路线都能进入构筑。",
-		["地图节点、卡牌战斗、奖励选牌", "中英双语辅助，更适合非中文母语玩家", "当前仍在 web 原型，等待 Godot 迁入"],
-		Color(0.38, 0.58, 0.9, 1.0),
-		"cangjie"
-	))
+	for game_card_variant in about_content.get("games", []):
+		var game_card: Dictionary = game_card_variant
+		var game_accent: Color = game_card.get("accent", Color.WHITE)
+		game_grid.add_child(_make_about_game_card(
+			String(game_card.get("kicker", "")),
+			String(game_card.get("title", "")),
+			String(game_card.get("copy", "")),
+			_to_string_array(game_card.get("points", [])),
+			game_accent,
+			String(game_card.get("preview_kind", ""))
+		))
 
 	var notes_grid := GridContainer.new()
 	notes_grid.columns = 1 if portrait_layout else 2
@@ -855,26 +850,14 @@ func _build_about_overlay() -> void:
 	notes_grid.add_theme_constant_override("v_separation", _i(14))
 	content.add_child(notes_grid)
 
-	notes_grid.add_child(_make_about_note_card(
-		"面向谁",
-		"不仅面向中文母语者，也面向中文学习者、教育者，以及想通过游戏认识汉字结构、字义和词感的玩家。",
-		Color(0.92, 0.68, 0.4, 1.0)
-	))
-	notes_grid.add_child(_make_about_note_card(
-		"适合传播",
-		"先保留浏览器可试玩 demo，更适合在中文学习社区、独立游戏圈和语言社群里直接分享与验证。",
-		Color(0.74, 0.56, 0.94, 1.0)
-	))
-	notes_grid.add_child(_make_about_note_card(
-		"迁移重点",
-		"Godot 主线优先补齐启动器、菜单、HUD 和战斗成长链，再追赶 web 端的音乐、设置、双语和仓颉玩法。",
-		Color(0.38, 0.74, 0.84, 1.0)
-	))
-	notes_grid.add_child(_make_about_note_card(
-		"下一步产品化",
-		"先把 Godot 版做成稳定可展示的 vertical slice，验证玩法和学习体验，再决定哪些角色、卡组、塔层与字阵系统进入完整版本。",
-		Color(0.58, 0.84, 0.62, 1.0)
-	))
+	for note_card_variant in about_content.get("notes", []):
+		var note_card: Dictionary = note_card_variant
+		var note_accent: Color = note_card.get("accent", Color.WHITE)
+		notes_grid.add_child(_make_about_note_card(
+			String(note_card.get("title", "")),
+			String(note_card.get("body", "")),
+			note_accent
+		))
 
 	var footer_row: BoxContainer = VBoxContainer.new() if portrait_layout else HBoxContainer.new()
 	footer_row.add_theme_constant_override("separation", _i(10))
@@ -885,7 +868,7 @@ func _build_about_overlay() -> void:
 	footer_row.add_child(theme_button)
 
 	var close_button := Button.new()
-	close_button.text = _localize_text("返回启动器")
+	close_button.text = _localize_text(String(about_content.get("close_text", "返回启动器")))
 	close_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	close_button.custom_minimum_size = _v(0.0, 52.0)
 	close_button.add_theme_font_override("font", title_font)
@@ -1043,6 +1026,7 @@ func _refresh_cangjie_portal() -> void:
 
 func _build_changelog_overlay() -> void:
 	var portrait_layout := _is_portrait_layout()
+	var changelog_content := FrontEndContent.launcher_changelog_content()
 	changelog_overlay = Control.new()
 	changelog_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
 	changelog_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -1071,10 +1055,10 @@ func _build_changelog_overlay() -> void:
 	box.add_theme_constant_override("separation", _i(16))
 	margin.add_child(box)
 
-	box.add_child(_make_tag("Update History", Color(0.14, 0.18, 0.24, 0.88), Color(0.96, 0.82, 0.56, 0.98)))
-	box.add_child(_make_label("更新日志", 44, Color(1.0, 0.95, 0.86, 1.0)))
-	box.add_child(_make_label("首页最近更新卡现在会把近期 Godot 迁移里程碑一并展开，方便直接对照前台推进节奏。", 18, Color(0.9, 0.92, 0.96, 0.95)))
-	box.add_child(_make_label("完整变更记录仍保留在仓库根目录 CHANGELOG.md；长期迁移状态仍以 MIGRATION_CHECKLIST.md 为准。", 16, Color(0.86, 0.9, 0.94, 0.84)))
+	box.add_child(_make_tag(String(changelog_content.get("tag", "")), Color(0.14, 0.18, 0.24, 0.88), Color(0.96, 0.82, 0.56, 0.98)))
+	box.add_child(_make_label(String(changelog_content.get("title", "")), 44, Color(1.0, 0.95, 0.86, 1.0)))
+	box.add_child(_make_label(String(changelog_content.get("summary", "")), 18, Color(0.9, 0.92, 0.96, 0.95)))
+	box.add_child(_make_label(String(changelog_content.get("footnote", "")), 16, Color(0.86, 0.9, 0.94, 0.84)))
 
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -1099,7 +1083,7 @@ func _build_changelog_overlay() -> void:
 	footer_row.add_child(theme_button)
 
 	var close_button := Button.new()
-	close_button.text = _localize_text("返回启动器")
+	close_button.text = _localize_text(String(changelog_content.get("close_text", "返回启动器")))
 	close_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	close_button.custom_minimum_size = _v(0.0, 52.0)
 	close_button.add_theme_font_override("font", title_font)
@@ -1114,6 +1098,7 @@ func _build_changelog_overlay() -> void:
 
 func _build_profile_overlay() -> void:
 	var portrait_layout := _is_portrait_layout()
+	var profile_content := FrontEndContent.launcher_profile_content()
 	profile_overlay = Control.new()
 	profile_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
 	profile_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -1142,9 +1127,9 @@ func _build_profile_overlay() -> void:
 	box.add_theme_constant_override("separation", _i(14))
 	margin.add_child(box)
 
-	box.add_child(_make_tag("Player Sigil", Color(0.12, 0.18, 0.24, 0.88), Color(0.96, 0.82, 0.56, 0.96)))
-	box.add_child(_make_label("玩家名帖", 40, Color(1.0, 0.95, 0.86, 1.0)))
-	box.add_child(_make_label("像 web 原型那样，为这台设备保存默认排行榜署名。结算页里留空时，后续战绩会直接复用这里的名字。", 18, Color(0.9, 0.92, 0.96, 0.95)))
+	box.add_child(_make_tag(String(profile_content.get("tag", "")), Color(0.12, 0.18, 0.24, 0.88), Color(0.96, 0.82, 0.56, 0.96)))
+	box.add_child(_make_label(String(profile_content.get("title", "")), 40, Color(1.0, 0.95, 0.86, 1.0)))
+	box.add_child(_make_label(String(profile_content.get("summary", "")), 18, Color(0.9, 0.92, 0.96, 0.95)))
 
 	var content_row: BoxContainer = VBoxContainer.new() if portrait_layout else HBoxContainer.new()
 	content_row.add_theme_constant_override("separation", _i(16))
@@ -1167,7 +1152,7 @@ func _build_profile_overlay() -> void:
 	var preview_box := VBoxContainer.new()
 	preview_box.add_theme_constant_override("separation", _i(10))
 	preview_margin.add_child(preview_box)
-	preview_box.add_child(_make_label("当前署名", 18, Color(0.96, 0.82, 0.54, 0.94)))
+	preview_box.add_child(_make_label(String(profile_content.get("preview_title", "")), 18, Color(0.96, 0.82, 0.54, 0.94)))
 
 	var avatar_panel := PanelContainer.new()
 	avatar_panel.custom_minimum_size = _v(0.0, 112.0)
@@ -1203,7 +1188,7 @@ func _build_profile_overlay() -> void:
 	var editor_box := VBoxContainer.new()
 	editor_box.add_theme_constant_override("separation", _i(10))
 	editor_margin.add_child(editor_box)
-	editor_box.add_child(_make_label("默认排行榜署名", 22, Color(1.0, 0.92, 0.8, 1.0)))
+	editor_box.add_child(_make_label(String(profile_content.get("name_field_title", "")), 22, Color(1.0, 0.92, 0.8, 1.0)))
 
 	profile_status_label = _make_label("", 15, Color(0.82, 0.9, 1.0, 0.92))
 	profile_status_label.visible = false
@@ -1230,7 +1215,7 @@ func _build_profile_overlay() -> void:
 	action_row.add_child(random_button)
 
 	var save_button := Button.new()
-	save_button.text = _localize_text("保存署名")
+	save_button.text = _localize_text(String(profile_content.get("save_text", "保存署名")))
 	save_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	save_button.custom_minimum_size = _v(0.0, 48.0)
 	save_button.add_theme_font_override("font", title_font)
@@ -1246,18 +1231,18 @@ func _build_profile_overlay() -> void:
 	footer_row.add_theme_constant_override("separation", _i(10))
 	box.add_child(footer_row)
 
-	var reset_button := _make_pill_button("恢复默认", _v(0.0, 50.0), Callable(self, "_on_profile_reset_pressed"))
+	var reset_button := _make_pill_button(String(profile_content.get("reset_text", "恢复默认")), _v(0.0, 50.0), Callable(self, "_on_profile_reset_pressed"))
 	reset_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	footer_row.add_child(reset_button)
 
-	var close_button := _make_pill_button("返回启动器", _v(0.0, 50.0), Callable(self, "_hide_profile"))
+	var close_button := _make_pill_button(String(profile_content.get("close_text", "返回启动器")), _v(0.0, 50.0), Callable(self, "_hide_profile"))
 	close_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	footer_row.add_child(close_button)
 
 	_refresh_profile_overlay()
 
 
-func _make_about_story_panel(paragraphs: Array[String]) -> PanelContainer:
+func _make_about_story_panel(title: String, paragraphs: Array[String]) -> PanelContainer:
 	var panel := PanelContainer.new()
 	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.08, 0.11, 0.14, 0.84), Color(0.28, 0.36, 0.44, 0.42)))
 
@@ -1271,7 +1256,7 @@ func _make_about_story_panel(paragraphs: Array[String]) -> PanelContainer:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", _i(12))
 	margin.add_child(box)
-	box.add_child(_make_label("为什么做这两款游戏", 24, Color(1.0, 0.92, 0.8, 1.0)))
+	box.add_child(_make_label(title, 24, Color(1.0, 0.92, 0.8, 1.0)))
 
 	for paragraph in paragraphs:
 		box.add_child(_make_label(paragraph, 18, Color(0.9, 0.92, 0.95, 0.95)))
