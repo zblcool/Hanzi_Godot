@@ -24,11 +24,12 @@ Status legend:
 - `[done]` Character selection flow with scholar / xia split and direct battle entry. Notes: source menu moved to "start -> choose hero -> battle"; Godot keeps that same hierarchy.
 - `[done]` Quick-start wave shortcuts for menu-side test entry. Notes: hanziHero keeps dedicated test starts for wave 10 / 20; Godot now exposes equivalent menu buttons and routes those shortcut runs into a separate local test board.
 - `[done]` Character reaction flavor on selection. Notes: hanziHero role cards trigger short personality lines; Godot now rotates short in-character response quotes in the detail panel whenever a hero is picked.
+- `[done]` Character archive lore and trait dossier. Notes: hanziHero's 人物志 surfaces role background, quoted thread, and role-trait guidance; Godot now mirrors that in the menu detail panel and 人物志 copy instead of stopping at flat combat stats.
 - `[done]` Player Sigil default-name flow in launcher and menu. Notes: hanziHero lets the launcher / portal maintain a device signature reused by leaderboard entries; Godot now mirrors that with a persistent `玩家名帖` overlay backed by `user://leaderboard_identity.json`.
 - `[done]` Theme toggle parity inside the menu layer. Notes: source launcher/menu surfaces share the remembered paper-ink theme; Godot Zihai menu and its overlays now inherit the same `夜墨 / 纸墨` preference and expose a matching top-bar toggle.
 - `[pending]` Language toggle parity inside the menu layer. Notes: source menu can switch zh/en on the front portal; Godot menu still keeps the placeholder `EN` pill without runtime behavior.
 - `[done]` Menu-side leaderboard build snapshots. Notes: hanziHero's menu leaderboard cards surface build lanes and kill mix; Godot menu leaderboard now appends `偏旁 / 成字 / 词技 / 击倒` 摘要 under each entry instead of stopping at flat score lines.
-- `[pending]` More menu-side build and progression surfacing beyond leaderboard snapshots. Notes: source menu still carries broader descriptive cards and front-end polish; Godot menu remains more utilitarian outside the richer leaderboard view.
+- `[pending]` More menu-side build and progression surfacing beyond leaderboard snapshots. Notes: source menu still carries starting-radical and active-skill sections plus broader front-end progression cards; Godot has the richer hero dossier now, but the remaining progression surfaces are still slimmer.
 
 ## Battle HUD
 
@@ -67,7 +68,7 @@ Status legend:
 
 - `[done]` Character archive, recipe atlas, and enemy codex text live in shared session data. Notes: source uses compendium-style front panels; Godot already ships equivalent text-driven overlays.
 - `[done]` Battlefield hero callouts and elite/boss taunt beats. Notes: hanziHero surfaces reactive frontline lines and enemy taunts in battle; Godot now mirrors that with a dedicated `战场呼应` card plus event-log entries for hero intro / recovery / milestone quotes and elite / boss entrance taunts.
-- `[pending]` More menu/archive hero flavor follow-through. Notes: source still has denser character flavor and front-end reactions across the portal and compendium surfaces than Godot's current menu/archive panels.
+- `[pending]` More menu/archive hero flavor follow-through. Notes: Godot now carries battle callouts plus richer人物志/详情档案 copy, but the source still has denser portal-wide flavor and bilingual front-end reactions across the remaining menu surfaces.
 - `[pending]` More narrative and educational copy parity from the launcher / about surface. Notes: source continues to frame the cultural motivation and bilingual-learning angle more broadly than Godot elsewhere.
 - `[blocked]` Full `仓颉之路` Godot port. Notes: the web prototype is playable, but the Godot repo does not yet have the deckbuilder combat/map foundation needed for a safe direct migration.
 

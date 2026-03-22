@@ -36,6 +36,8 @@ var detail_name_label: Label
 var detail_desc_label: Label
 var detail_weapon_label: Label
 var detail_focus_label: Label
+var detail_dossier_label: Label
+var detail_quote_label: Label
 var detail_role_label: Label
 var detail_reaction_panel: PanelContainer
 var detail_reaction_label: Label
@@ -165,6 +167,8 @@ func _rebuild_ui() -> void:
 	detail_desc_label = null
 	detail_weapon_label = null
 	detail_focus_label = null
+	detail_dossier_label = null
+	detail_quote_label = null
 	detail_role_label = null
 	detail_reaction_panel = null
 	detail_reaction_label = null
@@ -482,11 +486,15 @@ func _build_ui() -> void:
 	detail_weapon_label = _make_label("", 18, Color(0.86, 0.91, 0.98, 0.95))
 	detail_desc_label = _make_label("", 18, Color(0.9, 0.92, 0.95, 0.96))
 	detail_focus_label = _make_label("", 17, Color(0.82, 0.9, 1.0, 0.96))
+	detail_dossier_label = _make_label("", 16, Color(0.95, 0.9, 0.8, 0.96))
+	detail_quote_label = _make_label("", 16, Color(0.84, 0.91, 1.0, 0.95))
 	detail_box.add_child(detail_name_label)
 	detail_box.add_child(detail_role_label)
 	detail_box.add_child(detail_weapon_label)
 	detail_box.add_child(detail_desc_label)
 	detail_box.add_child(detail_focus_label)
+	detail_box.add_child(detail_dossier_label)
+	detail_box.add_child(detail_quote_label)
 
 	detail_reaction_panel = PanelContainer.new()
 	detail_reaction_panel.custom_minimum_size = _v(0.0, 104.0)
@@ -1423,7 +1431,7 @@ func _build_recipe_atlas_text() -> String:
 
 func _build_character_archive_text() -> String:
 	var lines: Array[String] = [
-		"当前人物志对应已经接入的两名执笔者，方便在真正落字进战场前先确认谁更适合这一轮的打法。",
+		"当前人物志对应已经接入的两名执笔者，除了基础面板，也补上了人物来路、角色特性与入卷建议，方便在真正落字前先决定这一轮更适合哪种写法。",
 		""
 	]
 	for hero_id_variant in Session.HERO_ORDER:
@@ -1439,8 +1447,15 @@ func _build_character_archive_text() -> String:
 		])
 		lines.append("  身份：%s" % String(hero.get("role_label", "")))
 		lines.append("  武器：%s" % String(hero.get("weapon", "")))
+		lines.append("  人物来路：%s" % String(hero.get("record_title", "")))
+		lines.append("  %s" % String(hero.get("record_body", "")))
+		lines.append("  摘句：%s" % String(hero.get("record_excerpt", "")))
+		lines.append("  出处：%s" % String(hero.get("record_source", "")))
 		lines.append("  战斗轮廓：%s" % String(hero.get("description", "")))
 		lines.append("  执笔焦点：%s" % String(hero.get("focus", "")))
+		lines.append("  角色特性：%s" % String(hero.get("trait_label", "")))
+		lines.append("  %s" % String(hero.get("trait_description", "")))
+		lines.append("  入卷建议：%s" % String(hero.get("route_hint", "")))
 		lines.append("  标签：%s" % " / ".join(tag_texts))
 		lines.append("  面板：机动 %.1f  气血 %.0f  伤害 %.0f  射程 %.1f" % [
 			float(hero.get("move_speed", 0.0)),
@@ -1911,7 +1926,16 @@ func _refresh_selection(trigger_reaction: bool = false) -> void:
 	detail_role_label.text = "%s  ·  %s" % [String(selected_data["role_label"]), String(selected_data["weapon"])]
 	detail_weapon_label.text = "主战描述：%s" % String(selected_data["description"])
 	detail_desc_label.text = "战斗焦点：%s" % String(selected_data["focus"])
-	detail_focus_label.text = "进入残卷后，同样的偏旁路线会因为角色武器而产生不同输出手感。"
+	detail_focus_label.text = "人物来路：%s" % String(selected_data.get("record_title", ""))
+	detail_dossier_label.text = "角色特性：%s · %s" % [
+		String(selected_data.get("trait_label", "")),
+		String(selected_data.get("trait_description", ""))
+	]
+	detail_quote_label.text = "入卷建议：%s\n摘句：%s · %s" % [
+		String(selected_data.get("route_hint", "")),
+		String(selected_data.get("record_excerpt", "")),
+		String(selected_data.get("record_source", ""))
+	]
 
 	detail_preview_core.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.24, accent.g * 0.2, accent.b * 0.16, 0.94), Color(accent.r, accent.g, accent.b, 0.26)))
 	detail_preview_glyph.text = String(selected_data["glyph"])
