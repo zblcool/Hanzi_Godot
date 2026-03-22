@@ -24,6 +24,7 @@ const UI_EN := {
 	"字潮翻动时，呼应会在这里出现。": "Callouts will appear here when the glyph tide shifts.",
 	"当前目标": "Current Objective",
 	"尚未收集，或已经全部化字。": "Nothing left to collect, or everything has already fused.",
+	"源稿路线参考": "Source Route Guide",
 	"已成技能字": "Formed Skill Glyphs",
 	"已成技艺": "Ready Skills",
 	"配乐提示": "Music Cue",
@@ -67,14 +68,82 @@ const HERO_EN := {
 		"title": "Ink Volley",
 		"role_label": "Ranged control",
 		"focus": "Collect radicals with steady pacing and bring fused glyphs online earlier.",
-		"tags": ["Lock-on", "Volley", "Stable fusion"]
+		"tags": ["Lock-on", "Volley", "Stable fusion"],
+		"route_hint": "Secure the first formed glyph, then decide whether this run wants sustain, area control, or lock-on pressure. The scholar is strongest when one route gets written deep first.",
+		"progression_cards": [
+			{
+				"title": "Open the Scroll",
+				"description": "Without a fixed opener, follow the first drops into a stable clear or sustain line, then decide which glyph route this run should deepen.",
+				"tags": ["明", "海", "休"]
+			},
+			{
+				"title": "Midgame Continuation",
+				"description": "Once the first glyph stands, add crowd control or target pressure to keep safe distance instead of spreading into every side route.",
+				"tags": ["雷", "明", "海"]
+			},
+			{
+				"title": "Inkstone Phrase",
+				"description": "Refine the most reliable main route first so it can take over the midgame. The scholar prefers depth over even spread.",
+				"tags": ["明月", "海啸", "休养"]
+			}
+		],
+		"build_route_cards": [
+			{
+				"glyph": "守",
+				"title": "Ink Ward",
+				"subtitle": "Sustain / Hold",
+				"description": "Mirroring the source web route picks, this lane leans toward Wood, Water, Field, and Moon so the run can stabilize around sustain, safer paper arrays, and hold-your-ground control.",
+				"tags": ["木", "氵", "田", "月"]
+			},
+			{
+				"glyph": "雷",
+				"title": "Storm Lattice",
+				"subtitle": "Volley / Control",
+				"description": "This route tilts toward Rain, Field, Sun, and Water, extending the scholar's ranged tempo into steadier volleys and broader battlefield control.",
+				"tags": ["雨", "田", "日", "氵"]
+			}
+		]
 	},
 	"xia": {
 		"name": "Xia",
 		"title": "Longblade Assault",
 		"role_label": "Melee breaker",
 		"focus": "Push into the enemy tide and turn `刂` directly into weapon growth.",
-		"tags": ["Point-blank", "Burst", "Blade growth"]
+		"tags": ["Point-blank", "Burst", "Blade growth"],
+		"route_hint": "First secure a glyph route that keeps melee space open, then use blade growth and shockwave skills to turn close-range risk into pressure.",
+		"progression_cards": [
+			{
+				"title": "Open the Scroll",
+				"description": "Because Xia starts with `亻 / 心`, look for `木` or `刂` early and form a first glyph that protects melee space or bursts the tide back.",
+				"tags": ["休", "忍"]
+			},
+			{
+				"title": "Build the Edge",
+				"description": "Once the close-range pocket is stable, add waves, lightning, or flame routes so the risk of diving in becomes forward pressure.",
+				"tags": ["海", "雷", "炎"]
+			},
+			{
+				"title": "Inkstone Phrase",
+				"description": "Use the inkstone first on the route that protects you or opens lanes for melee. Do not wait for every line to be complete.",
+				"tags": ["休养", "忍心", "海啸"]
+			}
+		],
+		"build_route_cards": [
+			{
+				"glyph": "游",
+				"title": "Wayfarer Script",
+				"subtitle": "Mobility / Active",
+				"description": "This source route leans toward Human, Blade, Moon, and Heart so melee spacing, lane cuts, and active-skill cadence stay fluid while diving in.",
+				"tags": ["亻", "刂", "月", "心"]
+			},
+			{
+				"glyph": "烈",
+				"title": "Ember Edge",
+				"subtitle": "Burst / Pressure",
+				"description": "It favors Fire, Blade, and Heart, pushing the run toward burst, close-range pressure, and heavier front-loaded cuts.",
+				"tags": ["火", "刂", "心", "炎 / 忍"]
+			}
+		]
 	}
 }
 const RECIPE_EN := {
@@ -406,7 +475,12 @@ var compact_radicals_label: Label
 var compact_tip_label: Label
 var compact_health_bar: ProgressBar
 var compact_xp_bar: ProgressBar
+var compact_route_label: Label
 var objective_panel: PanelContainer
+var objective_route_title_label: Label
+var objective_route_detail_label: Label
+var objective_stage_label: Label
+var objective_route_tags: HFlowContainer
 var callout_panel: PanelContainer
 var callout_title_label: Label
 var callout_text_label: Label
@@ -460,6 +534,12 @@ var test_tools_enabled := false
 var compact_layout := false
 var fps_update_timer := 0.0
 var event_log_entries: Array[Dictionary] = []
+var configured_hero_data: Dictionary = {}
+var cached_radicals: Dictionary = {}
+var cached_recipe_levels: Dictionary = {}
+var cached_word_levels: Dictionary = {}
+var cached_word_progress: Dictionary = {}
+var cached_blade_level := 0
 
 
 func _ready() -> void:
@@ -569,12 +649,14 @@ func _process(delta: float) -> void:
 
 
 func configure(hero_data: Dictionary) -> void:
+	configured_hero_data = hero_data.duplicate(true)
 	var localized_hero := _localized_hero_data(hero_data)
 	hero_label.text = "%s" % String(localized_hero["name"])
 	hero_title_label.text = "%s  ·  %s" % [String(localized_hero["title"]), String(localized_hero["role_label"])]
 	hero_focus_label.text = String(localized_hero["focus"])
 	_refresh_hero_tags(localized_hero)
 	_refresh_controls_text()
+	_refresh_route_focus()
 
 
 func set_battle_settings(settings: Dictionary) -> void:
@@ -643,6 +725,7 @@ func set_status(elapsed: float, kills: int, threat: int) -> void:
 
 
 func set_radicals(radicals: Dictionary) -> void:
+	cached_radicals = radicals.duplicate(true)
 	if radical_chip_container == null:
 		return
 
@@ -676,8 +759,16 @@ func set_radicals(radicals: Dictionary) -> void:
 				"Radicals %d  ·  %s" if _is_english() else "偏旁 %d 枚  ·  %s"
 			) % [total_count, "  ".join(compact_parts)]
 
+	_refresh_route_focus()
+
 
 func set_skills(recipe_levels: Dictionary, word_levels: Dictionary, word_progress: Dictionary, blade_level: int, hero_id: String) -> void:
+	cached_recipe_levels = recipe_levels.duplicate(true)
+	cached_word_levels = word_levels.duplicate(true)
+	cached_word_progress = word_progress.duplicate(true)
+	cached_blade_level = blade_level
+	if configured_hero_data.is_empty() or String(configured_hero_data.get("id", "")) != hero_id:
+		configured_hero_data = Session.get_hero_data(hero_id)
 	if skill_cards_box == null:
 		return
 
@@ -736,12 +827,206 @@ func set_skills(recipe_levels: Dictionary, word_levels: Dictionary, word_progres
 	for card in cards:
 		skill_cards_box.add_child(_make_skill_card(card))
 	_refresh_compact_skill_chips(cards)
+	_refresh_route_focus()
 
 
 func set_tip(text: String) -> void:
 	tip_label.text = _localize_text(text)
 	if compact_tip_label != null:
 		compact_tip_label.text = _localize_text(text)
+
+
+func _refresh_route_focus() -> void:
+	if configured_hero_data.is_empty():
+		return
+	var localized_hero := _localized_hero_data(configured_hero_data)
+	var accent := Color(localized_hero.get("accent", Color(0.86, 0.68, 0.38, 1.0)))
+	var summary := _build_route_focus_summary(localized_hero)
+	if objective_route_title_label != null:
+		objective_route_title_label.text = String(summary.get("title", ""))
+	if objective_route_detail_label != null:
+		objective_route_detail_label.text = String(summary.get("detail", ""))
+	if objective_stage_label != null:
+		objective_stage_label.text = String(summary.get("stage", ""))
+	if compact_route_label != null:
+		compact_route_label.text = String(summary.get("compact", ""))
+	if objective_route_tags != null:
+		for child in objective_route_tags.get_children():
+			child.queue_free()
+		var tags_variant: Variant = summary.get("tags", [])
+		if tags_variant is Array:
+			for tag_variant in tags_variant:
+				var tag_text := String(tag_variant).strip_edges()
+				if tag_text.is_empty():
+					continue
+				objective_route_tags.add_child(_make_route_tag_chip(tag_text, accent))
+
+
+func _build_route_focus_summary(hero_data: Dictionary) -> Dictionary:
+	var route_cards: Array[Dictionary] = []
+	var route_cards_variant: Variant = hero_data.get("build_route_cards", [])
+	if route_cards_variant is Array:
+		for card_variant in route_cards_variant:
+			if card_variant is Dictionary:
+				route_cards.append(card_variant as Dictionary)
+
+	var chosen_route: Dictionary = {}
+	if not route_cards.is_empty():
+		chosen_route = route_cards[0]
+		var best_score := -INF
+		for route_card in route_cards:
+			var route_score := _score_route_card(route_card)
+			if route_score > best_score:
+				best_score = route_score
+				chosen_route = route_card
+
+	var stage_card := _resolve_route_stage_card(hero_data)
+	var route_glyph := String(chosen_route.get("glyph", ""))
+	var route_title := String(chosen_route.get("title", ""))
+	var route_subtitle := String(chosen_route.get("subtitle", "")).strip_edges()
+	var title_parts: Array[String] = []
+	if not route_glyph.is_empty():
+		title_parts.append(route_glyph)
+	if not route_title.is_empty():
+		title_parts.append(route_title)
+	var title_text := "  ".join(title_parts)
+	if not route_subtitle.is_empty():
+		title_text += "  ·  %s" % route_subtitle
+
+	var route_detail := String(chosen_route.get("description", "")).strip_edges()
+	if route_detail.is_empty():
+		route_detail = String(hero_data.get("route_hint", "")).strip_edges()
+	if route_detail.is_empty():
+		route_detail = "Keep one route ahead of the rest so later phrase refinement has a clear lane." if _is_english() else "让一条路线始终比其余分支领先，后续磨词才有清晰主线。"
+
+	var stage_title := String(stage_card.get("title", "")).strip_edges()
+	var stage_tags_text := " / ".join(_collect_string_array(stage_card.get("tags", [])))
+	var stage_text := ""
+	if not stage_title.is_empty():
+		stage_text = ("Stage: %s" if _is_english() else "当前阶段：%s") % stage_title
+		if not stage_tags_text.is_empty():
+			stage_text += "  ·  %s" % stage_tags_text
+
+	var compact_text := title_text
+	if not stage_title.is_empty():
+		compact_text = ("%s  ·  %s" % [title_text, stage_title]).strip_edges()
+
+	return {
+		"title": title_text,
+		"detail": route_detail,
+		"stage": stage_text,
+		"compact": compact_text,
+		"tags": _collect_string_array(chosen_route.get("tags", []))
+	}
+
+
+func _resolve_route_stage_card(hero_data: Dictionary) -> Dictionary:
+	var cards: Array[Dictionary] = []
+	var cards_variant: Variant = hero_data.get("progression_cards", [])
+	if cards_variant is Array:
+		for card_variant in cards_variant:
+			if card_variant is Dictionary:
+				cards.append(card_variant as Dictionary)
+	if cards.is_empty():
+		return {}
+
+	var formed_recipe_count := 0
+	var maxed_recipe_count := 0
+	for recipe_id_variant in Session.RECIPE_ORDER:
+		var recipe_id := String(recipe_id_variant)
+		var recipe_level := int(cached_recipe_levels.get(recipe_id, 0))
+		if recipe_level <= 0:
+			continue
+		formed_recipe_count += 1
+		if recipe_level >= int(Session.get_recipe_data(recipe_id).get("max_level", 1)):
+			maxed_recipe_count += 1
+
+	var formed_word_count := 0
+	var word_progress_total := 0
+	for word_id_variant in Session.WORD_ORDER:
+		var word_id := String(word_id_variant)
+		var word_level := int(cached_word_levels.get(word_id, 0))
+		if word_level > 0:
+			formed_word_count += 1
+		word_progress_total += int(cached_word_progress.get(word_id, 0))
+
+	if formed_word_count > 0 or word_progress_total > 0 or maxed_recipe_count > 0:
+		return cards[min(2, cards.size() - 1)]
+	if formed_recipe_count > 0:
+		return cards[min(1, cards.size() - 1)]
+	return cards[0]
+
+
+func _score_route_card(route_card: Dictionary) -> float:
+	var score := 0.0
+	var tags_variant: Variant = route_card.get("tags", [])
+	if tags_variant is Array:
+		for tag_variant in tags_variant:
+			score += _score_route_tag(String(tag_variant))
+	return score
+
+
+func _score_route_tag(tag_text: String) -> float:
+	var score := 0.0
+	for token in _split_route_tokens(tag_text):
+		score += _score_route_token(token)
+	return score
+
+
+func _split_route_tokens(tag_text: String) -> Array[String]:
+	var normalized := tag_text.replace("／", "/").replace("、", "/").replace("，", "/").replace(",", "/")
+	var tokens: Array[String] = []
+	for piece in normalized.split("/"):
+		var trimmed := piece.strip_edges()
+		if not trimmed.is_empty():
+			tokens.append(trimmed)
+	return tokens
+
+
+func _score_route_token(token: String) -> float:
+	var score := 0.0
+	var stored_count := int(cached_radicals.get(token, 0))
+	if stored_count > 0:
+		score += float(stored_count) * 1.1
+	if token == "刂" and cached_blade_level > 0:
+		score += float(cached_blade_level) * 1.15
+
+	for recipe_id_variant in Session.RECIPE_ORDER:
+		var recipe_id := String(recipe_id_variant)
+		var recipe := Session.get_recipe_data(recipe_id)
+		var recipe_level := int(cached_recipe_levels.get(recipe_id, 0))
+		var word_id := String(recipe.get("word_id", ""))
+		var word_level := int(cached_word_levels.get(word_id, 0))
+		var word_progress := int(cached_word_progress.get(word_id, 0))
+		var radicals := _collect_string_array(recipe.get("radicals", []))
+		if recipe_level > 0:
+			if token == String(recipe.get("display", "")):
+				score += 2.0 + float(recipe_level) * 0.9
+			if radicals.has(token):
+				score += 0.7 + float(recipe_level) * 0.35
+		if word_level > 0:
+			var word := Session.get_word_data(word_id)
+			if token == String(word.get("display", "")):
+				score += 3.0 + float(word_level)
+			if token == String(recipe.get("display", "")):
+				score += 1.35 + float(word_level) * 0.5
+			if radicals.has(token):
+				score += 0.95 + float(word_level) * 0.45
+		elif word_progress > 0 and recipe_level >= int(recipe.get("max_level", 1)):
+			var pending_word := Session.get_word_data(word_id)
+			if token == String(pending_word.get("display", "")):
+				score += 1.35 + float(word_progress) * 0.45
+	return score
+
+
+func _collect_string_array(value: Variant) -> Array[String]:
+	var items: Array[String] = []
+	if value is Array:
+		for item_variant in value:
+			var text := String(item_variant).strip_edges()
+			if not text.is_empty():
+				items.append(text)
+	return items
 
 
 func push_event_log(text: String, color: Color = Color(0.88, 0.92, 0.97, 1.0)) -> void:
@@ -1596,6 +1881,8 @@ func _build_ui() -> void:
 	compact_box.add_child(compact_radicals_label)
 	compact_tip_label = _make_label("击倒字灵收集字力与补给。", 15, Color(0.92, 0.94, 0.96, 0.94))
 	compact_box.add_child(compact_tip_label)
+	compact_route_label = _make_label("墨守流  ·  开卷补笔", 13, Color(0.96, 0.82, 0.56, 0.9))
+	compact_box.add_child(compact_route_label)
 
 	callout_panel = _make_panel(Color(0.05, 0.07, 0.09, 0.84), Color(0.92, 0.69, 0.38, 0.42), Vector2(340.0, 92.0))
 	callout_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -1614,6 +1901,17 @@ func _build_ui() -> void:
 	objective_box.add_child(_make_label("当前目标", 20, Color(0.96, 0.82, 0.56, 0.98)))
 	tip_label = _make_label("尚未收集，或已经全部化字。", 18, Color(0.88, 0.9, 0.93, 0.95))
 	objective_box.add_child(tip_label)
+	objective_box.add_child(_make_label("源稿路线参考", 13, Color(0.96, 0.84, 0.6, 0.84), 2.0))
+	objective_route_title_label = _make_label("守  墨守流  ·  续航 / 站场", 18, Color(0.98, 0.95, 0.88, 0.98))
+	objective_box.add_child(objective_route_title_label)
+	objective_route_detail_label = _make_label("先把最稳的 build 主线写深，再让砚台磨词接手中盘。", 15, Color(0.88, 0.9, 0.93, 0.92))
+	objective_box.add_child(objective_route_detail_label)
+	objective_stage_label = _make_label("当前阶段：开卷补笔  ·  明 / 海 / 休", 14, Color(0.84, 0.9, 1.0, 0.92))
+	objective_box.add_child(objective_stage_label)
+	objective_route_tags = HFlowContainer.new()
+	objective_route_tags.add_theme_constant_override("h_separation", 8)
+	objective_route_tags.add_theme_constant_override("v_separation", 8)
+	objective_box.add_child(objective_route_tags)
 
 	skills_panel = _make_panel(Color(0.05, 0.07, 0.09, 0.74), Color(0.38, 0.74, 0.82, 0.62), Vector2(340.0, 860.0))
 	skills_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -1801,11 +2099,11 @@ func _refresh_layout() -> void:
 		top_right_stack.offset_bottom = -10.0
 
 	if compact_summary_panel != null:
-		compact_summary_panel.custom_minimum_size = Vector2(stack_width, 188.0)
+		compact_summary_panel.custom_minimum_size = Vector2(stack_width, 218.0)
 	if callout_panel != null:
 		callout_panel.custom_minimum_size = Vector2(stack_width, 92.0 if compact_layout else 88.0)
 	if objective_panel != null:
-		objective_panel.custom_minimum_size = Vector2(stack_width, 136.0)
+		objective_panel.custom_minimum_size = Vector2(stack_width, 230.0)
 	if skills_panel != null:
 		skills_panel.custom_minimum_size = Vector2(
 			stack_width,
@@ -2545,6 +2843,22 @@ func _make_compact_skill_chip(glyph: String, title: String, level: String, color
 	level_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	level_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	row.add_child(level_label)
+	return chip
+
+
+func _make_route_tag_chip(text: String, accent: Color) -> PanelContainer:
+	var chip := PanelContainer.new()
+	chip.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.16, accent.g * 0.16, accent.b * 0.2, 0.9), Color(accent.r, accent.g, accent.b, 0.42), 16))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 10)
+	margin.add_theme_constant_override("margin_top", 6)
+	margin.add_theme_constant_override("margin_right", 10)
+	margin.add_theme_constant_override("margin_bottom", 6)
+	chip.add_child(margin)
+
+	var label := _make_label(text, 13, Color(0.98, 0.95, 0.88, 0.98))
+	margin.add_child(label)
 	return chip
 
 
