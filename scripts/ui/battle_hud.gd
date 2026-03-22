@@ -25,6 +25,7 @@ const UI_EN := {
 	"字潮翻动时，呼应会在这里出现。": "Callouts will appear here when the glyph tide shifts.",
 	"当前目标": "Current Objective",
 	"尚未收集，或已经全部化字。": "Nothing left to collect, or everything has already fused.",
+	"源稿路线参考": "Source Route Guide",
 	"已成技能字": "Formed Skill Glyphs",
 	"已成技艺": "Ready Skills",
 	"配乐提示": "Music Cue",
@@ -346,6 +347,11 @@ var soundtrack_title_label: Label
 var soundtrack_detail_label: Label
 var banner_label: Label
 var overlay_label: Label
+var reveal_panel: PanelContainer
+var reveal_kicker_label: Label
+var reveal_glyph_label: Label
+var reveal_title_label: Label
+var reveal_detail_label: Label
 var xp_bar: ProgressBar
 var health_bar: ProgressBar
 var controls_label: Label
@@ -369,7 +375,12 @@ var compact_radicals_label: Label
 var compact_tip_label: Label
 var compact_health_bar: ProgressBar
 var compact_xp_bar: ProgressBar
+var compact_route_label: Label
 var objective_panel: PanelContainer
+var objective_route_title_label: Label
+var objective_route_detail_label: Label
+var objective_stage_label: Label
+var objective_route_tags: HFlowContainer
 var callout_panel: PanelContainer
 var callout_title_label: Label
 var callout_text_label: Label
@@ -412,6 +423,8 @@ var map_zoom_label: Label
 
 var banner_time := 0.0
 var banner_color: Color = Color(1.0, 0.95, 0.84, 1.0)
+var reveal_time := 0.0
+var reveal_duration := 0.0
 var callout_time := 0.0
 var soundtrack_toast: PanelContainer
 var soundtrack_toast_title_label: Label
@@ -421,6 +434,12 @@ var test_tools_enabled := false
 var compact_layout := false
 var fps_update_timer := 0.0
 var event_log_entries: Array[Dictionary] = []
+var configured_hero_data: Dictionary = {}
+var cached_radicals: Dictionary = {}
+var cached_recipe_levels: Dictionary = {}
+var cached_word_levels: Dictionary = {}
+var cached_word_progress: Dictionary = {}
+var cached_blade_level := 0
 
 
 func _ready() -> void:
@@ -470,6 +489,20 @@ func _process(delta: float) -> void:
 	else:
 		banner_label.visible = false
 
+	if reveal_time > 0.0 and reveal_panel != null:
+		reveal_time -= delta
+		reveal_panel.visible = true
+		var reveal_alpha: float = 1.0
+		if reveal_duration > 0.0:
+			var reveal_progress: float = clampf((reveal_duration - reveal_time) / reveal_duration, 0.0, 1.0)
+			if reveal_progress < 0.12:
+				reveal_alpha = clampf(reveal_progress / 0.12, 0.0, 1.0)
+		if reveal_time < 0.48:
+			reveal_alpha = minf(reveal_alpha, clampf(reveal_time / 0.48, 0.0, 1.0))
+		reveal_panel.modulate = Color(1.0, 1.0, 1.0, reveal_alpha)
+	elif reveal_panel != null:
+		reveal_panel.visible = false
+
 	if callout_time > 0.0 and callout_panel != null:
 		callout_time -= delta
 		callout_panel.visible = true
@@ -498,12 +531,14 @@ func _process(delta: float) -> void:
 
 
 func configure(hero_data: Dictionary) -> void:
+	configured_hero_data = hero_data.duplicate(true)
 	var localized_hero := _localized_hero_data(hero_data)
 	hero_label.text = "%s" % String(localized_hero["name"])
 	hero_title_label.text = "%s  ·  %s" % [String(localized_hero["title"]), String(localized_hero["role_label"])]
 	hero_focus_label.text = String(localized_hero["focus"])
 	_refresh_hero_tags(localized_hero)
 	_refresh_controls_text()
+	_refresh_route_focus()
 
 
 func set_battle_settings(settings: Dictionary) -> void:
@@ -572,6 +607,7 @@ func set_status(elapsed: float, kills: int, threat: int) -> void:
 
 
 func set_radicals(radicals: Dictionary) -> void:
+	cached_radicals = radicals.duplicate(true)
 	if radical_chip_container == null:
 		return
 
@@ -605,8 +641,16 @@ func set_radicals(radicals: Dictionary) -> void:
 				"Radicals %d  ·  %s" if _is_english() else "偏旁 %d 枚  ·  %s"
 			) % [total_count, "  ".join(compact_parts)]
 
+	_refresh_route_focus()
+
 
 func set_skills(recipe_levels: Dictionary, word_levels: Dictionary, word_progress: Dictionary, blade_level: int, hero_id: String) -> void:
+	cached_recipe_levels = recipe_levels.duplicate(true)
+	cached_word_levels = word_levels.duplicate(true)
+	cached_word_progress = word_progress.duplicate(true)
+	cached_blade_level = blade_level
+	if configured_hero_data.is_empty() or String(configured_hero_data.get("id", "")) != hero_id:
+		configured_hero_data = Session.get_hero_data(hero_id)
 	if skill_cards_box == null:
 		return
 
@@ -665,12 +709,206 @@ func set_skills(recipe_levels: Dictionary, word_levels: Dictionary, word_progres
 	for card in cards:
 		skill_cards_box.add_child(_make_skill_card(card))
 	_refresh_compact_skill_chips(cards)
+	_refresh_route_focus()
 
 
 func set_tip(text: String) -> void:
 	tip_label.text = _localize_text(text)
 	if compact_tip_label != null:
 		compact_tip_label.text = _localize_text(text)
+
+
+func _refresh_route_focus() -> void:
+	if configured_hero_data.is_empty():
+		return
+	var localized_hero := _localized_hero_data(configured_hero_data)
+	var accent := Color(localized_hero.get("accent", Color(0.86, 0.68, 0.38, 1.0)))
+	var summary := _build_route_focus_summary(localized_hero)
+	if objective_route_title_label != null:
+		objective_route_title_label.text = String(summary.get("title", ""))
+	if objective_route_detail_label != null:
+		objective_route_detail_label.text = String(summary.get("detail", ""))
+	if objective_stage_label != null:
+		objective_stage_label.text = String(summary.get("stage", ""))
+	if compact_route_label != null:
+		compact_route_label.text = String(summary.get("compact", ""))
+	if objective_route_tags != null:
+		for child in objective_route_tags.get_children():
+			child.queue_free()
+		var tags_variant: Variant = summary.get("tags", [])
+		if tags_variant is Array:
+			for tag_variant in tags_variant:
+				var tag_text := String(tag_variant).strip_edges()
+				if tag_text.is_empty():
+					continue
+				objective_route_tags.add_child(_make_route_tag_chip(tag_text, accent))
+
+
+func _build_route_focus_summary(hero_data: Dictionary) -> Dictionary:
+	var route_cards: Array[Dictionary] = []
+	var route_cards_variant: Variant = hero_data.get("build_route_cards", [])
+	if route_cards_variant is Array:
+		for card_variant in route_cards_variant:
+			if card_variant is Dictionary:
+				route_cards.append(card_variant as Dictionary)
+
+	var chosen_route: Dictionary = {}
+	if not route_cards.is_empty():
+		chosen_route = route_cards[0]
+		var best_score := -INF
+		for route_card in route_cards:
+			var route_score := _score_route_card(route_card)
+			if route_score > best_score:
+				best_score = route_score
+				chosen_route = route_card
+
+	var stage_card := _resolve_route_stage_card(hero_data)
+	var route_glyph := String(chosen_route.get("glyph", ""))
+	var route_title := String(chosen_route.get("title", ""))
+	var route_subtitle := String(chosen_route.get("subtitle", "")).strip_edges()
+	var title_parts: Array[String] = []
+	if not route_glyph.is_empty():
+		title_parts.append(route_glyph)
+	if not route_title.is_empty():
+		title_parts.append(route_title)
+	var title_text := "  ".join(title_parts)
+	if not route_subtitle.is_empty():
+		title_text += "  ·  %s" % route_subtitle
+
+	var route_detail := String(chosen_route.get("description", "")).strip_edges()
+	if route_detail.is_empty():
+		route_detail = String(hero_data.get("route_hint", "")).strip_edges()
+	if route_detail.is_empty():
+		route_detail = "Keep one route ahead of the rest so later phrase refinement has a clear lane." if _is_english() else "让一条路线始终比其余分支领先，后续磨词才有清晰主线。"
+
+	var stage_title := String(stage_card.get("title", "")).strip_edges()
+	var stage_tags_text := " / ".join(_collect_string_array(stage_card.get("tags", [])))
+	var stage_text := ""
+	if not stage_title.is_empty():
+		stage_text = ("Stage: %s" if _is_english() else "当前阶段：%s") % stage_title
+		if not stage_tags_text.is_empty():
+			stage_text += "  ·  %s" % stage_tags_text
+
+	var compact_text := title_text
+	if not stage_title.is_empty():
+		compact_text = ("%s  ·  %s" % [title_text, stage_title]).strip_edges()
+
+	return {
+		"title": title_text,
+		"detail": route_detail,
+		"stage": stage_text,
+		"compact": compact_text,
+		"tags": _collect_string_array(chosen_route.get("tags", []))
+	}
+
+
+func _resolve_route_stage_card(hero_data: Dictionary) -> Dictionary:
+	var cards: Array[Dictionary] = []
+	var cards_variant: Variant = hero_data.get("progression_cards", [])
+	if cards_variant is Array:
+		for card_variant in cards_variant:
+			if card_variant is Dictionary:
+				cards.append(card_variant as Dictionary)
+	if cards.is_empty():
+		return {}
+
+	var formed_recipe_count := 0
+	var maxed_recipe_count := 0
+	for recipe_id_variant in Session.RECIPE_ORDER:
+		var recipe_id := String(recipe_id_variant)
+		var recipe_level := int(cached_recipe_levels.get(recipe_id, 0))
+		if recipe_level <= 0:
+			continue
+		formed_recipe_count += 1
+		if recipe_level >= int(Session.get_recipe_data(recipe_id).get("max_level", 1)):
+			maxed_recipe_count += 1
+
+	var formed_word_count := 0
+	var word_progress_total := 0
+	for word_id_variant in Session.WORD_ORDER:
+		var word_id := String(word_id_variant)
+		var word_level := int(cached_word_levels.get(word_id, 0))
+		if word_level > 0:
+			formed_word_count += 1
+		word_progress_total += int(cached_word_progress.get(word_id, 0))
+
+	if formed_word_count > 0 or word_progress_total > 0 or maxed_recipe_count > 0:
+		return cards[min(2, cards.size() - 1)]
+	if formed_recipe_count > 0:
+		return cards[min(1, cards.size() - 1)]
+	return cards[0]
+
+
+func _score_route_card(route_card: Dictionary) -> float:
+	var score := 0.0
+	var tags_variant: Variant = route_card.get("tags", [])
+	if tags_variant is Array:
+		for tag_variant in tags_variant:
+			score += _score_route_tag(String(tag_variant))
+	return score
+
+
+func _score_route_tag(tag_text: String) -> float:
+	var score := 0.0
+	for token in _split_route_tokens(tag_text):
+		score += _score_route_token(token)
+	return score
+
+
+func _split_route_tokens(tag_text: String) -> Array[String]:
+	var normalized := tag_text.replace("／", "/").replace("、", "/").replace("，", "/").replace(",", "/")
+	var tokens: Array[String] = []
+	for piece in normalized.split("/"):
+		var trimmed := piece.strip_edges()
+		if not trimmed.is_empty():
+			tokens.append(trimmed)
+	return tokens
+
+
+func _score_route_token(token: String) -> float:
+	var score := 0.0
+	var stored_count := int(cached_radicals.get(token, 0))
+	if stored_count > 0:
+		score += float(stored_count) * 1.1
+	if token == "刂" and cached_blade_level > 0:
+		score += float(cached_blade_level) * 1.15
+
+	for recipe_id_variant in Session.RECIPE_ORDER:
+		var recipe_id := String(recipe_id_variant)
+		var recipe := Session.get_recipe_data(recipe_id)
+		var recipe_level := int(cached_recipe_levels.get(recipe_id, 0))
+		var word_id := String(recipe.get("word_id", ""))
+		var word_level := int(cached_word_levels.get(word_id, 0))
+		var word_progress := int(cached_word_progress.get(word_id, 0))
+		var radicals := _collect_string_array(recipe.get("radicals", []))
+		if recipe_level > 0:
+			if token == String(recipe.get("display", "")):
+				score += 2.0 + float(recipe_level) * 0.9
+			if radicals.has(token):
+				score += 0.7 + float(recipe_level) * 0.35
+		if word_level > 0:
+			var word := Session.get_word_data(word_id)
+			if token == String(word.get("display", "")):
+				score += 3.0 + float(word_level)
+			if token == String(recipe.get("display", "")):
+				score += 1.35 + float(word_level) * 0.5
+			if radicals.has(token):
+				score += 0.95 + float(word_level) * 0.45
+		elif word_progress > 0 and recipe_level >= int(recipe.get("max_level", 1)):
+			var pending_word := Session.get_word_data(word_id)
+			if token == String(pending_word.get("display", "")):
+				score += 1.35 + float(word_progress) * 0.45
+	return score
+
+
+func _collect_string_array(value: Variant) -> Array[String]:
+	var items: Array[String] = []
+	if value is Array:
+		for item_variant in value:
+			var text := String(item_variant).strip_edges()
+			if not text.is_empty():
+				items.append(text)
+	return items
 
 
 func push_event_log(text: String, color: Color = Color(0.88, 0.92, 0.97, 1.0)) -> void:
@@ -777,6 +1015,38 @@ func show_banner(text: String, color: Color, duration: float = 2.4) -> void:
 	banner_time = duration
 
 
+func show_reveal(kicker: String, title: String, detail: String, accent: Color, glyph: String = "", duration: float = 2.8) -> void:
+	if reveal_panel == null:
+		return
+
+	reveal_panel.add_theme_stylebox_override(
+		"panel",
+		_make_panel_style(
+			Color(accent.r * 0.1, accent.g * 0.1, accent.b * 0.14, 0.9),
+			Color(accent.r, accent.g, accent.b, 0.78),
+			28
+		)
+	)
+	if reveal_kicker_label != null:
+		reveal_kicker_label.text = kicker
+		reveal_kicker_label.add_theme_color_override("font_color", Color(accent.r * 0.24 + 0.72, accent.g * 0.22 + 0.72, accent.b * 0.18 + 0.72, 0.96))
+	if reveal_glyph_label != null:
+		reveal_glyph_label.text = glyph
+		reveal_glyph_label.visible = not glyph.strip_edges().is_empty()
+		reveal_glyph_label.add_theme_color_override("font_color", Color(accent.r * 0.34 + 0.64, accent.g * 0.3 + 0.64, accent.b * 0.22 + 0.64, 1.0))
+	if reveal_title_label != null:
+		reveal_title_label.text = title
+		reveal_title_label.add_theme_color_override("font_color", Color(1.0, 0.96, 0.9, 0.98))
+	if reveal_detail_label != null:
+		reveal_detail_label.text = detail
+		reveal_detail_label.visible = not detail.strip_edges().is_empty()
+		reveal_detail_label.add_theme_color_override("font_color", Color(0.88, 0.93, 0.97, 0.96))
+	reveal_panel.visible = true
+	reveal_panel.modulate = Color(1.0, 1.0, 1.0, 1.0)
+	reveal_duration = max(duration, 0.9)
+	reveal_time = reveal_duration
+
+
 func show_callout(title: String, text: String, accent: Color, duration: float = 3.0) -> void:
 	if callout_panel == null:
 		return
@@ -857,6 +1127,7 @@ func show_radical_choices(level: int, choices: Array[Dictionary], pending_count:
 		else "从三枚偏旁里选一枚。它会推进合字，满级后继续磨成词技。剩余待选：%d"
 	) % pending_count
 	overlay_label.visible = false
+	_hide_reveal()
 	for index in range(choice_buttons.size()):
 		var button: Button = choice_buttons[index]
 		if index < choices.size():
@@ -880,6 +1151,7 @@ func show_word_choices(choices: Array[Dictionary]) -> void:
 	choice_title_label.text = "Inkstone Refinement" if _is_english() else "砚台磨词"
 	choice_hint_label.text = "Use extra maxed-glyph stock to refine a higher phrase art. Each refinement spends one related radical." if _is_english() else "把满级合字的余材磨成更高一层的词技。每次磨词会消耗一枚相关偏旁。"
 	overlay_label.visible = false
+	_hide_reveal()
 	for index in range(choice_buttons.size()):
 		var button: Button = choice_buttons[index]
 		if index < choices.size():
@@ -911,6 +1183,7 @@ func show_pause_menu(elapsed: float, kills: int, threat: int, level: int) -> voi
 	hide_choice_overlay()
 	hide_map_overlay()
 	overlay_label.visible = false
+	_hide_reveal()
 	_hide_state_name_editor()
 	last_pause_summary = {
 		"elapsed": elapsed,
@@ -955,6 +1228,7 @@ func _show_settings_menu() -> void:
 	state_body_label.text = _build_settings_body()
 	_hide_state_name_editor()
 	overlay_label.visible = false
+	_hide_reveal()
 	_configure_state_button(state_primary_button, ("%s: %s" % ["Performance", _performance_mode_label()] if _is_english() else "演出档：%s" % _performance_mode_label()), Callable(self, "_cycle_performance_mode"))
 	_configure_state_button(state_secondary_button, ("%s: %s" % ["Glyph FX", _visual_effects_label()] if _is_english() else "视觉字效：%s" % _visual_effects_label()), Callable(self, "_toggle_visual_effects"))
 	_configure_state_button(state_tertiary_button, ("%s: %s" % ["Enemy Health Bars", _enemy_health_bar_label()] if _is_english() else "敌方血条：%s" % _enemy_health_bar_label()), Callable(self, "_toggle_enemy_health_bars"))
@@ -1022,6 +1296,7 @@ func set_game_over(
 	_hide_state_button(state_quinary_button)
 	_hide_state_button(state_senary_button)
 	overlay_label.visible = false
+	_hide_reveal()
 	state_overlay.visible = true
 
 
@@ -1081,6 +1356,7 @@ func _refresh_local_leaderboard_overlay() -> void:
 	_hide_state_button(state_quinary_button)
 	_hide_state_button(state_senary_button)
 	overlay_label.visible = false
+	_hide_reveal()
 	state_overlay.visible = true
 
 
@@ -1487,6 +1763,8 @@ func _build_ui() -> void:
 	compact_box.add_child(compact_radicals_label)
 	compact_tip_label = _make_label("击倒字灵收集字力与补给。", 15, Color(0.92, 0.94, 0.96, 0.94))
 	compact_box.add_child(compact_tip_label)
+	compact_route_label = _make_label("墨守流  ·  开卷补笔", 13, Color(0.96, 0.82, 0.56, 0.9))
+	compact_box.add_child(compact_route_label)
 
 	callout_panel = _make_panel(Color(0.05, 0.07, 0.09, 0.84), Color(0.92, 0.69, 0.38, 0.42), Vector2(340.0, 92.0))
 	callout_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -1505,6 +1783,17 @@ func _build_ui() -> void:
 	objective_box.add_child(_make_label("当前目标", 20, Color(0.96, 0.82, 0.56, 0.98)))
 	tip_label = _make_label("尚未收集，或已经全部化字。", 18, Color(0.88, 0.9, 0.93, 0.95))
 	objective_box.add_child(tip_label)
+	objective_box.add_child(_make_label("源稿路线参考", 13, Color(0.96, 0.84, 0.6, 0.84), 2.0))
+	objective_route_title_label = _make_label("守  墨守流  ·  续航 / 站场", 18, Color(0.98, 0.95, 0.88, 0.98))
+	objective_box.add_child(objective_route_title_label)
+	objective_route_detail_label = _make_label("先把最稳的 build 主线写深，再让砚台磨词接手中盘。", 15, Color(0.88, 0.9, 0.93, 0.92))
+	objective_box.add_child(objective_route_detail_label)
+	objective_stage_label = _make_label("当前阶段：开卷补笔  ·  明 / 海 / 休", 14, Color(0.84, 0.9, 1.0, 0.92))
+	objective_box.add_child(objective_stage_label)
+	objective_route_tags = HFlowContainer.new()
+	objective_route_tags.add_theme_constant_override("h_separation", 8)
+	objective_route_tags.add_theme_constant_override("v_separation", 8)
+	objective_box.add_child(objective_route_tags)
 
 	skills_panel = _make_panel(Color(0.05, 0.07, 0.09, 0.74), Color(0.38, 0.74, 0.82, 0.62), Vector2(340.0, 860.0))
 	skills_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -1582,6 +1871,47 @@ func _build_ui() -> void:
 	overlay_label.visible = false
 	root_control.add_child(overlay_label)
 
+	reveal_panel = PanelContainer.new()
+	reveal_panel.set_anchors_preset(Control.PRESET_CENTER)
+	reveal_panel.offset_left = -360.0
+	reveal_panel.offset_top = -164.0
+	reveal_panel.offset_right = 360.0
+	reveal_panel.offset_bottom = -16.0
+	reveal_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	reveal_panel.visible = false
+	reveal_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.08, 0.11, 0.14, 0.92), Color(0.96, 0.74, 0.44, 0.76), 28))
+	root_control.add_child(reveal_panel)
+
+	var reveal_margin := MarginContainer.new()
+	reveal_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	reveal_margin.add_theme_constant_override("margin_left", 22)
+	reveal_margin.add_theme_constant_override("margin_top", 18)
+	reveal_margin.add_theme_constant_override("margin_right", 22)
+	reveal_margin.add_theme_constant_override("margin_bottom", 18)
+	reveal_panel.add_child(reveal_margin)
+
+	var reveal_row := HBoxContainer.new()
+	reveal_row.add_theme_constant_override("separation", 18)
+	reveal_margin.add_child(reveal_row)
+
+	reveal_glyph_label = _make_label("字", 70, Color(1.0, 0.92, 0.78, 1.0), 4.0)
+	reveal_glyph_label.custom_minimum_size = Vector2(104.0, 104.0)
+	reveal_glyph_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	reveal_glyph_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	reveal_row.add_child(reveal_glyph_label)
+
+	var reveal_box := VBoxContainer.new()
+	reveal_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	reveal_box.add_theme_constant_override("separation", 6)
+	reveal_row.add_child(reveal_box)
+
+	reveal_kicker_label = _make_label("字境相变", 15, Color(0.98, 0.84, 0.6, 0.9), 3.0)
+	reveal_box.add_child(reveal_kicker_label)
+	reveal_title_label = _make_label("碑林", 34, Color(1.0, 0.96, 0.9, 1.0))
+	reveal_box.add_child(reveal_title_label)
+	reveal_detail_label = _make_label("大字揭示会在这里提示合字、词技与字境变化。", 16, Color(0.88, 0.93, 0.97, 0.94), 2.0)
+	reveal_box.add_child(reveal_detail_label)
+
 	soundtrack_toast = _make_panel(Color(0.08, 0.11, 0.13, 0.96), Color(0.92, 0.69, 0.38, 0.64), Vector2(300.0, 100.0))
 	soundtrack_toast.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	soundtrack_toast.offset_left = -690.0
@@ -1651,11 +1981,11 @@ func _refresh_layout() -> void:
 		top_right_stack.offset_bottom = -10.0
 
 	if compact_summary_panel != null:
-		compact_summary_panel.custom_minimum_size = Vector2(stack_width, 188.0)
+		compact_summary_panel.custom_minimum_size = Vector2(stack_width, 218.0)
 	if callout_panel != null:
 		callout_panel.custom_minimum_size = Vector2(stack_width, 92.0 if compact_layout else 88.0)
 	if objective_panel != null:
-		objective_panel.custom_minimum_size = Vector2(stack_width, 136.0)
+		objective_panel.custom_minimum_size = Vector2(stack_width, 230.0)
 	if skills_panel != null:
 		skills_panel.custom_minimum_size = Vector2(
 			stack_width,
@@ -1708,6 +2038,14 @@ func _refresh_layout() -> void:
 		banner_label.offset_top = 82.0 if compact_layout else 86.0
 		banner_label.offset_bottom = banner_label.offset_top + 64.0
 
+	if reveal_panel != null:
+		var reveal_width := minf(viewport_size.x - 120.0, 720.0 if not compact_layout else 600.0)
+		var reveal_half_width := reveal_width * 0.5
+		reveal_panel.offset_left = -reveal_half_width
+		reveal_panel.offset_right = reveal_half_width
+		reveal_panel.offset_top = -146.0 if compact_layout else -164.0
+		reveal_panel.offset_bottom = -30.0 if compact_layout else -16.0
+
 	if soundtrack_toast != null:
 		var toast_width := 280.0
 		soundtrack_toast.offset_left = -toast_width
@@ -1753,6 +2091,7 @@ func show_map_overlay(snapshot: Dictionary) -> void:
 	if map_overlay == null or map_canvas == null:
 		return
 	overlay_label.visible = false
+	_hide_reveal()
 	map_canvas.set_snapshot(snapshot)
 	map_summary_label.text = _localize_text(String(snapshot.get("summary", "敌群 0  ·  砚台 0  ·  草丛 0")))
 	_update_map_zoom_label()
@@ -2389,6 +2728,22 @@ func _make_compact_skill_chip(glyph: String, title: String, level: String, color
 	return chip
 
 
+func _make_route_tag_chip(text: String, accent: Color) -> PanelContainer:
+	var chip := PanelContainer.new()
+	chip.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.16, accent.g * 0.16, accent.b * 0.2, 0.9), Color(accent.r, accent.g, accent.b, 0.42), 16))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 10)
+	margin.add_theme_constant_override("margin_top", 6)
+	margin.add_theme_constant_override("margin_right", 10)
+	margin.add_theme_constant_override("margin_bottom", 6)
+	chip.add_child(margin)
+
+	var label := _make_label(text, 13, Color(0.98, 0.95, 0.88, 0.98))
+	margin.add_child(label)
+	return chip
+
+
 func _make_event_log_row(text: String, color: Color, compact: bool = false, placeholder: bool = false) -> PanelContainer:
 	var panel := PanelContainer.new()
 	panel.custom_minimum_size = Vector2(0.0, 32.0 if compact else 38.0)
@@ -2577,3 +2932,10 @@ func _apply_soundtrack_style(panel: PanelContainer, accent: Color, fill_alpha: f
 			22
 		)
 	)
+
+
+func _hide_reveal() -> void:
+	reveal_time = 0.0
+	reveal_duration = 0.0
+	if reveal_panel != null:
+		reveal_panel.visible = false

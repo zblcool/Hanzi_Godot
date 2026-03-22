@@ -1525,6 +1525,14 @@ func _set_recipe_level(recipe_id: String, new_level: int) -> void:
 	var recipe: Dictionary = _localized_recipe_data(recipe_id)
 	if new_level == 1:
 		hud.show_banner(("Glyph Formed  %s" if _is_english() else "合字成型  %s") % String(recipe["display"]), recipe["color"], 2.3)
+		hud.show_reveal(
+			"Glyph Formed" if _is_english() else "合字成型",
+			String(recipe["title"]),
+			String(recipe["description"]),
+			Color(recipe["color"]),
+			String(recipe["display"]),
+			2.6
+		)
 		_log_battle_event(("Glyph Formed · %s" if _is_english() else "合字成型 · %s") % String(recipe["display"]), Color(recipe["color"]))
 		if not first_recipe_callout_shown:
 			first_recipe_callout_shown = true
@@ -1540,6 +1548,14 @@ func _set_word_level(word_id: String, new_level: int) -> void:
 	var word: Dictionary = _localized_word_data(word_id)
 	if new_level == 1:
 		hud.show_banner(("Phrase Art Formed  %s" if _is_english() else "词技成型  %s") % String(word["display"]), word["color"], 2.5)
+		hud.show_reveal(
+			"Phrase Art Formed" if _is_english() else "词技成型",
+			String(word["title"]),
+			String(word["description"]),
+			Color(word["color"]),
+			String(word["display"]),
+			2.9
+		)
 		_log_battle_event(("Phrase Art Formed · %s" if _is_english() else "词技成型 · %s") % String(word["display"]), Color(word["color"]))
 		if not first_word_callout_shown:
 			first_word_callout_shown = true
@@ -2149,6 +2165,14 @@ func _set_field_phase_for_wave(wave: int, announce: bool = true) -> void:
 	if hud != null:
 		var localized_theme := _localized_field_phase_theme(next_theme)
 		hud.show_banner(("Realm Shift · %s" if _is_english() else "字境相变 · %s") % String(localized_theme.get("name", "Realm" if _is_english() else "字境")), Color(next_theme.get("accent", Color(1.0, 1.0, 1.0, 1.0))), 2.6)
+		hud.show_reveal(
+			"Realm Shift" if _is_english() else "字境相变",
+			String(localized_theme.get("name", "Realm" if _is_english() else "字境")),
+			String(localized_theme.get("tip", "")),
+			Color(next_theme.get("accent", Color(1.0, 1.0, 1.0, 1.0))),
+			next_glyph,
+			3.0
+		)
 		hud.set_tip(("Wave %d enters %s. %s" if _is_english() else "第 %d 波切入%s。%s") % [wave, String(localized_theme.get("name", "Realm" if _is_english() else "字境")), String(localized_theme.get("tip", ""))])
 		_log_battle_event(("Realm Shift · %s" if _is_english() else "字境相变 · %s") % String(localized_theme.get("name", "Realm" if _is_english() else "字境")), Color(next_theme.get("accent", Color(1.0, 1.0, 1.0, 1.0))))
 	var soundtrack_track: String = current_soundtrack_id if not current_soundtrack_id.is_empty() else "mosslightCanopy"

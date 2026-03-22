@@ -31,8 +31,9 @@ Status legend:
 - `[done]` Theme toggle parity inside the menu layer. Notes: source launcher/menu surfaces share the remembered paper-ink theme; Godot Zihai menu and its overlays now inherit the same `夜墨 / 纸墨` preference and expose a matching top-bar toggle.
 - `[done]` Language toggle parity inside the menu layer. Notes: the Godot Zihai menu now remembers the same `中 / EN` preference, exposes a working runtime toggle, and translates the hero/front-end menu flow instead of keeping a dead placeholder pill.
 - `[done]` Menu-side leaderboard build snapshots. Notes: hanziHero's menu leaderboard cards surface build lanes and kill mix; Godot menu leaderboard now appends `偏旁 / 成字 / 词技 / 击倒` 摘要 under each entry instead of stopping at flat score lines.
+- `[done]` Menu-side leaderboard sorting controls. Notes: hanziHero's source leaderboard can pivot between wave, kills, and survival-time ordering; Godot now mirrors that in the menu overlay while also surfacing level inline with each run summary.
 - `[done]` Source build-route preview cards in menu and archive. Notes: hanziHero's web front-end already frames route-choice archetypes like `墨守流 / 雷阵流 / 游侠流 / 烈笔流`; Godot now mirrors that with hero-specific `源稿构筑方向` preview cards in the menu detail panel and 人物志, while clearly marking them as front-end guidance rather than actual runtime route bias.
-- `[in progress]` More menu-side build and progression surfacing beyond leaderboard snapshots. Notes: Godot now combines the richer hero dossier with actual `起笔落点` cues, source-side `源稿字技` preview, `残卷路线` cards, source route-preview cards, paired `源稿遗物 / 词技` route chips in both the menu detail panel and 人物志, inline hero-card reactions/selected state, and a remembered zh/en front-end toggle; deeper battle-side parity and true route-bias mechanics still remain.
+- `[in progress]` More menu-side build and progression surfacing beyond leaderboard snapshots. Notes: Godot now combines the richer hero dossier with actual `起笔落点` cues, source-side `源稿字技` preview, `残卷路线` cards, source route-preview cards, paired `源稿遗物 / 词技` route chips in both the menu detail panel and 人物志, inline hero-card reactions/selected state, source-style leaderboard sort toggles, a remembered zh/en front-end toggle, and a matching battle-side route reminder; true route-bias mechanics still remain.
 
 ## Battle HUD
 
@@ -44,6 +45,7 @@ Status legend:
 - `[done]` Music track toast and soundtrack UI. Notes: hanziHero shows the active procedural track name and mood; Godot battle HUD now carries a matching `战场乐题` card plus a top-right `配乐提示` toast that reuses the source track names and mood text on key battle beats.
 - `[done]` Phrase / event log panel. Notes: Godot battle HUD now keeps a dedicated `战报` panel that records wave pushes, realm shifts, boss beats, recipe/word upgrades, and pickup highlights, with a compact mobile-safe variant for smaller screens.
 - `[done]` Bilingual HUD copy. Notes: source battle UI can switch zh/en; Godot battle HUD, pause/result overlays, map labels, soundtrack card, and key battle-side banner/tip copy now follow the remembered `中 / EN` runtime language toggle.
+- `[done]` Battle-side source build-route reminder. Notes: hanziHero keeps the current route visible in the battle-side build context; Godot now mirrors that in the HUD objective card and compact summary by surfacing the closest source route, current progression stage, and matching tags without introducing live route-bias mechanics.
 
 ## Combat Systems
 
@@ -82,7 +84,7 @@ Status legend:
 - `[pending]` Procedural music playback and current-track feedback. Notes: Godot now has the HUD-side track card and toast, but actual procedural playback / loop rotation is still missing.
 - `[pending]` Higher-end hit/audio differentiation. Notes: hanziHero has more layered weapon/skill sound identity and lingering glyph afterimages; Godot feedback can be pushed further.
 - `[done]` Themeable launcher/menu presentation. Notes: Godot launcher, about overlay, and Zihai menu now share the remembered `夜墨 / 纸墨` presentation; battle/HUD localization and broader downstream parity remain tracked separately.
-- `[pending]` More stage spectacle for big unlocks and transitions. Notes: source leans harder into large character/word reveal moments and evolving battlefield mood.
+- `[in progress]` More stage spectacle for big unlocks and transitions. Notes: Godot battle HUD now adds a larger reveal card for new glyphs, phrase arts, and `字境相变`, but boss/chapter beats and other late-run flourishes can still be pushed further.
 
 ## Export
 

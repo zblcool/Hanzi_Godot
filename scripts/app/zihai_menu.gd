@@ -53,6 +53,7 @@ const MENU_EN_TEXT := {
 	"文本直接取自当前 Godot 迁移版的角色数据，不额外编造尚未落地的职业或成长线。": "The text comes directly from the current Godot migration data and does not invent classes or growth lines that are not implemented yet.",
 	"残卷战绩": "Run Records",
 	"现在可以在二级菜单里直接查看本地排行榜，并顺手回看每局 build 走向，不必先打到结算页。": "You can now inspect the local leaderboard directly from the sub-menu and review each build path without first reaching the result screen.",
+	"当前可以按波次、击破或存活重新排序，更接近 source web 原型里回看不同 build 结果的方式。": "You can now resort by wave, kills, or survival time, closer to how the source web prototype reviews different build outcomes.",
 	"像 source web 原型一样，先在菜单里维护这台设备的默认排行榜署名。结算页留空时，会自动复用这里的名字。": "Just like the source web prototype, keep the default leaderboard alias for this device inside the menu. Result screens reuse it automatically when left blank.",
 	"当前署名": "Current Alias",
 	"默认排行榜署名": "Default Leaderboard Alias",
@@ -124,7 +125,11 @@ var leaderboard_summary_label: Label
 var leaderboard_body_label: Label
 var leaderboard_manual_button: Button
 var leaderboard_test_button: Button
+var leaderboard_sort_wave_button: Button
+var leaderboard_sort_kills_button: Button
+var leaderboard_sort_time_button: Button
 var leaderboard_view: String = "manual"
+var leaderboard_sort: String = "wave"
 var profile_overlay: Control
 var profile_name_input: LineEdit
 var profile_status_label: Label
@@ -265,6 +270,9 @@ func _rebuild_ui() -> void:
 	leaderboard_body_label = null
 	leaderboard_manual_button = null
 	leaderboard_test_button = null
+	leaderboard_sort_wave_button = null
+	leaderboard_sort_kills_button = null
+	leaderboard_sort_time_button = null
 	profile_overlay = null
 	profile_name_input = null
 	profile_status_label = null
@@ -1386,6 +1394,27 @@ func _build_leaderboard_overlay() -> void:
 	leaderboard_test_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	switch_row.add_child(leaderboard_test_button)
 
+	var sort_shell := VBoxContainer.new()
+	sort_shell.add_theme_constant_override("separation", _i(10))
+	box.add_child(sort_shell)
+	sort_shell.add_child(_make_label("当前可以按波次、击破或存活重新排序，更接近 source web 原型里回看不同 build 结果的方式。", 16, Color(0.82, 0.9, 1.0, 0.9)))
+
+	var sort_row: BoxContainer = VBoxContainer.new() if portrait_layout else HBoxContainer.new()
+	sort_row.add_theme_constant_override("separation", _i(10))
+	sort_shell.add_child(sort_row)
+
+	leaderboard_sort_wave_button = _make_pill_button("按波次", _v(0.0, 46.0), Callable(self, "_on_leaderboard_sort_wave_pressed"))
+	leaderboard_sort_wave_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	sort_row.add_child(leaderboard_sort_wave_button)
+
+	leaderboard_sort_kills_button = _make_pill_button("按击破", _v(0.0, 46.0), Callable(self, "_on_leaderboard_sort_kills_pressed"))
+	leaderboard_sort_kills_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	sort_row.add_child(leaderboard_sort_kills_button)
+
+	leaderboard_sort_time_button = _make_pill_button("按存活", _v(0.0, 46.0), Callable(self, "_on_leaderboard_sort_time_pressed"))
+	leaderboard_sort_time_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	sort_row.add_child(leaderboard_sort_time_button)
+
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -2190,9 +2219,10 @@ func _populate_character_archive_cards() -> void:
 		character_archive_cards_root.add_child(_make_character_archive_card(hero))
 
 
-func _build_local_leaderboard_text(view: String = "manual", limit: int = 8) -> String:
+func _build_local_leaderboard_text(view: String = "manual", limit: int = 8, sort: String = "wave") -> String:
 	var normalized_view := _normalize_leaderboard_view(view)
-	var entries: Array[Dictionary] = Session.get_local_leaderboard(limit, normalized_view)
+	var normalized_sort := _normalize_leaderboard_sort(sort)
+	var entries: Array[Dictionary] = _get_local_leaderboard_overlay_entries(normalized_view, normalized_sort, limit)
 	if entries.is_empty():
 		if normalized_view == "test":
 			return "There are no test-run records yet. Use the wave 10 or wave 20 shortcut once and this board will fill in separately." if _is_english() else "当前还没有试阵记录。用第 10 / 20 波捷径打一轮后，这里会单独留下试阵榜。"
@@ -2203,6 +2233,7 @@ func _build_local_leaderboard_text(view: String = "manual", limit: int = 8) -> S
 		lines.append("Test runs keep wave 10 and wave 20 shortcuts on a separate board." if _is_english() else "试阵榜会单独记录第 10 / 20 波捷径，不与主卷榜混排。")
 	else:
 		lines.append("The main-scroll board only tracks full runs that begin at wave 1." if _is_english() else "主卷榜只统计从第 1 波真正开卷的正式战绩。")
+	lines.append("Sorted by %s." % _get_leaderboard_sort_summary_label(normalized_sort) if _is_english() else "当前排序：%s。" % _get_leaderboard_sort_summary_label(normalized_sort))
 	lines.append("")
 	for index in range(entries.size()):
 		var entry: Dictionary = entries[index]
@@ -2212,9 +2243,10 @@ func _build_local_leaderboard_text(view: String = "manual", limit: int = 8) -> S
 		var bosses_label := "Bosses" if _is_english() else "卷主"
 		var threat_label := "Wave" if _is_english() else "波次"
 		var kills_label := "Kills" if _is_english() else "击破"
+		var level_label := "Level" if _is_english() else "等级"
 		var elapsed_label := "Time" if _is_english() else "存活"
 		lines.append(
-			"%d. %s  %s  %s %d  %s %d  %s %d  %s %s" % [
+			"%d. %s  %s  %s %d  %s %d  %s %d  %s %d  %s %s" % [
 				index + 1,
 				_format_leaderboard_identity(entry),
 				run_label,
@@ -2224,6 +2256,8 @@ func _build_local_leaderboard_text(view: String = "manual", limit: int = 8) -> S
 				int(entry.get("threat", 1)),
 				kills_label,
 				int(entry.get("kills", 0)),
+				level_label,
+				int(entry.get("level", 1)),
 				elapsed_label,
 				_format_elapsed(float(entry.get("elapsed", 0.0)))
 			]
@@ -2249,15 +2283,19 @@ func _refresh_leaderboard_overlay() -> void:
 		leaderboard_view = "test"
 	else:
 		leaderboard_view = _normalize_leaderboard_view(leaderboard_view)
+	leaderboard_sort = _normalize_leaderboard_sort(leaderboard_sort)
 
 	if leaderboard_view == "test":
-		leaderboard_summary_label.text = "The test board keeps wave 10 and wave 20 shortcuts separate so you can inspect enemy mixes, builds, and HUD behavior. Each entry also lists the run's radicals, glyphs, phrase arts, and kill spread." if _is_english() else "试阵榜单独收录第 10 / 20 波捷径，方便检查敌潮、build 与 HUD；每条记录下方也会补充本轮偏旁 / 成字 / 词技与击倒构成。"
+		leaderboard_summary_label.text = "The test board keeps wave 10 and wave 20 shortcuts separate so you can inspect enemy mixes, builds, and HUD behavior. It now also pivots between wave, kills, and survival-time ordering so route checks read closer to the source leaderboard." if _is_english() else "试阵榜单独收录第 10 / 20 波捷径，方便检查敌潮、build 与 HUD；现在也能在波次 / 击破 / 存活三种排序之间切换，更接近 source 榜单的回看方式。"
 	else:
-		leaderboard_summary_label.text = "The main-scroll board only keeps real runs that start from wave 1. Each entry also shows radicals, glyphs, phrase arts, and the main kill spread so you can review build direction before the next run." if _is_english() else "主卷榜只收从第 1 波真正开卷的战绩；条目下方会顺带标出偏旁 / 成字 / 词技和主要击倒构成，方便开局前回看 build 方向。"
+		leaderboard_summary_label.text = "The main-scroll board only keeps real runs that start from wave 1. It now also pivots between wave, kills, and survival-time ordering so you can review route outcomes from different angles before the next run." if _is_english() else "主卷榜只收从第 1 波真正开卷的战绩；现在也能在波次 / 击破 / 存活三种排序之间切换，开局前可以从不同角度回看 route 成果。"
 
-	leaderboard_body_label.text = _build_local_leaderboard_text(leaderboard_view, 8)
+	leaderboard_body_label.text = _build_local_leaderboard_text(leaderboard_view, 8, leaderboard_sort)
 	_apply_leaderboard_view_button(leaderboard_manual_button, "Main Board" if _is_english() else "主卷榜", manual_count, leaderboard_view == "manual")
 	_apply_leaderboard_view_button(leaderboard_test_button, "Test Board" if _is_english() else "试阵榜", test_count, leaderboard_view == "test")
+	_apply_leaderboard_sort_button(leaderboard_sort_wave_button, "Wave" if _is_english() else "按波次", leaderboard_sort == "wave")
+	_apply_leaderboard_sort_button(leaderboard_sort_kills_button, "Kills" if _is_english() else "按击破", leaderboard_sort == "kills")
+	_apply_leaderboard_sort_button(leaderboard_sort_time_button, "Time" if _is_english() else "按存活", leaderboard_sort == "time")
 
 
 func _apply_leaderboard_view_button(button: Button, title: String, count: int, active: bool) -> void:
@@ -2275,6 +2313,122 @@ func _apply_leaderboard_view_button(button: Button, title: String, count: int, a
 		button.add_theme_stylebox_override("normal", _make_panel_style(Color(0.04, 0.06, 0.08, 0.78), Color(0.2, 0.26, 0.32, 0.54)))
 		button.add_theme_stylebox_override("hover", _make_panel_style(Color(0.08, 0.1, 0.12, 0.84), Color(0.92, 0.68, 0.42, 0.44)))
 		button.add_theme_stylebox_override("pressed", _make_panel_style(Color(0.08, 0.1, 0.12, 0.88), Color(0.92, 0.68, 0.42, 0.62)))
+
+
+func _apply_leaderboard_sort_button(button: Button, title: String, active: bool) -> void:
+	if button == null:
+		return
+
+	button.text = title
+	if active:
+		button.add_theme_color_override("font_color", _resolve_label_color(Color(0.06, 0.08, 0.1, 1.0)))
+		button.add_theme_stylebox_override("normal", _make_button_style(Color(0.58, 0.82, 0.94, 1.0)))
+		button.add_theme_stylebox_override("hover", _make_button_style(Color(0.66, 0.88, 0.98, 1.0)))
+		button.add_theme_stylebox_override("pressed", _make_button_style(Color(0.46, 0.72, 0.84, 1.0)))
+	else:
+		button.add_theme_color_override("font_color", _resolve_label_color(Color(0.96, 0.92, 0.86, 0.98)))
+		button.add_theme_stylebox_override("normal", _make_panel_style(Color(0.04, 0.06, 0.08, 0.78), Color(0.24, 0.34, 0.42, 0.54)))
+		button.add_theme_stylebox_override("hover", _make_panel_style(Color(0.08, 0.1, 0.12, 0.84), Color(0.58, 0.82, 0.94, 0.44)))
+		button.add_theme_stylebox_override("pressed", _make_panel_style(Color(0.08, 0.1, 0.12, 0.88), Color(0.58, 0.82, 0.94, 0.62)))
+
+
+func _normalize_leaderboard_sort(sort: String) -> String:
+	if sort == "kills" or sort == "time":
+		return sort
+	return "wave"
+
+
+func _get_leaderboard_sort_summary_label(sort: String) -> String:
+	match _normalize_leaderboard_sort(sort):
+		"kills":
+			return "kills" if _is_english() else "按击破优先"
+		"time":
+			return "survival time" if _is_english() else "按存活优先"
+		_:
+			return "wave" if _is_english() else "按波次优先"
+
+
+func _get_local_leaderboard_overlay_entries(view: String, sort: String, limit: int = 8) -> Array[Dictionary]:
+	var normalized_view := _normalize_leaderboard_view(view)
+	var normalized_sort := _normalize_leaderboard_sort(sort)
+	var entries: Array[Dictionary] = []
+	for entry in Session.get_local_leaderboard(Session.LOCAL_LEADERBOARD_LIMIT, normalized_view):
+		entries.append(entry.duplicate(true))
+	entries.sort_custom(func(left: Dictionary, right: Dictionary) -> bool:
+		return _compare_leaderboard_overlay_entries(left, right, normalized_sort)
+	)
+	if limit > 0 and entries.size() > limit:
+		entries.resize(limit)
+	return entries
+
+
+func _compare_leaderboard_overlay_entries(left: Dictionary, right: Dictionary, sort: String) -> bool:
+	var normalized_sort := _normalize_leaderboard_sort(sort)
+	if normalized_sort == "kills":
+		var left_kills := int(left.get("kills", 0))
+		var right_kills := int(right.get("kills", 0))
+		if left_kills != right_kills:
+			return left_kills > right_kills
+		var left_threat := int(left.get("threat", 1))
+		var right_threat := int(right.get("threat", 1))
+		if left_threat != right_threat:
+			return left_threat > right_threat
+		var left_level := int(left.get("level", 1))
+		var right_level := int(right.get("level", 1))
+		if left_level != right_level:
+			return left_level > right_level
+		var left_elapsed := float(left.get("elapsed", 0.0))
+		var right_elapsed := float(right.get("elapsed", 0.0))
+		if not is_equal_approx(left_elapsed, right_elapsed):
+			return left_elapsed > right_elapsed
+		return _compare_leaderboard_overlay_entries_default(left, right)
+	if normalized_sort == "time":
+		var left_elapsed_time := float(left.get("elapsed", 0.0))
+		var right_elapsed_time := float(right.get("elapsed", 0.0))
+		if not is_equal_approx(left_elapsed_time, right_elapsed_time):
+			return left_elapsed_time > right_elapsed_time
+		var left_threat_time := int(left.get("threat", 1))
+		var right_threat_time := int(right.get("threat", 1))
+		if left_threat_time != right_threat_time:
+			return left_threat_time > right_threat_time
+		var left_kills_time := int(left.get("kills", 0))
+		var right_kills_time := int(right.get("kills", 0))
+		if left_kills_time != right_kills_time:
+			return left_kills_time > right_kills_time
+		var left_level_time := int(left.get("level", 1))
+		var right_level_time := int(right.get("level", 1))
+		if left_level_time != right_level_time:
+			return left_level_time > right_level_time
+	return _compare_leaderboard_overlay_entries_default(left, right)
+
+
+func _compare_leaderboard_overlay_entries_default(left: Dictionary, right: Dictionary) -> bool:
+	var left_complete: bool = bool(left.get("chapter_complete", false))
+	var right_complete: bool = bool(right.get("chapter_complete", false))
+	if left_complete != right_complete:
+		return left_complete and not right_complete
+
+	var left_bosses: int = int(left.get("bosses", 0))
+	var right_bosses: int = int(right.get("bosses", 0))
+	if left_bosses != right_bosses:
+		return left_bosses > right_bosses
+
+	var left_threat: int = int(left.get("threat", 1))
+	var right_threat: int = int(right.get("threat", 1))
+	if left_threat != right_threat:
+		return left_threat > right_threat
+
+	var left_kills: int = int(left.get("kills", 0))
+	var right_kills: int = int(right.get("kills", 0))
+	if left_kills != right_kills:
+		return left_kills > right_kills
+
+	var left_elapsed: float = float(left.get("elapsed", 0.0))
+	var right_elapsed: float = float(right.get("elapsed", 0.0))
+	if not is_equal_approx(left_elapsed, right_elapsed):
+		return left_elapsed > right_elapsed
+
+	return int(left.get("recorded_at", 0)) > int(right.get("recorded_at", 0))
 
 
 func _format_leaderboard_identity(entry: Dictionary) -> String:
@@ -2461,6 +2615,21 @@ func _on_leaderboard_manual_pressed() -> void:
 
 func _on_leaderboard_test_pressed() -> void:
 	leaderboard_view = "test"
+	_refresh_leaderboard_overlay()
+
+
+func _on_leaderboard_sort_wave_pressed() -> void:
+	leaderboard_sort = "wave"
+	_refresh_leaderboard_overlay()
+
+
+func _on_leaderboard_sort_kills_pressed() -> void:
+	leaderboard_sort = "kills"
+	_refresh_leaderboard_overlay()
+
+
+func _on_leaderboard_sort_time_pressed() -> void:
+	leaderboard_sort = "time"
 	_refresh_leaderboard_overlay()
 
 
