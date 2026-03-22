@@ -1,6 +1,6 @@
 # Godot Migration Checklist
 
-Last refreshed: 2026-03-22
+Last refreshed: 2026-03-23
 
 Status legend:
 - `[done]` already matches or has a solid Godot replacement
@@ -38,6 +38,7 @@ Status legend:
 ## Battle HUD
 
 - `[done]` Pause overlay, restart / return actions, and local leaderboard access. Notes: hanziHero exposes pause plus result-side leaderboard views; Godot now keeps the active source route reminder, progression stage, and current build counts visible in both pause and result overlays while preserving post-run naming/editing for local records.
+- `[done]` In-world hero health bar above the player model. Notes: hanziHero keeps survival state visible above the actor so low HUD density or mobile play does not hide danger; Godot now mirrors that with a persistent floating health bar over the current hero while keeping the existing corner HUD bars.
 - `[done]` Map modal with fog-of-war, drag, zoom, legend, and exploration summary. Notes: source has a modal map with zoom/drag/legend; Godot now has a close equivalent.
 - `[done]` Mobile joystick, touch interact, pause button, and landscape guard. Notes: hanziHero mobile battle flow depends on these protections; Godot already has matching control coverage.
 - `[done]` First runtime settings / LOD panel slice. Notes: Godot pause overlay now exposes a low-risk `战场布置` panel with remembered performance preset, enemy health bar toggle, and ambient glyph density controls, covering the first practical slice of hanziHero's settings modal.

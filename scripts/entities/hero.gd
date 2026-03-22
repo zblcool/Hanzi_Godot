@@ -88,6 +88,13 @@ var visual_root: Node3D
 var torso_root: Node3D
 var glyph_root: Node3D
 var glyph_label: Label3D
+var health_bar_root: Node3D
+var health_bar_back_material: StandardMaterial3D
+var health_bar_fill_material: StandardMaterial3D
+var health_bar_back_node: MeshInstance3D
+var health_bar_fill_node: MeshInstance3D
+var health_bar_width: float = 1.38
+var health_bar_fill_width: float = 1.3
 var shoulder_left_mesh: MeshInstance3D
 var shoulder_right_mesh: MeshInstance3D
 var left_arm_mesh: MeshInstance3D
@@ -127,6 +134,7 @@ func _ready() -> void:
 	add_to_group("player")
 	_build_visuals()
 	_apply_skill_levels()
+	_update_visual_state()
 	health_changed.emit(health, max_health)
 	set_physics_process(true)
 
@@ -609,6 +617,7 @@ func _build_visuals() -> void:
 		weapon_root.add_child(brush_tip)
 
 	_build_glyph_badge("文" if role == "ranged" else "侠")
+	_build_health_bar()
 
 
 func _update_visual_state() -> void:
@@ -650,6 +659,7 @@ func _update_visual_state() -> void:
 	if glyph_root != null:
 		glyph_root.position.y = 2.58 + sin(motion_time * 1.2 + 0.6) * 0.05
 		glyph_root.rotation_degrees.y = wrapf(glyph_root.rotation_degrees.y + (0.4 + move_blend * 1.6), 0.0, 360.0)
+	_update_health_bar()
 
 	var gait: float = sin(motion_time * 1.8) * 18.0 * move_blend
 	var sway: float = sin(motion_time * 0.9) * 4.5 * (0.3 + move_blend)
@@ -703,6 +713,17 @@ func _make_material(color: Color) -> StandardMaterial3D:
 	return material
 
 
+func _make_bar_material(color: Color) -> StandardMaterial3D:
+	var material := StandardMaterial3D.new()
+	material.albedo_color = color
+	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	material.emission_enabled = true
+	material.emission = Color(color.r * 0.22, color.g * 0.22, color.b * 0.22, 1.0)
+	return material
+
+
 func _build_glyph_badge(symbol: String) -> void:
 	glyph_root = Node3D.new()
 	glyph_root.position = Vector3(0.0, 2.58, 0.0)
@@ -749,6 +770,82 @@ func _build_glyph_badge(symbol: String) -> void:
 	glyph_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	glyph_label.modulate = Color(1.0, 0.95, 0.84, 0.98)
 	glyph_root.add_child(glyph_label)
+
+
+func _build_health_bar() -> void:
+	health_bar_width = 1.46 if role == "melee" else 1.38
+	health_bar_fill_width = health_bar_width - 0.08
+	health_bar_root = Node3D.new()
+	health_bar_root.position = Vector3(0.0, _health_bar_height(), 0.0)
+	health_bar_root.rotation_degrees.x = -58.0
+	visual_root.add_child(health_bar_root)
+
+	var frame_material := _make_bar_material(Color(0.96, 0.92, 0.84, 0.78))
+	health_bar_back_material = _make_bar_material(Color(0.13, 0.09, 0.08, 0.92))
+	health_bar_fill_material = _make_bar_material(Color(0.78, 0.34, 0.31, 0.98))
+
+	var frame := MeshInstance3D.new()
+	var frame_mesh := BoxMesh.new()
+	frame_mesh.size = Vector3(health_bar_width + 0.12, 0.16, 0.04)
+	frame.mesh = frame_mesh
+	frame.material_override = frame_material
+	health_bar_root.add_child(frame)
+
+	health_bar_back_node = MeshInstance3D.new()
+	var back_mesh := BoxMesh.new()
+	back_mesh.size = Vector3(health_bar_width, 0.1, 0.05)
+	health_bar_back_node.mesh = back_mesh
+	health_bar_back_node.position = Vector3(0.0, 0.0, -0.01)
+	health_bar_back_node.material_override = health_bar_back_material
+	health_bar_root.add_child(health_bar_back_node)
+
+	health_bar_fill_node = MeshInstance3D.new()
+	var fill_mesh := BoxMesh.new()
+	fill_mesh.size = Vector3(health_bar_fill_width, 0.06, 0.06)
+	health_bar_fill_node.mesh = fill_mesh
+	health_bar_fill_node.position = Vector3(0.0, 0.0, -0.02)
+	health_bar_fill_node.material_override = health_bar_fill_material
+	health_bar_root.add_child(health_bar_fill_node)
+
+
+func _update_health_bar() -> void:
+	if health_bar_root == null or health_bar_fill_node == null or health_bar_fill_material == null or health_bar_back_material == null:
+		return
+
+	if is_dead:
+		health_bar_root.visible = false
+		return
+
+	var ratio: float = clamp(health / max(max_health, 0.001), 0.0, 1.0)
+	health_bar_root.visible = true
+	health_bar_root.position.y = _health_bar_height() + (0.18 if stun_time > 0.0 else 0.0)
+	health_bar_root.rotation_degrees = Vector3(-58.0, -rotation_degrees.y, 0.0)
+	var low_health_pulse: float = 0.0
+	if ratio <= 0.35:
+		low_health_pulse = (sin(motion_time * 5.8) * 0.5 + 0.5) * 0.08
+	health_bar_root.scale = Vector3.ONE * (1.0 + low_health_pulse)
+
+	health_bar_fill_node.visible = ratio > 0.001
+	health_bar_fill_node.scale.x = max(ratio, 0.001)
+	health_bar_fill_node.position.x = -health_bar_fill_width * (1.0 - ratio) * 0.5
+
+	var fill_color := Color(0.82, 0.38, 0.31, 0.98)
+	if ratio <= 0.3:
+		fill_color = Color(0.9, 0.28, 0.24, 0.98)
+	elif ratio >= 0.7:
+		fill_color = Color(0.74, 0.36, 0.3, 0.98)
+	if resolve_active:
+		fill_color = fill_color.lerp(accent_color.lightened(0.18), 0.22)
+	if invulnerability_time > 0.0:
+		fill_color = fill_color.lightened(0.12)
+	health_bar_fill_material.albedo_color = fill_color
+	health_bar_fill_material.emission = Color(fill_color.r * 0.24, fill_color.g * 0.24, fill_color.b * 0.24, 1.0)
+	health_bar_back_material.albedo_color = Color(0.13, 0.09, 0.08, 0.92 if ratio < 0.999 else 0.84)
+	health_bar_back_material.emission = Color(0.04, 0.03, 0.03, 1.0)
+
+
+func _health_bar_height() -> float:
+	return 2.38 if role == "melee" else 2.24
 
 
 func _add_box_part(parent: Node3D, size: Vector3, box_position: Vector3, material: Material) -> MeshInstance3D:
