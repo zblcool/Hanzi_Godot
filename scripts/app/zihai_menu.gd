@@ -254,6 +254,7 @@ var transition_title_label: Label
 var transition_subtitle_label: Label
 var transition_busy: bool = false
 var reaction_time_remaining := 0.0
+var active_card_reaction_hero := ""
 
 
 func _ready() -> void:
@@ -297,6 +298,8 @@ func _process(delta: float) -> void:
 
 	if reaction_time_remaining > 0.0:
 		reaction_time_remaining = max(reaction_time_remaining - delta, 0.0)
+		if reaction_time_remaining <= 0.0 and not active_card_reaction_hero.is_empty():
+			_clear_card_reactions()
 	if detail_reaction_panel != null:
 		var emphasis: float = clampf(reaction_time_remaining / HERO_REACTION_DURATION, 0.0, 1.0)
 		detail_reaction_panel.modulate = Color(1.0, 1.0, 1.0, 0.84 + emphasis * 0.16)
@@ -348,6 +351,7 @@ func _rebuild_ui() -> void:
 	preview_motifs.clear()
 	hero_panels.clear()
 	detail_stat_widgets.clear()
+	active_card_reaction_hero = ""
 	detail_name_label = null
 	detail_desc_label = null
 	detail_weapon_label = null
@@ -926,7 +930,19 @@ func _make_hero_card(hero_id: String, hero_data: Dictionary) -> PanelContainer:
 	text_col.add_theme_constant_override("separation", _i(8))
 	row.add_child(text_col)
 
-	text_col.add_child(_make_label("%s  ·  %s" % [_localize_text(String(hero_data["name"])), _localize_text(String(hero_data["title"]))], 30, Color(1.0, 0.95, 0.86, 1.0)))
+	var title_row := HBoxContainer.new()
+	title_row.add_theme_constant_override("separation", _i(10))
+	text_col.add_child(title_row)
+
+	var title_label := _make_label("%s  ·  %s" % [_localize_text(String(hero_data["name"])), _localize_text(String(hero_data["title"]))], 30, Color(1.0, 0.95, 0.86, 1.0))
+	title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title_row.add_child(title_label)
+
+	var status_badge := _make_selected_badge(accent)
+	title_row.add_child(status_badge)
+	panel.set_meta("status_badge", status_badge)
+	panel.set_meta("status_badge_label", status_badge.get_meta("label"))
+
 	text_col.add_child(_make_label(String(hero_data["role_label"]), 18, accent))
 	text_col.add_child(_make_label(String(hero_data["description"]), 17, Color(0.91, 0.92, 0.9, 0.95)))
 
@@ -935,6 +951,12 @@ func _make_hero_card(hero_id: String, hero_data: Dictionary) -> PanelContainer:
 	text_col.add_child(tag_row)
 	for tag_text in hero_data["tags"]:
 		tag_row.add_child(_make_tag(String(tag_text), Color(accent.r * 0.16, accent.g * 0.16, accent.b * 0.2, 0.88), Color(0.98, 0.95, 0.9, 0.96)))
+
+	var reaction_panel := _make_card_reaction_bubble(accent)
+	reaction_panel.visible = false
+	text_col.add_child(reaction_panel)
+	panel.set_meta("reaction_panel", reaction_panel)
+	panel.set_meta("reaction_label", reaction_panel.get_meta("label"))
 
 	var spacer := Control.new()
 	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -948,6 +970,43 @@ func _make_hero_card(hero_id: String, hero_data: Dictionary) -> PanelContainer:
 	text_col.add_child(select_button)
 
 	return panel
+
+
+func _make_selected_badge(accent: Color) -> PanelContainer:
+	var badge := PanelContainer.new()
+	badge.visible = false
+	badge.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.16, accent.g * 0.16, accent.b * 0.22, 0.92), Color(accent.r, accent.g, accent.b, 0.26)))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", _i(12))
+	margin.add_theme_constant_override("margin_top", _i(6))
+	margin.add_theme_constant_override("margin_right", _i(12))
+	margin.add_theme_constant_override("margin_bottom", _i(6))
+	badge.add_child(margin)
+
+	var label := _make_label("", 14, Color(0.98, 0.95, 0.9, 0.98))
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	margin.add_child(label)
+	badge.set_meta("label", label)
+	return badge
+
+
+func _make_card_reaction_bubble(accent: Color) -> PanelContainer:
+	var bubble := PanelContainer.new()
+	bubble.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	bubble.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.12, accent.g * 0.12, accent.b * 0.16, 0.84), Color(accent.r, accent.g, accent.b, 0.24)))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", _i(14))
+	margin.add_theme_constant_override("margin_top", _i(12))
+	margin.add_theme_constant_override("margin_right", _i(14))
+	margin.add_theme_constant_override("margin_bottom", _i(12))
+	bubble.add_child(margin)
+
+	var label := _make_label("", 16, Color(0.98, 0.95, 0.9, 0.98))
+	margin.add_child(label)
+	bubble.set_meta("label", label)
+	return bubble
 
 
 func _build_card_preview(panel: PanelContainer, hero_data: Dictionary) -> void:
@@ -2713,6 +2772,12 @@ func _refresh_selection(trigger_reaction: bool = false) -> void:
 		var panel: PanelContainer = hero_panels[hero_id]
 		var hero_data: Dictionary = _localized_hero_data(hero_id)
 		panel.add_theme_stylebox_override("panel", _make_card_style(hero_id == selected_hero, hero_data["accent"]))
+		var status_badge: PanelContainer = panel.get_meta("status_badge", null) as PanelContainer
+		var status_badge_label: Label = panel.get_meta("status_badge_label", null) as Label
+		if status_badge_label != null:
+			status_badge_label.text = "Selected" if _is_english() else "已选中"
+		if status_badge != null:
+			status_badge.visible = hero_id == selected_hero
 
 	var selected_data: Dictionary = _localized_hero_data(selected_hero)
 	var accent: Color = selected_data["accent"]
@@ -2789,7 +2854,34 @@ func _show_hero_reaction(hero_id: String, hero_data: Dictionary) -> void:
 		)
 	)
 	detail_reaction_label.text = "“%s”" % _localize_text(quote)
+	_show_card_reaction(hero_id, quote, accent)
 	reaction_time_remaining = HERO_REACTION_DURATION
+
+
+func _show_card_reaction(hero_id: String, quote: String, accent: Color) -> void:
+	_clear_card_reactions()
+	var panel: PanelContainer = hero_panels.get(hero_id, null) as PanelContainer
+	if panel == null:
+		return
+	var reaction_panel: PanelContainer = panel.get_meta("reaction_panel", null) as PanelContainer
+	var reaction_label: Label = panel.get_meta("reaction_label", null) as Label
+	if reaction_panel == null or reaction_label == null:
+		return
+	reaction_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.12, accent.g * 0.12, accent.b * 0.16, 0.84), Color(accent.r, accent.g, accent.b, 0.24)))
+	reaction_label.text = "“%s”" % _localize_text(quote)
+	reaction_panel.visible = true
+	active_card_reaction_hero = hero_id
+
+
+func _clear_card_reactions() -> void:
+	active_card_reaction_hero = ""
+	for hero_panel_variant in hero_panels.values():
+		var panel: PanelContainer = hero_panel_variant as PanelContainer
+		if panel == null:
+			continue
+		var reaction_panel: PanelContainer = panel.get_meta("reaction_panel", null) as PanelContainer
+		if reaction_panel != null:
+			reaction_panel.visible = false
 
 
 func _consume_hero_quote(hero_id: String, hero_data: Dictionary) -> String:
