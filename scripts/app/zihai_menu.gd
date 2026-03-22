@@ -49,6 +49,7 @@ var detail_opening_radicals_row: Container
 var detail_source_skill_title_label: Label
 var detail_source_skill_body_label: Label
 var detail_progression_cards_root: VBoxContainer
+var detail_build_route_cards_root: VBoxContainer
 var detail_stat_widgets: Dictionary = {}
 var character_archive_overlay: Control
 var character_archive_cards_root: VBoxContainer
@@ -185,6 +186,7 @@ func _rebuild_ui() -> void:
 	detail_source_skill_title_label = null
 	detail_source_skill_body_label = null
 	detail_progression_cards_root = null
+	detail_build_route_cards_root = null
 	character_archive_overlay = null
 	character_archive_cards_root = null
 	recipe_atlas_overlay = null
@@ -605,6 +607,31 @@ func _build_ui() -> void:
 	detail_progression_cards_root = VBoxContainer.new()
 	detail_progression_cards_root.add_theme_constant_override("separation", _i(10))
 	progression_box.add_child(detail_progression_cards_root)
+	progression_box.add_child(_make_label("当前只先保留 web 原型的 build 顺序与路线提示，Godot 战斗内还没有真正的路线权重修正。", 15, Color(0.82, 0.9, 1.0, 0.88)))
+
+	var build_route_panel := PanelContainer.new()
+	build_route_panel.custom_minimum_size = _v(0.0, 224.0)
+	build_route_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.08, 0.12, 0.16, 0.72), Color(0.42, 0.68, 0.86, 0.34)))
+	detail_box.add_child(build_route_panel)
+
+	var build_route_margin := MarginContainer.new()
+	build_route_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	build_route_margin.add_theme_constant_override("margin_left", _i(16))
+	build_route_margin.add_theme_constant_override("margin_top", _i(16))
+	build_route_margin.add_theme_constant_override("margin_right", _i(16))
+	build_route_margin.add_theme_constant_override("margin_bottom", _i(16))
+	build_route_panel.add_child(build_route_margin)
+
+	var build_route_box := VBoxContainer.new()
+	build_route_box.add_theme_constant_override("separation", _i(10))
+	build_route_margin.add_child(build_route_box)
+	build_route_box.add_child(_make_label("源稿构筑方向", 22, Color(1.0, 0.92, 0.8, 1.0)))
+	build_route_box.add_child(_make_label("把 web 原型里更偏向的构筑方向先压缩成菜单预览，开局前更容易决定这局想往哪边写。", 16, Color(0.88, 0.92, 0.96, 0.94)))
+
+	detail_build_route_cards_root = VBoxContainer.new()
+	detail_build_route_cards_root.add_theme_constant_override("separation", _i(10))
+	build_route_box.add_child(detail_build_route_cards_root)
+	build_route_box.add_child(_make_label("这些卡片当前只负责前台提示，不会在 Godot 战斗里额外改掉落权重或自动加成。", 15, Color(0.82, 0.9, 1.0, 0.88)))
 
 	var stats_panel := PanelContainer.new()
 	stats_panel.custom_minimum_size = _v(0.0, 232.0)
@@ -1610,6 +1637,78 @@ func _populate_progression_cards(root: VBoxContainer, hero: Dictionary, accent: 
 				root.add_child(_make_progression_card(card_variant as Dictionary, accent, compact))
 
 
+func _make_build_route_card(card: Dictionary, accent: Color, compact: bool = false) -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.12, accent.g * 0.12, accent.b * 0.16, 0.58), Color(accent.r, accent.g, accent.b, 0.24)))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", _i(14 if compact else 16))
+	margin.add_theme_constant_override("margin_top", _i(12 if compact else 14))
+	margin.add_theme_constant_override("margin_right", _i(14 if compact else 16))
+	margin.add_theme_constant_override("margin_bottom", _i(12 if compact else 14))
+	panel.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", _i(8 if compact else 10))
+	margin.add_child(box)
+
+	var head_row := HBoxContainer.new()
+	head_row.add_theme_constant_override("separation", _i(12))
+	box.add_child(head_row)
+
+	var glyph_panel := PanelContainer.new()
+	glyph_panel.custom_minimum_size = _v(56.0 if compact else 62.0, 56.0 if compact else 62.0)
+	glyph_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.16, accent.g * 0.16, accent.b * 0.2, 0.88), Color(accent.r, accent.g, accent.b, 0.28)))
+	head_row.add_child(glyph_panel)
+
+	var glyph_label := _make_label(String(card.get("glyph", "路")).strip_edges(), 24 if compact else 28, Color(1.0, 0.95, 0.9, 1.0))
+	glyph_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	glyph_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	glyph_label.set_anchors_preset(Control.PRESET_FULL_RECT)
+	glyph_panel.add_child(glyph_label)
+
+	var summary_box := VBoxContainer.new()
+	summary_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	summary_box.add_theme_constant_override("separation", _i(4))
+	head_row.add_child(summary_box)
+
+	var title := String(card.get("title", "")).strip_edges()
+	if not title.is_empty():
+		summary_box.add_child(_make_label(title, 16 if compact else 17, Color(1.0, 0.92, 0.8, 1.0)))
+
+	var subtitle := String(card.get("subtitle", "")).strip_edges()
+	if not subtitle.is_empty():
+		summary_box.add_child(_make_label(subtitle, 14 if compact else 15, Color(0.82, 0.9, 1.0, 0.94)))
+
+	var description := String(card.get("description", "")).strip_edges()
+	if not description.is_empty():
+		box.add_child(_make_label(description, 15 if compact else 16, Color(0.9, 0.92, 0.95, 0.95)))
+
+	var tags_variant: Variant = card.get("tags", [])
+	if tags_variant is Array and not (tags_variant as Array).is_empty():
+		var tag_row := HFlowContainer.new()
+		tag_row.add_theme_constant_override("h_separation", _i(10))
+		tag_row.add_theme_constant_override("v_separation", _i(10))
+		box.add_child(tag_row)
+		for tag_variant in tags_variant:
+			tag_row.add_child(_make_tag(String(tag_variant), Color(accent.r * 0.16, accent.g * 0.16, accent.b * 0.2, 0.88), Color(0.98, 0.95, 0.9, 0.96)))
+
+	return panel
+
+
+func _populate_build_route_cards(root: VBoxContainer, hero: Dictionary, accent: Color, compact: bool = false) -> void:
+	if root == null:
+		return
+	for child in root.get_children():
+		child.queue_free()
+	var cards_variant: Variant = hero.get("build_route_cards", [])
+	if cards_variant is Array:
+		for card_variant in cards_variant:
+			if card_variant is Dictionary:
+				root.add_child(_make_build_route_card(card_variant as Dictionary, accent, compact))
+
+
 func _make_archive_stat_item(title: String, value: String, accent: Color) -> PanelContainer:
 	var panel := PanelContainer.new()
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -1788,6 +1887,31 @@ func _make_character_archive_card(hero: Dictionary) -> PanelContainer:
 	progression_cards_root.add_theme_constant_override("separation", _i(10))
 	progression_box.add_child(progression_cards_root)
 	_populate_progression_cards(progression_cards_root, hero, accent)
+	progression_box.add_child(_make_label("当前先保留 web 原型的 build 顺序与路线提示，Godot 战斗内还没有真正的路线权重修正与额外掉落偏向。", 15, Color(0.82, 0.9, 1.0, 0.88)))
+
+	var build_route_panel := PanelContainer.new()
+	build_route_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	build_route_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.08, 0.12, 0.16, 0.72), Color(0.42, 0.68, 0.86, 0.34)))
+	box.add_child(build_route_panel)
+
+	var build_route_margin := MarginContainer.new()
+	build_route_margin.add_theme_constant_override("margin_left", _i(16))
+	build_route_margin.add_theme_constant_override("margin_top", _i(16))
+	build_route_margin.add_theme_constant_override("margin_right", _i(16))
+	build_route_margin.add_theme_constant_override("margin_bottom", _i(16))
+	build_route_panel.add_child(build_route_margin)
+
+	var build_route_box := VBoxContainer.new()
+	build_route_box.add_theme_constant_override("separation", _i(10))
+	build_route_margin.add_child(build_route_box)
+	build_route_box.add_child(_make_label("源稿构筑方向", 18, Color(1.0, 0.92, 0.8, 1.0)))
+	build_route_box.add_child(_make_label("对照 web 原型现有的路线选择，把更贴近这名执笔者的构筑方向保留成前台参考。", 16, Color(0.88, 0.92, 0.96, 0.94)))
+
+	var build_route_cards_root := VBoxContainer.new()
+	build_route_cards_root.add_theme_constant_override("separation", _i(10))
+	build_route_box.add_child(build_route_cards_root)
+	_populate_build_route_cards(build_route_cards_root, hero, accent)
+	build_route_box.add_child(_make_label("这些卡片当前不直接改战斗数值或掉落权重，只帮助对照 web 原型的构筑意图。", 15, Color(0.82, 0.9, 1.0, 0.88)))
 
 	var stats_panel := PanelContainer.new()
 	stats_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -2331,6 +2455,7 @@ func _refresh_selection(trigger_reaction: bool = false) -> void:
 	detail_source_skill_title_label.text = _build_hero_active_skill_headline(selected_data)
 	detail_source_skill_body_label.text = _build_hero_active_skill_body(selected_data)
 	_populate_progression_cards(detail_progression_cards_root, selected_data, accent, true)
+	_populate_build_route_cards(detail_build_route_cards_root, selected_data, accent, true)
 
 	_set_stat_value("move_speed", float(selected_data["move_speed"]), 7.2, "%.1f")
 	_set_stat_value("max_health", float(selected_data["max_health"]), 140.0, "%.0f")

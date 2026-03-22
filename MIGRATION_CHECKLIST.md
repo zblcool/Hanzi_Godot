@@ -29,7 +29,8 @@ Status legend:
 - `[done]` Theme toggle parity inside the menu layer. Notes: source launcher/menu surfaces share the remembered paper-ink theme; Godot Zihai menu and its overlays now inherit the same `夜墨 / 纸墨` preference and expose a matching top-bar toggle.
 - `[pending]` Language toggle parity inside the menu layer. Notes: source menu can switch zh/en on the front portal; Godot menu still keeps the placeholder `EN` pill without runtime behavior.
 - `[done]` Menu-side leaderboard build snapshots. Notes: hanziHero's menu leaderboard cards surface build lanes and kill mix; Godot menu leaderboard now appends `偏旁 / 成字 / 词技 / 击倒` 摘要 under each entry instead of stopping at flat score lines.
-- `[in progress]` More menu-side build and progression surfacing beyond leaderboard snapshots. Notes: Godot now combines the richer hero dossier with actual `起笔落点` cues, source-side `源稿字技` preview, and new `残卷路线` cards in the menu detail panel and 人物志, including the xia's real `亻 / 心` opening loadout plus early/mid/inkstone build reminders; bilingual framing still remains beyond this slice.
+- `[done]` Source build-route preview cards in menu and archive. Notes: hanziHero's web front-end already frames route-choice archetypes like `墨守流 / 雷阵流 / 游侠流 / 烈笔流`; Godot now mirrors that with hero-specific `源稿构筑方向` preview cards in the menu detail panel and 人物志, while clearly marking them as front-end guidance rather than actual runtime route bias.
+- `[in progress]` More menu-side build and progression surfacing beyond leaderboard snapshots. Notes: Godot now combines the richer hero dossier with actual `起笔落点` cues, source-side `源稿字技` preview, `残卷路线` cards, and source route-preview cards in the menu detail panel and 人物志; bilingual framing and true route-bias mechanics still remain beyond this slice.
 
 ## Battle HUD
 
