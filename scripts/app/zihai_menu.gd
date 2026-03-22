@@ -141,7 +141,14 @@ const MENU_EN_TEXT := {
 	"击倒 %s": "Takedowns %s",
 	"以下条目对应当前残卷里已经接入的敌人谱系、预警方式与最实用的临场处理思路。": "The entries below describe enemy families, warnings, and counters that are already implemented in the current remnant scroll.",
 	"  预警：%s": "  Warning: %s",
-	"  应对：%s": "  Counter: %s"
+	"  应对：%s": "  Counter: %s",
+	"当前 Godot 保持无固定起手偏旁，第一批掉落更适合顺势决定这一局往哪条合字线转。": "The current Godot build keeps this hero without fixed opening radicals, so the first drops are meant to decide which fusion line the run should follow.",
+	"当前 Godot 会带着 %s 入卷，让这名执笔者更早摸到自己的开场路线。": "This Godot build starts with %s, letting the hero reach their opening route earlier.",
+	"无固定起手，顺第一批掉落决定路线。": "No fixed opener. Let the first drops decide the line.",
+	"起手自带 %s。": "Starts with %s.",
+	"无固定起手": "No fixed opener",
+	"当前还没有可对照的源稿字技条目。": "There is no matching source skill entry for this hero yet.",
+	"当前这名执笔者还没有额外记录到独立字技说明。": "This hero does not yet have an extra source-skill note."
 }
 var ui_font: Font
 var ui_scale := 1.0
@@ -1811,35 +1818,38 @@ func _build_recipe_atlas_text() -> String:
 
 
 func _build_hero_opening_summary(hero: Dictionary) -> String:
+	var archive_content := FrontEndContent.menu_archive_content()
 	var hero_id := String(hero.get("id", "scholar"))
 	var starting_radicals: Array[String] = Session.get_hero_starting_radicals(hero_id)
 	if starting_radicals.is_empty():
-		return "The current Godot build keeps this hero without fixed opening radicals, so the first drops are meant to decide which fusion line the run should follow." if _is_english() else "当前 Godot 保持无固定起手偏旁，第一批掉落更适合顺势决定这一局往哪条合字线转。"
+		return _localize_text(String(archive_content.get("opening_empty_summary", "当前 Godot 保持无固定起手偏旁，第一批掉落更适合顺势决定这一局往哪条合字线转。")))
 	var radical_labels: Array[String] = []
 	for radical in starting_radicals:
 		var radical_data: Dictionary = _localized_radical_data(radical)
 		radical_labels.append("%s %s" % [radical, String(radical_data.get("name", ""))])
-	return "This Godot build starts with %s, letting the hero reach their opening route earlier." % " / ".join(radical_labels) if _is_english() else "当前 Godot 会带着 %s 入卷，让这名执笔者更早摸到自己的开场路线。" % " / ".join(radical_labels)
+	return _localize_text(String(archive_content.get("opening_started_summary", "当前 Godot 会带着 %s 入卷，让这名执笔者更早摸到自己的开场路线。"))) % " / ".join(radical_labels)
 
 
 func _build_hero_stage_summary(hero: Dictionary) -> String:
+	var archive_content := FrontEndContent.menu_archive_content()
 	var hero_id := String(hero.get("id", "scholar"))
 	var starting_radicals: Array[String] = Session.get_hero_starting_radicals(hero_id)
 	if starting_radicals.is_empty():
-		return "No fixed opener. Let the first drops decide the line." if _is_english() else "无固定起手，顺第一批掉落决定路线。"
+		return _localize_text(String(archive_content.get("stage_empty_summary", "无固定起手，顺第一批掉落决定路线。")))
 	var radical_labels: Array[String] = []
 	for radical in starting_radicals:
 		var radical_data: Dictionary = _localized_radical_data(radical)
 		radical_labels.append("%s %s" % [radical, String(radical_data.get("name", ""))])
-	return "Starts with %s." % " / ".join(radical_labels) if _is_english() else "起手自带 %s。" % " / ".join(radical_labels)
+	return _localize_text(String(archive_content.get("stage_started_summary", "起手自带 %s。"))) % " / ".join(radical_labels)
 
 
 func _build_hero_starting_tags(hero: Dictionary) -> Array[String]:
+	var archive_content := FrontEndContent.menu_archive_content()
 	var hero_id := String(hero.get("id", "scholar"))
 	var starting_radicals: Array[String] = Session.get_hero_starting_radicals(hero_id)
 	if starting_radicals.is_empty():
 		var fallback_tags: Array[String] = []
-		fallback_tags.append("No fixed opener" if _is_english() else "无固定起手")
+		fallback_tags.append(_localize_text(String(archive_content.get("stage_tag_fallback", "无固定起手"))))
 		return fallback_tags
 	var tags: Array[String] = []
 	for radical in starting_radicals:
@@ -1856,6 +1866,7 @@ func _get_hero_attack_rate(hero: Dictionary) -> float:
 
 
 func _build_hero_active_skill_headline(hero: Dictionary) -> String:
+	var archive_content := FrontEndContent.menu_archive_content()
 	var glyph := String(hero.get("active_skill_glyph", "")).strip_edges()
 	var name := String(hero.get("active_skill_name", "")).strip_edges()
 	var cooldown := float(hero.get("active_skill_cooldown", 0.0))
@@ -1867,14 +1878,15 @@ func _build_hero_active_skill_headline(hero: Dictionary) -> String:
 	if cooldown > 0.0:
 		parts.append("%.1fs cooldown" % cooldown if _is_english() else "%.1f 秒冷却" % cooldown)
 	if parts.is_empty():
-		return "There is no matching source skill entry for this hero yet." if _is_english() else "当前还没有可对照的源稿字技条目。"
+		return _localize_text(String(archive_content.get("active_skill_missing_headline", "当前还没有可对照的源稿字技条目。")))
 	return " · ".join(parts)
 
 
 func _build_hero_active_skill_body(hero: Dictionary) -> String:
+	var archive_content := FrontEndContent.menu_archive_content()
 	var description := String(hero.get("active_skill_description", "")).strip_edges()
 	if description.is_empty():
-		return "This hero does not yet have an extra source-skill note." if _is_english() else "当前这名执笔者还没有额外记录到独立字技说明。"
+		return _localize_text(String(archive_content.get("active_skill_missing_body", "当前这名执笔者还没有额外记录到独立字技说明。")))
 	return _localize_text(description)
 
 
@@ -1987,7 +1999,7 @@ func _make_build_route_card(card: Dictionary, accent: Color, compact: bool = fal
 	if source_relics_variant is Array and not (source_relics_variant as Array).is_empty():
 		box.add_child(
 			_make_build_route_pairing_block(
-				"源稿遗物偏向",
+				String(FrontEndContent.menu_archive_content().get("build_route_relic_title", "源稿遗物偏向")),
 				source_relics_variant as Array,
 				Color(0.92, 0.7, 0.42, 0.14),
 				Color(1.0, 0.95, 0.88, 0.96),
@@ -1999,7 +2011,7 @@ func _make_build_route_card(card: Dictionary, accent: Color, compact: bool = fal
 	if source_words_variant is Array and not (source_words_variant as Array).is_empty():
 		box.add_child(
 			_make_build_route_pairing_block(
-				"源稿词技偏向",
+				String(FrontEndContent.menu_archive_content().get("build_route_word_title", "源稿词技偏向")),
 				source_words_variant as Array,
 				Color(0.44, 0.68, 0.86, 0.14),
 				Color(0.92, 0.96, 1.0, 0.96),
