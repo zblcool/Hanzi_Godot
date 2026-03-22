@@ -20,6 +20,10 @@ const DEFAULT_BATTLE_TIP := "击倒字灵收集字力与补给，升级时三选
 const BOSS_SPAWN_TIMES := [65.0, 130.0]
 const MAP_WORLD_RADIUS := 28.0
 const BIG_WAVE_INTERVAL := 5
+const FIELD_PHASE_WAVE_SPAN := 4
+const FIELD_PHASE_TRANSITION_TIME := 1.6
+const FIELD_PHASE_STAMP_LIMIT := 6
+const FIELD_PHASE_GLYPH_SEQUENCE := ["天", "地", "玄", "黄", "宇", "宙", "洪", "荒"]
 const BASE_ENEMY_CAP := 28
 const MAX_REGULAR_ENEMY_CAP := 38
 const BIG_WAVE_ENEMY_CAP := 46
@@ -46,6 +50,84 @@ const SOUNDTRACK_LIBRARY := {
 		"accent": Color(0.98, 0.76, 0.42, 1.0)
 	}
 }
+const FIELD_PHASE_THEMES := [
+	{
+		"id": "stelaeGrove",
+		"name": "碑林",
+		"accent": Color(0.72, 0.88, 0.78, 1.0),
+		"ground_glow": Color(0.7, 0.86, 0.78, 1.0),
+		"ground_shadow": Color(0.16, 0.22, 0.2, 1.0),
+		"environment_bg": Color(0.82, 0.79, 0.7, 1.0),
+		"environment_ambient": Color(0.78, 0.82, 0.74, 1.0),
+		"environment_fog": Color(0.8, 0.84, 0.78, 1.0),
+		"ambient_visibility": 0.96,
+		"fog_density_scale": 1.0,
+		"ambient_drift": Vector2(0.08, -0.04),
+		"backdrop_mountain": Color(0.42, 0.42, 0.36, 0.78),
+		"backdrop_mist": Color(0.88, 0.9, 0.84, 0.4),
+		"backdrop_paper": Color(0.92, 0.9, 0.82, 0.22),
+		"backdrop_alpha": 0.98,
+		"cue": "字境·碑林",
+		"tip": "碑林压阵，石色字痕会留在你当时落脚的位置。"
+	},
+	{
+		"id": "inkTide",
+		"name": "墨潮",
+		"accent": Color(0.64, 0.82, 1.0, 1.0),
+		"ground_glow": Color(0.56, 0.8, 0.98, 1.0),
+		"ground_shadow": Color(0.1, 0.16, 0.24, 1.0),
+		"environment_bg": Color(0.8, 0.79, 0.74, 1.0),
+		"environment_ambient": Color(0.74, 0.82, 0.88, 1.0),
+		"environment_fog": Color(0.72, 0.8, 0.88, 1.0),
+		"ambient_visibility": 0.9,
+		"fog_density_scale": 1.08,
+		"ambient_drift": Vector2(0.05, -0.12),
+		"backdrop_mountain": Color(0.34, 0.42, 0.5, 0.76),
+		"backdrop_mist": Color(0.82, 0.9, 0.98, 0.44),
+		"backdrop_paper": Color(0.84, 0.9, 0.98, 0.24),
+		"backdrop_alpha": 1.04,
+		"cue": "字境·墨潮",
+		"tip": "墨潮翻卷，地表会偏向水墨青蓝，古纹像潮线一样缓慢游动。"
+	},
+	{
+		"id": "thunderScript",
+		"name": "雷纹",
+		"accent": Color(0.9, 0.95, 1.0, 1.0),
+		"ground_glow": Color(0.86, 0.92, 1.0, 1.0),
+		"ground_shadow": Color(0.18, 0.2, 0.3, 1.0),
+		"environment_bg": Color(0.82, 0.81, 0.77, 1.0),
+		"environment_ambient": Color(0.84, 0.88, 0.92, 1.0),
+		"environment_fog": Color(0.82, 0.86, 0.94, 1.0),
+		"ambient_visibility": 1.08,
+		"fog_density_scale": 1.14,
+		"ambient_drift": Vector2(0.14, -0.05),
+		"backdrop_mountain": Color(0.4, 0.42, 0.54, 0.8),
+		"backdrop_mist": Color(0.88, 0.92, 0.98, 0.48),
+		"backdrop_paper": Color(0.92, 0.94, 1.0, 0.24),
+		"backdrop_alpha": 1.06,
+		"cue": "字境·雷纹",
+		"tip": "雷纹显形，雾色会更冷更亮，环境字阵也会抬高可见度。"
+	},
+	{
+		"id": "ancientScroll",
+		"name": "残卷",
+		"accent": Color(1.0, 0.84, 0.56, 1.0),
+		"ground_glow": Color(0.96, 0.78, 0.5, 1.0),
+		"ground_shadow": Color(0.28, 0.18, 0.1, 1.0),
+		"environment_bg": Color(0.88, 0.79, 0.66, 1.0),
+		"environment_ambient": Color(0.86, 0.8, 0.7, 1.0),
+		"environment_fog": Color(0.9, 0.82, 0.7, 1.0),
+		"ambient_visibility": 1.04,
+		"fog_density_scale": 0.94,
+		"ambient_drift": Vector2(0.09, -0.03),
+		"backdrop_mountain": Color(0.58, 0.48, 0.38, 0.8),
+		"backdrop_mist": Color(0.96, 0.88, 0.78, 0.42),
+		"backdrop_paper": Color(0.98, 0.92, 0.84, 0.22),
+		"backdrop_alpha": 0.96,
+		"cue": "字境·残卷",
+		"tip": "残卷回暖，纸本山水会偏回赭金，巨字像旧墨一样烙在地上。"
+	}
+]
 
 @onready var world_environment: WorldEnvironment = $WorldEnvironment
 @onready var camera_rig: Node3D = $CameraRig
@@ -95,6 +177,16 @@ var ground_detail_nodes: Array[Node3D] = []
 var ground_surface_materials: Array = []
 var ground_ripple_focus: Vector3 = Vector3.ZERO
 var backdrop_root: Node3D
+var backdrop_material_entries: Array[Dictionary] = []
+var backdrop_mist_material: StandardMaterial3D
+var field_phase_previous_theme: Dictionary = {}
+var field_phase_target_theme: Dictionary = {}
+var field_phase_previous_glyph: String = "天"
+var field_phase_target_glyph: String = "天"
+var field_phase_transition: float = 1.0
+var field_phase_ambient_visibility: float = 1.0
+var field_phase_stamp_root: Node3D
+var field_phase_stamp_entries: Array[Dictionary] = []
 var current_soundtrack_id: String = ""
 var current_soundtrack_cue: String = ""
 
@@ -121,6 +213,7 @@ func _ready() -> void:
 	_spawn_props()
 	_spawn_hud()
 	_apply_intro_preset()
+	_reset_field_phase_state(threat_level)
 	_apply_battle_settings()
 	_sync_hud()
 	_prime_soundtrack_ui()
@@ -133,6 +226,8 @@ func _process(delta: float) -> void:
 	_update_ground_shader(delta)
 	_update_tree_fade(delta)
 	_update_ambient_glyphs(delta)
+	_update_field_phase(delta)
+	_update_field_phase_stamps()
 
 	if game_over:
 		if Input.is_action_just_pressed("restart_run"):
@@ -413,6 +508,8 @@ func _apply_battle_settings() -> void:
 	_apply_performance_mode_visuals()
 	_apply_enemy_health_bar_setting()
 	_rebuild_ambient_glyphs()
+	if not field_phase_target_theme.is_empty():
+		_apply_field_phase_theme_blend(field_phase_previous_theme, field_phase_target_theme, _field_phase_blend_value())
 
 
 func _apply_performance_mode_visuals() -> void:
@@ -492,7 +589,7 @@ func _update_ambient_glyphs(_delta: float) -> void:
 		(glyph_root as Node3D).position = base_position + Vector3(0.0, bob * 0.28, 0.0)
 		(glyph_root as Node3D).rotation_degrees.y = fmod(elapsed_time * yaw_speed + drift_phase * 30.0, 360.0)
 		if glyph_label is Label3D and is_instance_valid(glyph_label):
-			var alpha := 0.14 + (bob * 0.5 + 0.5) * 0.16
+			var alpha := (0.14 + (bob * 0.5 + 0.5) * 0.16) * field_phase_ambient_visibility
 			(glyph_label as Label3D).modulate.a = alpha
 
 
@@ -1602,6 +1699,200 @@ func _on_boss_defeated(world_position: Vector3) -> void:
 	_gain_experience(12)
 
 
+func _field_phase_theme_for_wave(wave: int) -> Dictionary:
+	var safe_wave := maxi(1, wave)
+	var index := int(floor(float(safe_wave - 1) / float(FIELD_PHASE_WAVE_SPAN))) % FIELD_PHASE_THEMES.size()
+	return FIELD_PHASE_THEMES[index]
+
+
+func _field_phase_glyph_for_wave(wave: int) -> String:
+	var safe_wave := maxi(1, wave)
+	var index := int(floor(float(safe_wave - 1) / float(FIELD_PHASE_WAVE_SPAN))) % FIELD_PHASE_GLYPH_SEQUENCE.size()
+	return FIELD_PHASE_GLYPH_SEQUENCE[index]
+
+
+func _field_phase_blend_value() -> float:
+	return _ease_in_out(field_phase_transition)
+
+
+func _ease_in_out(value: float) -> float:
+	var clamped_value: float = clamp(value, 0.0, 1.0)
+	if clamped_value < 0.5:
+		return 2.0 * clamped_value * clamped_value
+	return 1.0 - pow(-2.0 * clamped_value + 2.0, 2.0) * 0.5
+
+
+func _reset_field_phase_state(wave: int = 1) -> void:
+	var theme := _field_phase_theme_for_wave(wave)
+	var glyph := _field_phase_glyph_for_wave(wave)
+	field_phase_previous_theme = theme
+	field_phase_target_theme = theme
+	field_phase_previous_glyph = glyph
+	field_phase_target_glyph = glyph
+	field_phase_transition = 1.0
+	_apply_field_phase_theme_blend(theme, theme, 1.0)
+
+
+func _set_field_phase_for_wave(wave: int, announce: bool = true) -> void:
+	var next_theme := _field_phase_theme_for_wave(wave)
+	var next_glyph := _field_phase_glyph_for_wave(wave)
+	if String(field_phase_target_theme.get("id", "")) == String(next_theme.get("id", "")) and field_phase_target_glyph == next_glyph:
+		return
+
+	field_phase_previous_theme = field_phase_target_theme if not field_phase_target_theme.is_empty() else next_theme
+	field_phase_target_theme = next_theme
+	field_phase_previous_glyph = field_phase_target_glyph
+	field_phase_target_glyph = next_glyph
+	field_phase_transition = 0.0
+
+	if not announce or not is_instance_valid(player):
+		return
+
+	var stamp_position: Vector3 = _field_phase_stamp_position()
+	_spawn_field_phase_stamp(stamp_position, next_glyph, next_theme)
+	_spawn_wave_effect(stamp_position, 5.1, Color(next_theme.get("accent", Color(1.0, 1.0, 1.0, 1.0))), next_glyph)
+	if hud != null:
+		hud.show_banner("字境相变 · %s" % String(next_theme.get("name", "字境")), Color(next_theme.get("accent", Color(1.0, 1.0, 1.0, 1.0))), 2.6)
+		hud.set_tip("第 %d 波切入%s。%s" % [wave, String(next_theme.get("name", "字境")), String(next_theme.get("tip", ""))])
+	var soundtrack_track: String = current_soundtrack_id if not current_soundtrack_id.is_empty() else "mosslightCanopy"
+	_set_soundtrack(soundtrack_track, String(next_theme.get("cue", "字境相变")), true, true)
+
+
+func _update_field_phase(delta: float) -> void:
+	if field_phase_target_theme.is_empty():
+		return
+	if field_phase_transition < 1.0:
+		field_phase_transition = min(field_phase_transition + delta / FIELD_PHASE_TRANSITION_TIME, 1.0)
+	_apply_field_phase_theme_blend(field_phase_previous_theme, field_phase_target_theme, _field_phase_blend_value())
+
+
+func _field_phase_stamp_position() -> Vector3:
+	var forward := Vector3(0.0, 0.0, -1.0)
+	if is_instance_valid(player):
+		var look_variant: Variant = player.get("look_direction")
+		if look_variant is Vector3:
+			forward = look_variant
+	if forward.length_squared() < 0.001:
+		forward = Vector3(0.0, 0.0, -1.0)
+	forward = forward.normalized()
+	var side := Vector3.UP.cross(forward).normalized()
+	var position: Vector3 = player.global_position + forward * 2.4 + side * 0.42
+	position.x = clamp(position.x, -MAP_WORLD_RADIUS + 3.2, MAP_WORLD_RADIUS - 3.2)
+	position.z = clamp(position.z, -MAP_WORLD_RADIUS + 3.2, MAP_WORLD_RADIUS - 3.2)
+	position.y = 0.05
+	return position
+
+
+func _spawn_field_phase_stamp(world_position: Vector3, glyph_text: String, theme: Dictionary) -> void:
+	if field_phase_stamp_root == null:
+		field_phase_stamp_root = Node3D.new()
+		field_phase_stamp_root.name = "FieldPhaseStamps"
+		ground_root.add_child(field_phase_stamp_root)
+
+	var accent := Color(theme.get("accent", Color(1.0, 1.0, 1.0, 1.0)))
+	var stamp_root := Node3D.new()
+	stamp_root.position = world_position
+	field_phase_stamp_root.add_child(stamp_root)
+
+	var base_disc := MeshInstance3D.new()
+	var base_disc_mesh := CylinderMesh.new()
+	base_disc_mesh.top_radius = 3.2
+	base_disc_mesh.bottom_radius = 3.2
+	base_disc_mesh.height = 0.04
+	base_disc.mesh = base_disc_mesh
+	var base_disc_material := StandardMaterial3D.new()
+	base_disc_material.albedo_color = Color(accent.r * 0.28, accent.g * 0.3, accent.b * 0.26, 0.18)
+	base_disc_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	base_disc_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	base_disc_material.emission_enabled = true
+	base_disc_material.emission = accent
+	base_disc_material.emission_energy_multiplier = 0.3
+	base_disc.material_override = base_disc_material
+	stamp_root.add_child(base_disc)
+
+	var outer_disc := MeshInstance3D.new()
+	var outer_disc_mesh := CylinderMesh.new()
+	outer_disc_mesh.top_radius = 4.6
+	outer_disc_mesh.bottom_radius = 4.6
+	outer_disc_mesh.height = 0.02
+	outer_disc.mesh = outer_disc_mesh
+	outer_disc.position.y = 0.01
+	var outer_disc_material := StandardMaterial3D.new()
+	outer_disc_material.albedo_color = Color(accent.r, accent.g, accent.b, 0.07)
+	outer_disc_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	outer_disc_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	outer_disc_material.emission_enabled = true
+	outer_disc_material.emission = Color(accent.r * 0.82, accent.g * 0.82, accent.b * 0.82, 1.0)
+	outer_disc_material.emission_energy_multiplier = 0.18
+	outer_disc.material_override = outer_disc_material
+	stamp_root.add_child(outer_disc)
+
+	for line_index in range(3):
+		var line := MeshInstance3D.new()
+		var line_mesh := BoxMesh.new()
+		line_mesh.size = Vector3(0.22, 0.02, 4.8 - float(line_index) * 0.7)
+		line.mesh = line_mesh
+		line.position.y = 0.03
+		line.rotation_degrees.y = 28.0 + float(line_index) * 46.0
+		var line_material := StandardMaterial3D.new()
+		line_material.albedo_color = Color(accent.r * 0.42, accent.g * 0.42, accent.b * 0.42, 0.16)
+		line_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		line_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+		line_material.emission_enabled = true
+		line_material.emission = accent
+		line_material.emission_energy_multiplier = 0.12
+		line.material_override = line_material
+		stamp_root.add_child(line)
+
+	var glyph := Label3D.new()
+	glyph.text = glyph_text
+	glyph.font = CJKFont.get_font()
+	glyph.font_size = 112
+	glyph.scale = Vector3(3.8, 3.8, 3.8)
+	glyph.position = Vector3(0.0, 0.05, 0.0)
+	glyph.rotation_degrees = Vector3(-90.0, 0.0, 0.0)
+	glyph.modulate = Color(1.0, 0.96, 0.88, 0.46)
+	stamp_root.add_child(glyph)
+
+	field_phase_stamp_entries.append({
+		"root": stamp_root,
+		"glyph": glyph,
+		"outer_disc": outer_disc,
+		"base_position": world_position,
+		"base_scale": outer_disc.scale,
+		"phase": rng.randf_range(0.0, TAU)
+	})
+	while field_phase_stamp_entries.size() > FIELD_PHASE_STAMP_LIMIT:
+		var oldest_entry: Dictionary = field_phase_stamp_entries.pop_front()
+		var oldest_root = oldest_entry.get("root", null)
+		if oldest_root is Node3D and is_instance_valid(oldest_root):
+			(oldest_root as Node3D).queue_free()
+
+
+func _update_field_phase_stamps() -> void:
+	if field_phase_stamp_entries.is_empty():
+		return
+	for entry in field_phase_stamp_entries:
+		var root_variant = entry.get("root", null)
+		var glyph_variant = entry.get("glyph", null)
+		var disc_variant = entry.get("outer_disc", null)
+		if not (root_variant is Node3D) or not is_instance_valid(root_variant):
+			continue
+		var root := root_variant as Node3D
+		var base_position: Vector3 = entry.get("base_position", root.position)
+		var phase: float = float(entry.get("phase", 0.0))
+		root.position = base_position + Vector3(0.0, sin(elapsed_time * 0.16 + phase) * 0.01, 0.0)
+		root.rotation_degrees.y = sin(elapsed_time * 0.08 + phase) * 5.0
+		if glyph_variant is Label3D and is_instance_valid(glyph_variant):
+			var glyph_label := glyph_variant as Label3D
+			glyph_label.modulate.a = 0.34 + (sin(elapsed_time * 0.3 + phase) * 0.5 + 0.5) * 0.16
+		if disc_variant is MeshInstance3D and is_instance_valid(disc_variant):
+			var outer_disc := disc_variant as MeshInstance3D
+			var base_scale: Vector3 = entry.get("base_scale", Vector3.ONE)
+			var pulse := 1.0 + sin(elapsed_time * 0.44 + phase) * 0.08
+			outer_disc.scale = base_scale * pulse
+
+
 func _on_threat_level_advanced(new_threat_level: int) -> void:
 	last_announced_threat_level = new_threat_level
 	if not is_instance_valid(player):
@@ -1620,6 +1911,8 @@ func _on_threat_level_advanced(new_threat_level: int) -> void:
 	hud.set_tip(_threat_level_tip(new_threat_level))
 	_spawn_wave_effect(player.global_position, (6.4 if _is_big_wave(new_threat_level) else 4.6) + float(new_threat_level) * 0.45, tint, wave_glyph)
 	_spawn_intro_symbols(wave_glyph, tint)
+	if new_threat_level > 1 and (new_threat_level - 1) % FIELD_PHASE_WAVE_SPAN == 0:
+		_set_field_phase_for_wave(new_threat_level, true)
 
 
 func _threat_level_color(new_threat_level: int) -> Color:
@@ -2069,19 +2362,21 @@ func _update_camera(delta: float) -> void:
 func _setup_environment() -> void:
 	var environment := Environment.new()
 	environment.background_mode = Environment.BG_COLOR
-	environment.background_color = Color(0.86, 0.77, 0.62, 1.0)
+	environment.background_color = Color(0.82, 0.79, 0.7, 1.0)
 	environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	environment.ambient_light_color = Color(0.82, 0.78, 0.68, 1.0)
-	environment.ambient_light_energy = 0.78
+	environment.ambient_light_color = Color(0.78, 0.82, 0.74, 1.0)
+	environment.ambient_light_energy = 0.8
 	environment.fog_enabled = true
-	environment.fog_density = 0.01
-	environment.fog_light_color = Color(0.84, 0.8, 0.72, 1.0)
+	environment.fog_density = 0.012
+	environment.fog_light_color = Color(0.8, 0.84, 0.78, 1.0)
 	world_environment.environment = environment
 
 
 func _build_ground() -> void:
 	ground_detail_nodes.clear()
 	ground_surface_materials.clear()
+	backdrop_material_entries.clear()
+	field_phase_stamp_entries.clear()
 	ground_ripple_focus = Vector3.ZERO
 	var floor := MeshInstance3D.new()
 	var plane := PlaneMesh.new()
@@ -2124,6 +2419,10 @@ func _build_ground() -> void:
 		ground_root.add_child(mound)
 		ground_detail_nodes.append(mound)
 
+	field_phase_stamp_root = Node3D.new()
+	field_phase_stamp_root.name = "FieldPhaseStamps"
+	ground_root.add_child(field_phase_stamp_root)
+
 	ambient_glyph_root = Node3D.new()
 	ambient_glyph_root.name = "AmbientGlyphs"
 	ground_root.add_child(ambient_glyph_root)
@@ -2142,6 +2441,10 @@ func _make_ground_material(base_color: Color, ink_color: Color, paper_color: Col
 	material.set_shader_parameter("phase_offset", phase_offset)
 	material.set_shader_parameter("focus_position", Vector3.ZERO)
 	material.set_shader_parameter("ambient_drift", Vector2(0.12, -0.08))
+	material.set_shader_parameter("theme_glow_color", Color(0.72, 0.88, 0.78, 1.0))
+	material.set_shader_parameter("theme_shadow_color", Color(0.16, 0.22, 0.2, 1.0))
+	material.set_shader_parameter("ambient_visibility", 1.0)
+	material.set_shader_parameter("phase_presence", 1.0)
 	ground_surface_materials.append(material)
 	return material
 
@@ -2159,6 +2462,85 @@ func _update_ground_shader(delta: float) -> void:
 		if material == null:
 			continue
 		material.set_shader_parameter("focus_position", ground_ripple_focus)
+
+
+func _base_fog_density() -> float:
+	return float(PERFORMANCE_FOG_DENSITY.get(_performance_mode(), PERFORMANCE_FOG_DENSITY["balanced"]))
+
+
+func _apply_field_phase_theme_blend(from_theme: Dictionary, to_theme: Dictionary, blend: float) -> void:
+	if world_environment.environment == null:
+		return
+
+	var environment := world_environment.environment
+	var background_from := Color(from_theme.get("environment_bg", environment.background_color))
+	var background_to := Color(to_theme.get("environment_bg", environment.background_color))
+	environment.background_color = background_from.lerp(background_to, blend)
+
+	var ambient_from := Color(from_theme.get("environment_ambient", environment.ambient_light_color))
+	var ambient_to := Color(to_theme.get("environment_ambient", environment.ambient_light_color))
+	environment.ambient_light_color = ambient_from.lerp(ambient_to, blend)
+	environment.ambient_light_energy = lerpf(0.78, 0.84, blend)
+
+	var fog_from := Color(from_theme.get("environment_fog", environment.fog_light_color))
+	var fog_to := Color(to_theme.get("environment_fog", environment.fog_light_color))
+	environment.fog_light_color = fog_from.lerp(fog_to, blend)
+	environment.fog_density = _base_fog_density() * lerpf(float(from_theme.get("fog_density_scale", 1.0)), float(to_theme.get("fog_density_scale", 1.0)), blend)
+
+	field_phase_ambient_visibility = lerpf(float(from_theme.get("ambient_visibility", 1.0)), float(to_theme.get("ambient_visibility", 1.0)), blend)
+
+	var drift_from := Vector2(from_theme.get("ambient_drift", Vector2(0.12, -0.08)))
+	var drift_to := Vector2(to_theme.get("ambient_drift", Vector2(0.12, -0.08)))
+	var glow_from := Color(from_theme.get("ground_glow", Color(0.72, 0.88, 0.78, 1.0)))
+	var glow_to := Color(to_theme.get("ground_glow", Color(0.72, 0.88, 0.78, 1.0)))
+	var shadow_from := Color(from_theme.get("ground_shadow", Color(0.16, 0.22, 0.2, 1.0)))
+	var shadow_to := Color(to_theme.get("ground_shadow", Color(0.16, 0.22, 0.2, 1.0)))
+	for material_variant in ground_surface_materials:
+		var material: ShaderMaterial = material_variant
+		if material == null:
+			continue
+		material.set_shader_parameter("ambient_drift", drift_from.lerp(drift_to, blend))
+		material.set_shader_parameter("theme_glow_color", glow_from.lerp(glow_to, blend))
+		material.set_shader_parameter("theme_shadow_color", shadow_from.lerp(shadow_to, blend))
+		material.set_shader_parameter("ambient_visibility", field_phase_ambient_visibility)
+		material.set_shader_parameter("phase_presence", 1.0)
+
+	_apply_field_phase_backdrop_blend(from_theme, to_theme, blend)
+
+
+func _apply_field_phase_backdrop_blend(from_theme: Dictionary, to_theme: Dictionary, blend: float) -> void:
+	for entry in backdrop_material_entries:
+		var material_variant = entry.get("material", null)
+		if not (material_variant is ShaderMaterial):
+			continue
+		var material := material_variant as ShaderMaterial
+		var layer_index: int = int(entry.get("layer_index", 0))
+		var layer_mix: float = clamp(0.58 - float(layer_index) * 0.09, 0.32, 0.58)
+		var base_mountain := Color(entry.get("mountain", Color(0.4, 0.34, 0.27, 0.78)))
+		var base_mist := Color(entry.get("mist", Color(0.9, 0.84, 0.74, 0.34)))
+		var base_paper := Color(entry.get("paper", Color(0.94, 0.86, 0.72, 0.18)))
+		var alpha_base: float = float(entry.get("alpha", 0.8))
+		var mountain_from := base_mountain.lerp(Color(from_theme.get("backdrop_mountain", base_mountain)), layer_mix)
+		var mountain_to := base_mountain.lerp(Color(to_theme.get("backdrop_mountain", base_mountain)), layer_mix)
+		var mist_from := base_mist.lerp(Color(from_theme.get("backdrop_mist", base_mist)), layer_mix)
+		var mist_to := base_mist.lerp(Color(to_theme.get("backdrop_mist", base_mist)), layer_mix)
+		var paper_from := base_paper.lerp(Color(from_theme.get("backdrop_paper", base_paper)), layer_mix)
+		var paper_to := base_paper.lerp(Color(to_theme.get("backdrop_paper", base_paper)), layer_mix)
+		material.set_shader_parameter("mountain_color", mountain_from.lerp(mountain_to, blend))
+		material.set_shader_parameter("mist_color", mist_from.lerp(mist_to, blend))
+		material.set_shader_parameter("paper_tint", paper_from.lerp(paper_to, blend))
+		material.set_shader_parameter(
+			"alpha_strength",
+			alpha_base * lerpf(float(from_theme.get("backdrop_alpha", 1.0)), float(to_theme.get("backdrop_alpha", 1.0)), blend)
+		)
+
+	if backdrop_mist_material != null:
+		var mist_from := Color(from_theme.get("backdrop_mist", Color(0.95, 0.9, 0.82, 0.22)))
+		var mist_to := Color(to_theme.get("backdrop_mist", Color(0.95, 0.9, 0.82, 0.22)))
+		var paper_from := Color(from_theme.get("backdrop_paper", Color(0.95, 0.9, 0.82, 0.22)))
+		var paper_to := Color(to_theme.get("backdrop_paper", Color(0.95, 0.9, 0.82, 0.22)))
+		backdrop_mist_material.albedo_color = paper_from.lerp(paper_to, blend)
+		backdrop_mist_material.emission = mist_from.lerp(mist_to, blend)
 
 
 func _build_shanshui_backdrop() -> void:
@@ -2226,6 +2608,14 @@ func _build_shanshui_backdrop() -> void:
 			material.set_shader_parameter("ridge_height", 0.54 - float(layer_index) * 0.08)
 			plane.material_override = material
 			backdrop_root.add_child(plane)
+			backdrop_material_entries.append({
+				"material": material,
+				"layer_index": layer_index,
+				"mountain": Color(layer["mountain"]),
+				"mist": Color(layer["mist"]),
+				"paper": Color(layer["paper"]),
+				"alpha": float(layer["alpha"])
+			})
 
 	var mist_disc := MeshInstance3D.new()
 	var mist_mesh := CylinderMesh.new()
@@ -2242,6 +2632,7 @@ func _build_shanshui_backdrop() -> void:
 	mist_material.emission = Color(0.88, 0.82, 0.72, 1.0)
 	mist_material.emission_energy_multiplier = 0.12
 	mist_disc.material_override = mist_material
+	backdrop_mist_material = mist_material
 	backdrop_root.add_child(mist_disc)
 
 
