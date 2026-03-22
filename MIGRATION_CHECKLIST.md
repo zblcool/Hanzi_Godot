@@ -12,7 +12,7 @@ Status legend:
 
 - `[done]` Godot launcher home with two game cards, floating glyph ambience, and mobile browser guidance. Notes: hanziHero uses a launcher homepage with portal cards; Godot now preserves the same top-level game-selection role.
 - `[done]` About overlay upgraded to a richer story/article layout with two game summaries and migration notes. Notes: hanziHero's launcher has an about portal with story paragraphs, game cards, and note cards; Godot now carries that structure in-code.
-- `[pending]` Theme toggle parity for launcher and about surface. Notes: hanziHero supports a paper-ink theme switch; Godot is still fixed to one dark-ink presentation.
+- `[done]` Theme toggle parity for launcher and about surface. Notes: hanziHero supports a paper-ink theme switch; Godot launcher and about overlay now expose a remembered `夜墨 / 纸墨` toggle while preserving the existing night-ink default.
 - `[pending]` Bilingual launcher copy and runtime language toggle. Notes: hanziHero ships zh/en launcher strings; Godot still shows placeholder `EN` pills without behavior.
 - `[pending]` Cangjie portal follow-through. Notes: hanziHero can open the deckbuilder prototype directly; Godot still stops at a non-interactive "后续接入" button.
 
@@ -23,7 +23,7 @@ Status legend:
 - `[done]` Quick-start wave shortcuts for menu-side test entry. Notes: hanziHero keeps dedicated test starts for wave 10 / 20; Godot now exposes equivalent menu buttons and routes those shortcut runs into a separate local test board.
 - `[done]` Character reaction flavor on selection. Notes: hanziHero role cards trigger short personality lines; Godot now rotates short in-character response quotes in the detail panel whenever a hero is picked.
 - `[done]` Player Sigil default-name flow in launcher and menu. Notes: hanziHero lets the launcher / portal maintain a device signature reused by leaderboard entries; Godot now mirrors that with a persistent `玩家名帖` overlay backed by `user://leaderboard_identity.json`.
-- `[pending]` Theme / language parity inside the menu layer. Notes: source launcher/menu surfaces share theme and language toggles; Godot menu copy is still single-language.
+- `[pending]` Theme / language parity inside the menu layer. Notes: source launcher/menu surfaces share theme and language toggles; Godot launcher now has the remembered theme switch, but the Zihai menu is still single-language and fixed to one presentation.
 - `[pending]` More menu-side build and progression surfacing. Notes: source menu surfaces richer descriptive cards and front-end polish; Godot menu remains more utilitarian.
 
 ## Battle HUD
@@ -71,7 +71,7 @@ Status legend:
 - `[done]` Tree fade-through, bush anti-abuse lockout, banners, and strong telegraph readability. Notes: Godot already carries several of the source combat-polish beats into 3D.
 - `[pending]` Procedural music playback and current-track feedback. Notes: Godot now has the HUD-side track card and toast, but actual procedural playback / loop rotation is still missing.
 - `[pending]` Higher-end hit/audio differentiation. Notes: hanziHero has more layered weapon/skill sound identity and lingering glyph afterimages; Godot feedback can be pushed further.
-- `[pending]` Themeable launcher/menu presentation. Notes: source supports stronger visual mode switching; Godot keeps one locked art direction so far.
+- `[pending]` Themeable launcher/menu presentation. Notes: Godot launcher now has `夜墨 / 纸墨` switching, but the menu layer and downstream scene propagation still keep one locked art direction.
 - `[pending]` More stage spectacle for big unlocks and transitions. Notes: source leans harder into large character/word reveal moments and evolving battlefield mood.
 
 ## Export
