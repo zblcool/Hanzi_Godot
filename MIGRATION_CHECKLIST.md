@@ -27,7 +27,8 @@ Status legend:
 - `[done]` Player Sigil default-name flow in launcher and menu. Notes: hanziHero lets the launcher / portal maintain a device signature reused by leaderboard entries; Godot now mirrors that with a persistent `玩家名帖` overlay backed by `user://leaderboard_identity.json`.
 - `[done]` Theme toggle parity inside the menu layer. Notes: source launcher/menu surfaces share the remembered paper-ink theme; Godot Zihai menu and its overlays now inherit the same `夜墨 / 纸墨` preference and expose a matching top-bar toggle.
 - `[pending]` Language toggle parity inside the menu layer. Notes: source menu can switch zh/en on the front portal; Godot menu still keeps the placeholder `EN` pill without runtime behavior.
-- `[pending]` More menu-side build and progression surfacing. Notes: source menu surfaces richer descriptive cards and front-end polish; Godot menu remains more utilitarian.
+- `[done]` Menu-side leaderboard build snapshots. Notes: hanziHero's menu leaderboard cards surface build lanes and kill mix; Godot menu leaderboard now appends `偏旁 / 成字 / 词技 / 击倒` 摘要 under each entry instead of stopping at flat score lines.
+- `[pending]` More menu-side build and progression surfacing beyond leaderboard snapshots. Notes: source menu still carries broader descriptive cards and front-end polish; Godot menu remains more utilitarian outside the richer leaderboard view.
 
 ## Battle HUD
 

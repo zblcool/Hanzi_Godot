@@ -1086,7 +1086,7 @@ func _build_leaderboard_overlay() -> void:
 	margin.add_child(box)
 
 	box.add_child(_make_label("残卷战绩", 36, Color(1.0, 0.95, 0.86, 1.0)))
-	box.add_child(_make_label("现在可以在二级菜单里直接查看本地排行榜，不必先打到结算页。", 18, Color(0.88, 0.92, 0.96, 0.95)))
+	box.add_child(_make_label("现在可以在二级菜单里直接查看本地排行榜，并顺手回看每局 build 走向，不必先打到结算页。", 18, Color(0.88, 0.92, 0.96, 0.95)))
 
 	var summary_panel := PanelContainer.new()
 	summary_panel.custom_minimum_size = _v(0.0, 88.0)
@@ -1482,6 +1482,12 @@ func _build_local_leaderboard_text(view: String = "manual", limit: int = 8) -> S
 				_format_elapsed(float(entry.get("elapsed", 0.0)))
 			]
 		)
+		var detail_line := _build_local_leaderboard_detail_line(entry)
+		if not detail_line.is_empty():
+			lines.append("   %s" % detail_line)
+		lines.append("")
+	while not lines.is_empty() and String(lines[lines.size() - 1]).is_empty():
+		lines.remove_at(lines.size() - 1)
 	return "\n".join(lines)
 
 
@@ -1499,9 +1505,9 @@ func _refresh_leaderboard_overlay() -> void:
 		leaderboard_view = _normalize_leaderboard_view(leaderboard_view)
 
 	if leaderboard_view == "test":
-		leaderboard_summary_label.text = "试阵榜单独收录第 10 / 20 波捷径，方便检查敌潮、build 与 HUD，不会干扰主卷榜。"
+		leaderboard_summary_label.text = "试阵榜单独收录第 10 / 20 波捷径，方便检查敌潮、build 与 HUD；每条记录下方也会补充本轮偏旁 / 成字 / 词技与击倒构成。"
 	else:
-		leaderboard_summary_label.text = "主卷榜只收从第 1 波真正开卷的战绩；第 10 / 20 波捷径会单独记入试阵榜。"
+		leaderboard_summary_label.text = "主卷榜只收从第 1 波真正开卷的战绩；条目下方会顺带标出偏旁 / 成字 / 词技和主要击倒构成，方便开局前回看 build 方向。"
 
 	leaderboard_body_label.text = _build_local_leaderboard_text(leaderboard_view, 8)
 	_apply_leaderboard_view_button(leaderboard_manual_button, "主卷榜", manual_count, leaderboard_view == "manual")
@@ -1533,6 +1539,95 @@ func _format_leaderboard_identity(entry: Dictionary) -> String:
 	if hero_name.is_empty():
 		return player_name
 	return "%s · %s" % [player_name, hero_name]
+
+
+func _build_local_leaderboard_detail_line(entry: Dictionary) -> String:
+	var segments: Array[String] = []
+
+	var radicals_text := _summarize_run_counts(entry.get("radicals", {}), Session.RADICAL_ORDER, "radical")
+	if not radicals_text.is_empty():
+		segments.append("偏旁 %s" % radicals_text)
+
+	var recipes_text := _summarize_run_counts(entry.get("recipes", {}), Session.RECIPE_ORDER, "recipe")
+	if not recipes_text.is_empty():
+		segments.append("成字 %s" % recipes_text)
+
+	var words_text := _summarize_run_counts(entry.get("words", {}), Session.WORD_ORDER, "word")
+	if not words_text.is_empty():
+		segments.append("词技 %s" % words_text)
+
+	var blade_level: int = int(entry.get("blade_level", 0))
+	if blade_level > 0:
+		segments.append("%s Lv.%d" % ["剑势" if String(entry.get("hero_id", "scholar")) == "xia" else "笔锋", blade_level])
+
+	var enemy_text := _summarize_enemy_kills(entry.get("enemy_kills", {}))
+	if not enemy_text.is_empty():
+		segments.append("击倒 %s" % enemy_text)
+
+	return " | ".join(segments)
+
+
+func _summarize_run_counts(raw_counts: Variant, order: Array, category: String) -> String:
+	if not (raw_counts is Dictionary):
+		return ""
+
+	var counts := raw_counts as Dictionary
+	var parts: Array[String] = []
+	for key_variant in order:
+		var key := String(key_variant)
+		var amount: int = int(counts.get(key, 0))
+		if amount <= 0:
+			continue
+		parts.append("%s%d" % [_run_count_label(key, category), amount])
+		if parts.size() >= 3:
+			break
+	return " ".join(parts)
+
+
+func _run_count_label(key: String, category: String) -> String:
+	match category:
+		"recipe":
+			return String(Session.get_recipe_data(key).get("display", key))
+		"word":
+			return String(Session.get_word_data(key).get("display", key))
+		_:
+			return key
+
+
+func _summarize_enemy_kills(raw_counts: Variant) -> String:
+	if not (raw_counts is Dictionary):
+		return ""
+
+	var counts := raw_counts as Dictionary
+	var ranked_enemies: Array[Dictionary] = []
+	for enemy_id_variant in Session.ENEMY_ORDER:
+		var enemy_id := String(enemy_id_variant)
+		var amount: int = int(counts.get(enemy_id, 0))
+		if amount <= 0:
+			continue
+		ranked_enemies.append({
+			"id": enemy_id,
+			"amount": amount
+		})
+
+	if ranked_enemies.is_empty():
+		return ""
+
+	ranked_enemies.sort_custom(func(left: Dictionary, right: Dictionary) -> bool:
+		var left_amount: int = int(left.get("amount", 0))
+		var right_amount: int = int(right.get("amount", 0))
+		if left_amount != right_amount:
+			return left_amount > right_amount
+		return Session.ENEMY_ORDER.find(String(left.get("id", ""))) < Session.ENEMY_ORDER.find(String(right.get("id", "")))
+	)
+
+	var parts: Array[String] = []
+	var limit: int = mini(3, ranked_enemies.size())
+	for index in range(limit):
+		var item: Dictionary = ranked_enemies[index]
+		var enemy_id := String(item.get("id", "basic"))
+		parts.append("%s%d" % [String(Session.get_enemy_data(enemy_id).get("glyph", enemy_id)), int(item.get("amount", 0))])
+	return " ".join(parts)
 
 
 func _normalize_leaderboard_view(view: String) -> String:
