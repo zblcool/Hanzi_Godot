@@ -24,17 +24,92 @@ const PAPER_THEME := {
 	"outline": Color(0.95, 0.92, 0.86, 0.4)
 }
 const LAUNCHER_UPDATE_SPOTLIGHT := {
-	"eyebrow": "Latest Update",
-	"title": "启动器前台迁移继续对齐",
-	"summary": "Godot 启动器首页现在会直接概括当前迁移主线，开始承接 web 原型首页“最近更新 / changelog 聚光卡”的前台角色。",
-	"meta": ["2026-03-22", "Godot 主线", "迁移前台"],
+	"eyebrow": "Update History",
+	"title": "启动器更新日志入口已补齐",
+	"summary": "Godot 启动器首页现在既保留最近更新聚光卡，也能直接打开内置更新历史面板，继续向 web 原型首页的 changelog panel 对齐。",
+	"meta": ["2026-03-22", "Godot 启动器", "更新日志"],
 	"highlights": [
-		"当前主线链路已经稳定在：启动器 -> 字海二级菜单 -> 3D 战斗。",
-		"前台已补齐主题联动、玩家名帖与场景 smoke 检查，迁移进展更容易直接看到。",
-		"启动器层下一个明显缺口仍是双语切换与仓颉入口接入。"
+		"首页“最近更新”卡现在可以直接展开最近几次迁移里程碑，不再只停在单条快照。",
+		"前台已补齐主题联动、玩家名帖与场景 smoke 检查，近期推进可以留在同一层里回看。",
+		"启动器层剩余更大的缺口仍是双语切换与仓颉入口接入。"
 	],
 	"footnote": "完整长期追踪仍以仓库根目录的 MIGRATION_CHECKLIST 为准。"
 }
+const LAUNCHER_CHANGELOG_HISTORY := [
+	{
+		"date": "2026-03-22",
+		"title": "启动器更新日志面板接回首页",
+		"summary": "Godot 首页现在既保留最近更新聚光卡，也能展开内置更新历史面板，直接回看最近几次迁移里程碑。",
+		"meta": ["Godot 启动器", "迁移前台", "Launcher"],
+		"sections": [
+			{
+				"label": "新增",
+				"items": [
+					"首页最近更新卡新增“查看更新记录”入口，可以直接展开最近几次 Godot 迁移快照。",
+					"启动器内置更新面板会滚动列出近期完成项，让 changelog 入口不再只存在于仓库文件里。"
+				]
+			},
+			{
+				"label": "同步",
+				"items": [
+					"近期的主题联动、玩家名帖、战场乐题提示和 utility 掉落迁移成果都被收进同一条前台历史里。",
+					"继续对齐 hanziHero web 启动器里的 changelog panel 角色，但先保留当前 Godot 单语结构。"
+				]
+			},
+			{
+				"label": "下一步",
+				"items": [
+					"启动器剩余更大的缺口仍是双语切换与仓颉入口接入。",
+					"如果继续做前台层，小而稳的下一步更适合补菜单侧的 build / progression 展示。"
+				]
+			}
+		]
+	},
+	{
+		"date": "2026-03-21",
+		"title": "字海菜单层与排行榜署名链路接稳",
+		"summary": "Godot 主线把启动器后的字海二级菜单、局外资料面板和本地排行榜署名链路接成了更完整的一段 vertical slice。",
+		"meta": ["菜单层", "排行榜", "Vertical Slice"],
+		"sections": [
+			{
+				"label": "新增",
+				"items": [
+					"补上人物志、合字图谱、怪物图鉴和本地排行榜这些字海二级菜单 overlays。",
+					"启动器和菜单都能维护玩家名帖，后续结算页留空时会自动复用默认署名。"
+				]
+			},
+			{
+				"label": "打磨",
+				"items": [
+					"移动端战斗入口、暂停和小屏 UI 进一步压实，不再只是桌面演示。",
+					"场景 smoke 检查、README 与迁移清单开始持续跟着当前主线一起维护。"
+				]
+			}
+		]
+	},
+	{
+		"date": "2026-03-20",
+		"title": "首个 Godot 字海可玩切片成型",
+		"summary": "Godot 仓库完成了启动器、菜单、3D 战斗、地图、导出与移动端守护的第一轮闭环，字海残卷开始脱离占位原型。",
+		"meta": ["3D 战斗", "Web 导出", "移动端"],
+		"sections": [
+			{
+				"label": "新增",
+				"items": [
+					"搭出 Godot 版启动器、字海战斗原型、地图 modal、暂停层和移动端横屏保护。",
+					"接通 Web 导出脚本、Vercel 部署路径，以及基础本地排行榜存档。"
+				]
+			},
+			{
+				"label": "系统",
+				"items": [
+					"敌人谱系、宝箱与场景道具、波次推进和核心偏旁成长链路开始在 Godot 内成型。",
+					"Launcher -> 字海菜单 -> 3D 战斗 的仓库主线从这一天开始可持续迭代。"
+				]
+			}
+		]
+	}
+]
 
 var title_font: Font
 var ui_scale := 1.0
@@ -42,6 +117,7 @@ var floating_symbols: Array[Dictionary] = []
 var preview_motifs: Array[Dictionary] = []
 var current_theme := "night-ink"
 var about_overlay: Control
+var changelog_overlay: Control
 var profile_overlay: Control
 var profile_name_input: LineEdit
 var profile_status_label: Label
@@ -142,6 +218,7 @@ func _draw() -> void:
 
 func _rebuild_ui() -> void:
 	var restore_about := about_overlay != null and about_overlay.visible
+	var restore_changelog := changelog_overlay != null and changelog_overlay.visible
 	var restore_profile := profile_overlay != null and profile_overlay.visible
 	var profile_draft := ""
 	if restore_profile and profile_name_input != null:
@@ -149,6 +226,7 @@ func _rebuild_ui() -> void:
 	ui_scale = _compute_ui_scale()
 	preview_motifs.clear()
 	about_overlay = null
+	changelog_overlay = null
 	profile_overlay = null
 	profile_name_input = null
 	profile_status_label = null
@@ -162,6 +240,8 @@ func _rebuild_ui() -> void:
 	_build_ui()
 	if restore_about and about_overlay != null:
 		about_overlay.visible = true
+	if restore_changelog and changelog_overlay != null:
+		changelog_overlay.visible = true
 	if restore_profile and profile_overlay != null and profile_name_input != null:
 		profile_name_input.text = profile_draft
 		_refresh_profile_overlay()
@@ -383,6 +463,7 @@ func _build_ui() -> void:
 	))
 
 	_build_about_overlay()
+	_build_changelog_overlay()
 	_build_profile_overlay()
 
 
@@ -536,7 +617,7 @@ func _make_update_spotlight_panel() -> PanelContainer:
 	var accent := Color(0.92, 0.7, 0.38, 1.0)
 	var panel := PanelContainer.new()
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	panel.custom_minimum_size = _v(0.0, 212.0)
+	panel.custom_minimum_size = _v(0.0, 292.0)
 	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.1, accent.g * 0.09, accent.b * 0.08, 0.9), Color(accent.r, accent.g, accent.b, 0.54)))
 
 	var margin := MarginContainer.new()
@@ -567,6 +648,14 @@ func _make_update_spotlight_panel() -> PanelContainer:
 		highlights_box.add_child(_make_label("• %s" % String(highlight_variant), 16, Color(0.9, 0.92, 0.96, 0.92)))
 
 	box.add_child(_make_label(String(LAUNCHER_UPDATE_SPOTLIGHT["footnote"]), 15, Color(0.86, 0.9, 0.94, 0.8)))
+
+	var action_row := HBoxContainer.new()
+	action_row.add_theme_constant_override("separation", _i(10))
+	box.add_child(action_row)
+
+	var history_button := _make_pill_button("查看更新记录", _v(0.0, 48.0), Callable(self, "_show_changelog"))
+	history_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	action_row.add_child(history_button)
 	return panel
 
 
@@ -687,6 +776,79 @@ func _build_about_overlay() -> void:
 	close_button.add_theme_stylebox_override("hover", _make_button_style(Color(0.98, 0.7, 0.34, 1.0), 16))
 	close_button.add_theme_stylebox_override("pressed", _make_button_style(Color(0.84, 0.54, 0.22, 1.0), 16))
 	close_button.pressed.connect(_hide_about)
+	footer_row.add_child(close_button)
+
+
+func _build_changelog_overlay() -> void:
+	changelog_overlay = Control.new()
+	changelog_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	changelog_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	changelog_overlay.visible = false
+	add_child(changelog_overlay)
+
+	var scrim := ColorRect.new()
+	scrim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	scrim.color = Color(0.01, 0.02, 0.03, 0.76)
+	changelog_overlay.add_child(scrim)
+
+	var panel := PanelContainer.new()
+	panel.set_anchors_preset(Control.PRESET_CENTER)
+	panel.offset_left = -_f(600.0)
+	panel.offset_top = -_f(338.0)
+	panel.offset_right = _f(600.0)
+	panel.offset_bottom = _f(338.0)
+	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.05, 0.08, 0.1, 0.96), Color(0.92, 0.72, 0.42, 0.88)))
+	changelog_overlay.add_child(panel)
+
+	var margin := MarginContainer.new()
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left", _i(28))
+	margin.add_theme_constant_override("margin_top", _i(24))
+	margin.add_theme_constant_override("margin_right", _i(28))
+	margin.add_theme_constant_override("margin_bottom", _i(24))
+	panel.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", _i(16))
+	margin.add_child(box)
+
+	box.add_child(_make_tag("Update History", Color(0.14, 0.18, 0.24, 0.88), Color(0.96, 0.82, 0.56, 0.98)))
+	box.add_child(_make_label("更新日志", 44, Color(1.0, 0.95, 0.86, 1.0)))
+	box.add_child(_make_label("首页最近更新卡现在会把近期 Godot 迁移里程碑一并展开，方便直接对照前台推进节奏。", 18, Color(0.9, 0.92, 0.96, 0.95)))
+	box.add_child(_make_label("完整变更记录仍保留在仓库根目录 CHANGELOG.md；长期迁移状态仍以 MIGRATION_CHECKLIST.md 为准。", 16, Color(0.86, 0.9, 0.94, 0.84)))
+
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	box.add_child(scroll)
+
+	var content := VBoxContainer.new()
+	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	content.add_theme_constant_override("separation", _i(14))
+	scroll.add_child(content)
+
+	for entry_index in range(LAUNCHER_CHANGELOG_HISTORY.size()):
+		content.add_child(_make_changelog_entry_card(LAUNCHER_CHANGELOG_HISTORY[entry_index], entry_index == 0))
+
+	var footer_row := HBoxContainer.new()
+	footer_row.add_theme_constant_override("separation", _i(10))
+	box.add_child(footer_row)
+
+	var theme_button := _make_theme_toggle_button(_v(0.0, 52.0))
+	theme_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	footer_row.add_child(theme_button)
+
+	var close_button := Button.new()
+	close_button.text = "返回启动器"
+	close_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	close_button.custom_minimum_size = _v(0.0, 52.0)
+	close_button.add_theme_font_override("font", title_font)
+	close_button.add_theme_font_size_override("font_size", _i(22))
+	close_button.add_theme_color_override("font_color", _resolve_label_color(Color(0.08, 0.07, 0.07, 1.0)))
+	close_button.add_theme_stylebox_override("normal", _make_button_style(Color(0.92, 0.62, 0.28, 1.0), 16))
+	close_button.add_theme_stylebox_override("hover", _make_button_style(Color(0.98, 0.7, 0.34, 1.0), 16))
+	close_button.add_theme_stylebox_override("pressed", _make_button_style(Color(0.84, 0.54, 0.22, 1.0), 16))
+	close_button.pressed.connect(_hide_changelog)
 	footer_row.add_child(close_button)
 
 
@@ -917,6 +1079,67 @@ func _make_about_note_card(title: String, body: String, accent: Color) -> PanelC
 	return card
 
 
+func _make_changelog_entry_card(entry: Dictionary, is_latest: bool) -> PanelContainer:
+	var accent := Color(0.92, 0.7, 0.38, 1.0) if is_latest else Color(0.42, 0.72, 0.92, 1.0)
+	var card := PanelContainer.new()
+	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	card.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.1, accent.g * 0.09, accent.b * 0.11, 0.88), Color(accent.r, accent.g, accent.b, 0.46)))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", _i(20))
+	margin.add_theme_constant_override("margin_top", _i(20))
+	margin.add_theme_constant_override("margin_right", _i(20))
+	margin.add_theme_constant_override("margin_bottom", _i(20))
+	card.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", _i(10))
+	margin.add_child(box)
+
+	var meta_row := HBoxContainer.new()
+	meta_row.add_theme_constant_override("separation", _i(8))
+	box.add_child(meta_row)
+	if is_latest:
+		meta_row.add_child(_make_tag("当前快照", Color(0.14, 0.18, 0.24, 0.9), Color(0.96, 0.82, 0.56, 0.98)))
+	meta_row.add_child(_make_tag(String(entry.get("date", "")), Color(accent.r * 0.14, accent.g * 0.14, accent.b * 0.16, 0.9), Color(0.98, 0.94, 0.88, 0.96)))
+	for meta_variant in entry.get("meta", []):
+		meta_row.add_child(_make_tag(String(meta_variant), Color(accent.r * 0.12, accent.g * 0.12, accent.b * 0.16, 0.8), Color(0.92, 0.94, 0.9, 0.94)))
+
+	box.add_child(_make_label(String(entry.get("title", "")), 30 if is_latest else 26, Color(1.0, 0.95, 0.86, 1.0)))
+	box.add_child(_make_label(String(entry.get("summary", "")), 17, Color(0.9, 0.92, 0.96, 0.94)))
+
+	var sections_box := VBoxContainer.new()
+	sections_box.add_theme_constant_override("separation", _i(10))
+	box.add_child(sections_box)
+	for section_variant in entry.get("sections", []):
+		var section: Dictionary = section_variant
+		sections_box.add_child(_make_changelog_section_card(String(section.get("label", "")), section.get("items", []), accent))
+
+	return card
+
+
+func _make_changelog_section_card(title: String, items: Array, accent: Color) -> PanelContainer:
+	var card := PanelContainer.new()
+	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	card.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.08, accent.g * 0.08, accent.b * 0.1, 0.82), Color(accent.r, accent.g, accent.b, 0.28)))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", _i(18))
+	margin.add_theme_constant_override("margin_top", _i(16))
+	margin.add_theme_constant_override("margin_right", _i(18))
+	margin.add_theme_constant_override("margin_bottom", _i(16))
+	card.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", _i(8))
+	margin.add_child(box)
+	box.add_child(_make_label(title, 21, Color(1.0, 0.92, 0.8, 1.0)))
+	for item_variant in items:
+		box.add_child(_make_label("• %s" % String(item_variant), 16, Color(0.9, 0.92, 0.95, 0.93)))
+
+	return card
+
+
 func _make_text_input(placeholder_text: String) -> LineEdit:
 	var input := LineEdit.new()
 	input.custom_minimum_size = _v(0.0, 52.0)
@@ -1046,6 +1269,8 @@ func _on_toggle_theme_pressed() -> void:
 
 func _show_about() -> void:
 	if about_overlay != null:
+		_hide_changelog()
+		_hide_profile()
 		about_overlay.visible = true
 
 
@@ -1054,10 +1279,23 @@ func _hide_about() -> void:
 		about_overlay.visible = false
 
 
+func _show_changelog() -> void:
+	if changelog_overlay != null:
+		_hide_about()
+		_hide_profile()
+		changelog_overlay.visible = true
+
+
+func _hide_changelog() -> void:
+	if changelog_overlay != null:
+		changelog_overlay.visible = false
+
+
 func _show_profile() -> void:
 	if profile_overlay == null or profile_name_input == null:
 		return
 	_hide_about()
+	_hide_changelog()
 	var identity: Dictionary = Session.get_leaderboard_identity()
 	profile_name_input.text = String(identity.get("custom_name", ""))
 	_refresh_profile_overlay()
@@ -1136,6 +1374,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if profile_overlay != null and profile_overlay.visible:
 		_hide_profile()
+		get_viewport().set_input_as_handled()
+		return
+	if changelog_overlay != null and changelog_overlay.visible:
+		_hide_changelog()
 		get_viewport().set_input_as_handled()
 		return
 	if about_overlay != null and about_overlay.visible:

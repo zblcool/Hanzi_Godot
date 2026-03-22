@@ -2,6 +2,12 @@
 
 All notable changes to this Godot migration project are documented here.
 
+## 2026-03-22
+
+- Added an in-launcher changelog history overlay so the latest-update card can open recent migration milestones directly on the Godot home screen.
+- Added launcher/menu theme parity, player sigil naming, music-track HUD feedback, and enemy-dropped utility pickups plus 回春丹 recovery across the current vertical slice.
+- Kept the migration checklist, README, and smoke-test-driven workflow aligned with the current Godot launcher -> menu -> battle mainline.
+
 ## 2026-03-21
 
 - Added the 字海二级菜单 overlays for the leaderboard, 合字图谱, 怪物图鉴, and 人物志.
