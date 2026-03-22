@@ -2656,12 +2656,12 @@ func _build_enemy_archive_text() -> String:
 	for enemy_id_variant in Session.ENEMY_ORDER:
 		var enemy_id := String(enemy_id_variant)
 		var enemy: Dictionary = _localized_enemy_data(enemy_id)
-		lines.append("%s  %s  ·  %s" % [
+		lines.append(_localize_text(String(enemy_content.get("entry_format", "%s  %s  ·  %s"))) % [
 			String(enemy.get("glyph", "")),
 			String(enemy.get("name", "")),
 			String(enemy.get("title", ""))
 		])
-		lines.append("  %s" % String(enemy.get("summary", "")))
+		lines.append(_localize_text(String(enemy_content.get("summary_format", "  %s"))) % String(enemy.get("summary", "")))
 		lines.append(_localize_text(String(enemy_content.get("warning_format", "  预警：%s"))) % String(enemy.get("warning", "")))
 		lines.append(_localize_text(String(enemy_content.get("counter_format", "  应对：%s"))) % String(enemy.get("counter", "")))
 		lines.append("")

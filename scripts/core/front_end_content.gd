@@ -491,6 +491,8 @@ const MENU_LEADERBOARD_CONTENT := {
 
 const MENU_ENEMY_CONTENT := {
 	"intro": "以下条目对应当前残卷里已经接入的敌人谱系、预警方式与最实用的临场处理思路。",
+	"entry_format": "%s  %s  ·  %s",
+	"summary_format": "  %s",
 	"warning_format": "  预警：%s",
 	"counter_format": "  应对：%s"
 }
