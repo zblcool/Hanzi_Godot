@@ -250,14 +250,56 @@ func _rebuild_ui() -> void:
 
 
 func _on_viewport_size_changed() -> void:
-	var new_scale := _compute_ui_scale()
-	if absf(new_scale - ui_scale) > 0.02:
-		_rebuild_ui()
+	_rebuild_ui()
 
 
 func _compute_ui_scale() -> float:
 	var viewport_size := get_viewport_rect().size
-	return clamp(min(viewport_size.x / BASE_VIEWPORT.x, viewport_size.y / BASE_VIEWPORT.y), MIN_UI_SCALE, 1.0)
+	var min_scale := 0.44 if _is_portrait_layout() else MIN_UI_SCALE
+	return clamp(min(viewport_size.x / BASE_VIEWPORT.x, viewport_size.y / BASE_VIEWPORT.y), min_scale, 1.0)
+
+
+func _is_portrait_layout() -> bool:
+	var viewport_size := get_viewport_rect().size
+	return viewport_size.x <= viewport_size.y
+
+
+func _safe_area_insets() -> Dictionary:
+	var visible_rect := get_viewport_rect()
+	var safe_area: Rect2 = Rect2(DisplayServer.get_display_safe_area())
+	if safe_area.size.x <= 0.0 or safe_area.size.y <= 0.0:
+		return {"left": 0.0, "top": 0.0, "right": 0.0, "bottom": 0.0}
+
+	var left := maxf(safe_area.position.x - visible_rect.position.x, 0.0)
+	var top := maxf(safe_area.position.y - visible_rect.position.y, 0.0)
+	var right := maxf((visible_rect.position.x + visible_rect.size.x) - (safe_area.position.x + safe_area.size.x), 0.0)
+	var bottom := maxf((visible_rect.position.y + visible_rect.size.y) - (safe_area.position.y + safe_area.size.y), 0.0)
+	return {"left": left, "top": top, "right": right, "bottom": bottom}
+
+
+func _apply_root_safe_margins(root: MarginContainer, left: float, top: float, right: float, bottom: float) -> void:
+	var safe_area := _safe_area_insets()
+	root.add_theme_constant_override("margin_left", _i(left) + int(round(float(safe_area["left"]))))
+	root.add_theme_constant_override("margin_top", _i(top) + int(round(float(safe_area["top"]))))
+	root.add_theme_constant_override("margin_right", _i(right) + int(round(float(safe_area["right"]))))
+	root.add_theme_constant_override("margin_bottom", _i(bottom) + int(round(float(safe_area["bottom"]))))
+
+
+func _set_center_overlay_panel(panel: Control, design_width: float, design_height: float, margin_x: float = 24.0, margin_y: float = 24.0) -> void:
+	var safe_area := _safe_area_insets()
+	var viewport_size := get_viewport_rect().size
+	var usable_position := Vector2(float(safe_area["left"]) + margin_x, float(safe_area["top"]) + margin_y)
+	var usable_size := Vector2(
+		maxf(260.0, viewport_size.x - float(safe_area["left"]) - float(safe_area["right"]) - margin_x * 2.0),
+		maxf(260.0, viewport_size.y - float(safe_area["top"]) - float(safe_area["bottom"]) - margin_y * 2.0)
+	)
+	var panel_size := Vector2(min(_f(design_width), usable_size.x), min(_f(design_height), usable_size.y))
+	panel.anchor_left = 0.0
+	panel.anchor_top = 0.0
+	panel.anchor_right = 0.0
+	panel.anchor_bottom = 0.0
+	panel.position = usable_position + (usable_size - panel_size) * 0.5
+	panel.size = panel_size
 
 
 func _f(value: float) -> float:
@@ -339,12 +381,16 @@ func _make_theme_toggle_button(size: Vector2) -> Button:
 
 
 func _build_ui() -> void:
+	var portrait_layout := _is_portrait_layout()
 	var root := MarginContainer.new()
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
-	root.add_theme_constant_override("margin_left", _i(44))
-	root.add_theme_constant_override("margin_top", _i(32))
-	root.add_theme_constant_override("margin_right", _i(44))
-	root.add_theme_constant_override("margin_bottom", _i(24))
+	_apply_root_safe_margins(
+		root,
+		24.0 if portrait_layout else 44.0,
+		20.0 if portrait_layout else 32.0,
+		24.0 if portrait_layout else 44.0,
+		20.0 if portrait_layout else 24.0
+	)
 	add_child(root)
 
 	var scroll := ScrollContainer.new()
@@ -357,20 +403,34 @@ func _build_ui() -> void:
 	layout.add_theme_constant_override("separation", _i(20))
 	scroll.add_child(layout)
 
-	var top_bar := HBoxContainer.new()
-	top_bar.add_theme_constant_override("separation", _i(12))
+	var top_bar: Container
+	if portrait_layout:
+		var top_grid := GridContainer.new()
+		top_grid.columns = 2
+		top_grid.add_theme_constant_override("h_separation", _i(12))
+		top_grid.add_theme_constant_override("v_separation", _i(12))
+		top_bar = top_grid
+	else:
+		var top_row := HBoxContainer.new()
+		top_row.add_theme_constant_override("separation", _i(12))
+		var top_spacer := Control.new()
+		top_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		top_row.add_child(top_spacer)
+		top_bar = top_row
 	layout.add_child(top_bar)
 
-	var top_spacer := Control.new()
-	top_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	top_bar.add_child(top_spacer)
-	top_bar.add_child(_make_pill_button("玩家名帖", _v(152.0, 54.0), Callable(self, "_show_profile")))
-	top_bar.add_child(_make_pill_button("关于字海", _v(136.0, 54.0), Callable(self, "_show_about")))
-	top_bar.add_child(_make_theme_toggle_button(_v(94.0, 54.0)))
-	top_bar.add_child(_make_static_pill("EN", _v(78.0, 54.0)))
+	var top_buttons: Array[Control] = [
+		_make_pill_button("玩家名帖", _v(152.0, 54.0), Callable(self, "_show_profile")),
+		_make_pill_button("关于字海", _v(136.0, 54.0), Callable(self, "_show_about")),
+		_make_theme_toggle_button(_v(94.0, 54.0)),
+		_make_static_pill("EN", _v(78.0, 54.0))
+	]
+	for button in top_buttons:
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL if portrait_layout else 0
+		top_bar.add_child(button)
 
 	var header_panel := PanelContainer.new()
-	header_panel.custom_minimum_size = _v(0.0, 188.0)
+	header_panel.custom_minimum_size = _v(0.0, 212.0 if portrait_layout else 188.0)
 	header_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.06, 0.08, 0.1, 0.8), Color(0.24, 0.3, 0.36, 0.72)))
 	layout.add_child(header_panel)
 
@@ -388,7 +448,7 @@ func _build_ui() -> void:
 	header_box.add_child(_make_label("汉字游戏启动器", 72, Color(1.0, 0.95, 0.86, 1.0)))
 	header_box.add_child(_make_label("从字形、部件到战斗系统，把汉字本身做成游戏的核心机制。", 18, Color(0.9, 0.92, 0.96, 0.94)))
 
-	var mobile_row := HBoxContainer.new()
+	var mobile_row: BoxContainer = VBoxContainer.new() if portrait_layout else HBoxContainer.new()
 	mobile_row.add_theme_constant_override("separation", _i(18))
 	layout.add_child(mobile_row)
 
@@ -409,7 +469,7 @@ func _build_ui() -> void:
 		Color(0.52, 0.8, 1.0, 1.0)
 	))
 
-	var main_row := HBoxContainer.new()
+	var main_row: BoxContainer = VBoxContainer.new() if portrait_layout else HBoxContainer.new()
 	main_row.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	main_row.add_theme_constant_override("separation", _i(20))
 	layout.add_child(main_row)
@@ -439,7 +499,7 @@ func _build_ui() -> void:
 
 	layout.add_child(_make_update_spotlight_panel())
 
-	var roadmap_row := HBoxContainer.new()
+	var roadmap_row: BoxContainer = VBoxContainer.new() if portrait_layout else HBoxContainer.new()
 	roadmap_row.add_theme_constant_override("separation", _i(18))
 	layout.add_child(roadmap_row)
 
@@ -660,6 +720,7 @@ func _make_update_spotlight_panel() -> PanelContainer:
 
 
 func _build_about_overlay() -> void:
+	var portrait_layout := _is_portrait_layout()
 	about_overlay = Control.new()
 	about_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
 	about_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -672,11 +733,7 @@ func _build_about_overlay() -> void:
 	about_overlay.add_child(scrim)
 
 	var panel := PanelContainer.new()
-	panel.set_anchors_preset(Control.PRESET_CENTER)
-	panel.offset_left = -_f(560.0)
-	panel.offset_top = -_f(318.0)
-	panel.offset_right = _f(560.0)
-	panel.offset_bottom = _f(318.0)
+	_set_center_overlay_panel(panel, 1120.0, 780.0 if portrait_layout else 636.0)
 	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.05, 0.08, 0.1, 0.96), Color(0.94, 0.7, 0.42, 0.9)))
 	about_overlay.add_child(panel)
 
@@ -713,7 +770,7 @@ func _build_about_overlay() -> void:
 	]))
 
 	var game_grid := GridContainer.new()
-	game_grid.columns = 2
+	game_grid.columns = 1 if portrait_layout else 2
 	game_grid.add_theme_constant_override("h_separation", _i(16))
 	game_grid.add_theme_constant_override("v_separation", _i(16))
 	content.add_child(game_grid)
@@ -736,7 +793,7 @@ func _build_about_overlay() -> void:
 	))
 
 	var notes_grid := GridContainer.new()
-	notes_grid.columns = 3
+	notes_grid.columns = 1 if portrait_layout else 3
 	notes_grid.add_theme_constant_override("h_separation", _i(14))
 	notes_grid.add_theme_constant_override("v_separation", _i(14))
 	content.add_child(notes_grid)
@@ -757,7 +814,7 @@ func _build_about_overlay() -> void:
 		Color(0.58, 0.84, 0.62, 1.0)
 	))
 
-	var footer_row := HBoxContainer.new()
+	var footer_row: BoxContainer = VBoxContainer.new() if portrait_layout else HBoxContainer.new()
 	footer_row.add_theme_constant_override("separation", _i(10))
 	box.add_child(footer_row)
 
@@ -780,6 +837,7 @@ func _build_about_overlay() -> void:
 
 
 func _build_changelog_overlay() -> void:
+	var portrait_layout := _is_portrait_layout()
 	changelog_overlay = Control.new()
 	changelog_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
 	changelog_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -792,11 +850,7 @@ func _build_changelog_overlay() -> void:
 	changelog_overlay.add_child(scrim)
 
 	var panel := PanelContainer.new()
-	panel.set_anchors_preset(Control.PRESET_CENTER)
-	panel.offset_left = -_f(600.0)
-	panel.offset_top = -_f(338.0)
-	panel.offset_right = _f(600.0)
-	panel.offset_bottom = _f(338.0)
+	_set_center_overlay_panel(panel, 1200.0, 860.0 if portrait_layout else 676.0)
 	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.05, 0.08, 0.1, 0.96), Color(0.92, 0.72, 0.42, 0.88)))
 	changelog_overlay.add_child(panel)
 
@@ -830,7 +884,7 @@ func _build_changelog_overlay() -> void:
 	for entry_index in range(LAUNCHER_CHANGELOG_HISTORY.size()):
 		content.add_child(_make_changelog_entry_card(LAUNCHER_CHANGELOG_HISTORY[entry_index], entry_index == 0))
 
-	var footer_row := HBoxContainer.new()
+	var footer_row: BoxContainer = VBoxContainer.new() if portrait_layout else HBoxContainer.new()
 	footer_row.add_theme_constant_override("separation", _i(10))
 	box.add_child(footer_row)
 
@@ -853,6 +907,7 @@ func _build_changelog_overlay() -> void:
 
 
 func _build_profile_overlay() -> void:
+	var portrait_layout := _is_portrait_layout()
 	profile_overlay = Control.new()
 	profile_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
 	profile_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -865,11 +920,7 @@ func _build_profile_overlay() -> void:
 	profile_overlay.add_child(scrim)
 
 	var panel := PanelContainer.new()
-	panel.set_anchors_preset(Control.PRESET_CENTER)
-	panel.offset_left = -_f(380.0)
-	panel.offset_top = -_f(250.0)
-	panel.offset_right = _f(380.0)
-	panel.offset_bottom = _f(250.0)
+	_set_center_overlay_panel(panel, 760.0, 760.0 if portrait_layout else 500.0)
 	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.05, 0.08, 0.1, 0.96), Color(0.52, 0.8, 1.0, 0.72)))
 	profile_overlay.add_child(panel)
 
@@ -889,7 +940,7 @@ func _build_profile_overlay() -> void:
 	box.add_child(_make_label("玩家名帖", 40, Color(1.0, 0.95, 0.86, 1.0)))
 	box.add_child(_make_label("像 web 原型那样，为这台设备保存默认排行榜署名。结算页里留空时，后续战绩会直接复用这里的名字。", 18, Color(0.9, 0.92, 0.96, 0.95)))
 
-	var content_row := HBoxContainer.new()
+	var content_row: BoxContainer = VBoxContainer.new() if portrait_layout else HBoxContainer.new()
 	content_row.add_theme_constant_override("separation", _i(16))
 	box.add_child(content_row)
 
@@ -964,7 +1015,7 @@ func _build_profile_overlay() -> void:
 	profile_hint_label = _make_label("", 16, Color(0.88, 0.92, 0.96, 0.92))
 	editor_box.add_child(profile_hint_label)
 
-	var action_row := HBoxContainer.new()
+	var action_row: BoxContainer = VBoxContainer.new() if portrait_layout else HBoxContainer.new()
 	action_row.add_theme_constant_override("separation", _i(10))
 	editor_box.add_child(action_row)
 
@@ -985,7 +1036,7 @@ func _build_profile_overlay() -> void:
 	save_button.pressed.connect(_on_profile_save_pressed)
 	action_row.add_child(save_button)
 
-	var footer_row := HBoxContainer.new()
+	var footer_row: BoxContainer = VBoxContainer.new() if portrait_layout else HBoxContainer.new()
 	footer_row.add_theme_constant_override("separation", _i(10))
 	box.add_child(footer_row)
 
