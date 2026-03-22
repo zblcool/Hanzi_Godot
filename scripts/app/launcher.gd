@@ -1,6 +1,7 @@
 extends Control
 
 const CJKFont := preload("res://scripts/core/cjk_font.gd")
+const FrontEndContent := preload("res://scripts/core/front_end_content.gd")
 const BASE_VIEWPORT := Vector2(2100.0, 1200.0)
 const MIN_UI_SCALE := 0.6
 const NIGHT_THEME := {
@@ -23,150 +24,6 @@ const PAPER_THEME := {
 	"shadow": Color(0.18, 0.14, 0.1, 0.08),
 	"outline": Color(0.95, 0.92, 0.86, 0.4)
 }
-const LAUNCHER_UPDATE_SPOTLIGHT := {
-	"eyebrow": "Update History",
-	"title": "启动器更新日志入口已补齐",
-	"summary": "Godot 启动器首页现在既保留最近更新聚光卡，也能直接打开内置更新历史面板，继续向 web 原型首页的 changelog panel 对齐。",
-	"meta": ["2026-03-22", "Godot 启动器", "更新日志"],
-	"highlights": [
-		"首页“最近更新”卡现在可以直接展开最近几次迁移里程碑，不再只停在单条快照。",
-		"前台已补齐主题联动、玩家名帖与场景 smoke 检查，近期推进可以留在同一层里回看。",
-		"启动器层剩余更大的缺口仍是双语切换与仓颉入口接入。"
-	],
-	"footnote": "完整长期追踪仍以仓库根目录的 MIGRATION_CHECKLIST 为准。"
-}
-const LAUNCHER_CHANGELOG_HISTORY := [
-	{
-		"date": "2026-03-22",
-		"title": "启动器更新日志面板接回首页",
-		"summary": "Godot 首页现在既保留最近更新聚光卡，也能展开内置更新历史面板，直接回看最近几次迁移里程碑。",
-		"meta": ["Godot 启动器", "迁移前台", "Launcher"],
-		"sections": [
-			{
-				"label": "新增",
-				"items": [
-					"首页最近更新卡新增“查看更新记录”入口，可以直接展开最近几次 Godot 迁移快照。",
-					"启动器内置更新面板会滚动列出近期完成项，让 changelog 入口不再只存在于仓库文件里。"
-				]
-			},
-			{
-				"label": "同步",
-				"items": [
-					"近期的主题联动、玩家名帖、战场乐题提示和 utility 掉落迁移成果都被收进同一条前台历史里。",
-					"继续对齐 hanziHero web 启动器里的 changelog panel 角色，但先保留当前 Godot 单语结构。"
-				]
-			},
-			{
-				"label": "下一步",
-				"items": [
-					"启动器剩余更大的缺口仍是双语切换与仓颉入口接入。",
-					"如果继续做前台层，小而稳的下一步更适合补菜单侧的 build / progression 展示。"
-				]
-			}
-		]
-	},
-	{
-		"date": "2026-03-21",
-		"title": "字海菜单层与排行榜署名链路接稳",
-		"summary": "Godot 主线把启动器后的字海二级菜单、局外资料面板和本地排行榜署名链路接成了更完整的一段 vertical slice。",
-		"meta": ["菜单层", "排行榜", "Vertical Slice"],
-		"sections": [
-			{
-				"label": "新增",
-				"items": [
-					"补上人物志、合字图谱、怪物图鉴和本地排行榜这些字海二级菜单 overlays。",
-					"启动器和菜单都能维护玩家名帖，后续结算页留空时会自动复用默认署名。"
-				]
-			},
-			{
-				"label": "打磨",
-				"items": [
-					"移动端战斗入口、暂停和小屏 UI 进一步压实，不再只是桌面演示。",
-					"场景 smoke 检查、README 与迁移清单开始持续跟着当前主线一起维护。"
-				]
-			}
-		]
-	},
-	{
-		"date": "2026-03-20",
-		"title": "首个 Godot 字海可玩切片成型",
-		"summary": "Godot 仓库完成了启动器、菜单、3D 战斗、地图、导出与移动端守护的第一轮闭环，字海残卷开始脱离占位原型。",
-		"meta": ["3D 战斗", "Web 导出", "移动端"],
-		"sections": [
-			{
-				"label": "新增",
-				"items": [
-					"搭出 Godot 版启动器、字海战斗原型、地图 modal、暂停层和移动端横屏保护。",
-					"接通 Web 导出脚本、Vercel 部署路径，以及基础本地排行榜存档。"
-				]
-			},
-			{
-				"label": "系统",
-				"items": [
-					"敌人谱系、宝箱与场景道具、波次推进和核心偏旁成长链路开始在 Godot 内成型。",
-					"Launcher -> 字海菜单 -> 3D 战斗 的仓库主线从这一天开始可持续迭代。"
-				]
-			}
-		]
-	}
-]
-const CANGJIE_PORTAL_SECTIONS := [
-	{
-		"id": "overview",
-		"title": "仓颉之路",
-		"eyebrow": "Deckbuilder Climb",
-		"summary": "原项目里的《仓颉之路》已经不是空概念，而是一条可玩的 deckbuilder 爬塔原型。当前 Godot 仓库还没有把这条战斗/地图基础迁进来，所以这里先把它做成正式入口页，而不是继续停在“后续接入”。",
-		"points": [
-			"核心节奏是爬塔、抽牌、出牌和字形组合，不走字海残卷那套自动攻击幸存者循环。",
-			"战斗舞台会把卡牌信息直接浮在场中，强调“字形 + 动作 + 语义”的同时反馈。",
-			"当前最适合在 Godot 里先迁的是入口层、图谱层和长期设计说明，再等真正的卡牌战斗基础跟上。"
-		]
-	},
-	{
-		"id": "card_codex",
-		"title": "卡牌字库",
-		"eyebrow": "Card Codex",
-		"summary": "web 原型已经把牌分成偏旁基牌、合字牌和引擎牌三层，不是单一数值卡堆。",
-		"points": [
-			"偏旁牌负责起手和过渡，是后续合字路线的材料层。",
-			"合字牌会把结构真正写成战斗效果，让“组字”变成卡组成长的一部分。",
-			"引擎牌继续推进抽牌、留牌、回气或连锁，让 deckbuilder 身份成立。"
-		]
-	},
-	{
-		"id": "fusion_atlas",
-		"title": "合字图谱",
-		"eyebrow": "Fusion Atlas",
-		"summary": "《仓颉之路》不是只把汉字当皮肤，而是把合字路线直接做成牌组构筑图谱。",
-		"points": [
-			"不同合字路线会决定你这次爬塔偏向爆发、连锁、续航还是控制。",
-			"图谱层会比字海残卷更强调“先收什么，再往哪条组合线转”。",
-			"Godot 当前已经有字海的偏旁 -> 合字 -> 词技主线，后面可以把这套图谱思路反向迁回来。"
-		]
-	},
-	{
-		"id": "relic_shelf",
-		"title": "遗物架",
-		"eyebrow": "Relic Shelf",
-		"summary": "web 原型里《仓颉之路》有独立遗物层，负责给整套牌组和路线额外偏转。",
-		"points": [
-			"遗物不会只加一点基础数值，而是会改变抽牌、留牌、字形连锁和节点选择价值。",
-			"这条系统也正是 Godot 《字海残卷》当前还缺的第二成长线之一。",
-			"后续如果先在启动器把遗物架说明、样例和目标整理好，会更适合衔接真正的系统迁移。"
-		]
-	},
-	{
-		"id": "tower_guide",
-		"title": "塔路导览",
-		"eyebrow": "Tower Guide",
-		"summary": "原型里塔路节点和敌人意图已经是独立设计，不只是打完一场接一场的线性战斗。",
-		"points": [
-			"路线会混合战斗、恢复、事件和构筑节点，逼你在短期强度和长期牌组之间做取舍。",
-			"敌人不是字海那种大群追击，而是更接近回合制对局里的意图压迫和节奏管理。",
-			"Godot 端现在先用这层 portal 把路线、节点和敌意图整理清楚，避免第二项目继续只剩一张静态卡片。"
-		]
-	}
-]
 const EN_TEXT := {
 	"玩家名帖": "Player Sigil",
 	"关于字海": "About",
@@ -574,6 +431,44 @@ func _make_language_toggle_button(size: Vector2) -> Button:
 	return button
 
 
+func _resolve_launcher_action(action_id: String) -> Callable:
+	match action_id:
+		"show_profile":
+			return Callable(self, "_show_profile")
+		"show_about":
+			return Callable(self, "_show_about")
+		"enter_zihai":
+			return Callable(self, "_on_enter_zihai_pressed")
+		"show_cangjie_portal":
+			return Callable(self, "_show_cangjie_portal")
+		"show_changelog":
+			return Callable(self, "_show_changelog")
+		_:
+			return Callable()
+
+
+func _make_launcher_top_button(button_data: Dictionary) -> Button:
+	var size: Vector2 = button_data.get("size", Vector2(0.0, 54.0))
+	match String(button_data.get("kind", "action")):
+		"theme_toggle":
+			return _make_theme_toggle_button(size)
+		"language_toggle":
+			return _make_language_toggle_button(size)
+		_:
+			return _make_pill_button(
+				String(button_data.get("title", "")),
+				size,
+				_resolve_launcher_action(String(button_data.get("action", "")))
+			)
+
+
+func _to_string_array(values: Array) -> Array[String]:
+	var result: Array[String] = []
+	for value in values:
+		result.append(String(value))
+	return result
+
+
 func _build_ui() -> void:
 	var portrait_layout := _is_portrait_layout()
 	var root := MarginContainer.new()
@@ -613,13 +508,8 @@ func _build_ui() -> void:
 		top_bar = top_row
 	layout.add_child(top_bar)
 
-	var top_buttons: Array[Control] = [
-		_make_pill_button("玩家名帖", _v(152.0, 54.0), Callable(self, "_show_profile")),
-		_make_pill_button("关于字海", _v(136.0, 54.0), Callable(self, "_show_about")),
-		_make_theme_toggle_button(_v(94.0, 54.0)),
-		_make_language_toggle_button(_v(78.0, 54.0))
-	]
-	for button in top_buttons:
+	for button_data in FrontEndContent.launcher_top_actions():
+		var button := _make_launcher_top_button(button_data)
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL if portrait_layout else 0
 		top_bar.add_child(button)
 
@@ -646,50 +536,32 @@ func _build_ui() -> void:
 	mobile_row.add_theme_constant_override("separation", _i(18))
 	layout.add_child(mobile_row)
 
-	mobile_row.add_child(_make_info_panel(
-		"微信内打开",
-		[
-			"如果是微信内置浏览器，尽量切到系统浏览器再进入。",
-			"这样更容易拿到稳定的全屏、音频和触控体验。"
-		],
-		Color(0.5, 0.88, 0.66, 1.0)
-	))
-	mobile_row.add_child(_make_info_panel(
-		"iPhone / iPad",
-		[
-			"可以用“分享 -> 添加到主屏幕”把启动器放到桌面。",
-			"主屏幕入口会更接近独立应用的打开方式。"
-		],
-		Color(0.52, 0.8, 1.0, 1.0)
-	))
+	for info_panel in FrontEndContent.launcher_mobile_info_panels():
+		var info_accent: Color = info_panel.get("accent", Color.WHITE)
+		mobile_row.add_child(_make_info_panel(
+			String(info_panel.get("title", "")),
+			_to_string_array(info_panel.get("lines", [])),
+			info_accent
+		))
 
 	var main_row: BoxContainer = VBoxContainer.new() if portrait_layout else HBoxContainer.new()
 	main_row.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	main_row.add_theme_constant_override("separation", _i(20))
 	layout.add_child(main_row)
 
-	main_row.add_child(_make_game_card(
-		"字海残卷",
-		"Action Roguelite",
-		"在墨阵里活下去，把偏旁一步步磨成成字与词技。",
-		["3D 自动战斗", "偏旁三选一", "合字 -> 磨词"],
-		Color(0.92, 0.54, 0.28, 1.0),
-		"zihai",
-		"进入字海残卷",
-		Callable(self, "_on_enter_zihai_pressed"),
-		true
-	))
-	main_row.add_child(_make_game_card(
-		"仓颉之路",
-		"Deckbuilder Climb",
-		"把字形拆解、语义路线和出牌构筑压进同一条爬塔曲线。",
-		["卡牌构筑", "字形拼装", "后续迁移"],
-		Color(0.38, 0.58, 0.9, 1.0),
-		"cangjie",
-		"进入仓颉入口",
-		Callable(self, "_show_cangjie_portal"),
-		true
-	))
+	for card_data in FrontEndContent.launcher_game_cards():
+		var card_accent: Color = card_data.get("accent", Color.WHITE)
+		main_row.add_child(_make_game_card(
+			String(card_data.get("title", "")),
+			String(card_data.get("badge_text", "")),
+			String(card_data.get("tagline", "")),
+			_to_string_array(card_data.get("tags", [])),
+			card_accent,
+			String(card_data.get("preview_kind", "")),
+			String(card_data.get("button_text", "")),
+			_resolve_launcher_action(String(card_data.get("action", ""))),
+			bool(card_data.get("enabled", true))
+		))
 
 	layout.add_child(_make_update_spotlight_panel())
 
@@ -697,24 +569,13 @@ func _build_ui() -> void:
 	roadmap_row.add_theme_constant_override("separation", _i(18))
 	layout.add_child(roadmap_row)
 
-	roadmap_row.add_child(_make_info_panel(
-		"迁移阶段",
-		[
-			"入口 -> 二级菜单 -> 战斗 的层级已经稳定。",
-			"字海残卷保持 3D 俯视角，不回退到纯占位原型。",
-			"敌人轮廓、字核和 UI 正在向 web 端气质统一。"
-		],
-		Color(0.92, 0.68, 0.4, 1.0)
-	))
-	roadmap_row.add_child(_make_info_panel(
-		"当前目标",
-		[
-			"把偏旁、合字、词技做成真正的成长主线。",
-			"让战斗里的字、墨、纸和敌人轮廓属于同一世界。",
-			"把菜单和 HUD 提到可展示、可录像的完成度。"
-		],
-		Color(0.38, 0.74, 0.84, 1.0)
-	))
+	for info_panel in FrontEndContent.launcher_roadmap_info_panels():
+		var info_accent: Color = info_panel.get("accent", Color.WHITE)
+		roadmap_row.add_child(_make_info_panel(
+			String(info_panel.get("title", "")),
+			_to_string_array(info_panel.get("lines", [])),
+			info_accent
+		))
 
 	_build_about_overlay()
 	_build_cangjie_overlay()
@@ -869,6 +730,7 @@ func _make_info_panel(title: String, lines: Array[String], accent: Color) -> Pan
 
 
 func _make_update_spotlight_panel() -> PanelContainer:
+	var spotlight := FrontEndContent.launcher_update_spotlight()
 	var accent := Color(0.92, 0.7, 0.38, 1.0)
 	var panel := PanelContainer.new()
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -886,29 +748,29 @@ func _make_update_spotlight_panel() -> PanelContainer:
 	box.add_theme_constant_override("separation", _i(10))
 	margin.add_child(box)
 
-	box.add_child(_make_tag(String(LAUNCHER_UPDATE_SPOTLIGHT["eyebrow"]), Color(0.14, 0.18, 0.24, 0.88), Color(0.96, 0.82, 0.56, 0.98)))
-	box.add_child(_make_label(String(LAUNCHER_UPDATE_SPOTLIGHT["title"]), 32, Color(1.0, 0.95, 0.86, 1.0)))
-	box.add_child(_make_label(String(LAUNCHER_UPDATE_SPOTLIGHT["summary"]), 18, Color(0.9, 0.92, 0.96, 0.95)))
+	box.add_child(_make_tag(String(spotlight.get("eyebrow", "")), Color(0.14, 0.18, 0.24, 0.88), Color(0.96, 0.82, 0.56, 0.98)))
+	box.add_child(_make_label(String(spotlight.get("title", "")), 32, Color(1.0, 0.95, 0.86, 1.0)))
+	box.add_child(_make_label(String(spotlight.get("summary", "")), 18, Color(0.9, 0.92, 0.96, 0.95)))
 
 	var meta_row := HBoxContainer.new()
 	meta_row.add_theme_constant_override("separation", _i(8))
 	box.add_child(meta_row)
-	for meta_text_variant in LAUNCHER_UPDATE_SPOTLIGHT["meta"]:
+	for meta_text_variant in spotlight.get("meta", []):
 		meta_row.add_child(_make_tag(String(meta_text_variant), Color(accent.r * 0.14, accent.g * 0.14, accent.b * 0.16, 0.9), Color(0.98, 0.94, 0.88, 0.96)))
 
 	var highlights_box := VBoxContainer.new()
 	highlights_box.add_theme_constant_override("separation", _i(6))
 	box.add_child(highlights_box)
-	for highlight_variant in LAUNCHER_UPDATE_SPOTLIGHT["highlights"]:
+	for highlight_variant in spotlight.get("highlights", []):
 		highlights_box.add_child(_make_label("• %s" % String(highlight_variant), 16, Color(0.9, 0.92, 0.96, 0.92)))
 
-	box.add_child(_make_label(String(LAUNCHER_UPDATE_SPOTLIGHT["footnote"]), 15, Color(0.86, 0.9, 0.94, 0.8)))
+	box.add_child(_make_label(String(spotlight.get("footnote", "")), 15, Color(0.86, 0.9, 0.94, 0.8)))
 
 	var action_row := HBoxContainer.new()
 	action_row.add_theme_constant_override("separation", _i(10))
 	box.add_child(action_row)
 
-	var history_button := _make_pill_button("查看更新记录", _v(0.0, 48.0), Callable(self, "_show_changelog"))
+	var history_button := _make_pill_button("查看更新记录", _v(0.0, 48.0), _resolve_launcher_action("show_changelog"))
 	history_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	action_row.add_child(history_button)
 	return panel
@@ -1070,6 +932,8 @@ func _build_cangjie_overlay() -> void:
 	box.add_child(_make_label("仓颉之路入口", 42, Color(1.0, 0.95, 0.86, 1.0)))
 	box.add_child(_make_label("先把 deckbuilder 原型的核心结构、迁移状态和后续切入点收进同一层入口里，避免第二项目继续停在一张静态卡片。", 18, Color(0.9, 0.92, 0.96, 0.95)))
 
+	var portal_sections := FrontEndContent.cangjie_portal_sections()
+
 	var nav_container: Container
 	if portrait_layout:
 		var nav_grid := GridContainer.new()
@@ -1084,7 +948,7 @@ func _build_cangjie_overlay() -> void:
 	box.add_child(nav_container)
 
 	cangjie_nav_buttons.clear()
-	for section in CANGJIE_PORTAL_SECTIONS:
+	for section in portal_sections:
 		var section_id := String(section.get("id", "overview"))
 		var button := _make_pill_button(String(section.get("title", section_id)), _v(0.0, 48.0), Callable(self, "_on_cangjie_section_pressed").bind(section_id))
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -1149,8 +1013,12 @@ func _refresh_cangjie_portal() -> void:
 	if cangjie_section_title_label == null or cangjie_section_body_label == null:
 		return
 
-	var active_section: Dictionary = CANGJIE_PORTAL_SECTIONS[0]
-	for section in CANGJIE_PORTAL_SECTIONS:
+	var sections := FrontEndContent.cangjie_portal_sections()
+	if sections.is_empty():
+		return
+
+	var active_section: Dictionary = sections[0]
+	for section in sections:
 		if String(section.get("id", "")) == cangjie_section:
 			active_section = section
 			break
@@ -1218,8 +1086,9 @@ func _build_changelog_overlay() -> void:
 	content.add_theme_constant_override("separation", _i(14))
 	scroll.add_child(content)
 
-	for entry_index in range(LAUNCHER_CHANGELOG_HISTORY.size()):
-		content.add_child(_make_changelog_entry_card(LAUNCHER_CHANGELOG_HISTORY[entry_index], entry_index == 0))
+	var changelog_history := FrontEndContent.launcher_changelog_history()
+	for entry_index in range(changelog_history.size()):
+		content.add_child(_make_changelog_entry_card(changelog_history[entry_index], entry_index == 0))
 
 	var footer_row: BoxContainer = VBoxContainer.new() if portrait_layout else HBoxContainer.new()
 	footer_row.add_theme_constant_override("separation", _i(10))

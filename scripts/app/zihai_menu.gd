@@ -1,6 +1,7 @@
 extends Control
 
 const CJKFont := preload("res://scripts/core/cjk_font.gd")
+const FrontEndContent := preload("res://scripts/core/front_end_content.gd")
 const HanziLocalization := preload("res://scripts/core/hanzi_localization.gd")
 const BASE_VIEWPORT := Vector2(2100.0, 1200.0)
 const MIN_UI_SCALE := 0.6
@@ -462,6 +463,45 @@ func _make_language_toggle_button(size: Vector2) -> Button:
 	return button
 
 
+func _resolve_menu_action(action_id: String) -> Callable:
+	match action_id:
+		"back":
+			return Callable(self, "_on_back_pressed")
+		"character_archive":
+			return Callable(self, "_on_character_archive_pressed")
+		"recipe_atlas":
+			return Callable(self, "_on_recipe_atlas_pressed")
+		"enemy_archive":
+			return Callable(self, "_on_enemy_archive_pressed")
+		"profile":
+			return Callable(self, "_on_profile_pressed")
+		"leaderboard":
+			return Callable(self, "_on_leaderboard_pressed")
+		"start":
+			return Callable(self, "_on_start_pressed")
+		"start_wave_10":
+			return Callable(self, "_on_start_wave_10_pressed")
+		"start_wave_20":
+			return Callable(self, "_on_start_wave_20_pressed")
+		_:
+			return Callable()
+
+
+func _make_menu_top_button(button_data: Dictionary) -> Button:
+	var size: Vector2 = button_data.get("size", Vector2(0.0, 54.0))
+	match String(button_data.get("kind", "action")):
+		"theme_toggle":
+			return _make_theme_toggle_button(size)
+		"language_toggle":
+			return _make_language_toggle_button(size)
+		_:
+			return _make_pill_button(
+				String(button_data.get("title", "")),
+				size,
+				_resolve_menu_action(String(button_data.get("action", "")))
+			)
+
+
 func _build_ui() -> void:
 	var portrait_layout := _is_portrait_layout()
 	var root := MarginContainer.new()
@@ -501,18 +541,8 @@ func _build_ui() -> void:
 		top_bar = top_row
 	layout.add_child(top_bar)
 
-	var top_buttons: Array[Control] = [
-		_make_pill_button("返回启动器", _v(168.0, 54.0), Callable(self, "_on_back_pressed")),
-		_make_pill_button("人物志", _v(148.0, 54.0), Callable(self, "_on_character_archive_pressed")),
-		_make_pill_button("合字图谱", _v(164.0, 54.0), Callable(self, "_on_recipe_atlas_pressed")),
-		_make_pill_button("怪物图鉴", _v(164.0, 54.0), Callable(self, "_on_enemy_archive_pressed")),
-		_make_pill_button("玩家名帖", _v(156.0, 54.0), Callable(self, "_on_profile_pressed")),
-		_make_pill_button("查看排行榜", _v(172.0, 54.0), Callable(self, "_on_leaderboard_pressed")),
-		_make_pill_button("直接开始", _v(152.0, 54.0), Callable(self, "_on_start_pressed")),
-		_make_theme_toggle_button(_v(94.0, 54.0)),
-		_make_language_toggle_button(_v(74.0, 54.0))
-	]
-	for button in top_buttons:
+	for button_data in FrontEndContent.menu_top_actions():
+		var button := _make_menu_top_button(button_data)
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL if portrait_layout else 0
 		top_bar.add_child(button)
 
@@ -780,9 +810,13 @@ func _build_ui() -> void:
 	var quick_start_row: BoxContainer = VBoxContainer.new() if portrait_layout else HBoxContainer.new()
 	quick_start_row.add_theme_constant_override("separation", _i(10))
 	quick_start_box.add_child(quick_start_row)
-	quick_start_row.add_child(_make_quick_start_button("标准入卷", Color(0.92, 0.68, 0.42, 1.0), Callable(self, "_on_start_pressed")))
-	quick_start_row.add_child(_make_quick_start_button("试阵 · 第10波", Color(0.56, 0.84, 1.0, 1.0), Callable(self, "_on_start_wave_10_pressed")))
-	quick_start_row.add_child(_make_quick_start_button("压测 · 第20波", Color(0.78, 0.52, 1.0, 1.0), Callable(self, "_on_start_wave_20_pressed")))
+	for quick_start in FrontEndContent.menu_quick_start_actions():
+		var quick_start_accent: Color = quick_start.get("accent", Color.WHITE)
+		quick_start_row.add_child(_make_quick_start_button(
+			String(quick_start.get("title", "")),
+			quick_start_accent,
+			_resolve_menu_action(String(quick_start.get("action", "")))
+		))
 
 	_build_character_archive_overlay()
 	_build_recipe_atlas_overlay()
