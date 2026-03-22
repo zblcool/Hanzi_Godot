@@ -70,6 +70,8 @@ const MENU_EN_TEXT := {
 	"气血": "Vitality",
 	"伤害": "Damage",
 	"射程": "Range",
+	"攻速": "Attack Rate",
+	"拾取": "Pickup",
 	"夜墨": "Night Ink",
 	"纸墨": "Paper Ink",
 	"切换到夜墨主题": "Switch to Night Ink theme",
@@ -837,7 +839,7 @@ func _build_ui() -> void:
 	build_route_box.add_child(_make_label("这些卡片当前只负责前台提示，不会在 Godot 战斗里额外改掉落权重或自动加成。", 15, Color(0.82, 0.9, 1.0, 0.88)))
 
 	var stats_panel := PanelContainer.new()
-	stats_panel.custom_minimum_size = _v(0.0, 232.0)
+	stats_panel.custom_minimum_size = _v(0.0, 312.0)
 	stats_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.08, 0.12, 0.16, 0.72), Color(0.28, 0.36, 0.42, 0.46)))
 	detail_box.add_child(stats_panel)
 
@@ -857,6 +859,8 @@ func _build_ui() -> void:
 	detail_stat_widgets["max_health"] = _make_stat_row(stats_box, "气血")
 	detail_stat_widgets["attack_damage"] = _make_stat_row(stats_box, "伤害")
 	detail_stat_widgets["attack_range"] = _make_stat_row(stats_box, "射程")
+	detail_stat_widgets["attack_rate"] = _make_stat_row(stats_box, "攻速")
+	detail_stat_widgets["pickup_radius"] = _make_stat_row(stats_box, "拾取")
 
 	var quick_start_panel := PanelContainer.new()
 	quick_start_panel.custom_minimum_size = _v(0.0, 164.0)
@@ -1836,6 +1840,13 @@ func _build_hero_starting_tags(hero: Dictionary) -> Array[String]:
 	return tags
 
 
+func _get_hero_attack_rate(hero: Dictionary) -> float:
+	var attack_interval := float(hero.get("attack_interval", 0.0))
+	if attack_interval <= 0.0:
+		return 0.0
+	return 1.0 / attack_interval
+
+
 func _build_hero_active_skill_headline(hero: Dictionary) -> String:
 	var glyph := String(hero.get("active_skill_glyph", "")).strip_edges()
 	var name := String(hero.get("active_skill_name", "")).strip_edges()
@@ -2201,7 +2212,7 @@ func _make_character_archive_card(hero: Dictionary) -> PanelContainer:
 	stats_box.add_child(_make_label("战斗轮廓", 18, Color(1.0, 0.92, 0.8, 1.0)))
 
 	var stats_grid := GridContainer.new()
-	stats_grid.columns = 2
+	stats_grid.columns = 2 if portrait_layout else 3
 	stats_grid.add_theme_constant_override("h_separation", _i(10))
 	stats_grid.add_theme_constant_override("v_separation", _i(10))
 	stats_box.add_child(stats_grid)
@@ -2209,6 +2220,8 @@ func _make_character_archive_card(hero: Dictionary) -> PanelContainer:
 	stats_grid.add_child(_make_archive_stat_item("气血", "%.0f" % float(hero.get("max_health", 0.0)), accent))
 	stats_grid.add_child(_make_archive_stat_item("伤害", "%.0f" % float(hero.get("attack_damage", 0.0)), accent))
 	stats_grid.add_child(_make_archive_stat_item("射程", "%.1f" % float(hero.get("attack_range", 0.0)), accent))
+	stats_grid.add_child(_make_archive_stat_item("攻速", "%.2f/s" % _get_hero_attack_rate(hero) if _is_english() else "%.2f /秒" % _get_hero_attack_rate(hero), accent))
+	stats_grid.add_child(_make_archive_stat_item("拾取", "%.1f" % float(hero.get("collect_radius", 0.0)), accent))
 
 	return panel
 
@@ -2756,6 +2769,8 @@ func _refresh_selection(trigger_reaction: bool = false) -> void:
 	_set_stat_value("max_health", float(selected_data["max_health"]), 140.0, "%.0f")
 	_set_stat_value("attack_damage", float(selected_data["attack_damage"]), 24.0, "%.0f")
 	_set_stat_value("attack_range", float(selected_data["attack_range"]), 15.5, "%.1f")
+	_set_stat_value("attack_rate", _get_hero_attack_rate(selected_data), 2.0, "%.2f/s" if _is_english() else "%.2f /秒")
+	_set_stat_value("pickup_radius", float(selected_data.get("collect_radius", 0.0)), 4.5, "%.1f")
 	if trigger_reaction:
 		_show_hero_reaction(selected_hero, selected_data)
 
