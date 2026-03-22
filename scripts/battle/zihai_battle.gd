@@ -344,6 +344,24 @@ const CHAMBER_LAYOUTS := {
 				"reward_type": "reveal",
 				"reward_amount": 0.8,
 				"discover_radius": 6.3
+			},
+			{
+				"id": "bright_moon_glance",
+				"text": "举头望明月",
+				"english_text": "Raise Your Head to the Bright Moon",
+				"glyph": "望",
+				"position": Vector3(5.8, 0.0, 7.6),
+				"guardian_position": Vector3(9.4, 0.0, 4.8),
+				"guardian_health_scale": 1.12,
+				"guardian_glyph": "望",
+				"guardian_name": "望月守句",
+				"english_guardian_name": "Moonward Guardian",
+				"tint": Color(1.0, 0.94, 0.84, 1.0),
+				"guardian_tint": Color(0.88, 0.72, 0.48, 1.0),
+				"reward_type": "radical",
+				"reward_radical": "月",
+				"reward_amount": 1.0,
+				"discover_radius": 6.1
 			}
 		]
 	}
