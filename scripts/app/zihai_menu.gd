@@ -83,6 +83,8 @@ const MENU_EN_TEXT := {
 	"纸墨": "Paper Ink",
 	"切换到夜墨主题": "Switch to Night Ink theme",
 	"切换到纸墨主题": "Switch to Paper Ink theme",
+	"切换到英文": "Switch to English",
+	"切换到中文": "Switch to Chinese",
 	"把 web 原型里更偏向的构筑方向先压缩成菜单预览，连同源稿词技 / 遗物搭配一起放在开局前参考。": "Compress the source web build routes into a menu preview and keep their source word and relic pairings visible before the run.",
 	"当前只负责前台提示：源稿词技 / 遗物搭配还没有接回 Godot 战斗掉落或路线权重。": "Front-end reference only: source word and relic pairings are not yet wired back into Godot battle drops or route bias.",
 	"对照 web 原型现有的路线选择，把更贴近这名执笔者的构筑方向与词技 / 遗物搭配保留成前台参考。": "Mirror the source web route choices by keeping the best-fitting build directions, words, and relic pairings visible for this hero.",
@@ -470,19 +472,29 @@ func _get_theme_palette() -> Dictionary:
 
 
 func _get_theme_toggle_label() -> String:
-	return "Paper Ink" if _is_english() and _is_paper_theme() else ("Night Ink" if _is_english() else ("纸墨" if _is_paper_theme() else "夜墨"))
+	var page_content := FrontEndContent.menu_page_content()
+	if _is_paper_theme():
+		return _localize_text(String(page_content.get("theme_label_paper", "纸墨")))
+	return _localize_text(String(page_content.get("theme_label_night", "夜墨")))
 
 
 func _get_theme_toggle_tooltip() -> String:
-	return "Switch to Night Ink theme" if _is_english() and _is_paper_theme() else ("Switch to Paper Ink theme" if _is_english() else ("切换到夜墨主题" if _is_paper_theme() else "切换到纸墨主题"))
+	var page_content := FrontEndContent.menu_page_content()
+	if _is_paper_theme():
+		return _localize_text(String(page_content.get("theme_tooltip_to_night", "切换到夜墨主题")))
+	return _localize_text(String(page_content.get("theme_tooltip_to_paper", "切换到纸墨主题")))
 
 
 func _get_language_toggle_label() -> String:
-	return "中" if _is_english() else "EN"
+	var page_content := FrontEndContent.menu_page_content()
+	return String(page_content.get("language_label_zh", "中")) if _is_english() else String(page_content.get("language_label_en", "EN"))
 
 
 func _get_language_toggle_tooltip() -> String:
-	return "切换到中文" if _is_english() else "Switch to English"
+	var page_content := FrontEndContent.menu_page_content()
+	if _is_english():
+		return _localize_text(String(page_content.get("language_tooltip_to_chinese", "切换到中文")))
+	return _localize_text(String(page_content.get("language_tooltip_to_english", "切换到英文")))
 
 
 func _localize_text(text: String) -> String:
@@ -1058,7 +1070,7 @@ func _build_detail_preview(panel: PanelContainer) -> void:
 	detail_preview_core.add_theme_stylebox_override("panel", _make_panel_style(Color(0.26, 0.2, 0.16, 0.94), Color(0.88, 0.64, 0.34, 0.26)))
 	stage.add_child(detail_preview_core)
 
-	detail_preview_glyph = _make_label("书", 68, Color(1.0, 0.95, 0.86, 1.0))
+	detail_preview_glyph = _make_label(String(FrontEndContent.menu_page_content().get("detail_preview_fallback_glyph", "书")), 68, Color(1.0, 0.95, 0.86, 1.0))
 	detail_preview_glyph.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	detail_preview_glyph.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	detail_preview_glyph.set_anchors_preset(Control.PRESET_FULL_RECT)
