@@ -401,10 +401,11 @@ var state_overlay: Control
 var state_title_label: Label
 var state_body_label: Label
 var state_name_hint_label: Label
-var state_name_row: HBoxContainer
+var state_name_row: BoxContainer
 var state_name_status_label: Label
 var state_name_input: LineEdit
 var state_name_button: Button
+var state_buttons_box: GridContainer
 var state_primary_button: Button
 var state_secondary_button: Button
 var state_tertiary_button: Button
@@ -2198,17 +2199,28 @@ func _refresh_layout() -> void:
 		_set_label_font_size(state_name_hint_label, 14 if micro_layout else 16)
 	if state_name_status_label != null:
 		_set_label_font_size(state_name_status_label, 13 if micro_layout else 15)
+	if state_name_row != null:
+		state_name_row.vertical = micro_layout
+		state_name_row.add_theme_constant_override("separation", 8 if micro_layout else 10)
 	if state_name_input != null:
 		state_name_input.custom_minimum_size = Vector2(0.0, 44.0 if micro_layout else 48.0)
 		state_name_input.add_theme_font_size_override("font_size", 17 if micro_layout else (18 if web_tight_layout else 20))
 	if state_name_button != null:
-		state_name_button.custom_minimum_size = Vector2(132.0 if micro_layout else (146.0 if web_tight_layout else 160.0), 44.0 if micro_layout else 48.0)
+		state_name_button.custom_minimum_size = Vector2(0.0 if micro_layout else (146.0 if web_tight_layout else 160.0), 44.0 if micro_layout else 48.0)
 		state_name_button.add_theme_font_size_override("font_size", 16 if micro_layout else 18)
+		if state_name_button.has_meta("state_full_text"):
+			state_name_button.text = _format_state_button_text(String(state_name_button.get_meta("state_full_text", "")))
+	if state_buttons_box != null:
+		state_buttons_box.columns = 2 if (micro_layout or web_tight_layout) else 1
+		state_buttons_box.add_theme_constant_override("h_separation", 8 if micro_layout else 10)
+		state_buttons_box.add_theme_constant_override("v_separation", 8 if micro_layout else 10)
 	for state_button in [state_primary_button, state_secondary_button, state_tertiary_button, state_quaternary_button, state_quinary_button, state_senary_button]:
 		if state_button == null:
 			continue
 		state_button.custom_minimum_size = Vector2(0.0, 44.0 if micro_layout else (48.0 if web_tight_layout else 52.0))
 		state_button.add_theme_font_size_override("font_size", 18 if micro_layout else (20 if web_tight_layout else 22))
+		if state_button.has_meta("state_full_text"):
+			state_button.text = _format_state_button_text(String(state_button.get_meta("state_full_text", "")))
 
 	_set_label_font_size(compact_health_label, 15 if micro_layout else 17)
 	_set_label_font_size(compact_progress_label, 15 if micro_layout else 17)
@@ -2318,8 +2330,8 @@ func _build_map_help_text() -> String:
 func _refresh_map_legend_density() -> void:
 	var micro_layout := _should_use_micro_layout()
 	var web_tight_layout := _should_use_web_tight_layout()
-	var visible_rows := 4 if micro_layout else map_legend_rows.size()
-	var detail_rows := 3 if micro_layout else (4 if web_tight_layout else map_legend_rows.size())
+	var visible_rows := 4 if micro_layout else (5 if web_tight_layout else map_legend_rows.size())
+	var detail_rows := 2 if micro_layout else (3 if web_tight_layout else map_legend_rows.size())
 	for index in range(map_legend_rows.size()):
 		var row := map_legend_rows[index]
 		if row == null:
@@ -2336,10 +2348,94 @@ func _refresh_map_legend_density() -> void:
 		var title_label := row.get_meta("legend_title_label", null) as Label
 		if title_label != null:
 			_set_label_font_size(title_label, 15 if micro_layout else (16 if web_tight_layout else 18))
+			var full_title := String(row.get_meta("legend_full_title", title_label.text))
+			title_label.tooltip_text = full_title
+			title_label.text = _truncate_overlay_text(
+				full_title,
+				14 if micro_layout and _is_english() else (8 if micro_layout else (22 if web_tight_layout and _is_english() else (12 if web_tight_layout else 64)))
+			)
 		var detail_label := row.get_meta("legend_detail_label", null) as Label
 		if detail_label != null:
 			detail_label.visible = index < detail_rows
 			_set_label_font_size(detail_label, 13 if micro_layout else 14)
+			var full_detail := String(row.get_meta("legend_full_detail", detail_label.text))
+			detail_label.tooltip_text = full_detail
+			detail_label.text = _truncate_overlay_text(
+				full_detail,
+				26 if micro_layout and _is_english() else (12 if micro_layout else (42 if web_tight_layout and _is_english() else (20 if web_tight_layout else 96)))
+			)
+
+
+func _format_state_button_text(text: String) -> String:
+	var compact_copy := _should_use_micro_layout() or _should_use_web_tight_layout()
+	var full_text := text.strip_edges()
+	if not compact_copy:
+		return full_text
+	if _is_english():
+		var english_compact := full_text
+		var english_prefixes := {
+			"Performance: ": "Perf · ",
+			"Glyph FX: ": "Glyph · ",
+			"Enemy Health Bars: ": "HP Bars · ",
+			"Ambient Glyphs: ": "Ambient · ",
+			"Distant Enemy Detail: ": "Distant · ",
+			"Switch to Test Board · ": "Test Board · ",
+			"Switch to Main Board · ": "Main Board · "
+		}
+		for prefix in english_prefixes.keys():
+			if english_compact.begins_with(prefix):
+				return String(english_prefixes[prefix]) + english_compact.trim_prefix(prefix)
+		match english_compact:
+			"Resume Battle":
+				return "Resume"
+			"Battle Setup":
+				return "Setup"
+			"Restart Run":
+				return "Restart"
+			"Return to Menu":
+				return "Menu"
+			"Back to Pause":
+				return "Back"
+			"Back to Summary":
+				return "Summary"
+			"View Test Board":
+				return "Test Board"
+			"View Main Board":
+				return "Main Board"
+			"Save Alias":
+				return "Save"
+		return english_compact
+	var chinese_compact := full_text
+	var chinese_prefixes := {
+		"演出档：": "演出：",
+		"视觉字效：": "字效：",
+		"敌方血条：": "血条：",
+		"环境字影：": "环境：",
+		"远敌细节：": "远敌：",
+		"切到试阵榜 · ": "试阵榜 · ",
+		"切到主卷榜 · ": "主卷榜 · ",
+		"查看试阵榜": "试阵榜",
+		"查看主卷榜": "主卷榜"
+	}
+	for prefix in chinese_prefixes.keys():
+		if chinese_compact.begins_with(prefix):
+			return String(chinese_prefixes[prefix]) + chinese_compact.trim_prefix(prefix)
+	match chinese_compact:
+		"继续战斗":
+			return "继续"
+		"战场布置":
+			return "设置"
+		"重新开始":
+			return "重开"
+		"返回菜单":
+			return "菜单"
+		"返回暂停":
+			return "返回"
+		"返回结算":
+			return "结算"
+		"保存署名":
+			return "保存"
+	return chinese_compact
 
 
 func _safe_area_insets() -> Dictionary:
@@ -2639,7 +2735,8 @@ func _build_state_overlay(root: Control) -> void:
 	state_name_hint_label = _make_label("", 16, Color(0.96, 0.82, 0.56, 0.96))
 	box.add_child(state_name_hint_label)
 
-	state_name_row = HBoxContainer.new()
+	state_name_row = BoxContainer.new()
+	state_name_row.vertical = false
 	state_name_row.add_theme_constant_override("separation", 10)
 	box.add_child(state_name_row)
 
@@ -2655,7 +2752,9 @@ func _build_state_overlay(root: Control) -> void:
 
 	state_name_button = _make_state_button()
 	state_name_button.custom_minimum_size = Vector2(160.0, 48.0)
-	state_name_button.text = _localize_text("保存署名")
+	state_name_button.set_meta("state_full_text", _localize_text("保存署名"))
+	state_name_button.tooltip_text = _localize_text("保存署名")
+	state_name_button.text = _format_state_button_text(String(state_name_button.get_meta("state_full_text", "")))
 	state_name_button.add_theme_stylebox_override("normal", _make_button_style(Color(0.92, 0.62, 0.28, 1.0), 18))
 	state_name_button.add_theme_stylebox_override("hover", _make_button_style(Color(0.98, 0.7, 0.34, 1.0), 18))
 	state_name_button.add_theme_stylebox_override("pressed", _make_button_style(Color(0.84, 0.54, 0.22, 1.0), 18))
@@ -2669,9 +2768,11 @@ func _build_state_overlay(root: Control) -> void:
 	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	box.add_child(spacer)
 
-	var buttons_box := VBoxContainer.new()
-	buttons_box.add_theme_constant_override("separation", 10)
-	box.add_child(buttons_box)
+	state_buttons_box = GridContainer.new()
+	state_buttons_box.columns = 1
+	state_buttons_box.add_theme_constant_override("h_separation", 10)
+	state_buttons_box.add_theme_constant_override("v_separation", 10)
+	box.add_child(state_buttons_box)
 
 	state_primary_button = _make_state_button()
 	state_secondary_button = _make_state_button()
@@ -2679,12 +2780,12 @@ func _build_state_overlay(root: Control) -> void:
 	state_quaternary_button = _make_state_button()
 	state_quinary_button = _make_state_button()
 	state_senary_button = _make_state_button()
-	buttons_box.add_child(state_primary_button)
-	buttons_box.add_child(state_secondary_button)
-	buttons_box.add_child(state_tertiary_button)
-	buttons_box.add_child(state_quaternary_button)
-	buttons_box.add_child(state_quinary_button)
-	buttons_box.add_child(state_senary_button)
+	state_buttons_box.add_child(state_primary_button)
+	state_buttons_box.add_child(state_secondary_button)
+	state_buttons_box.add_child(state_tertiary_button)
+	state_buttons_box.add_child(state_quaternary_button)
+	state_buttons_box.add_child(state_quinary_button)
+	state_buttons_box.add_child(state_senary_button)
 
 
 func _on_choice_button_pressed(index: int) -> void:
@@ -2717,6 +2818,7 @@ func _configure_choice_button(button: Button, title: String, headline: String, d
 func _make_state_button() -> Button:
 	var button := Button.new()
 	button.custom_minimum_size = Vector2(0.0, 52.0)
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.add_theme_font_override("font", ui_font)
 	button.add_theme_font_size_override("font_size", 22)
 	button.add_theme_color_override("font_color", Color(0.08, 0.08, 0.08, 1.0))
@@ -2727,7 +2829,9 @@ func _configure_state_button(button: Button, text: String, callback: Callable) -
 	if button == null:
 		return
 	button.visible = true
-	button.text = text
+	button.set_meta("state_full_text", text)
+	button.tooltip_text = text
+	button.text = _format_state_button_text(text)
 	_clear_state_button_connections(button)
 	button.add_theme_stylebox_override("normal", _make_button_style(Color(0.92, 0.62, 0.28, 1.0), 18))
 	button.add_theme_stylebox_override("hover", _make_button_style(Color(0.98, 0.7, 0.34, 1.0), 18))
@@ -2778,6 +2882,10 @@ func _make_map_legend_row(symbol_text: String, title: String, detail: String, co
 	row.set_meta("legend_icon_label", icon_label)
 	row.set_meta("legend_title_label", title_label)
 	row.set_meta("legend_detail_label", detail_label)
+	row.set_meta("legend_full_title", title_label.text)
+	row.set_meta("legend_full_detail", detail_label.text)
+	title_label.tooltip_text = title_label.text
+	detail_label.tooltip_text = detail_label.text
 	return row
 
 
