@@ -13,6 +13,8 @@ Status legend:
 - `[done]` Godot launcher home with two game cards, floating glyph ambience, and mobile browser guidance. Notes: hanziHero uses a launcher homepage with portal cards; Godot now preserves the same top-level game-selection role.
 - `[done]` About overlay upgraded to a richer story/article layout with two game summaries and migration notes. Notes: hanziHero's launcher has an about portal with story paragraphs, game cards, and note cards; Godot now carries that structure in-code.
 - `[done]` Theme toggle parity for launcher and about surface. Notes: hanziHero supports a paper-ink theme switch; Godot launcher and about overlay now expose a remembered `夜墨 / 纸墨` toggle while preserving the existing night-ink default.
+- `[done]` Launcher-side latest update spotlight. Notes: hanziHero's homepage surfaces a recent version / changelog spotlight; Godot launcher now mirrors that front-page role with an in-launcher migration progress card.
+- `[pending]` Launcher-side changelog history overlay. Notes: the source launcher can open a dedicated changelog panel; Godot currently surfaces only the latest migration snapshot on the home screen.
 - `[pending]` Bilingual launcher copy and runtime language toggle. Notes: hanziHero ships zh/en launcher strings; Godot still shows placeholder `EN` pills without behavior.
 - `[pending]` Cangjie portal follow-through. Notes: hanziHero can open the deckbuilder prototype directly; Godot still stops at a non-interactive "后续接入" button.
 

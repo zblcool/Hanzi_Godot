@@ -23,6 +23,18 @@ const PAPER_THEME := {
 	"shadow": Color(0.18, 0.14, 0.1, 0.08),
 	"outline": Color(0.95, 0.92, 0.86, 0.4)
 }
+const LAUNCHER_UPDATE_SPOTLIGHT := {
+	"eyebrow": "Latest Update",
+	"title": "启动器前台迁移继续对齐",
+	"summary": "Godot 启动器首页现在会直接概括当前迁移主线，开始承接 web 原型首页“最近更新 / changelog 聚光卡”的前台角色。",
+	"meta": ["2026-03-22", "Godot 主线", "迁移前台"],
+	"highlights": [
+		"当前主线链路已经稳定在：启动器 -> 字海二级菜单 -> 3D 战斗。",
+		"前台已补齐主题联动、玩家名帖与场景 smoke 检查，迁移进展更容易直接看到。",
+		"启动器层下一个明显缺口仍是双语切换与仓颉入口接入。"
+	],
+	"footnote": "完整长期追踪仍以仓库根目录的 MIGRATION_CHECKLIST 为准。"
+}
 
 var title_font: Font
 var ui_scale := 1.0
@@ -345,6 +357,8 @@ func _build_ui() -> void:
 		false
 	))
 
+	layout.add_child(_make_update_spotlight_panel())
+
 	var roadmap_row := HBoxContainer.new()
 	roadmap_row.add_theme_constant_override("separation", _i(18))
 	layout.add_child(roadmap_row)
@@ -515,6 +529,44 @@ func _make_info_panel(title: String, lines: Array[String], accent: Color) -> Pan
 	box.add_child(_make_label(title, 26, Color(1.0, 0.92, 0.8, 1.0)))
 	for line_text in lines:
 		box.add_child(_make_label(line_text, 17, Color(0.9, 0.92, 0.95, 0.95)))
+	return panel
+
+
+func _make_update_spotlight_panel() -> PanelContainer:
+	var accent := Color(0.92, 0.7, 0.38, 1.0)
+	var panel := PanelContainer.new()
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.custom_minimum_size = _v(0.0, 212.0)
+	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.1, accent.g * 0.09, accent.b * 0.08, 0.9), Color(accent.r, accent.g, accent.b, 0.54)))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", _i(24))
+	margin.add_theme_constant_override("margin_top", _i(22))
+	margin.add_theme_constant_override("margin_right", _i(24))
+	margin.add_theme_constant_override("margin_bottom", _i(22))
+	panel.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", _i(10))
+	margin.add_child(box)
+
+	box.add_child(_make_tag(String(LAUNCHER_UPDATE_SPOTLIGHT["eyebrow"]), Color(0.14, 0.18, 0.24, 0.88), Color(0.96, 0.82, 0.56, 0.98)))
+	box.add_child(_make_label(String(LAUNCHER_UPDATE_SPOTLIGHT["title"]), 32, Color(1.0, 0.95, 0.86, 1.0)))
+	box.add_child(_make_label(String(LAUNCHER_UPDATE_SPOTLIGHT["summary"]), 18, Color(0.9, 0.92, 0.96, 0.95)))
+
+	var meta_row := HBoxContainer.new()
+	meta_row.add_theme_constant_override("separation", _i(8))
+	box.add_child(meta_row)
+	for meta_text_variant in LAUNCHER_UPDATE_SPOTLIGHT["meta"]:
+		meta_row.add_child(_make_tag(String(meta_text_variant), Color(accent.r * 0.14, accent.g * 0.14, accent.b * 0.16, 0.9), Color(0.98, 0.94, 0.88, 0.96)))
+
+	var highlights_box := VBoxContainer.new()
+	highlights_box.add_theme_constant_override("separation", _i(6))
+	box.add_child(highlights_box)
+	for highlight_variant in LAUNCHER_UPDATE_SPOTLIGHT["highlights"]:
+		highlights_box.add_child(_make_label("• %s" % String(highlight_variant), 16, Color(0.9, 0.92, 0.96, 0.92)))
+
+	box.add_child(_make_label(String(LAUNCHER_UPDATE_SPOTLIGHT["footnote"]), 15, Color(0.86, 0.9, 0.94, 0.8)))
 	return panel
 
 
