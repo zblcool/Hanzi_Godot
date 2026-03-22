@@ -37,7 +37,7 @@ Status legend:
 
 ## Battle HUD
 
-- `[done]` Pause overlay, restart / return actions, and local leaderboard access. Notes: hanziHero exposes pause plus result-side leaderboard views; Godot already supports pause and post-run naming/editing for local records.
+- `[done]` Pause overlay, restart / return actions, and local leaderboard access. Notes: hanziHero exposes pause plus result-side leaderboard views; Godot now keeps the active source route reminder, progression stage, and current build counts visible in both pause and result overlays while preserving post-run naming/editing for local records.
 - `[done]` Map modal with fog-of-war, drag, zoom, legend, and exploration summary. Notes: source has a modal map with zoom/drag/legend; Godot now has a close equivalent.
 - `[done]` Mobile joystick, touch interact, pause button, and landscape guard. Notes: hanziHero mobile battle flow depends on these protections; Godot already has matching control coverage.
 - `[done]` First runtime settings / LOD panel slice. Notes: Godot pause overlay now exposes a low-risk `战场布置` panel with remembered performance preset, enemy health bar toggle, and ambient glyph density controls, covering the first practical slice of hanziHero's settings modal.
@@ -46,7 +46,7 @@ Status legend:
 - `[done]` Phrase / event log panel. Notes: Godot battle HUD now keeps a dedicated `战报` panel that records wave pushes, realm shifts, boss beats, recipe/word upgrades, and pickup highlights, with a compact mobile-safe variant for smaller screens.
 - `[done]` Bilingual HUD copy. Notes: source battle UI can switch zh/en; Godot battle HUD, pause/result overlays, map labels, soundtrack card, and key battle-side banner/tip copy now follow the remembered `中 / EN` runtime language toggle.
 - `[done]` Battle-side source build-route reminder. Notes: hanziHero keeps the current route visible in the battle-side build context; Godot now mirrors that in the HUD objective card and compact summary by surfacing the closest source route, current progression stage, and matching tags without introducing live route-bias mechanics.
-- `[done]` Pause/result route-focus recap. Notes: hanziHero's pause summary keeps the chosen build lane visible alongside the current build context; Godot pause and game-over overlays now repeat the closest source route, current progression stage, and short route reminder so the run can be reviewed without reopening the live HUD card.
+- `[done]` Pause/result route-focus recap. Notes: hanziHero's pause summary keeps the chosen build lane visible alongside the current build context; Godot pause and game-over overlays now repeat the closest source route, current progression stage, and current `偏旁 / 成字 / 词技` counts so the run can be reviewed without reopening the live HUD card.
 
 ## Combat Systems
 

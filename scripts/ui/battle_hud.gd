@@ -851,10 +851,33 @@ func _build_route_focus_state_lines() -> Array[String]:
 	var stage := String(summary.get("stage", "")).strip_edges()
 	if not stage.is_empty():
 		lines.append(stage)
+	lines.append(_build_route_progress_text())
 	var detail := String(summary.get("detail", "")).strip_edges()
 	if not detail.is_empty():
 		lines.append(detail)
 	return lines
+
+
+func _build_route_progress_text() -> String:
+	var radical_total := 0
+	for radical_variant in Session.RADICAL_ORDER:
+		radical_total += int(cached_radicals.get(String(radical_variant), 0))
+
+	var formed_recipe_count := 0
+	for recipe_id_variant in Session.RECIPE_ORDER:
+		if int(cached_recipe_levels.get(String(recipe_id_variant), 0)) > 0:
+			formed_recipe_count += 1
+
+	var formed_word_count := 0
+	for word_id_variant in Session.WORD_ORDER:
+		if int(cached_word_levels.get(String(word_id_variant), 0)) > 0:
+			formed_word_count += 1
+
+	return (
+		"Build: radicals %d  ·  glyphs %d  ·  phrases %d"
+		if _is_english()
+		else "构筑进度：偏旁 %d  ·  成字 %d  ·  词技 %d"
+	) % [radical_total, formed_recipe_count, formed_word_count]
 
 
 func _resolve_route_stage_card(hero_data: Dictionary) -> Dictionary:
@@ -2319,10 +2342,10 @@ func _build_state_overlay(root: Control) -> void:
 
 	var panel := PanelContainer.new()
 	panel.set_anchors_preset(Control.PRESET_CENTER)
-	panel.offset_left = -360.0
-	panel.offset_top = -270.0
-	panel.offset_right = 360.0
-	panel.offset_bottom = 270.0
+	panel.offset_left = -380.0
+	panel.offset_top = -300.0
+	panel.offset_right = 380.0
+	panel.offset_bottom = 300.0
 	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.06, 0.08, 0.1, 0.96), Color(0.94, 0.7, 0.4, 0.92), 24))
 	state_overlay.add_child(panel)
 
