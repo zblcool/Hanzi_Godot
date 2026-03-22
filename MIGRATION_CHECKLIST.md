@@ -66,7 +66,8 @@ Status legend:
 ## Content
 
 - `[done]` Character archive, recipe atlas, and enemy codex text live in shared session data. Notes: source uses compendium-style front panels; Godot already ships equivalent text-driven overlays.
-- `[pending]` More hero flavor text, taunts, and reactive presentation. Notes: hanziHero has more voiced/written character reactions on the front end and battlefield.
+- `[done]` Battlefield hero callouts and elite/boss taunt beats. Notes: hanziHero surfaces reactive frontline lines and enemy taunts in battle; Godot now mirrors that with a dedicated `战场呼应` card plus event-log entries for hero intro / recovery / milestone quotes and elite / boss entrance taunts.
+- `[pending]` More menu/archive hero flavor follow-through. Notes: source still has denser character flavor and front-end reactions across the portal and compendium surfaces than Godot's current menu/archive panels.
 - `[pending]` More narrative and educational copy parity from the launcher / about surface. Notes: source continues to frame the cultural motivation and bilingual-learning angle more broadly than Godot elsewhere.
 - `[blocked]` Full `仓颉之路` Godot port. Notes: the web prototype is playable, but the Godot repo does not yet have the deckbuilder combat/map foundation needed for a safe direct migration.
 
