@@ -37,6 +37,8 @@ const CHAMBER_INTERLUDE_REST_BRUSH_DURATION := 8.0
 const CHAMBER_SCROLL_ECHO_FURY_DROP_DURATION := 8.0
 const CHAMBER_SCROLL_ECHO_PRESSURE_PAPER_CHANCE := 0.3
 const CHAMBER_SCROLL_ECHO_BASIC_PAPER_CHANCE := 0.12
+const CHAMBER_INTERLUDE_REST_ECHO_HEAL_RATIO := 0.08
+const CHAMBER_INTERLUDE_REST_ECHO_BRUSH_DURATION := 4.0
 const TREE_FADE_RADIUS := 2.65
 const TREE_FADE_ALPHA := 0.28
 const TREE_FADE_SPEED := 4.8
@@ -370,13 +372,25 @@ func _clear_chamber_modifier() -> void:
 	chamber_modifier_expires_after_bosses = 0
 
 
-func _arm_scroll_echo_modifier() -> void:
-	chamber_modifier_id = "scroll_echo"
+func _arm_chamber_modifier(modifier_id: String) -> void:
+	chamber_modifier_id = modifier_id
 	chamber_modifier_expires_after_bosses = int(Session.chapter_progress.get("completed_bosses", 0)) + 1
+
+
+func _arm_scroll_echo_modifier() -> void:
+	_arm_chamber_modifier("scroll_echo")
 
 
 func _scroll_echo_modifier_active() -> bool:
 	return chamber_modifier_id == "scroll_echo"
+
+
+func _reward_supply_modifier_active() -> bool:
+	return chamber_modifier_id == "reward_supply"
+
+
+func _short_rest_modifier_active() -> bool:
+	return chamber_modifier_id == "short_rest"
 
 
 func _chamber_interlude_title() -> String:
@@ -441,18 +455,37 @@ func _chamber_interlude_preview_lines(next_wave: int) -> Array[String]:
 func _chamber_interlude_body(next_wave: int) -> String:
 	var reward_radical := String(chamber_interlude_offer.get("reward_radical", "日"))
 	if _is_english():
-		return "The first scroll lord is gone and the chamber has gone quiet. This is the first room-break stop before the run pushes deeper.\n\nCheck the next push below, then choose one:\nReward keeps radical %s for the next chamber.\nEvent carries a Scroll Echo forward so pressure enemies echo extra paper and elites can drop %d s of Swift Edict until the next scroll lord.\nRecovery restores %d%% vitality, clears stun, and grants %d s of brush haste." % [
+		return "The first scroll lord is gone and the chamber has gone quiet. This is the first room-break stop before the run pushes deeper.\n\nCheck the next push below, then choose one:\nReward keeps radical %s and lifts paper / seal drops through the next chamber.\nEvent carries a Scroll Echo forward so pressure enemies echo extra paper and elites can drop %d s of Swift Edict until the next scroll lord.\nRecovery restores %d%% vitality, clears stun, and grants %d s of brush haste now, then repeats a smaller %d%% recovery echo on later wave pushes." % [
 			reward_radical,
 			int(round(CHAMBER_SCROLL_ECHO_FURY_DROP_DURATION)),
 			int(round(CHAMBER_INTERLUDE_REST_HEAL_RATIO * 100.0)),
-			int(round(CHAMBER_INTERLUDE_REST_BRUSH_DURATION))
+			int(round(CHAMBER_INTERLUDE_REST_BRUSH_DURATION)),
+			int(round(CHAMBER_INTERLUDE_REST_ECHO_HEAL_RATIO * 100.0))
 		]
-	return "首位卷主已散，当前房间也暂时清空。这一步先做成进入更深残卷前的停顿。\n\n先看下方下一段预览，再定一项：\n奖励 · 偏旁补给：带走偏旁「%s」，为下一段先添一笔。\n异事 · 残卷回响：给下一段挂上一层掉落偏向，让压境敌群额外回响残纸，精英也能额外吐出 %d 秒疾书令，持续到下一位卷主。\n修整 · 歇笔回气：回复 %d%% 气血，解除眩晕，并获得 %d 秒文笔提速。" % [
+	return "首位卷主已散，当前房间也暂时清空。这一步先做成进入更深残卷前的停顿。\n\n先看下方下一段预览，再定一项：\n奖励 · 偏旁补给：带走偏旁「%s」，而且下一段敌人会更常掉残纸 / 战印。\n异事 · 残卷回响：给下一段挂上一层掉落偏向，让压境敌群额外回响残纸，精英也能额外吐出 %d 秒疾书令，持续到下一位卷主。\n修整 · 歇笔回气：先回复 %d%% 气血、解除眩晕并获得 %d 秒文笔提速，后面每逢字潮推进还会再补一小口气。" % [
 		reward_radical,
 		int(round(CHAMBER_SCROLL_ECHO_FURY_DROP_DURATION)),
 		int(round(CHAMBER_INTERLUDE_REST_HEAL_RATIO * 100.0)),
 		int(round(CHAMBER_INTERLUDE_REST_BRUSH_DURATION))
 	]
+
+
+func _apply_chamber_modifier_wave_echo(new_threat_level: int) -> void:
+	if not _short_rest_modifier_active() or not is_instance_valid(player):
+		return
+	player.heal(player.max_health * CHAMBER_INTERLUDE_REST_ECHO_HEAL_RATIO)
+	if player.has_method("clear_stun"):
+		player.clear_stun()
+	player.apply_brush_haste(CHAMBER_INTERLUDE_REST_ECHO_BRUSH_DURATION)
+	hud.show_banner(
+		("Short Rest  Echo heal %d%%" if _is_english() else "歇笔回气  再补 %d%% 气血") % int(round(CHAMBER_INTERLUDE_REST_ECHO_HEAL_RATIO * 100.0)),
+		Color(0.62, 0.9, 0.74, 1.0),
+		1.6
+	)
+	_log_battle_event(
+		("Wave %d · Short Rest echoes again" if _is_english() else "第 %d 波 · 歇笔回气再次回响") % new_threat_level,
+		Color(0.62, 0.9, 0.74, 1.0)
+	)
 
 
 func _ready() -> void:
@@ -1386,6 +1419,18 @@ func _build_supply_drops(enemy_type: String) -> Dictionary:
 
 
 func _apply_chamber_modifier_supply_drops(enemy_type: String, drops: Dictionary) -> void:
+	if _reward_supply_modifier_active():
+		match enemy_type:
+			"elite":
+				_add_supply_drop(drops, "paper", 2.0)
+				_add_supply_drop(drops, "seal", 1.0)
+			"boss":
+				_add_supply_drop(drops, "paper", 4.0)
+				_add_supply_drop(drops, "seal", 1.0)
+			_:
+				if rng.randf() < 0.16:
+					_add_supply_drop(drops, "paper", 1.0)
+
 	if not _scroll_echo_modifier_active() or enemy_type == "boss":
 		return
 
@@ -2696,6 +2741,7 @@ func _on_threat_level_advanced(new_threat_level: int) -> void:
 	_spawn_intro_symbols(wave_glyph, tint)
 	if new_threat_level > 1 and (new_threat_level - 1) % FIELD_PHASE_WAVE_SPAN == 0:
 		_set_field_phase_for_wave(new_threat_level, true)
+	_apply_chamber_modifier_wave_echo(new_threat_level)
 
 
 func _threat_level_color(new_threat_level: int) -> Color:
@@ -2963,8 +3009,14 @@ func _on_hud_chamber_interlude_selected(choice_id: String) -> void:
 		"reward":
 			var reward_radical := String(chamber_interlude_offer.get("reward_radical", "日"))
 			var reward_color := Color(Session.RADICAL_COLORS.get(reward_radical, Color(0.94, 0.72, 0.4, 1.0)))
+			_arm_chamber_modifier("reward_supply")
 			_apply_radical_choice(reward_radical)
-			hud.set_tip(("Radical supply secured. `%s` now enters the next chamber with you." if _is_english() else "偏旁补给已经带上，「%s」会跟着你继续入深层。") % reward_radical)
+			hud.show_banner(
+				("Radical Cache  Next chamber drops rise" if _is_english() else "偏旁补给  下一段残纸更盛"),
+				reward_color,
+				1.8
+			)
+			hud.set_tip(("Radical supply secured. `%s` now enters the next chamber, and enemy drops there will carry more paper and seals." if _is_english() else "偏旁补给已经带上，「%s」会跟着你继续入深层，下一段敌人也会带来更多残纸和战印。") % reward_radical)
 			_log_battle_event(("Between Chambers · Radical supply %s" if _is_english() else "卷间抉择 · 偏旁补给 %s") % reward_radical, reward_color)
 		"event":
 			_arm_scroll_echo_modifier()
@@ -2983,6 +3035,7 @@ func _on_hud_chamber_interlude_selected(choice_id: String) -> void:
 				Color(0.96, 0.62, 0.34, 1.0)
 			)
 		"recovery":
+			_arm_chamber_modifier("short_rest")
 			if is_instance_valid(player):
 				player.heal(player.max_health * CHAMBER_INTERLUDE_REST_HEAL_RATIO)
 				if player.has_method("clear_stun"):
@@ -2993,7 +3046,7 @@ func _on_hud_chamber_interlude_selected(choice_id: String) -> void:
 				Color(0.62, 0.9, 0.74, 1.0),
 				1.9
 			)
-			hud.set_tip(("Short rest restores vitality, clears stun, and gives %d s of brush haste for the next push." if _is_english() else "歇笔修整会回气、解眩晕，并补上 %d 秒文笔提速，适合接着推进下一段。") % int(round(CHAMBER_INTERLUDE_REST_BRUSH_DURATION)))
+			hud.set_tip(("Short rest restores vitality, clears stun, and gives %d s of brush haste now; later wave pushes in the next chamber also echo smaller recovery." if _is_english() else "歇笔修整会先回气、解眩晕，并补上 %d 秒文笔提速；下一段后续字潮推进时还会再回一小口气。") % int(round(CHAMBER_INTERLUDE_REST_BRUSH_DURATION)))
 			_log_battle_event(
 				("Between Chambers · Short Rest %d%%" if _is_english() else "卷间抉择 · 歇笔回气 %d%%") % int(round(CHAMBER_INTERLUDE_REST_HEAL_RATIO * 100.0)),
 				Color(0.62, 0.9, 0.74, 1.0)
