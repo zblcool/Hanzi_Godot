@@ -2135,11 +2135,7 @@ func _refresh_layout() -> void:
 		top_pills.offset_bottom = top_margin + pill_height_total
 		tool_bottom = top_pills.offset_bottom
 	var stack_top := tool_bottom + (8.0 if micro_layout else (10.0 if compact_layout else 20.0))
-	if top_right_stack != null:
-		top_right_stack.offset_left = -stack_width - right_margin
-		top_right_stack.offset_right = -right_margin
-		top_right_stack.offset_top = stack_top
-		top_right_stack.offset_bottom = -10.0
+	var boss_bottom := tool_bottom
 
 	if boss_panel != null:
 		if compact_layout:
@@ -2156,18 +2152,33 @@ func _refresh_layout() -> void:
 			boss_panel.offset_right = -boss_margin
 			boss_panel.offset_top = 102.0 if micro_layout else (118.0 if compact_layout else 154.0)
 			boss_panel.offset_bottom = boss_panel.offset_top + 92.0
+		boss_bottom = boss_panel.offset_bottom if boss_panel.visible else tool_bottom
 	if boss_name_label != null:
 		_set_label_font_size(boss_name_label, 22 if micro_layout else (24 if web_tight_layout else 28))
 	if boss_detail_label != null:
 		_set_label_font_size(boss_detail_label, 14 if micro_layout else 16)
 	if boss_bar != null:
 		boss_bar.custom_minimum_size = Vector2(0.0, 12.0 if micro_layout else 16.0)
+	if top_right_stack != null:
+		var effective_stack_top := stack_top
+		if compact_layout and boss_panel != null and boss_panel.visible:
+			effective_stack_top = maxf(effective_stack_top, boss_bottom + (8.0 if micro_layout else 10.0))
+		top_right_stack.offset_left = -stack_width - right_margin
+		top_right_stack.offset_right = -right_margin
+		top_right_stack.offset_top = effective_stack_top
+		top_right_stack.offset_bottom = -10.0
 
 	if banner_label != null:
+		_set_label_font_size(banner_label, 30 if micro_layout else (36 if web_tight_layout else 44))
 		var banner_margin := 116.0 if micro_layout else (180.0 if compact_layout else 420.0)
 		banner_label.offset_left = banner_margin
 		banner_label.offset_right = -banner_margin
-		banner_label.offset_top = 72.0 if micro_layout else (82.0 if compact_layout else 86.0)
+		var banner_top := 72.0 if micro_layout else (82.0 if compact_layout else 86.0)
+		if compact_layout:
+			banner_top = maxf(banner_top, boss_bottom + (10.0 if micro_layout else 12.0))
+		else:
+			banner_top = maxf(banner_top, tool_bottom + 12.0)
+		banner_label.offset_top = banner_top
 		banner_label.offset_bottom = banner_label.offset_top + 64.0
 
 	if reveal_panel != null:
@@ -2179,11 +2190,21 @@ func _refresh_layout() -> void:
 		reveal_panel.offset_bottom = -20.0 if micro_layout else (-30.0 if compact_layout else -16.0)
 
 	if soundtrack_toast != null:
-		var toast_width := 236.0 if micro_layout else 280.0
-		soundtrack_toast.offset_left = -toast_width
-		soundtrack_toast.offset_right = 0.0
-		soundtrack_toast.offset_top = stack_top + 6.0
-		soundtrack_toast.offset_bottom = soundtrack_toast.offset_top + 92.0
+		var toast_width := 220.0 if micro_layout else (248.0 if compact_layout else 280.0)
+		var toast_top := stack_top + 6.0
+		if compact_layout:
+			toast_top = maxf(toast_top, boss_bottom + (10.0 if micro_layout else 12.0))
+			soundtrack_toast.anchor_left = 0.0
+			soundtrack_toast.anchor_right = 0.0
+			soundtrack_toast.offset_left = 0.0
+			soundtrack_toast.offset_right = toast_width
+		else:
+			soundtrack_toast.anchor_left = 1.0
+			soundtrack_toast.anchor_right = 1.0
+			soundtrack_toast.offset_left = -toast_width
+			soundtrack_toast.offset_right = 0.0
+		soundtrack_toast.offset_top = toast_top
+		soundtrack_toast.offset_bottom = soundtrack_toast.offset_top + (84.0 if micro_layout else 92.0)
 
 	var overlay_margin_x := 14.0 if micro_layout else (18.0 if web_tight_layout else 24.0)
 	var overlay_margin_y := 12.0 if micro_layout else (16.0 if web_tight_layout else 24.0)
@@ -2287,6 +2308,8 @@ func _refresh_layout() -> void:
 	_set_label_font_size(compact_route_label, 12 if micro_layout else 13)
 	_set_label_font_size(callout_title_label, 13 if micro_layout else 14)
 	_set_label_font_size(callout_text_label, 14 if micro_layout else 16)
+	_set_label_font_size(soundtrack_toast_title_label, 20 if micro_layout else (22 if web_tight_layout else 24))
+	_set_label_font_size(soundtrack_toast_detail_label, 13 if micro_layout else 15)
 	_set_label_font_size(tip_label, 16 if web_tight_layout else 18)
 	_set_label_font_size(objective_route_title_label, 16 if web_tight_layout else 18)
 	_set_label_font_size(objective_route_detail_label, 14 if web_tight_layout else 15)
