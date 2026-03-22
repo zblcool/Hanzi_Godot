@@ -70,7 +70,7 @@ Status legend:
 - `[done]` Battlefield hero callouts and elite/boss taunt beats. Notes: hanziHero surfaces reactive frontline lines and enemy taunts in battle; Godot now mirrors that with a dedicated `战场呼应` card plus event-log entries for hero intro / recovery / milestone quotes and elite / boss entrance taunts.
 - `[done]` Menu/archive hero lore follow-through. Notes: Godot人物志 now mirrors the source portal more closely with richer lore cards, archive excerpts/sources, and actual opening-radical cues wired into both the menu detail panel and battle start state.
 - `[pending]` More front-end hero flavor beyond the archive pass. Notes: source still has denser front-portal character framing and some extra reaction beats beyond the current Godot selection quotes, archive lore cards, and battle-side callouts.
-- `[pending]` More narrative and educational copy parity from the launcher / about surface. Notes: source continues to frame the cultural motivation and bilingual-learning angle more broadly than Godot elsewhere.
+- `[done]` More narrative and educational copy parity from the launcher / about surface. Notes: Godot about overlay now mirrors the source launcher more closely with explicit audience, shareability, migration-focus, and next-product-step cards instead of stopping at a generic migration note.
 - `[blocked]` Full `仓颉之路` Godot port. Notes: the web prototype is playable, but the Godot repo does not yet have the deckbuilder combat/map foundation needed for a safe direct migration.
 
 ## Polish

@@ -863,15 +863,20 @@ func _build_about_overlay() -> void:
 	))
 
 	var notes_grid := GridContainer.new()
-	notes_grid.columns = 1 if portrait_layout else 3
+	notes_grid.columns = 1 if portrait_layout else 2
 	notes_grid.add_theme_constant_override("h_separation", _i(14))
 	notes_grid.add_theme_constant_override("v_separation", _i(14))
 	content.add_child(notes_grid)
 
 	notes_grid.add_child(_make_about_note_card(
 		"面向谁",
-		"不仅面向会中文的人，也面向想通过游戏认识汉字结构、字义和词感的玩家。",
+		"不仅面向中文母语者，也面向中文学习者、教育者，以及想通过游戏认识汉字结构、字义和词感的玩家。",
 		Color(0.92, 0.68, 0.4, 1.0)
+	))
+	notes_grid.add_child(_make_about_note_card(
+		"适合传播",
+		"先保留浏览器可试玩 demo，更适合在中文学习社区、独立游戏圈和语言社群里直接分享与验证。",
+		Color(0.74, 0.56, 0.94, 1.0)
 	))
 	notes_grid.add_child(_make_about_note_card(
 		"迁移重点",
@@ -880,7 +885,7 @@ func _build_about_overlay() -> void:
 	))
 	notes_grid.add_child(_make_about_note_card(
 		"下一步产品化",
-		"先把 Godot 版做成稳定可展示的 vertical slice，再决定哪些内容继续留在网页 demo，哪些进入完整版本。",
+		"先把 Godot 版做成稳定可展示的 vertical slice，验证玩法和学习体验，再决定哪些角色、卡组、塔层与字阵系统进入完整版本。",
 		Color(0.58, 0.84, 0.62, 1.0)
 	))
 
