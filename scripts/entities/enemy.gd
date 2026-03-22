@@ -1,6 +1,7 @@
 extends Node3D
 
 const CJKFont := preload("res://scripts/core/cjk_font.gd")
+const ENEMY_SURFACE_SHADER := preload("res://assets/shaders/enemy_surface.gdshader")
 
 signal defeated(world_position: Vector3, enemy_type: String)
 signal request_hazard(target_position: Vector3, radius: float, warning_time: float, active_time: float, damage: float, tint: Color, label: String)
@@ -42,8 +43,8 @@ var elite_skill_index: int = 0
 var elite_spin_angle: float = 0.0
 var is_dead: bool = false
 
-var body_material: StandardMaterial3D
-var accent_material: StandardMaterial3D
+var body_material: ShaderMaterial
+var accent_material: ShaderMaterial
 var health_bar_back_material: StandardMaterial3D
 var health_bar_fill_material: StandardMaterial3D
 var label_node: Label3D
@@ -63,6 +64,7 @@ var rear_right_leg_node: MeshInstance3D
 var gait_amount: float = 0.0
 var health_bar_width: float = 1.08
 var health_bars_enabled: bool = true
+var surface_material_entries: Array = []
 
 
 func configure(kind: String, difficulty: float, player_ref) -> void:
@@ -555,6 +557,7 @@ func _face_direction(direction: Vector3, delta: float) -> void:
 
 
 func _build_visuals() -> void:
+	surface_material_entries.clear()
 	body_material = _make_material(tint)
 	accent_material = _make_material(tint.lightened(0.15))
 	visual_root = Node3D.new()
@@ -707,7 +710,8 @@ func _build_glyph_badge() -> void:
 	badge_material.cull_mode = BaseMaterial3D.CULL_DISABLED
 
 	var ring_material := StandardMaterial3D.new()
-	ring_material.albedo_color = Color(accent_material.albedo_color.r, accent_material.albedo_color.g, accent_material.albedo_color.b, 0.46)
+	var ring_color: Color = tint.lightened(0.26)
+	ring_material.albedo_color = Color(ring_color.r, ring_color.g, ring_color.b, 0.46)
 	ring_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	ring_material.cull_mode = BaseMaterial3D.CULL_DISABLED
 
@@ -761,17 +765,7 @@ func _add_box_part(size: Vector3, position: Vector3, material: Material) -> Mesh
 
 
 func _update_visual_state() -> void:
-	if hit_flash_time > 0.0:
-		body_material.albedo_color = Color(1.0, 0.9, 0.74, 1.0)
-	elif windup_time > 0.0:
-		body_material.albedo_color = tint.lightened(0.2)
-	else:
-		body_material.albedo_color = tint
-
-	if dash_time > 0.0:
-		accent_material.albedo_color = tint.lightened(0.35)
-	else:
-		accent_material.albedo_color = tint.lightened(0.16)
+	_update_surface_materials()
 
 	var bob_phase: float = drift_time * (3.2 + gait_amount * 1.8) + float(int(get_instance_id()) % 9) * 0.35
 	if visual_root != null:
@@ -865,14 +859,41 @@ func _update_visual_state() -> void:
 				right_arm_node.rotation_degrees.x = 12.0 - windup_time * 12.0
 
 
-func _make_material(color: Color) -> StandardMaterial3D:
-	var material := StandardMaterial3D.new()
-	material.albedo_color = color
-	material.roughness = 0.82
-	material.metallic = 0.05
-	material.emission_enabled = true
-	material.emission = Color(color.r * 0.12, color.g * 0.12, color.b * 0.12, 1.0)
+func _make_material(color: Color) -> ShaderMaterial:
+	var material := ShaderMaterial.new()
+	material.shader = ENEMY_SURFACE_SHADER
+	var accent_color: Color = color.lightened(0.26)
+	var glow_strength: float = 0.32
+	if enemy_type == "elite":
+		glow_strength = 0.42
+	elif enemy_type == "boss":
+		glow_strength = 0.52
+	material.set_shader_parameter("base_color", color)
+	material.set_shader_parameter("accent_color", accent_color)
+	material.set_shader_parameter("glow_strength", glow_strength)
+	material.set_shader_parameter("phase_offset", float((int(get_instance_id()) + surface_material_entries.size() * 13) % 37) * 0.31)
+	material.set_shader_parameter("mark_scale", 6.4 + float(int(get_instance_id()) % 5) * 0.52)
+	surface_material_entries.append({
+		"material": material,
+		"glow_strength": glow_strength
+	})
 	return material
+
+
+func _update_surface_materials() -> void:
+	var flash_strength: float = clamp(hit_flash_time / 0.14, 0.0, 1.0)
+	var windup_strength: float = clamp(windup_time / 1.2, 0.0, 1.0)
+	var dash_strength: float = clamp(dash_time / 1.0, 0.0, 1.0)
+	for entry_variant in surface_material_entries:
+		var entry: Dictionary = entry_variant
+		var material: ShaderMaterial = entry.get("material", null)
+		if material == null:
+			continue
+		var base_glow: float = float(entry.get("glow_strength", 0.32))
+		material.set_shader_parameter("flash_strength", flash_strength)
+		material.set_shader_parameter("windup_strength", windup_strength)
+		material.set_shader_parameter("dash_strength", dash_strength)
+		material.set_shader_parameter("glow_strength", base_glow + gait_amount * 0.08)
 
 
 func _build_health_bar() -> void:

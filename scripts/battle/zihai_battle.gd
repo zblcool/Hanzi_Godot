@@ -14,6 +14,7 @@ const TREASURE_CHEST_SCENE := preload("res://scenes/entities/treasure_chest.tscn
 const BATTLE_HUD_SCENE := preload("res://scenes/ui/battle_hud.tscn")
 const TOUCH_CONTROLS_OVERLAY := preload("res://scripts/ui/touch_controls_overlay.gd")
 const CJKFont := preload("res://scripts/core/cjk_font.gd")
+const GROUND_SURFACE_SHADER := preload("res://assets/shaders/ink_ground.gdshader")
 const DEFAULT_BATTLE_TIP := "击倒字灵收集字力与补给，升级时三选一偏旁。靠近砚台按 E 磨词。"
 const BOSS_SPAWN_TIMES := [65.0, 130.0]
 const MAP_WORLD_RADIUS := 28.0
@@ -90,6 +91,7 @@ var battle_settings: Dictionary = {}
 var ambient_glyph_root: Node3D
 var ambient_glyph_entries: Array[Dictionary] = []
 var ground_detail_nodes: Array[Node3D] = []
+var ground_surface_materials: Array = []
 var current_soundtrack_id: String = ""
 var current_soundtrack_cue: String = ""
 
@@ -125,6 +127,7 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	_update_camera(delta)
+	_update_ground_shader()
 	_update_tree_fade(delta)
 	_update_ambient_glyphs(delta)
 
@@ -2041,13 +2044,20 @@ func _setup_environment() -> void:
 
 func _build_ground() -> void:
 	ground_detail_nodes.clear()
+	ground_surface_materials.clear()
 	var floor := MeshInstance3D.new()
 	var plane := PlaneMesh.new()
 	plane.size = Vector2(180.0, 180.0)
 	floor.mesh = plane
-	var floor_material := StandardMaterial3D.new()
-	floor_material.albedo_color = Color(0.11, 0.12, 0.13, 1.0)
-	floor_material.roughness = 1.0
+	var floor_material := _make_ground_material(
+		Color(0.08, 0.095, 0.11, 1.0),
+		Color(0.46, 0.66, 0.68, 1.0),
+		Color(0.18, 0.2, 0.18, 1.0),
+		0.16,
+		0.28,
+		0.12,
+		0.0
+	)
 	floor.material_override = floor_material
 	ground_root.add_child(floor)
 
@@ -2063,9 +2073,15 @@ func _build_ground() -> void:
 			rng.randf_range(-42.0, 42.0)
 		)
 		mound.scale = Vector3(1.2, 0.4, 1.0 + randf() * 0.8)
-		var mound_material := StandardMaterial3D.new()
-		mound_material.albedo_color = Color(0.15, 0.16, 0.17, 1.0)
-		mound_material.roughness = 1.0
+		var mound_material := _make_ground_material(
+			Color(0.12, 0.13, 0.14, 1.0),
+			Color(0.32, 0.46, 0.5, 1.0),
+			Color(0.22, 0.22, 0.2, 1.0),
+			0.08,
+			0.18,
+			0.06,
+			float(index) * 0.41
+		)
 		mound.material_override = mound_material
 		ground_root.add_child(mound)
 		ground_detail_nodes.append(mound)
@@ -2073,6 +2089,32 @@ func _build_ground() -> void:
 	ambient_glyph_root = Node3D.new()
 	ambient_glyph_root.name = "AmbientGlyphs"
 	ground_root.add_child(ambient_glyph_root)
+
+
+func _make_ground_material(base_color: Color, ink_color: Color, paper_color: Color, ripple_strength: float, detail_mix: float, emission_strength: float, phase_offset: float) -> ShaderMaterial:
+	var material := ShaderMaterial.new()
+	material.shader = GROUND_SURFACE_SHADER
+	material.set_shader_parameter("base_color", base_color)
+	material.set_shader_parameter("ink_color", ink_color)
+	material.set_shader_parameter("paper_color", paper_color)
+	material.set_shader_parameter("ripple_strength", ripple_strength)
+	material.set_shader_parameter("detail_mix", detail_mix)
+	material.set_shader_parameter("emission_strength", emission_strength)
+	material.set_shader_parameter("phase_offset", phase_offset)
+	material.set_shader_parameter("focus_position", Vector3.ZERO)
+	ground_surface_materials.append(material)
+	return material
+
+
+func _update_ground_shader() -> void:
+	if ground_surface_materials.is_empty() or not is_instance_valid(player):
+		return
+	var focus_position := Vector3(player.global_position.x, 0.0, player.global_position.z)
+	for material_variant in ground_surface_materials:
+		var material: ShaderMaterial = material_variant
+		if material == null:
+			continue
+		material.set_shader_parameter("focus_position", focus_position)
 
 
 func _create_tree(position: Vector3) -> void:
