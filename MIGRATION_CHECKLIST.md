@@ -70,7 +70,8 @@ Status legend:
 - `[pending]` Cloud leaderboard sync. Notes: hanziHero has online leaderboard plumbing; Godot only keeps local records today.
 - `[pending]` Relic-aware build summary. Notes: source pause / result views include owned relic context; Godot cannot yet show that lane because relics are not ported.
 - `[pending]` More map-event reward routing. Notes: source sentence discoveries can branch into different reward types; Godot progression currently stays in the core combat loop.
-- `[pending]` Dungeon-room transition and interlude flow. Notes: hanziHero now breaks longer runs into room-to-room reward / event / recovery beats after major milestones; Godot still keeps boss clears inside one continuous arena without those transition choices.
+- `[done]` First boss-clear chamber-break continue gate. Notes: hanziHero pauses before sending the run into the next room; Godot now stops after the first scroll-lord clear once the remaining field is quiet, shows a dedicated `卷间缓冲` overlay, and requires an explicit continue before combat resumes.
+- `[in progress]` Dungeon-room transition and interlude flow. Notes: hanziHero now breaks longer runs into room-to-room reward / event / recovery beats after major milestones; Godot now has the first chamber-break continue gate, but reward / event / recovery picks, actual room reseeding, and later chamber routing are still missing.
 
 ## Content
 
