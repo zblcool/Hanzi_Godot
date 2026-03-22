@@ -275,6 +275,50 @@ func _localized_intro_tip(start_wave: int, fallback: String) -> String:
 	return HanziLocalization.localized_intro_tip(start_wave, fallback, Session.get_launcher_language())
 
 
+func _current_scroll_label() -> String:
+	return "Scroll I" if _is_english() else "残卷一"
+
+
+func _boss_stage_label(stage_index: int) -> String:
+	if stage_index <= 0:
+		return "First Scroll Lord" if _is_english() else "首卷主"
+	return "Deeper Scroll Lord" if _is_english() else "深层卷主"
+
+
+func _boss_reveal_title(stage_index: int, boss_name: String) -> String:
+	if stage_index <= 0:
+		if _is_english():
+			return "%s enters the field" % boss_name
+		return "%s压阵而至" % boss_name
+	if _is_english():
+		return "%s descends deeper" % boss_name
+	return "%s自深卷降阵" % boss_name
+
+
+func _boss_spawn_reveal_detail(stage_index: int) -> String:
+	if stage_index <= 0:
+		return "Large forbidden arrays arrive first. Dodge the opening layer, then punish the recovery." if _is_english() else "先躲开场的大禁阵，再抓卷主回气时的空档。"
+	return "This deeper lord chains volleys, charges, and forbidden arrays into one longer rhythm." if _is_english() else "更深的卷主会把弹幕、冲锋和禁阵连成更长一套节奏。"
+
+
+func _boss_defeat_reveal_title(completed_bosses: int) -> String:
+	if completed_bosses >= BOSS_SPAWN_TIMES.size():
+		return "Both scroll lords have fallen" if _is_english() else "两位卷主皆已崩散"
+	return "The deeper layer unfolds" if _is_english() else "更深一层正在翻开"
+
+
+func _boss_defeat_reveal_detail(completed_bosses: int) -> String:
+	if completed_bosses >= BOSS_SPAWN_TIMES.size():
+		return "Chapter target secured. Keep fighting only to test how far this build can still climb." if _is_english() else "本卷目标已经定住，后续战斗主要用于继续测试这条 build 的上限。"
+	return "Gather the scattered supplies, then prepare for the next scroll lord and denser mixed waves." if _is_english() else "先收拢散落补给，再准备迎接下一位卷主和更密的混编字潮。"
+
+
+func _boss_defeat_kicker(completed_bosses: int) -> String:
+	if completed_bosses >= BOSS_SPAWN_TIMES.size():
+		return _current_scroll_label()
+	return "%s · %s" % [_current_scroll_label(), "Layer Break" if _is_english() else "破卷入深层"]
+
+
 func _ready() -> void:
 	rng.randomize()
 	battle_intro = Session.consume_battle_intro()
@@ -674,6 +718,14 @@ func _spawn_boss(stage_index: int) -> void:
 	hud.show_banner("Boss Appears" if _is_english() else "卷主现身", tint, 2.4)
 	hud.set_tip(_boss_stage_tip(stage_index))
 	hud.show_boss(String(boss.enemy_name), String(boss.glyph), tint, boss.max_health)
+	hud.show_reveal(
+		"%s · %s" % [_current_scroll_label(), _boss_stage_label(stage_index)],
+		_boss_reveal_title(stage_index, String(boss.enemy_name)),
+		_boss_spawn_reveal_detail(stage_index),
+		tint,
+		String(boss.glyph),
+		3.2
+	)
 	_log_battle_event(("Boss Appears · %s" if _is_english() else "卷主现身 · %s") % String(boss.enemy_name), tint)
 	_show_enemy_taunt(String(boss.enemy_name), "boss", tint, 3.1)
 	_set_soundtrack("fireflyFootpath", "卷主压阵", true, true)
@@ -2096,12 +2148,28 @@ func _on_boss_defeated(world_position: Vector3) -> void:
 	if completed_bosses >= BOSS_SPAWN_TIMES.size():
 		Session.chapter_progress["chapter_complete"] = true
 		hud.show_banner("Scroll I Secured" if _is_english() else "残卷一暂定", Color(1.0, 0.88, 0.58, 1.0), 2.6)
+		hud.show_reveal(
+			_current_scroll_label(),
+			_boss_defeat_reveal_title(completed_bosses),
+			_boss_defeat_reveal_detail(completed_bosses),
+			Color(1.0, 0.88, 0.58, 1.0),
+			"定",
+			3.35
+		)
 		hud.set_tip("Both scroll lords have collapsed. The chapter goal is complete, and you can keep fighting to test the build ceiling." if _is_english() else "本卷两位卷主都已崩散，章节目标完成。继续战斗可测试成长上限。")
 		_log_battle_event("Scroll I Secured · Bosses gone" if _is_english() else "残卷一暂定 · 卷主尽散", Color(1.0, 0.88, 0.58, 1.0))
 		_set_soundtrack("mosslightCanopy", "残卷暂定", true, true)
 		_show_hero_callout("chapter_complete", 3.2)
 	else:
 		hud.show_banner("Boss Dispersed" if _is_english() else "卷主退散", Color(1.0, 0.84, 0.52, 1.0), 2.2)
+		hud.show_reveal(
+			_boss_defeat_kicker(completed_bosses),
+			_boss_defeat_reveal_title(completed_bosses),
+			_boss_defeat_reveal_detail(completed_bosses),
+			Color(1.0, 0.84, 0.52, 1.0),
+			"破",
+			3.1
+		)
 		hud.set_tip("The scroll lord has fallen. Gather the scattered supplies quickly and prepare for the deeper layer ahead." if _is_english() else "卷主崩散，残卷继续翻开。抓紧收补给并准备迎接更深的一层。")
 		_log_battle_event("Boss Dispersed · The scroll unfolds deeper" if _is_english() else "卷主退散 · 残卷继续翻开", Color(1.0, 0.84, 0.52, 1.0))
 		_set_soundtrack("mosslightCanopy", "残卷回气", true, true)

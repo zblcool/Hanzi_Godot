@@ -69,6 +69,7 @@ Status legend:
 - `[pending]` Cloud leaderboard sync. Notes: hanziHero has online leaderboard plumbing; Godot only keeps local records today.
 - `[pending]` Relic-aware build summary. Notes: source pause / result views include owned relic context; Godot cannot yet show that lane because relics are not ported.
 - `[pending]` More map-event reward routing. Notes: source sentence discoveries can branch into different reward types; Godot progression currently stays in the core combat loop.
+- `[pending]` Dungeon-room transition and interlude flow. Notes: hanziHero now breaks longer runs into room-to-room reward / event / recovery beats after major milestones; Godot still keeps boss clears inside one continuous arena without those transition choices.
 
 ## Content
 
@@ -85,7 +86,7 @@ Status legend:
 - `[pending]` Procedural music playback and current-track feedback. Notes: Godot now has the HUD-side track card and toast, but actual procedural playback / loop rotation is still missing.
 - `[pending]` Higher-end hit/audio differentiation. Notes: hanziHero has more layered weapon/skill sound identity and lingering glyph afterimages; Godot feedback can be pushed further.
 - `[done]` Themeable launcher/menu presentation. Notes: Godot launcher, about overlay, and Zihai menu now share the remembered `夜墨 / 纸墨` presentation; battle/HUD localization and broader downstream parity remain tracked separately.
-- `[in progress]` More stage spectacle for big unlocks and transitions. Notes: Godot battle HUD now adds a larger reveal card for new glyphs, phrase arts, and `字境相变`, but boss/chapter beats and other late-run flourishes can still be pushed further.
+- `[in progress]` More stage spectacle for big unlocks and transitions. Notes: Godot battle HUD now adds larger centered reveal cards for new glyphs, phrase arts, `字境相变`, boss arrivals, and chapter-secured beats, but late-run dungeon-room transitions and other flourishes can still be pushed further.
 
 ## Export
 
