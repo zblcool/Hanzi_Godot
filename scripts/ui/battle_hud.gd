@@ -330,7 +330,7 @@ var current_language := "zh"
 var root_control: Control
 var safe_content_root: Control
 var left_column: VBoxContainer
-var top_pills: HBoxContainer
+var top_pills: GridContainer
 var top_right_stack: VBoxContainer
 
 var hero_label: Label
@@ -1780,24 +1780,30 @@ func _build_ui() -> void:
 	event_log_list.add_theme_constant_override("separation", 8)
 	event_log_box.add_child(event_log_list)
 
-	top_pills = HBoxContainer.new()
+	top_pills = GridContainer.new()
+	top_pills.columns = 4
 	top_pills.anchor_left = 1.0
 	top_pills.anchor_right = 1.0
 	top_pills.anchor_top = 0.0
 	top_pills.anchor_bottom = 0.0
-	top_pills.add_theme_constant_override("separation", 12)
+	top_pills.add_theme_constant_override("h_separation", 12)
+	top_pills.add_theme_constant_override("v_separation", 10)
 	safe_content_root.add_child(top_pills)
 	map_button = _make_pill_button("地图", Callable(self, "_emit_map_toggle"))
+	map_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top_pills.add_child(map_button)
 	pause_button = _make_pill_button("暂停", Callable(self, "_emit_pause"))
+	pause_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top_pills.add_child(pause_button)
 	test_next_wave_button = _make_pill_button("下一波", Callable(self, "_emit_test_next_wave"))
 	test_next_wave_button.custom_minimum_size = Vector2(112.0, 52.0)
+	test_next_wave_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	test_next_wave_button.visible = false
 	top_pills.add_child(test_next_wave_button)
 
 	fps_panel = PanelContainer.new()
 	fps_panel.custom_minimum_size = Vector2(116.0, 52.0)
+	fps_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	fps_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.04, 0.06, 0.08, 0.84), Color(0.4, 0.64, 0.72, 0.6), 26))
 	fps_panel.visible = false
 	top_pills.add_child(fps_panel)
@@ -2061,12 +2067,6 @@ func _refresh_layout() -> void:
 		stack_width = clamp(usable_width * compact_ratio, 196.0 if micro_layout else (212.0 if web_tight_layout else 228.0), 244.0 if micro_layout else (272.0 if web_tight_layout else 296.0))
 	var right_margin := 0.0
 	var top_margin := 0.0
-	var stack_top := 54.0 if micro_layout else (62.0 if compact_layout else 72.0)
-	if top_right_stack != null:
-		top_right_stack.offset_left = -stack_width - right_margin
-		top_right_stack.offset_right = -right_margin
-		top_right_stack.offset_top = stack_top
-		top_right_stack.offset_bottom = -10.0
 
 	if compact_summary_panel != null:
 		compact_summary_panel.custom_minimum_size = Vector2(stack_width, 182.0 if micro_layout else (198.0 if web_tight_layout else 218.0))
@@ -2113,21 +2113,55 @@ func _refresh_layout() -> void:
 		fps_panel.custom_minimum_size = Vector2(74.0 if micro_layout else (88.0 if compact_layout else 116.0), pill_height)
 	if fps_value_label != null:
 		_set_label_font_size(fps_value_label, pill_font_size)
+	var visible_pill_count := 0
+	for pill in [map_button, pause_button, test_next_wave_button, fps_panel]:
+		if pill != null and pill.visible:
+			visible_pill_count += 1
+	var pill_columns := maxi(1, visible_pill_count)
+	if micro_layout:
+		pill_columns = mini(2, maxi(1, visible_pill_count))
+	elif web_tight_layout and visible_pill_count > 3:
+		pill_columns = 3
+	var tool_bottom := top_margin + pill_height
 	if top_pills != null:
-		top_pills.add_theme_constant_override("separation", 8 if micro_layout else 12)
+		top_pills.columns = pill_columns
+		top_pills.add_theme_constant_override("h_separation", 8 if micro_layout else 12)
+		top_pills.add_theme_constant_override("v_separation", 8 if micro_layout else 10)
 		var pill_width := maxf(top_pills.get_combined_minimum_size().x, 160.0 if micro_layout else 184.0)
+		var pill_height_total := maxf(top_pills.get_combined_minimum_size().y, pill_height)
 		top_pills.offset_left = -pill_width - right_margin
 		top_pills.offset_right = -right_margin
 		top_pills.offset_top = top_margin
-		top_pills.offset_bottom = top_margin + pill_height
+		top_pills.offset_bottom = top_margin + pill_height_total
+		tool_bottom = top_pills.offset_bottom
+	var stack_top := tool_bottom + (8.0 if micro_layout else (10.0 if compact_layout else 20.0))
+	if top_right_stack != null:
+		top_right_stack.offset_left = -stack_width - right_margin
+		top_right_stack.offset_right = -right_margin
+		top_right_stack.offset_top = stack_top
+		top_right_stack.offset_bottom = -10.0
 
 	if boss_panel != null:
-		var boss_width := maxf(220.0 if micro_layout else 260.0, minf(460.0 if web_tight_layout else 520.0, viewport_size.x - (84.0 if micro_layout else (140.0 if compact_layout else 660.0))))
-		var boss_margin := maxf(28.0 if micro_layout else 70.0, (viewport_size.x - boss_width) * 0.5)
-		boss_panel.offset_left = boss_margin
-		boss_panel.offset_right = -boss_margin
-		boss_panel.offset_top = 102.0 if micro_layout else (118.0 if compact_layout else 154.0)
-		boss_panel.offset_bottom = boss_panel.offset_top + 92.0
+		if compact_layout:
+			var boss_left_margin := 0.0
+			var boss_right_margin := stack_width + (10.0 if micro_layout else 14.0)
+			boss_panel.offset_left = boss_left_margin
+			boss_panel.offset_right = -boss_right_margin
+			boss_panel.offset_top = tool_bottom + (8.0 if micro_layout else 10.0)
+			boss_panel.offset_bottom = boss_panel.offset_top + (84.0 if micro_layout else 92.0)
+		else:
+			var boss_width := maxf(220.0 if micro_layout else 260.0, minf(460.0 if web_tight_layout else 520.0, viewport_size.x - (84.0 if micro_layout else (140.0 if compact_layout else 660.0))))
+			var boss_margin := maxf(28.0 if micro_layout else 70.0, (viewport_size.x - boss_width) * 0.5)
+			boss_panel.offset_left = boss_margin
+			boss_panel.offset_right = -boss_margin
+			boss_panel.offset_top = 102.0 if micro_layout else (118.0 if compact_layout else 154.0)
+			boss_panel.offset_bottom = boss_panel.offset_top + 92.0
+	if boss_name_label != null:
+		_set_label_font_size(boss_name_label, 22 if micro_layout else (24 if web_tight_layout else 28))
+	if boss_detail_label != null:
+		_set_label_font_size(boss_detail_label, 14 if micro_layout else 16)
+	if boss_bar != null:
+		boss_bar.custom_minimum_size = Vector2(0.0, 12.0 if micro_layout else 16.0)
 
 	if banner_label != null:
 		var banner_margin := 116.0 if micro_layout else (180.0 if compact_layout else 420.0)
