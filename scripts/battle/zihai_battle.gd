@@ -250,6 +250,10 @@ func _localized_word_data(word_id: String) -> Dictionary:
 	return HanziLocalization.localized_word_data(word_id, Session.get_launcher_language())
 
 
+func _localized_enemy_data(enemy_id: String) -> Dictionary:
+	return HanziLocalization.localized_enemy_data(enemy_id, Session.get_launcher_language())
+
+
 func _localized_field_phase_theme(theme: Dictionary) -> Dictionary:
 	return HanziLocalization.localized_field_phase_theme(theme, Session.get_launcher_language())
 
@@ -361,22 +365,71 @@ func _chamber_interlude_title() -> String:
 	return "%s · %s" % [_current_scroll_label(), "Between Chambers" if _is_english() else "卷间抉择"]
 
 
-func _chamber_interlude_body(next_wave: int) -> String:
+func _chamber_preview_pressure_copy(next_wave: int) -> String:
+	if _is_big_wave(next_wave):
+		return "Enemy cap and spawn rate both rise together." if _is_english() else "刷怪速度和场上字灵上限都会一起抬高。"
+	match next_wave:
+		2:
+			return "Ranged pressure starts mixing into the tide." if _is_english() else "弓手会开始混进字潮，远程牵制变多。"
+		3:
+			return "Dashes and ground arrays start overlapping." if _is_english() else "突刺和地阵会开始叠在一起施压。"
+		4:
+			return "Charge lines start cutting through mixed waves." if _is_english() else "冲锋线会开始切穿混编字潮。"
+		_:
+			return "Elites begin anchoring the pack more often." if _is_english() else "魁首会更常压阵，混编节奏会更硬。"
+
+
+func _chamber_preview_threat_ids(next_wave: int) -> Array[String]:
+	if next_wave >= 5:
+		return ["elite", "cavalry", "ritualist"]
+	if next_wave >= 4:
+		return ["cavalry", "ritualist", "assassin"]
+	if next_wave >= 3:
+		return ["assassin", "ritualist", "archer"]
+	if next_wave >= 2:
+		return ["archer", "tank", "swift"]
+	return ["swift", "basic"]
+
+
+func _chamber_preview_threat_names(next_wave: int) -> Array[String]:
+	var names: Array[String] = []
+	for enemy_id_variant in _chamber_preview_threat_ids(next_wave):
+		var enemy_id := String(enemy_id_variant)
+		var enemy_data := _localized_enemy_data(enemy_id)
+		names.append(String(enemy_data.get("name", enemy_id)))
+	return names
+
+
+func _chamber_interlude_preview_lines(next_wave: int) -> Array[String]:
 	var localized_next_theme := _localized_field_phase_theme(_field_phase_theme_for_wave(next_wave))
 	var next_theme_name := String(localized_next_theme.get("name", "Inkfield" if _is_english() else "字境"))
+	var threat_joiner := ", " if _is_english() else " / "
+	var threat_mix := threat_joiner.join(PackedStringArray(_chamber_preview_threat_names(next_wave)))
+	if _is_english():
+		return [
+			"Next Wave · %d%s" % [next_wave, " · Major Surge" if _is_big_wave(next_wave) else ""],
+			"Realm · %s" % next_theme_name,
+			"Pressure · %s" % _chamber_preview_pressure_copy(next_wave),
+			"Threat Mix · %s" % threat_mix
+		]
+	return [
+		"下一波 · 第 %d 波%s" % [next_wave, " · 大潮压境" if _is_big_wave(next_wave) else ""],
+		"字境 · %s" % next_theme_name,
+		"压境重点 · %s" % _chamber_preview_pressure_copy(next_wave),
+		"威胁混编 · %s" % threat_mix
+	]
+
+
+func _chamber_interlude_body(next_wave: int) -> String:
 	var reward_radical := String(chamber_interlude_offer.get("reward_radical", "日"))
 	if _is_english():
-		return "The first scroll lord is gone and the chamber has gone quiet. Treat this as the first room-break stop before the run pushes deeper.\n\nNext pressure: Wave %d\nNext realm cue: %s\n\nChoose one before continuing:\nReward · Radical Supply: take %s into the next chamber.\nEvent · Scroll Echo: relic routing is not ported yet, so this fallback grants %d s of Swift Edict.\nRecovery · Short Rest: restore %d%% vitality, clear stun, and gain %d s of brush haste." % [
-			next_wave,
-			next_theme_name,
+		return "The first scroll lord is gone and the chamber has gone quiet. This is the first room-break stop before the run pushes deeper.\n\nCheck the next push below, then choose one:\nReward keeps radical %s for the next chamber.\nEvent uses a safe Scroll Echo fallback for %d s of Swift Edict.\nRecovery restores %d%% vitality, clears stun, and grants %d s of brush haste." % [
 			reward_radical,
 			int(round(CHAMBER_INTERLUDE_EVENT_FURY_DURATION)),
 			int(round(CHAMBER_INTERLUDE_REST_HEAL_RATIO * 100.0)),
 			int(round(CHAMBER_INTERLUDE_REST_BRUSH_DURATION))
 		]
-	return "首位卷主已散，当前房间也暂时清空。这一步先做成进入更深残卷前的停顿。\n\n下一段压力：第 %d 波\n下一层字境：%s\n\n继续深入前先定一项：\n奖励 · 偏旁补给：带走偏旁「%s」，为下一段先添一笔。\n异事 · 残卷回响：遗物路线还没迁回 Godot，这一步先给 %d 秒疾书令做低风险替代。\n修整 · 歇笔回气：回复 %d%% 气血，解除眩晕，并获得 %d 秒文笔提速。" % [
-		next_wave,
-		next_theme_name,
+	return "首位卷主已散，当前房间也暂时清空。这一步先做成进入更深残卷前的停顿。\n\n先看下方下一段预览，再定一项：\n奖励 · 偏旁补给：带走偏旁「%s」，为下一段先添一笔。\n异事 · 残卷回响：遗物路线还没迁回 Godot，这一步先给 %d 秒疾书令做低风险替代。\n修整 · 歇笔回气：回复 %d%% 气血，解除眩晕，并获得 %d 秒文笔提速。" % [
 		reward_radical,
 		int(round(CHAMBER_INTERLUDE_EVENT_FURY_DURATION)),
 		int(round(CHAMBER_INTERLUDE_REST_HEAL_RATIO * 100.0)),
@@ -2367,7 +2420,12 @@ func _open_chamber_break_gate() -> void:
 	Engine.time_scale = 0.0
 	if hud != null and hud.has_method("show_chamber_interlude"):
 		var next_wave := maxi(threat_level + 1, 2)
-		hud.show_chamber_interlude(_chamber_interlude_title(), _chamber_interlude_body(next_wave), _chamber_interlude_options())
+		hud.show_chamber_interlude(
+			_chamber_interlude_title(),
+			_chamber_interlude_body(next_wave),
+			_chamber_interlude_options(),
+			_chamber_interlude_preview_lines(next_wave)
+		)
 	_log_battle_event("Between Chambers · Choose one route" if _is_english() else "卷间抉择 · 先定一条路", Color(0.96, 0.82, 0.54, 1.0))
 
 

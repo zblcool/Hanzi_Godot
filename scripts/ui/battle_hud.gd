@@ -61,7 +61,8 @@ const UI_EN := {
 	"升级时三选一偏旁": "Pick one of three radicals on level-up",
 	"靠近砚台按 E 磨词": "Press E near an inkstone to refine phrases",
 	"M / Tab 地图，R 重开，Esc 返回菜单": "M / Tab map, R restart, Esc return to menu",
-	"试阵模式：右上可直接跳到下一波，并实时显示 FPS": "Test mode: jump to the next wave from the top-right and watch FPS live"
+	"试阵模式：右上可直接跳到下一波，并实时显示 FPS": "Test mode: jump to the next wave from the top-right and watch FPS live",
+	"下一段预览": "Next Chamber Preview"
 }
 class BattleMapCanvas:
 	extends Control
@@ -401,6 +402,9 @@ var choice_mode: String = ""
 var state_overlay: Control
 var state_title_label: Label
 var state_body_label: Label
+var state_preview_panel: PanelContainer
+var state_preview_title_label: Label
+var state_preview_line_labels: Array[Label] = []
 var state_name_hint_label: Label
 var state_name_row: BoxContainer
 var state_name_status_label: Label
@@ -1305,6 +1309,7 @@ func show_pause_menu(elapsed: float, kills: int, threat: int, level: int) -> voi
 	overlay_label.visible = false
 	_hide_reveal()
 	_hide_state_name_editor()
+	_hide_state_preview()
 	last_pause_summary = {
 		"elapsed": elapsed,
 		"kills": kills,
@@ -1328,6 +1333,7 @@ func show_chamber_transition(title: String, body: String) -> void:
 	hide_map_overlay()
 	overlay_label.visible = false
 	_hide_state_name_editor()
+	_hide_state_preview()
 	state_mode = "chamber_transition"
 	state_title_label.text = title
 	state_body_label.text = body
@@ -1340,7 +1346,7 @@ func show_chamber_transition(title: String, body: String) -> void:
 	state_overlay.visible = true
 
 
-func show_chamber_interlude(title: String, body: String, options: Array[Dictionary]) -> void:
+func show_chamber_interlude(title: String, body: String, options: Array[Dictionary], preview_lines: Array[String] = []) -> void:
 	hide_choice_overlay()
 	hide_map_overlay()
 	overlay_label.visible = false
@@ -1348,6 +1354,7 @@ func show_chamber_interlude(title: String, body: String, options: Array[Dictiona
 	state_mode = "chamber_interlude"
 	state_title_label.text = title
 	state_body_label.text = body
+	_show_state_preview(_localize_text("下一段预览"), preview_lines)
 
 	var option_buttons := [state_primary_button, state_secondary_button, state_tertiary_button]
 	for index in range(option_buttons.size()):
@@ -1373,6 +1380,7 @@ func hide_state_overlay() -> void:
 	state_mode = ""
 	if state_overlay != null:
 		state_overlay.visible = false
+	_hide_state_preview()
 
 
 func _show_settings_menu() -> void:
@@ -1380,6 +1388,7 @@ func _show_settings_menu() -> void:
 	state_title_label.text = "Battle Setup" if _is_english() else "战场布置"
 	state_body_label.text = _build_settings_body()
 	_hide_state_name_editor()
+	_hide_state_preview()
 	overlay_label.visible = false
 	_hide_reveal()
 	_configure_state_button(state_primary_button, ("%s: %s" % ["Performance", _performance_mode_label()] if _is_english() else "演出档：%s" % _performance_mode_label()), Callable(self, "_cycle_performance_mode"))
@@ -1402,6 +1411,7 @@ func set_game_over(
 	hide_choice_overlay()
 	hide_map_overlay()
 	var normalized_view := _normalize_local_leaderboard_view(leaderboard_view)
+	_hide_state_preview()
 	state_mode = "game_over"
 	last_game_over_data = {
 		"summary": summary,
@@ -1469,6 +1479,7 @@ func _show_test_leaderboard() -> void:
 
 func _refresh_local_leaderboard_overlay() -> void:
 	state_mode = "leaderboard"
+	_hide_state_preview()
 	local_leaderboard_view = _normalize_local_leaderboard_view(local_leaderboard_view)
 	var manual_count := Session.get_local_leaderboard_count("manual")
 	var test_count := Session.get_local_leaderboard_count("test")
@@ -2324,6 +2335,12 @@ func _refresh_layout() -> void:
 		_set_label_font_size(state_title_label, 34 if micro_layout else (38 if web_tight_layout else 42))
 	if state_body_label != null:
 		_set_label_font_size(state_body_label, 17 if micro_layout else (18 if web_tight_layout else 20))
+	if state_preview_title_label != null:
+		_set_label_font_size(state_preview_title_label, 15 if micro_layout else 16)
+	for preview_line_label in state_preview_line_labels:
+		if preview_line_label == null:
+			continue
+		_set_label_font_size(preview_line_label, 13 if micro_layout else 14)
 	if state_name_hint_label != null:
 		_set_label_font_size(state_name_hint_label, 14 if micro_layout else 16)
 	if state_name_status_label != null:
@@ -2911,6 +2928,31 @@ func _build_state_overlay(root: Control) -> void:
 	box.add_child(state_title_label)
 	box.add_child(state_body_label)
 
+	state_preview_panel = PanelContainer.new()
+	state_preview_panel.visible = false
+	state_preview_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.1, 0.12, 0.16, 0.94), Color(0.74, 0.84, 1.0, 0.46), 18))
+	box.add_child(state_preview_panel)
+
+	var preview_margin := MarginContainer.new()
+	preview_margin.add_theme_constant_override("margin_left", 16)
+	preview_margin.add_theme_constant_override("margin_top", 14)
+	preview_margin.add_theme_constant_override("margin_right", 16)
+	preview_margin.add_theme_constant_override("margin_bottom", 14)
+	state_preview_panel.add_child(preview_margin)
+
+	var preview_box := VBoxContainer.new()
+	preview_box.add_theme_constant_override("separation", 6)
+	preview_margin.add_child(preview_box)
+
+	state_preview_title_label = _make_label("下一段预览", 16, Color(0.9, 0.96, 1.0, 0.98))
+	preview_box.add_child(state_preview_title_label)
+
+	for _index in range(4):
+		var preview_line := _make_label("", 14, Color(0.86, 0.92, 0.98, 0.92))
+		preview_line.visible = false
+		state_preview_line_labels.append(preview_line)
+		preview_box.add_child(preview_line)
+
 	state_name_hint_label = _make_label("", 16, Color(0.96, 0.82, 0.56, 0.96))
 	box.add_child(state_name_hint_label)
 
@@ -3156,6 +3198,44 @@ func _save_state_name() -> void:
 	state_name_status_label.text = ("Current alias: %s" if _is_english() else "当前署名：%s") % resolved_name
 	if state_mode == "leaderboard":
 		state_body_label.text = _build_local_leaderboard_text(local_leaderboard_view)
+
+
+func _show_state_preview(title_text: String, lines: Array[String]) -> void:
+	if state_preview_panel == null or state_preview_title_label == null:
+		return
+	var filtered_lines: Array[String] = []
+	for line_variant in lines:
+		var line_text := String(line_variant).strip_edges()
+		if line_text.is_empty():
+			continue
+		filtered_lines.append(line_text)
+	if filtered_lines.is_empty():
+		_hide_state_preview()
+		return
+	state_preview_panel.visible = true
+	state_preview_title_label.text = title_text
+	for index in range(state_preview_line_labels.size()):
+		var line_label := state_preview_line_labels[index]
+		if line_label == null:
+			continue
+		if index < filtered_lines.size():
+			line_label.visible = true
+			line_label.text = filtered_lines[index]
+		else:
+			line_label.visible = false
+			line_label.text = ""
+
+
+func _hide_state_preview() -> void:
+	if state_preview_panel != null:
+		state_preview_panel.visible = false
+	if state_preview_title_label != null:
+		state_preview_title_label.text = ""
+	for line_label in state_preview_line_labels:
+		if line_label == null:
+			continue
+		line_label.visible = false
+		line_label.text = ""
 
 
 func _refresh_controls_text() -> void:
