@@ -14,6 +14,7 @@ const TREASURE_CHEST_SCENE := preload("res://scenes/entities/treasure_chest.tscn
 const BATTLE_HUD_SCENE := preload("res://scenes/ui/battle_hud.tscn")
 const TOUCH_CONTROLS_OVERLAY := preload("res://scripts/ui/touch_controls_overlay.gd")
 const CJKFont := preload("res://scripts/core/cjk_font.gd")
+const HanziLocalization := preload("res://scripts/core/hanzi_localization.gd")
 const GROUND_SURFACE_SHADER := preload("res://assets/shaders/ink_ground.gdshader")
 const SHANSHUI_BACKDROP_SHADER := preload("res://assets/shaders/shanshui_backdrop.gdshader")
 const DEFAULT_BATTLE_TIP := "击倒字灵收集字力与补给，升级时三选一偏旁。靠近砚台按 E 磨词。"
@@ -55,57 +56,6 @@ const SOUNDTRACK_LIBRARY := {
 		"mood": "16-bit 轻快巡游",
 		"accent": Color(0.98, 0.76, 0.42, 1.0)
 	}
-}
-const SOUNDTRACK_EN := {
-	"mosslightCanopy": {"title": "Mosslight Canopy", "mood": "16-bit Quiet Forest"},
-	"fireflyFootpath": {"title": "Firefly Footpath", "mood": "16-bit Light Patrol"}
-}
-const RADICAL_EN := {
-	"亻": {"name": "person radical", "description": "Combine with `木` into `休`, leaning toward sustain and recovery."},
-	"木": {"name": "wood radical", "description": "The other half of `休`, and the route that keeps healing lines climbing."},
-	"日": {"name": "sun radical", "description": "Combine with `月` into `明` to strengthen your main damage tempo."},
-	"月": {"name": "moon radical", "description": "Advances the `明` route and pushes the weapon toward phrase arts sooner."},
-	"氵": {"name": "water radical", "description": "Combine with `每` into `海` for wave-based crowd clear."},
-	"每": {"name": "every base", "description": "Completes `海` and helps refine it into stronger sea phrase arts."},
-	"雨": {"name": "rain radical", "description": "Combine with `田` into `雷` for lock-on lightning and mid-field control."},
-	"田": {"name": "field frame", "description": "Completes `雷` and later refines into a lightning-rain field."},
-	"心": {"name": "heart radical", "description": "Combine with `刂` into `忍` and trade low health for fiercer pressure."},
-	"火": {"name": "fire radical", "description": "Two fires form `炎`, turning the area around you into a ring of flame shots."},
-	"刂": {"name": "blade radical", "description": "Both sharpens your weapon and combines with `心` into `忍`."}
-}
-const RECIPE_EN := {
-	"ming": {"title": "Sun-Moon Wheels", "description": "Strengthens your main attack rhythm and periodically releases twin pursuit wheels."},
-	"xiu": {"title": "Forest Rest", "description": "Heals over time and knocks back nearby enemies to stretch survivability."},
-	"hai": {"title": "Sea Tide", "description": "Detonates ink-wave ripples on a timer to clear nearby swarms."},
-	"lei": {"title": "Falling Thunder", "description": "Locks onto the nearest cluster and slams the mid-field with lightning."},
-	"ren": {"title": "Endurance Instinct", "description": "Below half health, gain attack speed, damage, and move speed together."},
-	"yan": {"title": "Flame Surge", "description": "Periodically sprays flame glyph volleys in all directions to burn open space."}
-}
-const WORD_EN := {
-	"ming_guang": {"title": "Moonbright Verse", "description": "Twin wheels add a moon-chasing volley and lift the main weapon with them."},
-	"xiu_yang": {"title": "Restful Phrase", "description": "Turns healing into stable sustain and raises the margin for mistakes."},
-	"hai_xiao": {"title": "Sea Howl", "description": "Refines the tide into a fiercer ink wave with shorter cycles and larger reach."},
-	"lei_yu": {"title": "Rain of Thunder", "description": "Lightning impacts spread into a rain field, turning burst into control."},
-	"ren_xin": {"title": "Ruthless Heart", "description": "When endurance triggers, recover health and cut out periodic aftershocks."},
-	"yan_chao": {"title": "Flame Surge Scroll", "description": "Makes flame volleys denser and faster, with scorching waves erupting on hit."}
-}
-const FIELD_PHASE_EN := {
-	"stelaeGrove": {"name": "Stele Grove", "cue": "Realm Shift · Stele Grove", "tip": "Stone-lit script settles over the arena, leaving carved glyph marks where you were standing."},
-	"inkTide": {"name": "Ink Tide", "cue": "Realm Shift · Ink Tide", "tip": "The field turns toward blue-black ink and the old patterns drift like tide lines."},
-	"thunderScript": {"name": "Thunder Script", "cue": "Realm Shift · Thunder Script", "tip": "Fog turns colder and brighter, and the ambient glyph array becomes easier to read."},
-	"ancientScroll": {"name": "Ancient Scroll", "cue": "Realm Shift · Ancient Scroll", "tip": "Warm parchment tones return and giant glyphs press into the ground like old ink seals."}
-}
-const CUE_EN := {
-	"试阵预热": "Test Warmup",
-	"待入曲": "Awaiting Cue",
-	"卷主压阵": "Boss Pressure",
-	"入卷铺陈": "Scroll Opening",
-	"试阵开卷": "Test Entry",
-	"残卷暂定": "Scroll Secured",
-	"残卷回气": "Breathing Space",
-	"大潮压境": "Major Tide",
-	"字潮提速": "Tide Rising",
-	"字境相变": "Realm Shift"
 }
 const ENEMY_ENTRANCE_TAUNTS := {
 	"elite": [
@@ -278,74 +228,31 @@ func _is_english() -> bool:
 
 
 func _localized_hero_data(hero_data: Dictionary) -> Dictionary:
-	var localized := hero_data.duplicate(true)
-	if not _is_english():
-		return localized
-	var hero_id := String(hero_data.get("id", ""))
-	if hero_id == "scholar":
-		localized["name"] = "Scholar"
-	elif hero_id == "xia":
-		localized["name"] = "Xia"
-	return localized
+	return HanziLocalization.localized_hero_data(String(hero_data.get("id", "")), Session.get_launcher_language())
 
 
 func _localized_radical_data(radical: String) -> Dictionary:
-	var radical_data := Session.get_radical_data(radical).duplicate(true)
-	if not _is_english():
-		return radical_data
-	var patch: Dictionary = RADICAL_EN.get(radical, {})
-	for key in patch.keys():
-		radical_data[key] = patch[key]
-	return radical_data
+	return HanziLocalization.localized_radical_data(radical, Session.get_launcher_language())
 
 
 func _localized_recipe_data(recipe_id: String) -> Dictionary:
-	var recipe := Session.get_recipe_data(recipe_id).duplicate(true)
-	if not _is_english():
-		return recipe
-	var patch: Dictionary = RECIPE_EN.get(recipe_id, {})
-	for key in patch.keys():
-		recipe[key] = patch[key]
-	return recipe
+	return HanziLocalization.localized_recipe_data(recipe_id, Session.get_launcher_language())
 
 
 func _localized_word_data(word_id: String) -> Dictionary:
-	var word := Session.get_word_data(word_id).duplicate(true)
-	if not _is_english():
-		return word
-	var patch: Dictionary = WORD_EN.get(word_id, {})
-	for key in patch.keys():
-		word[key] = patch[key]
-	return word
+	return HanziLocalization.localized_word_data(word_id, Session.get_launcher_language())
 
 
 func _localized_field_phase_theme(theme: Dictionary) -> Dictionary:
-	var localized := theme.duplicate(true)
-	if not _is_english():
-		return localized
-	var patch: Dictionary = FIELD_PHASE_EN.get(String(theme.get("id", "")), {})
-	for key in patch.keys():
-		localized[key] = patch[key]
-	return localized
+	return HanziLocalization.localized_field_phase_theme(theme, Session.get_launcher_language())
 
 
 func _localized_soundtrack_entry(track_id: String) -> Dictionary:
-	var entry: Dictionary = {}
-	var entry_variant: Variant = SOUNDTRACK_LIBRARY.get(track_id, {})
-	if entry_variant is Dictionary:
-		entry = (entry_variant as Dictionary).duplicate(true)
-	if not _is_english():
-		return entry
-	var patch: Dictionary = SOUNDTRACK_EN.get(track_id, {})
-	for key in patch.keys():
-		entry[key] = patch[key]
-	return entry
+	return HanziLocalization.localized_soundtrack_entry(track_id, Session.get_launcher_language(), SOUNDTRACK_LIBRARY)
 
 
 func _localized_soundtrack_cue(cue: String) -> String:
-	if not _is_english():
-		return cue
-	return String(CUE_EN.get(cue, cue))
+	return HanziLocalization.localized_soundtrack_cue(cue, Session.get_launcher_language())
 
 
 func _default_battle_tip() -> String:
@@ -361,27 +268,11 @@ func _weapon_core_label() -> String:
 
 
 func _localized_intro_title(start_wave: int, fallback: String) -> String:
-	if not _is_english():
-		return fallback
-	match start_wave:
-		10:
-			return "Scroll X · Test Run"
-		20:
-			return "Scroll XX · Stress Test"
-		_:
-			return "Scroll I · Inkfall"
+	return HanziLocalization.localized_intro_title(start_wave, fallback, Session.get_launcher_language())
 
 
 func _localized_intro_tip(start_wave: int, fallback: String) -> String:
-	if not _is_english():
-		return fallback
-	match start_wave:
-		10:
-			return "Start with a midgame build already in motion and focus on mixed waves, warnings, and HUD pacing."
-		20:
-			return "Enter with a more complete late build and use this run to inspect elites, major surges, and HUD rhythm under pressure."
-		_:
-			return "Secure the first radical and form your opening glyph as quickly as possible."
+	return HanziLocalization.localized_intro_tip(start_wave, fallback, Session.get_launcher_language())
 
 
 func _ready() -> void:

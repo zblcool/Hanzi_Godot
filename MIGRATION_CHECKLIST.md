@@ -93,6 +93,6 @@ Status legend:
 ## Technical Debt
 
 - `[done]` Long-lived migration tracking in repo root. Notes: `MIGRATION_CHECKLIST.md` remains the source of truth and now has a matching long-lived GitHub tracker issue for checklist/body sync instead of one-off progress issues.
-- `[in progress]` Shared localization layer for launcher, menu, and battle UI. Notes: launcher, menu, and battle/HUD now all follow the remembered zh/en runtime toggle, but the strings still live inline in GDScript rather than in a shared data-driven localization layer.
+- `[in progress]` Shared localization layer for launcher, menu, and battle UI. Notes: shared hero, radical, recipe, word, enemy, soundtrack, and field-phase translation data now live in `scripts/core/hanzi_localization.gd`, while page-specific UI copy and event text still remain inline in the scene scripts.
 - `[pending]` Break up `scripts/battle/zihai_battle.gd` into smaller systems. Notes: source JS has already started splitting combat/rendering/data concerns; Godot battle logic is still concentrated in one large script.
 - `[pending]` Move launcher / menu content into data-driven definitions. Notes: current Godot UI is built inline in GDScript; data-backed cards would make future theme and language parity safer.

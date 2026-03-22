@@ -1,6 +1,7 @@
 extends CanvasLayer
 
 const CJKFont := preload("res://scripts/core/cjk_font.gd")
+const HanziLocalization := preload("res://scripts/core/hanzi_localization.gd")
 const EVENT_LOG_LIMIT := 12
 const EVENT_LOG_DESKTOP_VISIBLE := 6
 const EVENT_LOG_COMPACT_VISIBLE := 3
@@ -61,39 +62,6 @@ const UI_EN := {
 	"M / Tab 地图，R 重开，Esc 返回菜单": "M / Tab map, R restart, Esc return to menu",
 	"试阵模式：右上可直接跳到下一波，并实时显示 FPS": "Test mode: jump to the next wave from the top-right and watch FPS live"
 }
-const HERO_EN := {
-	"scholar": {
-		"name": "Scholar",
-		"title": "Ink Volley",
-		"role_label": "Ranged control",
-		"focus": "Collect radicals with steady pacing and bring fused glyphs online earlier.",
-		"tags": ["Lock-on", "Volley", "Stable fusion"]
-	},
-	"xia": {
-		"name": "Xia",
-		"title": "Longblade Assault",
-		"role_label": "Melee breaker",
-		"focus": "Push into the enemy tide and turn `刂` directly into weapon growth.",
-		"tags": ["Point-blank", "Burst", "Blade growth"]
-	}
-}
-const RECIPE_EN := {
-	"ming": {"title": "Sun-Moon Wheels", "description": "Strengthens your main attack rhythm and periodically releases twin pursuit wheels."},
-	"xiu": {"title": "Forest Rest", "description": "Heals over time and knocks back nearby enemies to stretch survivability."},
-	"hai": {"title": "Sea Tide", "description": "Detonates ink-wave ripples on a timer to clear nearby swarms."},
-	"lei": {"title": "Falling Thunder", "description": "Locks onto the nearest cluster and slams the mid-field with lightning."},
-	"ren": {"title": "Endurance Instinct", "description": "Below half health, gain attack speed, damage, and move speed together."},
-	"yan": {"title": "Flame Surge", "description": "Periodically sprays flame glyph volleys in all directions to burn open space."}
-}
-const WORD_EN := {
-	"ming_guang": {"title": "Moonbright Verse", "description": "Twin wheels add a moon-chasing volley and lift the main weapon with them."},
-	"xiu_yang": {"title": "Restful Phrase", "description": "Turns healing into stable sustain and raises the margin for mistakes."},
-	"hai_xiao": {"title": "Sea Howl", "description": "Refines the tide into a fiercer ink wave with shorter cycles and larger reach."},
-	"lei_yu": {"title": "Rain of Thunder", "description": "Lightning impacts spread into a rain field, turning burst into control."},
-	"ren_xin": {"title": "Ruthless Heart", "description": "When endurance triggers, recover health and cut out periodic aftershocks."},
-	"yan_chao": {"title": "Flame Surge Scroll", "description": "Makes flame volleys denser and faster, with scorching waves erupting on hit."}
-}
-
 class BattleMapCanvas:
 	extends Control
 
@@ -480,33 +448,15 @@ func _localize_text(text: String) -> String:
 
 
 func _localized_hero_data(hero_data: Dictionary) -> Dictionary:
-	var localized := hero_data.duplicate(true)
-	if not _is_english():
-		return localized
-	var patch: Dictionary = HERO_EN.get(String(hero_data.get("id", "")), {})
-	for key in patch.keys():
-		localized[key] = patch[key]
-	return localized
+	return HanziLocalization.localized_hero_data(String(hero_data.get("id", "")), current_language)
 
 
 func _localized_recipe_data(recipe_id: String) -> Dictionary:
-	var recipe := Session.get_recipe_data(recipe_id).duplicate(true)
-	if not _is_english():
-		return recipe
-	var patch: Dictionary = RECIPE_EN.get(recipe_id, {})
-	for key in patch.keys():
-		recipe[key] = patch[key]
-	return recipe
+	return HanziLocalization.localized_recipe_data(recipe_id, current_language)
 
 
 func _localized_word_data(word_id: String) -> Dictionary:
-	var word := Session.get_word_data(word_id).duplicate(true)
-	if not _is_english():
-		return word
-	var patch: Dictionary = WORD_EN.get(word_id, {})
-	for key in patch.keys():
-		word[key] = patch[key]
-	return word
+	return HanziLocalization.localized_word_data(word_id, current_language)
 
 
 func _process(delta: float) -> void:
