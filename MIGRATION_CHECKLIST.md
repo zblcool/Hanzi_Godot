@@ -37,7 +37,7 @@ Status legend:
 - `[done]` First runtime settings / LOD panel slice. Notes: Godot pause overlay now exposes a low-risk `战场布置` panel with remembered performance preset, enemy health bar toggle, and ambient glyph density controls, covering the first practical slice of hanziHero's settings modal.
 - `[done]` Runtime settings follow-through for effect/detail parity. Notes: Godot pause overlay now remembers separate `视觉字效` and `远敌细节` toggles alongside the original preset slice, so decorative glyph bursts can be trimmed independently and distant enemy badges / health bars collapse back to a near-only read when detail is lowered.
 - `[done]` Music track toast and soundtrack UI. Notes: hanziHero shows the active procedural track name and mood; Godot battle HUD now carries a matching `战场乐题` card plus a top-right `配乐提示` toast that reuses the source track names and mood text on key battle beats.
-- `[pending]` Phrase / event log panel. Notes: hanziHero records discovered sentence events in a dedicated log; Godot battle UI does not yet surface event history.
+- `[done]` Phrase / event log panel. Notes: Godot battle HUD now keeps a dedicated `战报` panel that records wave pushes, realm shifts, boss beats, recipe/word upgrades, and pickup highlights, with a compact mobile-safe variant for smaller screens.
 - `[pending]` Bilingual HUD copy. Notes: source battle UI can switch zh/en; Godot HUD remains Chinese-only.
 
 ## Combat Systems

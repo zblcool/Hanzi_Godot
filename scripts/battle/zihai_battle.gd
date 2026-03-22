@@ -348,6 +348,12 @@ func _prime_soundtrack_ui() -> void:
 	_set_soundtrack(track_id, cue, false, true)
 
 
+func _log_battle_event(text: String, color: Color = Color(0.88, 0.92, 0.97, 1.0)) -> void:
+	if hud == null or not hud.has_method("push_event_log"):
+		return
+	hud.push_event_log(text, color)
+
+
 func _test_tools_enabled() -> bool:
 	return OS.is_debug_build() or not bool(battle_intro.get("recordable", true))
 
@@ -522,6 +528,7 @@ func _spawn_boss(stage_index: int) -> void:
 	hud.show_banner("卷主现身", tint, 2.4)
 	hud.set_tip(_boss_stage_tip(stage_index))
 	hud.show_boss(String(boss.enemy_name), String(boss.glyph), tint, boss.max_health)
+	_log_battle_event("卷主现身 · %s" % String(boss.enemy_name), tint)
 	_set_soundtrack("fireflyFootpath", "卷主压阵", true, true)
 	_spawn_wave_effect(boss.global_position, 6.2, tint, String(boss.glyph))
 	_spawn_boss_entrance_effect(boss.global_position, String(boss.glyph), tint)
@@ -1097,15 +1104,18 @@ func _collect_all_xp_pickups() -> int:
 
 func _on_supply_collected(world_position: Vector3, supply_id: String, amount: float, tint: Color, label: String) -> void:
 	var pulse_radius: float = 1.05
+	var event_text := ""
 	match supply_id:
 		"paper":
 			var xp_gain: int = int(round(amount))
 			_gain_experience(xp_gain)
 			hud.show_banner("拾得残纸  +%d 字墨" % xp_gain, tint, 1.45)
+			event_text = "拾得残纸 · +%d 字墨" % xp_gain
 		"ink":
 			if is_instance_valid(player):
 				player.heal(amount)
 				hud.show_banner("拾得墨团  回气 %d" % int(round(amount)), tint, 1.5)
+				event_text = "拾得墨团 · 回气 %d" % int(round(amount))
 			pulse_radius = 1.12
 		"seal":
 			if is_instance_valid(player):
@@ -1116,14 +1126,17 @@ func _on_supply_collected(world_position: Vector3, supply_id: String, amount: fl
 					tint,
 					1.7
 				)
+				event_text = "拾得战印 · %s +%d" % ["剑势" if Session.selected_hero == "xia" else "笔锋", blade_gain]
 			pulse_radius = 1.22
 		"magnet":
 			var gathered_xp: int = _collect_all_xp_pickups()
 			if gathered_xp > 0:
 				_gain_experience(gathered_xp)
 				hud.show_banner("拾得聚墨符  收束 %d 字墨" % gathered_xp, tint, 1.8)
+				event_text = "拾得聚墨符 · 收束 %d 字墨" % gathered_xp
 			else:
 				hud.show_banner("拾得聚墨符  场上已无散墨", tint, 1.6)
+				event_text = "拾得聚墨符 · 场上已无散墨"
 			hud.set_tip("聚墨符会把战场上遗落的字墨尽数回收，适合在绕场之后一口气补等级。")
 			pulse_radius = 1.26
 		"fury":
@@ -1132,6 +1145,7 @@ func _on_supply_collected(world_position: Vector3, supply_id: String, amount: fl
 				player.apply_fury_haste(duration)
 				hud.show_banner("拾得疾书令  攻速移速提升 %d 秒" % int(round(duration)), tint, 1.85)
 				hud.set_tip("疾书令会短时间拉高攻速与移速，适合强开精英或抢一波散落补给。")
+				event_text = "拾得疾书令 · 提速 %d 秒" % int(round(duration))
 			pulse_radius = 1.24
 		"potion":
 			if is_instance_valid(player):
@@ -1139,6 +1153,7 @@ func _on_supply_collected(world_position: Vector3, supply_id: String, amount: fl
 				player.heal(player.max_health * heal_ratio)
 				hud.show_banner("拾得回春丹  回复 %d%% 气血" % int(round(heal_ratio * 100.0)), tint, 1.8)
 				hud.set_tip("回春丹会按最大气血比例回气，适合硬吃一波精英或卷主技能后迅速稳住局势。")
+				event_text = "拾得回春丹 · 回复 %d%% 气血" % int(round(heal_ratio * 100.0))
 			pulse_radius = 1.22
 		"brush":
 			if is_instance_valid(player):
@@ -1146,8 +1161,11 @@ func _on_supply_collected(world_position: Vector3, supply_id: String, amount: fl
 				player.apply_brush_haste(duration)
 				hud.show_banner("拾得文笔  机动提升 %d 秒" % int(round(duration)), tint, 1.7)
 				hud.set_tip("文笔加身，短时间内移动更快，适合拉扯敌群和抢补给。")
+				event_text = "拾得文笔 · 机动提升 %d 秒" % int(round(duration))
 			pulse_radius = 1.18
 
+	if not event_text.is_empty():
+		_log_battle_event(event_text, tint)
 	_spawn_wave_effect(world_position, pulse_radius, tint, label)
 	_sync_hud()
 
@@ -1356,8 +1374,10 @@ func _set_recipe_level(recipe_id: String, new_level: int) -> void:
 	var recipe: Dictionary = Session.get_recipe_data(recipe_id)
 	if new_level == 1:
 		hud.show_banner("合字成型  %s" % String(recipe["display"]), recipe["color"], 2.3)
+		_log_battle_event("合字成型 · %s" % String(recipe["display"]), Color(recipe["color"]))
 	else:
 		hud.show_banner("%s 进为 Lv.%d" % [String(recipe["display"]), new_level], recipe["color"], 1.7)
+		_log_battle_event("%s 升至 Lv.%d" % [String(recipe["display"]), new_level], Color(recipe["color"]))
 
 
 func _set_word_level(word_id: String, new_level: int) -> void:
@@ -1366,8 +1386,10 @@ func _set_word_level(word_id: String, new_level: int) -> void:
 	var word: Dictionary = Session.get_word_data(word_id)
 	if new_level == 1:
 		hud.show_banner("词技成型  %s" % String(word["display"]), word["color"], 2.5)
+		_log_battle_event("词技成型 · %s" % String(word["display"]), Color(word["color"]))
 	else:
 		hud.show_banner("%s 进为 Lv.%d" % [String(word["display"]), new_level], word["color"], 1.8)
+		_log_battle_event("%s 升至 Lv.%d" % [String(word["display"]), new_level], Color(word["color"]))
 
 
 func _has_recipe_parts(radicals: Array) -> bool:
@@ -1733,6 +1755,7 @@ func _on_treasure_chest_opened(world_position: Vector3, drops: Dictionary) -> vo
 	_spawn_supply_bundle(world_position, drops)
 	hud.show_banner("宝箱开启", Color(1.0, 0.84, 0.52, 1.0), 1.7)
 	hud.set_tip("宝箱散出补给。先收残纸与墨团，再决定是压等级还是补状态。")
+	_log_battle_event("宝箱开启 · 补给散落", Color(1.0, 0.84, 0.52, 1.0))
 
 
 func _sync_hud() -> void:
@@ -1832,6 +1855,7 @@ func _start_opening_sequence() -> void:
 		soundtrack_track = "fireflyFootpath"
 		soundtrack_cue = "试阵开卷"
 	_set_soundtrack(soundtrack_track, soundtrack_cue, true, true)
+	_log_battle_event("%s · %s入卷" % [intro_title, String(hero_data["name"])], accent)
 	_spawn_wave_effect(player.global_position, 3.3, accent, String(hero_data["glyph"]))
 	_spawn_intro_symbols(String(hero_data["glyph"]), accent)
 
@@ -1871,6 +1895,7 @@ func _jump_to_next_wave_for_test() -> void:
 	if hud != null:
 		hud.show_banner("试阵跃迁 · 第 %d 波" % next_wave, _threat_level_color(next_wave), 1.95)
 		hud.set_tip("已清空当前敌群并切到第 %d 波，可继续观察刷怪节奏、演出密度和 FPS。" % next_wave)
+		_log_battle_event("试阵跃迁 · 第 %d 波" % next_wave, _threat_level_color(next_wave))
 
 
 func _on_boss_defeated(world_position: Vector3) -> void:
@@ -1880,10 +1905,12 @@ func _on_boss_defeated(world_position: Vector3) -> void:
 		Session.chapter_progress["chapter_complete"] = true
 		hud.show_banner("残卷一暂定", Color(1.0, 0.88, 0.58, 1.0), 2.6)
 		hud.set_tip("本卷两位卷主都已崩散，章节目标完成。继续战斗可测试成长上限。")
+		_log_battle_event("残卷一暂定 · 卷主尽散", Color(1.0, 0.88, 0.58, 1.0))
 		_set_soundtrack("mosslightCanopy", "残卷暂定", true, true)
 	else:
 		hud.show_banner("卷主退散", Color(1.0, 0.84, 0.52, 1.0), 2.2)
 		hud.set_tip("卷主崩散，残卷继续翻开。抓紧收补给并准备迎接更深的一层。")
+		_log_battle_event("卷主退散 · 残卷继续翻开", Color(1.0, 0.84, 0.52, 1.0))
 		_set_soundtrack("mosslightCanopy", "残卷回气", true, true)
 	_spawn_wave_effect(world_position, 7.2, Color(1.0, 0.74, 0.46, 1.0), "破")
 	_gain_experience(12)
@@ -1944,6 +1971,7 @@ func _set_field_phase_for_wave(wave: int, announce: bool = true) -> void:
 	if hud != null:
 		hud.show_banner("字境相变 · %s" % String(next_theme.get("name", "字境")), Color(next_theme.get("accent", Color(1.0, 1.0, 1.0, 1.0))), 2.6)
 		hud.set_tip("第 %d 波切入%s。%s" % [wave, String(next_theme.get("name", "字境")), String(next_theme.get("tip", ""))])
+		_log_battle_event("字境相变 · %s" % String(next_theme.get("name", "字境")), Color(next_theme.get("accent", Color(1.0, 1.0, 1.0, 1.0))))
 	var soundtrack_track: String = current_soundtrack_id if not current_soundtrack_id.is_empty() else "mosslightCanopy"
 	_set_soundtrack(soundtrack_track, String(next_theme.get("cue", "字境相变")), true, true)
 
@@ -2094,10 +2122,12 @@ func _on_threat_level_advanced(new_threat_level: int) -> void:
 	var wave_glyph := _threat_level_glyph(new_threat_level)
 	if _is_big_wave(new_threat_level):
 		hud.show_banner("字潮第 %d 波 · 大潮" % new_threat_level, tint, 2.35)
+		_log_battle_event("第 %d 波 · 大潮压境" % new_threat_level, tint)
 		spawn_timer = min(spawn_timer, 0.16)
 		_set_soundtrack("fireflyFootpath", "大潮压境", true, true)
 	else:
 		hud.show_banner("字潮第 %d 波" % new_threat_level, tint, 1.85)
+		_log_battle_event("第 %d 波 · 字潮推进" % new_threat_level, tint)
 		if new_threat_level == 2:
 			_set_soundtrack("fireflyFootpath", "字潮提速", true, true)
 	hud.set_tip(_threat_level_tip(new_threat_level))

@@ -1,6 +1,9 @@
 extends CanvasLayer
 
 const CJKFont := preload("res://scripts/core/cjk_font.gd")
+const EVENT_LOG_LIMIT := 12
+const EVENT_LOG_DESKTOP_VISIBLE := 6
+const EVENT_LOG_COMPACT_VISIBLE := 3
 
 class BattleMapCanvas:
 	extends Control
@@ -312,6 +315,10 @@ var objective_panel: PanelContainer
 var skills_panel: PanelContainer
 var compact_skill_panel: PanelContainer
 var compact_skill_chip_container: HFlowContainer
+var event_log_panel: PanelContainer
+var event_log_list: VBoxContainer
+var compact_event_panel: PanelContainer
+var compact_event_list: VBoxContainer
 
 var choice_overlay: Control
 var choice_title_label: Label
@@ -351,6 +358,7 @@ var soundtrack_toast_time := 0.0
 var test_tools_enabled := false
 var compact_layout := false
 var fps_update_timer := 0.0
+var event_log_entries: Array[Dictionary] = []
 
 
 func _ready() -> void:
@@ -550,6 +558,66 @@ func set_tip(text: String) -> void:
 	tip_label.text = text
 	if compact_tip_label != null:
 		compact_tip_label.text = text
+
+
+func push_event_log(text: String, color: Color = Color(0.88, 0.92, 0.97, 1.0)) -> void:
+	var clean_text := text.strip_edges()
+	if clean_text.is_empty():
+		return
+
+	event_log_entries.insert(0, {
+		"text": clean_text,
+		"color": color
+	})
+	while event_log_entries.size() > EVENT_LOG_LIMIT:
+		event_log_entries.pop_back()
+	_refresh_event_log_views()
+
+
+func _refresh_event_log_views() -> void:
+	if event_log_list == null and compact_event_list == null:
+		return
+
+	if event_log_list != null:
+		for child in event_log_list.get_children():
+			event_log_list.remove_child(child)
+			child.queue_free()
+	if compact_event_list != null:
+		for child in compact_event_list.get_children():
+			compact_event_list.remove_child(child)
+			child.queue_free()
+
+	if event_log_entries.is_empty():
+		var placeholder_text := "波次、卷主、合字和拾取会记在这里。"
+		if event_log_list != null:
+			event_log_list.add_child(_make_event_log_row(placeholder_text, Color(0.52, 0.64, 0.76, 1.0), false, true))
+		if compact_event_list != null:
+			compact_event_list.add_child(_make_event_log_row(placeholder_text, Color(0.52, 0.64, 0.76, 1.0), true, true))
+		return
+
+	if event_log_list != null:
+		var desktop_visible: int = mini(event_log_entries.size(), EVENT_LOG_DESKTOP_VISIBLE)
+		for index in range(desktop_visible):
+			var entry: Dictionary = event_log_entries[index]
+			event_log_list.add_child(
+				_make_event_log_row(
+					String(entry.get("text", "")),
+					Color(entry.get("color", Color(0.88, 0.92, 0.97, 1.0))),
+					false
+				)
+			)
+
+	if compact_event_list != null:
+		var compact_visible: int = mini(event_log_entries.size(), EVENT_LOG_COMPACT_VISIBLE)
+		for index in range(compact_visible):
+			var entry: Dictionary = event_log_entries[index]
+			compact_event_list.add_child(
+				_make_event_log_row(
+					String(entry.get("text", "")),
+					Color(entry.get("color", Color(0.88, 0.92, 0.97, 1.0))),
+					true
+				)
+			)
 
 
 func _refresh_compact_skill_chips(cards: Array[Dictionary]) -> void:
@@ -1165,6 +1233,14 @@ func _build_ui() -> void:
 	controls_label = _make_label("", 15, Color(0.88, 0.9, 0.93, 0.94))
 	controls_box.add_child(controls_label)
 
+	event_log_panel = _make_panel(Color(0.05, 0.07, 0.09, 0.74), Color(0.7, 0.8, 0.9, 0.42), Vector2(320.0, 214.0))
+	left_column.add_child(event_log_panel)
+	var event_log_box := _panel_box(event_log_panel)
+	event_log_box.add_child(_make_label("战报", 18, Color(0.96, 0.9, 0.8, 1.0)))
+	event_log_list = VBoxContainer.new()
+	event_log_list.add_theme_constant_override("separation", 8)
+	event_log_box.add_child(event_log_list)
+
 	top_pills = HBoxContainer.new()
 	top_pills.anchor_left = 1.0
 	top_pills.anchor_right = 1.0
@@ -1286,6 +1362,15 @@ func _build_ui() -> void:
 	compact_skill_chip_container.add_theme_constant_override("v_separation", 8)
 	compact_skill_box.add_child(compact_skill_chip_container)
 
+	compact_event_panel = _make_panel(Color(0.05, 0.07, 0.09, 0.82), Color(0.7, 0.8, 0.9, 0.36), Vector2(262.0, 124.0))
+	compact_event_panel.visible = false
+	safe_content_root.add_child(compact_event_panel)
+	var compact_event_box := _panel_box(compact_event_panel)
+	compact_event_box.add_child(_make_label("战报", 15, Color(0.96, 0.9, 0.8, 0.98)))
+	compact_event_list = VBoxContainer.new()
+	compact_event_list.add_theme_constant_override("separation", 6)
+	compact_event_box.add_child(compact_event_list)
+
 	banner_label = _make_label("", 44, Color(1.0, 0.92, 0.78, 1.0))
 	banner_label.set_anchors_preset(Control.PRESET_TOP_WIDE)
 	banner_label.offset_left = 420.0
@@ -1324,6 +1409,8 @@ func _build_ui() -> void:
 	soundtrack_toast_box.add_child(soundtrack_toast_detail_label)
 	_apply_soundtrack_style(soundtrack_toast, Color(0.92, 0.69, 0.38, 1.0), 0.96, 0.64)
 
+	_refresh_event_log_views()
+
 	_build_map_overlay(root_control)
 	_build_choice_overlay(root_control)
 	_build_state_overlay(root_control)
@@ -1347,6 +1434,8 @@ func _refresh_layout() -> void:
 		left_column.visible = not compact_layout
 		left_column.position = Vector2.ZERO
 		left_column.size = Vector2(320.0, maxf(360.0, viewport_rect.size.y - 64.0))
+	if event_log_panel != null:
+		event_log_panel.visible = not compact_layout
 	if compact_summary_panel != null:
 		compact_summary_panel.visible = compact_layout
 	if objective_panel != null:
@@ -1355,6 +1444,8 @@ func _refresh_layout() -> void:
 		skills_panel.visible = not compact_layout
 	if compact_skill_panel != null:
 		compact_skill_panel.visible = compact_layout
+	if compact_event_panel != null:
+		compact_event_panel.visible = compact_layout
 
 	var viewport_size := viewport_rect.size
 	var stack_width := 304.0 if compact_layout else 340.0
@@ -1378,12 +1469,21 @@ func _refresh_layout() -> void:
 			stack_width,
 			maxf(220.0, viewport_size.y - 240.0)
 		)
+	if event_log_panel != null:
+		event_log_panel.custom_minimum_size = Vector2(320.0, clamp(viewport_size.y * 0.24, 176.0, 228.0))
 	if compact_skill_panel != null:
 		var side_reserve: float = clampf((viewport_size.x - float(safe_insets["left"]) - float(safe_insets["right"])) * 0.2, 134.0, 260.0)
 		compact_skill_panel.offset_left = side_reserve
 		compact_skill_panel.offset_right = -side_reserve
 		compact_skill_panel.offset_bottom = -96.0
 		compact_skill_panel.offset_top = compact_skill_panel.offset_bottom - 108.0
+	if compact_event_panel != null:
+		var event_width := clampf((viewport_size.x - float(safe_insets["left"]) - float(safe_insets["right"])) * 0.26, 220.0, 272.0)
+		compact_event_panel.custom_minimum_size = Vector2(event_width, 132.0)
+		compact_event_panel.offset_left = 0.0
+		compact_event_panel.offset_right = event_width
+		compact_event_panel.offset_top = 58.0
+		compact_event_panel.offset_bottom = compact_event_panel.offset_top + 132.0
 
 	var pill_height := 48.0 if compact_layout else 52.0
 	if map_button != null:
@@ -2093,6 +2193,43 @@ func _make_compact_skill_chip(glyph: String, title: String, level: String, color
 	level_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	row.add_child(level_label)
 	return chip
+
+
+func _make_event_log_row(text: String, color: Color, compact: bool = false, placeholder: bool = false) -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(0.0, 32.0 if compact else 38.0)
+	var fill := Color(color.r * 0.13, color.g * 0.14, color.b * 0.16, 0.82)
+	var border := Color(color.r, color.g, color.b, 0.34)
+	if placeholder:
+		fill = Color(0.08, 0.11, 0.14, 0.62)
+		border = Color(0.42, 0.5, 0.6, 0.24)
+	panel.add_theme_stylebox_override("panel", _make_panel_style(fill, border, 16))
+
+	var margin := MarginContainer.new()
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left", 12 if compact else 14)
+	margin.add_theme_constant_override("margin_top", 7 if compact else 8)
+	margin.add_theme_constant_override("margin_right", 12 if compact else 14)
+	margin.add_theme_constant_override("margin_bottom", 7 if compact else 8)
+	panel.add_child(margin)
+
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8 if compact else 10)
+	margin.add_child(row)
+
+	var marker := ColorRect.new()
+	marker.color = Color(0.55, 0.64, 0.72, 0.58) if placeholder else color
+	marker.custom_minimum_size = Vector2(4.0, 14.0 if compact else 16.0)
+	row.add_child(marker)
+
+	var label := _make_label(
+		text,
+		12 if compact else 14,
+		Color(0.8, 0.86, 0.92, 0.78) if placeholder else Color(0.95, 0.96, 0.92, 0.97)
+	)
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(label)
+	return panel
 
 
 func _make_skill_card(data: Dictionary) -> PanelContainer:
