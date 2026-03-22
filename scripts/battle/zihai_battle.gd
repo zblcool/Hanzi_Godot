@@ -326,6 +326,24 @@ const CHAMBER_LAYOUTS := {
 				"reward_type": "xp",
 				"reward_amount": 16.0,
 				"discover_radius": 6.4
+			},
+			{
+				"id": "mountain_water_long",
+				"text": "山高水长",
+				"english_text": "Mountains High, Waters Long",
+				"glyph": "川",
+				"position": Vector3(-12.6, 0.0, -4.8),
+				"guardian_position": Vector3(-8.2, 0.0, -7.2),
+				"guardian_type": "tank",
+				"guardian_health_scale": 1.48,
+				"guardian_glyph": "川",
+				"guardian_name": "山水长卫",
+				"english_guardian_name": "Longflow Sentinel",
+				"tint": Color(0.88, 0.96, 0.9, 1.0),
+				"guardian_tint": Color(0.58, 0.78, 0.62, 1.0),
+				"reward_type": "reveal",
+				"reward_amount": 0.8,
+				"discover_radius": 6.3
 			}
 		]
 	}
@@ -379,6 +397,7 @@ var tree_fade_entries: Array[Dictionary] = []
 var active_inkstone: Node3D = null
 var battle_intro: Dictionary = {}
 var explored_map_cells: Dictionary = {}
+var map_reveal_radius_bonus: float = 0.0
 var enemy_kills_by_type: Dictionary = {}
 var battle_settings: Dictionary = {}
 var decorative_effects_root: Node3D
@@ -785,6 +804,8 @@ func _phrase_event_reward_copy(phrase_event: Dictionary) -> String:
 			return ("restore %d vitality" if _is_english() else "回复 %d 点气血") % reward_amount
 		"xp":
 			return ("gain %d ink" if _is_english() else "获得 %d 点字墨") % reward_amount
+		"reveal":
+			return "widen nearby fog reveal" if _is_english() else "扩开附近迷雾显形"
 		"radical":
 			var reward_radical := String(phrase_event.get("reward_radical", "日"))
 			return ("gain radical %s" if _is_english() else "获得偏旁「%s」") % reward_radical
@@ -900,6 +921,10 @@ func _grant_phrase_event_reward(phrase_event: Dictionary) -> void:
 				player.heal(reward_amount)
 		"xp":
 			_gain_experience(int(round(reward_amount)))
+		"reveal":
+			map_reveal_radius_bonus += maxf(reward_amount, 0.8)
+			if is_instance_valid(player):
+				_reveal_map_around_position(player.global_position)
 		"radical":
 			_apply_radical_choice(String(phrase_event.get("reward_radical", _pick_chamber_interlude_radical())))
 
@@ -3555,9 +3580,10 @@ func _map_enemy_color(enemy_type: String) -> Color:
 
 func _reveal_map_around_position(world_position: Vector3) -> void:
 	var center := _map_point(world_position)
-	var min_cell := _map_fog_cell_from_world(center - Vector2.ONE * MAP_FOG_REVEAL_RADIUS)
-	var max_cell := _map_fog_cell_from_world(center + Vector2.ONE * MAP_FOG_REVEAL_RADIUS)
-	var reveal_radius: float = MAP_FOG_REVEAL_RADIUS + MAP_FOG_CELL_SIZE * 0.42
+	var fog_reveal_radius := MAP_FOG_REVEAL_RADIUS + maxf(map_reveal_radius_bonus, 0.0)
+	var min_cell := _map_fog_cell_from_world(center - Vector2.ONE * fog_reveal_radius)
+	var max_cell := _map_fog_cell_from_world(center + Vector2.ONE * fog_reveal_radius)
+	var reveal_radius: float = fog_reveal_radius + MAP_FOG_CELL_SIZE * 0.42
 	for cell_x in range(min_cell.x, max_cell.x + 1):
 		for cell_y in range(min_cell.y, max_cell.y + 1):
 			var cell := Vector2i(cell_x, cell_y)
