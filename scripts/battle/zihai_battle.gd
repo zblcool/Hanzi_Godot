@@ -32,9 +32,11 @@ const ENEMY_UTILITY_ACTIVE_LIMIT := 2
 const ENEMY_POTION_ACTIVE_LIMIT := 2
 const HEALTH_POTION_DROP_METER_STEP := 0.05
 const HEALTH_POTION_HEAL_RATIO := 0.3
-const CHAMBER_INTERLUDE_EVENT_FURY_DURATION := 12.0
 const CHAMBER_INTERLUDE_REST_HEAL_RATIO := 0.24
 const CHAMBER_INTERLUDE_REST_BRUSH_DURATION := 8.0
+const CHAMBER_SCROLL_ECHO_FURY_DROP_DURATION := 8.0
+const CHAMBER_SCROLL_ECHO_PRESSURE_PAPER_CHANCE := 0.3
+const CHAMBER_SCROLL_ECHO_BASIC_PAPER_CHANCE := 0.12
 const TREE_FADE_RADIUS := 2.65
 const TREE_FADE_ALPHA := 0.28
 const TREE_FADE_SPEED := 4.8
@@ -185,6 +187,8 @@ var boss_spawn_index: int = 0
 var active_boss = null
 var chamber_break_pending := false
 var chamber_interlude_offer: Dictionary = {}
+var chamber_modifier_id: String = ""
+var chamber_modifier_expires_after_bosses: int = 0
 
 var radical_counts: Dictionary = {}
 var skill_levels: Dictionary = {}
@@ -361,6 +365,20 @@ func _pick_chamber_interlude_radical() -> String:
 	return candidates[rng.randi_range(0, candidates.size() - 1)]
 
 
+func _clear_chamber_modifier() -> void:
+	chamber_modifier_id = ""
+	chamber_modifier_expires_after_bosses = 0
+
+
+func _arm_scroll_echo_modifier() -> void:
+	chamber_modifier_id = "scroll_echo"
+	chamber_modifier_expires_after_bosses = int(Session.chapter_progress.get("completed_bosses", 0)) + 1
+
+
+func _scroll_echo_modifier_active() -> bool:
+	return chamber_modifier_id == "scroll_echo"
+
+
 func _chamber_interlude_title() -> String:
 	return "%s · %s" % [_current_scroll_label(), "Between Chambers" if _is_english() else "卷间抉择"]
 
@@ -423,15 +441,15 @@ func _chamber_interlude_preview_lines(next_wave: int) -> Array[String]:
 func _chamber_interlude_body(next_wave: int) -> String:
 	var reward_radical := String(chamber_interlude_offer.get("reward_radical", "日"))
 	if _is_english():
-		return "The first scroll lord is gone and the chamber has gone quiet. This is the first room-break stop before the run pushes deeper.\n\nCheck the next push below, then choose one:\nReward keeps radical %s for the next chamber.\nEvent uses a safe Scroll Echo fallback for %d s of Swift Edict.\nRecovery restores %d%% vitality, clears stun, and grants %d s of brush haste." % [
+		return "The first scroll lord is gone and the chamber has gone quiet. This is the first room-break stop before the run pushes deeper.\n\nCheck the next push below, then choose one:\nReward keeps radical %s for the next chamber.\nEvent carries a Scroll Echo forward so pressure enemies echo extra paper and elites can drop %d s of Swift Edict until the next scroll lord.\nRecovery restores %d%% vitality, clears stun, and grants %d s of brush haste." % [
 			reward_radical,
-			int(round(CHAMBER_INTERLUDE_EVENT_FURY_DURATION)),
+			int(round(CHAMBER_SCROLL_ECHO_FURY_DROP_DURATION)),
 			int(round(CHAMBER_INTERLUDE_REST_HEAL_RATIO * 100.0)),
 			int(round(CHAMBER_INTERLUDE_REST_BRUSH_DURATION))
 		]
-	return "首位卷主已散，当前房间也暂时清空。这一步先做成进入更深残卷前的停顿。\n\n先看下方下一段预览，再定一项：\n奖励 · 偏旁补给：带走偏旁「%s」，为下一段先添一笔。\n异事 · 残卷回响：遗物路线还没迁回 Godot，这一步先给 %d 秒疾书令做低风险替代。\n修整 · 歇笔回气：回复 %d%% 气血，解除眩晕，并获得 %d 秒文笔提速。" % [
+	return "首位卷主已散，当前房间也暂时清空。这一步先做成进入更深残卷前的停顿。\n\n先看下方下一段预览，再定一项：\n奖励 · 偏旁补给：带走偏旁「%s」，为下一段先添一笔。\n异事 · 残卷回响：给下一段挂上一层掉落偏向，让压境敌群额外回响残纸，精英也能额外吐出 %d 秒疾书令，持续到下一位卷主。\n修整 · 歇笔回气：回复 %d%% 气血，解除眩晕，并获得 %d 秒文笔提速。" % [
 		reward_radical,
-		int(round(CHAMBER_INTERLUDE_EVENT_FURY_DURATION)),
+		int(round(CHAMBER_SCROLL_ECHO_FURY_DROP_DURATION)),
 		int(round(CHAMBER_INTERLUDE_REST_HEAL_RATIO * 100.0)),
 		int(round(CHAMBER_INTERLUDE_REST_BRUSH_DURATION))
 	]
@@ -1361,9 +1379,28 @@ func _build_supply_drops(enemy_type: String) -> Dictionary:
 	if kills > 0 and kills % 21 == 0:
 		_add_supply_drop(drops, "ink", 16.0)
 
+	_apply_chamber_modifier_supply_drops(enemy_type, drops)
 	_add_enemy_utility_drop(drops, enemy_type)
 	_add_health_potion_drop(drops)
 	return drops
+
+
+func _apply_chamber_modifier_supply_drops(enemy_type: String, drops: Dictionary) -> void:
+	if not _scroll_echo_modifier_active() or enemy_type == "boss":
+		return
+
+	var pressure_enemy: bool = enemy_type in ["archer", "assassin", "cavalry", "ritualist"]
+	if enemy_type == "elite":
+		_add_supply_drop(drops, "paper", 2.0)
+		if _count_active_supply_pickups(["fury"]) < ENEMY_UTILITY_ACTIVE_LIMIT and float(drops.get("fury", 0.0)) <= 0.0:
+			_add_supply_drop(drops, "fury", CHAMBER_SCROLL_ECHO_FURY_DROP_DURATION)
+		return
+
+	if pressure_enemy:
+		if rng.randf() < CHAMBER_SCROLL_ECHO_PRESSURE_PAPER_CHANCE:
+			_add_supply_drop(drops, "paper", 2.0)
+	elif rng.randf() < CHAMBER_SCROLL_ECHO_BASIC_PAPER_CHANCE:
+		_add_supply_drop(drops, "paper", 1.0)
 
 
 func _add_supply_drop(drops: Dictionary, supply_id: String, amount: float) -> void:
@@ -2374,6 +2411,8 @@ func _jump_to_next_wave_for_test() -> void:
 func _on_boss_defeated(world_position: Vector3) -> void:
 	var completed_bosses: int = int(Session.chapter_progress.get("completed_bosses", 0)) + 1
 	Session.chapter_progress["completed_bosses"] = completed_bosses
+	if chamber_modifier_expires_after_bosses > 0 and completed_bosses >= chamber_modifier_expires_after_bosses:
+		_clear_chamber_modifier()
 	if completed_bosses >= BOSS_SPAWN_TIMES.size():
 		chamber_break_pending = false
 		Session.chapter_progress["chapter_complete"] = true
@@ -2928,16 +2967,19 @@ func _on_hud_chamber_interlude_selected(choice_id: String) -> void:
 			hud.set_tip(("Radical supply secured. `%s` now enters the next chamber with you." if _is_english() else "偏旁补给已经带上，「%s」会跟着你继续入深层。") % reward_radical)
 			_log_battle_event(("Between Chambers · Radical supply %s" if _is_english() else "卷间抉择 · 偏旁补给 %s") % reward_radical, reward_color)
 		"event":
-			if is_instance_valid(player):
-				player.apply_fury_haste(CHAMBER_INTERLUDE_EVENT_FURY_DURATION)
+			_arm_scroll_echo_modifier()
 			hud.show_banner(
-				("Scroll Echo  Swift Edict for %d s" if _is_english() else "残卷回响  疾书令持续 %d 秒") % int(round(CHAMBER_INTERLUDE_EVENT_FURY_DURATION)),
+				"Scroll Echo Armed" if _is_english() else "残卷回响已挂载",
 				Color(0.96, 0.62, 0.34, 1.0),
 				1.9
 			)
-			hud.set_tip("The first interlude event uses a safe fallback for now: a temporary offensive surge instead of the source relic route." if _is_english() else "当前首个卷间异事先用低风险替代：暂不给遗物，改成一次短时烈笔提速。")
+			hud.set_tip(
+				"This chamber choice now carries into the next chamber: pressure enemies echo extra paper, and elites can drop Swift Edict until the next scroll lord."
+				if _is_english()
+				else "这次卷间异事会一路带进下一段：压境敌群会额外回响残纸，精英也能多吐一枚疾书令，持续到下一位卷主。"
+			)
 			_log_battle_event(
-				("Between Chambers · Scroll Echo %d s" if _is_english() else "卷间抉择 · 残卷回响 %d 秒") % int(round(CHAMBER_INTERLUDE_EVENT_FURY_DURATION)),
+				"Between Chambers · Scroll Echo armed for the next chamber" if _is_english() else "卷间抉择 · 残卷回响会一路带进下一段",
 				Color(0.96, 0.62, 0.34, 1.0)
 			)
 		"recovery":
