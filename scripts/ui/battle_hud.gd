@@ -261,9 +261,14 @@ signal pause_resume_requested
 signal restart_requested
 signal return_menu_requested
 signal map_toggle_requested
+signal test_next_wave_requested
 signal battle_setting_changed(setting_key: String, value: Variant)
 
 var ui_font: Font
+var root_control: Control
+var left_column: VBoxContainer
+var top_pills: HBoxContainer
+var top_right_stack: VBoxContainer
 
 var hero_label: Label
 var hero_title_label: Label
@@ -291,6 +296,19 @@ var boss_detail_label: Label
 var boss_bar: ProgressBar
 var pause_button: Button
 var map_button: Button
+var test_next_wave_button: Button
+var fps_panel: PanelContainer
+var fps_value_label: Label
+var compact_summary_panel: PanelContainer
+var compact_health_label: Label
+var compact_progress_label: Label
+var compact_status_label: Label
+var compact_radicals_label: Label
+var compact_tip_label: Label
+var compact_health_bar: ProgressBar
+var compact_xp_bar: ProgressBar
+var objective_panel: PanelContainer
+var skills_panel: PanelContainer
 
 var choice_overlay: Control
 var choice_title_label: Label
@@ -325,6 +343,9 @@ var soundtrack_toast: PanelContainer
 var soundtrack_toast_title_label: Label
 var soundtrack_toast_detail_label: Label
 var soundtrack_toast_time := 0.0
+var test_tools_enabled := false
+var compact_layout := false
+var fps_update_timer := 0.0
 
 
 func _ready() -> void:
@@ -332,6 +353,9 @@ func _ready() -> void:
 	battle_settings = Session.get_battle_settings()
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_build_ui()
+	get_viewport().size_changed.connect(_refresh_layout)
+	_refresh_layout()
+	call_deferred("_refresh_layout")
 	set_process(true)
 
 
@@ -356,19 +380,38 @@ func _process(delta: float) -> void:
 	else:
 		soundtrack_toast.visible = false
 
+	if test_tools_enabled and fps_value_label != null:
+		fps_update_timer = max(fps_update_timer - delta, 0.0)
+		if fps_update_timer <= 0.0:
+			fps_update_timer = 0.24
+			fps_value_label.text = "FPS %d" % Engine.get_frames_per_second()
+
 
 func configure(hero_data: Dictionary) -> void:
 	hero_label.text = "%s" % String(hero_data["name"])
 	hero_title_label.text = "%s  ·  %s" % [String(hero_data["title"]), String(hero_data["role_label"])]
 	hero_focus_label.text = String(hero_data["focus"])
 	_refresh_hero_tags(hero_data)
-	controls_label.text = "WASD / 方向键移动\n自动朝最近敌人出手\n升级时三选一偏旁\n靠近砚台按 E 磨词\nM / Tab 地图，R 重开，Esc 返回菜单"
+	_refresh_controls_text()
 
 
 func set_battle_settings(settings: Dictionary) -> void:
 	battle_settings = settings.duplicate(true)
 	if state_mode == "settings" and state_overlay != null and state_overlay.visible:
 		_show_settings_menu()
+
+
+func set_test_tools_enabled(enabled: bool) -> void:
+	test_tools_enabled = enabled
+	if test_next_wave_button != null:
+		test_next_wave_button.visible = enabled
+	if fps_panel != null:
+		fps_panel.visible = enabled
+	if fps_value_label != null:
+		fps_value_label.text = "FPS %d" % Engine.get_frames_per_second() if enabled else "FPS --"
+	fps_update_timer = 0.0
+	_refresh_controls_text()
+	_refresh_layout()
 
 
 func is_settings_menu_open() -> bool:
@@ -383,12 +426,22 @@ func set_health(current: float, maximum: float) -> void:
 	health_label.text = "气血  %d / %d" % [int(ceil(current)), int(ceil(maximum))]
 	health_bar.max_value = max(1.0, maximum)
 	health_bar.value = clamp(current, 0.0, maximum)
+	if compact_health_label != null:
+		compact_health_label.text = "气血  %d / %d" % [int(ceil(current)), int(ceil(maximum))]
+	if compact_health_bar != null:
+		compact_health_bar.max_value = max(1.0, maximum)
+		compact_health_bar.value = clamp(current, 0.0, maximum)
 
 
 func set_progress(level: int, current: int, target: int) -> void:
 	progress_label.text = "字墨  Lv.%d   %d / %d" % [level, current, target]
 	xp_bar.max_value = max(1, target)
 	xp_bar.value = clamp(current, 0, target)
+	if compact_progress_label != null:
+		compact_progress_label.text = "字墨  Lv.%d   %d / %d" % [level, current, target]
+	if compact_xp_bar != null:
+		compact_xp_bar.max_value = max(1, target)
+		compact_xp_bar.value = clamp(current, 0, target)
 
 
 func set_status(elapsed: float, kills: int, threat: int) -> void:
@@ -396,6 +449,8 @@ func set_status(elapsed: float, kills: int, threat: int) -> void:
 	var minutes: int = int(total_seconds / 60)
 	var seconds: int = total_seconds % 60
 	status_label.text = "存活  %02d:%02d\n波次  %d\n击破  %d" % [minutes, seconds, threat, kills]
+	if compact_status_label != null:
+		compact_status_label.text = "存活 %02d:%02d  ·  波次 %d  ·  击破 %d" % [minutes, seconds, threat, kills]
 
 
 func set_radicals(radicals: Dictionary) -> void:
@@ -406,18 +461,25 @@ func set_radicals(radicals: Dictionary) -> void:
 		child.queue_free()
 
 	var total_count: int = 0
+	var compact_parts: Array[String] = []
 	for radical_variant in Session.RADICAL_ORDER:
 		var radical := String(radical_variant)
 		var amount: int = int(radicals.get(radical, 0))
 		total_count += amount
 		if amount > 0:
 			radical_chip_container.add_child(_make_radical_chip(radical, amount))
+			if compact_parts.size() < 4:
+				compact_parts.append("%s×%d" % [radical, amount])
 
 	if total_count <= 0:
 		radicals_label.text = "当前尚未留存偏旁"
 		radical_chip_container.add_child(_make_radical_chip("字", 0, Color(0.4, 0.54, 0.68, 1.0), "全部化字"))
+		if compact_radicals_label != null:
+			compact_radicals_label.text = "偏旁 0 枚  ·  当前全部化字"
 	else:
 		radicals_label.text = "当前留存 %d 枚偏旁，可继续合字或磨词" % total_count
+		if compact_radicals_label != null:
+			compact_radicals_label.text = "偏旁 %d 枚  ·  %s" % [total_count, "  ".join(compact_parts)]
 
 
 func set_skills(recipe_levels: Dictionary, word_levels: Dictionary, word_progress: Dictionary, blade_level: int, hero_id: String) -> void:
@@ -479,6 +541,8 @@ func set_skills(recipe_levels: Dictionary, word_levels: Dictionary, word_progres
 
 func set_tip(text: String) -> void:
 	tip_label.text = text
+	if compact_tip_label != null:
+		compact_tip_label.text = text
 
 
 func show_banner(text: String, color: Color, duration: float = 2.4) -> void:
@@ -961,16 +1025,16 @@ func _summarize_enemy_kills(raw_counts: Variant) -> String:
 
 
 func _build_ui() -> void:
-	var root := Control.new()
-	root.set_anchors_preset(Control.PRESET_FULL_RECT)
-	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(root)
+	root_control = Control.new()
+	root_control.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root_control.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(root_control)
 
-	var left_column := VBoxContainer.new()
+	left_column = VBoxContainer.new()
 	left_column.position = Vector2(24.0, 24.0)
 	left_column.size = Vector2(410.0, 940.0)
 	left_column.add_theme_constant_override("separation", 16)
-	root.add_child(left_column)
+	root_control.add_child(left_column)
 
 	var intro_panel := _make_panel(Color(0.05, 0.08, 0.1, 0.76), Color(0.93, 0.69, 0.38, 0.84), Vector2(410.0, 430.0))
 	left_column.add_child(intro_panel)
@@ -1028,20 +1092,35 @@ func _build_ui() -> void:
 	controls_label = _make_label("", 18, Color(0.88, 0.9, 0.93, 0.94))
 	controls_box.add_child(controls_label)
 
-	var top_pills := HBoxContainer.new()
-	top_pills.position = Vector2(1080.0, 24.0)
+	top_pills = HBoxContainer.new()
+	top_pills.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	top_pills.add_theme_constant_override("separation", 12)
-	root.add_child(top_pills)
+	root_control.add_child(top_pills)
 	map_button = _make_pill_button("地图", Callable(self, "_emit_map_toggle"))
 	top_pills.add_child(map_button)
 	pause_button = _make_pill_button("暂停", Callable(self, "_emit_pause"))
 	top_pills.add_child(pause_button)
-	top_pills.add_child(_make_pill("EN"))
+	test_next_wave_button = _make_pill_button("下一波", Callable(self, "_emit_test_next_wave"))
+	test_next_wave_button.custom_minimum_size = Vector2(112.0, 52.0)
+	test_next_wave_button.visible = false
+	top_pills.add_child(test_next_wave_button)
+
+	fps_panel = PanelContainer.new()
+	fps_panel.custom_minimum_size = Vector2(116.0, 52.0)
+	fps_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.04, 0.06, 0.08, 0.84), Color(0.4, 0.64, 0.72, 0.6), 26))
+	fps_panel.visible = false
+	top_pills.add_child(fps_panel)
+
+	fps_value_label = _make_label("FPS --", 17, Color(0.9, 0.96, 1.0, 0.98))
+	fps_value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	fps_value_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	fps_value_label.set_anchors_preset(Control.PRESET_FULL_RECT)
+	fps_panel.add_child(fps_value_label)
 
 	boss_panel = _make_panel(Color(0.08, 0.06, 0.06, 0.88), Color(0.84, 0.34, 0.24, 0.72), Vector2(520.0, 92.0))
-	boss_panel.position = Vector2(700.0, 154.0)
+	boss_panel.set_anchors_preset(Control.PRESET_TOP_WIDE)
 	boss_panel.visible = false
-	root.add_child(boss_panel)
+	root_control.add_child(boss_panel)
 	var boss_box := _panel_box(boss_panel)
 	boss_name_label = _make_label("卷  卷主", 28, Color(1.0, 0.94, 0.86, 1.0))
 	boss_detail_label = _make_label("卷主降阵", 16, Color(0.92, 0.84, 0.78, 0.92))
@@ -1050,17 +1129,41 @@ func _build_ui() -> void:
 	boss_bar = _make_bar(Color(0.88, 0.36, 0.28, 1.0))
 	boss_box.add_child(boss_bar)
 
-	var objective_panel := _make_panel(Color(0.05, 0.07, 0.09, 0.76), Color(0.94, 0.7, 0.4, 0.6), Vector2(340.0, 150.0))
-	objective_panel.position = Vector2(1540.0, 24.0)
-	root.add_child(objective_panel)
+	top_right_stack = VBoxContainer.new()
+	top_right_stack.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	top_right_stack.add_theme_constant_override("separation", 12)
+	root_control.add_child(top_right_stack)
+
+	compact_summary_panel = _make_panel(Color(0.05, 0.07, 0.09, 0.84), Color(0.42, 0.74, 0.84, 0.62), Vector2(340.0, 188.0))
+	compact_summary_panel.visible = false
+	top_right_stack.add_child(compact_summary_panel)
+	var compact_box := _panel_box(compact_summary_panel)
+	compact_box.add_child(_make_label("战局摘要", 20, Color(0.96, 0.88, 0.72, 0.98)))
+	compact_health_label = _make_label("气血  0 / 0", 17, Color(0.96, 0.92, 0.87, 0.98))
+	compact_box.add_child(compact_health_label)
+	compact_health_bar = _make_bar(Color(0.82, 0.38, 0.31, 0.96))
+	compact_box.add_child(compact_health_bar)
+	compact_progress_label = _make_label("字墨  Lv.1   0 / 4", 17, Color(0.98, 0.91, 0.72, 1.0))
+	compact_box.add_child(compact_progress_label)
+	compact_xp_bar = _make_bar(Color(0.56, 0.84, 0.82, 0.96))
+	compact_box.add_child(compact_xp_bar)
+	compact_status_label = _make_label("存活 00:00  ·  波次 1  ·  击破 0", 16, Color(0.86, 0.92, 0.98, 0.98))
+	compact_box.add_child(compact_status_label)
+	compact_radicals_label = _make_label("偏旁 0 枚  ·  当前全部化字", 15, Color(0.88, 0.9, 0.92, 0.94))
+	compact_box.add_child(compact_radicals_label)
+	compact_tip_label = _make_label("击倒字灵收集字力与补给。", 15, Color(0.92, 0.94, 0.96, 0.94))
+	compact_box.add_child(compact_tip_label)
+
+	objective_panel = _make_panel(Color(0.05, 0.07, 0.09, 0.76), Color(0.94, 0.7, 0.4, 0.6), Vector2(340.0, 150.0))
+	top_right_stack.add_child(objective_panel)
 	var objective_box := _panel_box(objective_panel)
 	objective_box.add_child(_make_label("当前目标", 20, Color(0.96, 0.82, 0.56, 0.98)))
 	tip_label = _make_label("尚未收集，或已经全部化字。", 18, Color(0.88, 0.9, 0.93, 0.95))
 	objective_box.add_child(tip_label)
 
-	var skills_panel := _make_panel(Color(0.05, 0.07, 0.09, 0.74), Color(0.38, 0.74, 0.82, 0.62), Vector2(340.0, 860.0))
-	skills_panel.position = Vector2(1540.0, 190.0)
-	root.add_child(skills_panel)
+	skills_panel = _make_panel(Color(0.05, 0.07, 0.09, 0.74), Color(0.38, 0.74, 0.82, 0.62), Vector2(340.0, 860.0))
+	skills_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	top_right_stack.add_child(skills_panel)
 	var skills_margin := MarginContainer.new()
 	skills_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
 	skills_margin.add_theme_constant_override("margin_left", 18)
@@ -1092,7 +1195,7 @@ func _build_ui() -> void:
 	banner_label.offset_bottom = 150.0
 	banner_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	banner_label.visible = false
-	root.add_child(banner_label)
+	root_control.add_child(banner_label)
 
 	overlay_label = _make_label("", 30, Color(1.0, 0.92, 0.84, 1.0))
 	overlay_label.set_anchors_preset(Control.PRESET_CENTER)
@@ -1103,7 +1206,7 @@ func _build_ui() -> void:
 	overlay_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	overlay_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	overlay_label.visible = false
-	root.add_child(overlay_label)
+	root_control.add_child(overlay_label)
 
 	soundtrack_toast = _make_panel(Color(0.08, 0.11, 0.13, 0.96), Color(0.92, 0.69, 0.38, 0.64), Vector2(300.0, 100.0))
 	soundtrack_toast.set_anchors_preset(Control.PRESET_TOP_RIGHT)
@@ -1112,7 +1215,7 @@ func _build_ui() -> void:
 	soundtrack_toast.offset_right = -390.0
 	soundtrack_toast.offset_bottom = 188.0
 	soundtrack_toast.visible = false
-	root.add_child(soundtrack_toast)
+	root_control.add_child(soundtrack_toast)
 	var soundtrack_toast_box := _panel_box(soundtrack_toast)
 	soundtrack_toast_box.add_theme_constant_override("separation", 4)
 	soundtrack_toast_box.add_child(_make_label("配乐提示", 14, Color(0.96, 0.9, 0.82, 0.76), 3.0))
@@ -1122,9 +1225,78 @@ func _build_ui() -> void:
 	soundtrack_toast_box.add_child(soundtrack_toast_detail_label)
 	_apply_soundtrack_style(soundtrack_toast, Color(0.92, 0.69, 0.38, 1.0), 0.96, 0.64)
 
-	_build_map_overlay(root)
-	_build_choice_overlay(root)
-	_build_state_overlay(root)
+	_build_map_overlay(root_control)
+	_build_choice_overlay(root_control)
+	_build_state_overlay(root_control)
+
+
+func _refresh_layout() -> void:
+	if root_control == null:
+		return
+
+	compact_layout = _should_use_compact_layout()
+	if left_column != null:
+		left_column.visible = not compact_layout
+	if compact_summary_panel != null:
+		compact_summary_panel.visible = compact_layout
+	if objective_panel != null:
+		objective_panel.visible = not compact_layout
+
+	var viewport_size := get_viewport().get_visible_rect().size
+	var stack_width := 304.0 if compact_layout else 340.0
+	if top_right_stack != null:
+		top_right_stack.position = Vector2(-stack_width - 18.0, 84.0 if compact_layout else 92.0)
+
+	if compact_summary_panel != null:
+		compact_summary_panel.custom_minimum_size = Vector2(stack_width, 196.0)
+	if objective_panel != null:
+		objective_panel.custom_minimum_size = Vector2(stack_width, 150.0)
+	if skills_panel != null:
+		skills_panel.custom_minimum_size = Vector2(
+			stack_width,
+			maxf(260.0, viewport_size.y - (320.0 if compact_layout else 236.0))
+		)
+
+	var pill_height := 48.0 if compact_layout else 52.0
+	if map_button != null:
+		map_button.custom_minimum_size = Vector2(84.0 if compact_layout else 94.0, pill_height)
+	if pause_button != null:
+		pause_button.custom_minimum_size = Vector2(84.0 if compact_layout else 94.0, pill_height)
+	if test_next_wave_button != null:
+		test_next_wave_button.custom_minimum_size = Vector2(100.0 if compact_layout else 112.0, pill_height)
+	if fps_panel != null:
+		fps_panel.custom_minimum_size = Vector2(92.0 if compact_layout else 116.0, pill_height)
+	if top_pills != null:
+		top_pills.position = Vector2(-top_pills.get_combined_minimum_size().x - 18.0, 18.0 if compact_layout else 24.0)
+
+	if boss_panel != null:
+		var boss_width := maxf(260.0, minf(520.0, viewport_size.x - (140.0 if compact_layout else 660.0)))
+		var boss_margin := maxf(70.0, (viewport_size.x - boss_width) * 0.5)
+		boss_panel.offset_left = boss_margin
+		boss_panel.offset_right = -boss_margin
+		boss_panel.offset_top = 118.0 if compact_layout else 154.0
+		boss_panel.offset_bottom = boss_panel.offset_top + 92.0
+
+	if banner_label != null:
+		var banner_margin := 180.0 if compact_layout else 420.0
+		banner_label.offset_left = banner_margin
+		banner_label.offset_right = -banner_margin
+		banner_label.offset_top = 82.0 if compact_layout else 86.0
+		banner_label.offset_bottom = banner_label.offset_top + 64.0
+
+
+func _should_use_compact_layout() -> bool:
+	var viewport_size := get_viewport().get_visible_rect().size
+	return (
+		viewport_size.x <= 1500.0 or
+		viewport_size.y <= 820.0 or
+		DisplayServer.is_touchscreen_available() or
+		OS.has_feature("mobile") or
+		OS.has_feature("android") or
+		OS.has_feature("ios") or
+		OS.has_feature("web_android") or
+		OS.has_feature("web_ios")
+	)
 
 
 func show_map_overlay(snapshot: Dictionary) -> void:
@@ -1580,6 +1752,22 @@ func _save_state_name() -> void:
 		state_body_label.text = _build_local_leaderboard_text()
 
 
+func _refresh_controls_text() -> void:
+	if controls_label == null:
+		return
+
+	var lines := [
+		"WASD / 方向键移动",
+		"自动朝最近敌人出手",
+		"升级时三选一偏旁",
+		"靠近砚台按 E 磨词",
+		"M / Tab 地图，R 重开，Esc 返回菜单"
+	]
+	if test_tools_enabled:
+		lines.append("试阵模式：右上可直接跳到下一波，并实时显示 FPS")
+	controls_label.text = "\n".join(lines)
+
+
 func _emit_pause_resume() -> void:
 	hide_state_overlay()
 	pause_resume_requested.emit()
@@ -1601,6 +1789,18 @@ func _emit_pause() -> void:
 	if map_overlay != null and map_overlay.visible:
 		return
 	pause_requested.emit()
+
+
+func _emit_test_next_wave() -> void:
+	if not test_tools_enabled:
+		return
+	if choice_overlay != null and choice_overlay.visible:
+		return
+	if state_overlay != null and state_overlay.visible:
+		return
+	if map_overlay != null and map_overlay.visible:
+		return
+	test_next_wave_requested.emit()
 
 
 func _emit_restart() -> void:

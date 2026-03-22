@@ -314,6 +314,7 @@ func _spawn_hud() -> void:
 	add_child(hud)
 	hud.configure(Session.get_selected_hero())
 	hud.set_battle_settings(battle_settings)
+	hud.set_test_tools_enabled(_test_tools_enabled())
 	hud.radical_choice_selected.connect(_on_radical_choice_selected)
 	hud.word_choice_selected.connect(_on_word_choice_selected)
 	hud.pause_requested.connect(_on_hud_pause_requested)
@@ -321,6 +322,7 @@ func _spawn_hud() -> void:
 	hud.restart_requested.connect(_on_hud_restart_requested)
 	hud.return_menu_requested.connect(_on_hud_return_menu_requested)
 	hud.map_toggle_requested.connect(_on_hud_map_toggle_requested)
+	hud.test_next_wave_requested.connect(_on_hud_test_next_wave_requested)
 	hud.battle_setting_changed.connect(_on_hud_battle_setting_changed)
 	_spawn_touch_controls()
 
@@ -329,6 +331,10 @@ func _prime_soundtrack_ui() -> void:
 	var track_id := "fireflyFootpath" if threat_level >= 4 or elapsed_time >= 60.0 else "mosslightCanopy"
 	var cue := "试阵预热" if elapsed_time > 0.0 or threat_level > 1 else "待入曲"
 	_set_soundtrack(track_id, cue, false, true)
+
+
+func _test_tools_enabled() -> bool:
+	return OS.is_debug_build() or not bool(battle_intro.get("recordable", true))
 
 
 func _set_soundtrack(track_id: String, cue: String, announce: bool = true, force: bool = false) -> void:
@@ -1683,6 +1689,42 @@ func _start_opening_sequence() -> void:
 	_spawn_intro_symbols(String(hero_data["glyph"]), accent)
 
 
+func _clear_active_wave_for_test_jump() -> void:
+	for enemy in get_tree().get_nodes_in_group("enemy"):
+		if is_instance_valid(enemy) and not enemy.is_queued_for_deletion():
+			enemy.queue_free()
+
+	active_boss = null
+	if hud != null:
+		hud.hide_boss()
+
+	for child in projectiles_root.get_children():
+		if is_instance_valid(child) and not child.is_queued_for_deletion():
+			child.queue_free()
+	for child in effects_root.get_children():
+		if is_instance_valid(child) and not child.is_queued_for_deletion():
+			child.queue_free()
+
+
+func _jump_to_next_wave_for_test() -> void:
+	if not _test_tools_enabled() or not is_instance_valid(player):
+		return
+
+	var next_wave := threat_level + 1
+	var target_elapsed := maxf(elapsed_time + 0.05, float(next_wave - 1) * 30.0 + 0.05)
+	_clear_active_wave_for_test_jump()
+	opening_time = 0.0
+	spawn_timer = 0.08
+	elapsed_time = target_elapsed
+	_on_threat_level_advanced(next_wave)
+	threat_level = next_wave
+	_update_boss_flow()
+	_sync_hud()
+	if hud != null:
+		hud.show_banner("试阵跃迁 · 第 %d 波" % next_wave, _threat_level_color(next_wave), 1.95)
+		hud.set_tip("已清空当前敌群并切到第 %d 波，可继续观察刷怪节奏、演出密度和 FPS。" % next_wave)
+
+
 func _on_boss_defeated(world_position: Vector3) -> void:
 	var completed_bosses: int = int(Session.chapter_progress.get("completed_bosses", 0)) + 1
 	Session.chapter_progress["completed_bosses"] = completed_bosses
@@ -2161,6 +2203,12 @@ func _on_hud_pause_requested() -> void:
 
 func _on_hud_map_toggle_requested() -> void:
 	_set_map_overlay(not map_overlay_active)
+
+
+func _on_hud_test_next_wave_requested() -> void:
+	if game_over or paused or map_overlay_active or levelup_active or word_choice_active:
+		return
+	_jump_to_next_wave_for_test()
 
 
 func _on_hud_battle_setting_changed(_setting_key: String, _value: Variant) -> void:
