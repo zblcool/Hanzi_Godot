@@ -43,6 +43,8 @@ const PERFORMANCE_GROUND_DETAIL_COUNTS := {"performance": 6, "balanced": 12, "qu
 const PERFORMANCE_WAVE_SHARDS := {"performance": 2, "balanced": 4, "quality": 6}
 const PERFORMANCE_INTRO_SYMBOLS := {"performance": 3, "balanced": 4, "quality": 6}
 const PERFORMANCE_BOSS_SYMBOLS := {"performance": 4, "balanced": 6, "quality": 8}
+const PERFORMANCE_SLASH_AFTERIMAGES := {"performance": 2, "balanced": 3, "quality": 4}
+const PERFORMANCE_IMPACT_AFTERIMAGES := {"performance": 2, "balanced": 3, "quality": 4}
 const ENEMY_DETAIL_DISTANCE := {"performance": 18.0, "balanced": 22.0, "quality": 26.0}
 const ENEMY_DETAIL_REFRESH_INTERVAL := 0.12
 const SOUNDTRACK_LIBRARY := {
@@ -1031,7 +1033,7 @@ func _boss_stage_tip(stage_index: int) -> String:
 func _on_player_fire_projectile(origin: Vector3, direction: Vector3, damage: float, speed: float, glyph: String, tint: Color) -> void:
 	var bolt = INK_BOLT_SCENE.instantiate()
 	bolt.configure(origin, direction, damage, speed, glyph, tint)
-	bolt.impact.connect(_on_projectile_impact)
+	bolt.impact.connect(_on_player_projectile_impact)
 	projectiles_root.add_child(bolt)
 
 
@@ -1050,6 +1052,7 @@ func _on_player_request_wave(origin: Vector3, radius: float, damage: float, tint
 
 func _on_player_request_slash(origin: Vector3, forward: Vector3, radius: float, damage: float, arc_dot: float, tint: Color, label: String) -> void:
 	_spawn_wave_effect(origin + forward * radius * 0.35, radius * 0.7, tint, label)
+	_spawn_slash_afterimages(origin, forward, radius, tint, label)
 	for node in get_tree().get_nodes_in_group("enemy"):
 		if not is_instance_valid(node) or node.is_queued_for_deletion():
 			continue
@@ -1675,6 +1678,11 @@ func _on_enemy_request_projectile(origin: Vector3, direction: Vector3, speed: fl
 	projectiles_root.add_child(bolt)
 
 
+func _on_player_projectile_impact(world_position: Vector3, tint: Color, label: String) -> void:
+	_on_projectile_impact(world_position, tint, label)
+	_spawn_player_impact_afterimages(world_position, tint, label)
+
+
 func _on_projectile_impact(world_position: Vector3, tint: Color, label: String) -> void:
 	_spawn_wave_effect(world_position, 0.95, tint, label)
 
@@ -1751,6 +1759,106 @@ func _spawn_wave_effect(origin: Vector3, radius: float, tint: Color, label: Stri
 		tween.parallel().tween_property(inner_ring, "rotation_degrees:y", -36.0, 0.28)
 	tween.parallel().tween_property(shard_root, "rotation_degrees:y", 42.0, 0.28)
 	tween.tween_callback(effect_root.queue_free)
+
+
+func _spawn_slash_afterimages(origin: Vector3, forward: Vector3, radius: float, tint: Color, label: String) -> void:
+	if not _visual_effects_enabled():
+		return
+	var direction := forward
+	direction.y = 0.0
+	if direction.length_squared() < 0.001:
+		direction = Vector3.FORWARD
+	direction = direction.normalized()
+	var count: int = int(PERFORMANCE_SLASH_AFTERIMAGES.get(_performance_mode(), PERFORMANCE_SLASH_AFTERIMAGES["balanced"]))
+	for index in range(count):
+		var spread := 0.0 if count <= 1 else (float(index) / float(count - 1) - 0.5)
+		var slash_direction := direction.rotated(Vector3.UP, spread * 0.54).normalized()
+		var glyph_text := label if index == maxi(0, int(floor(float(count - 1) * 0.5))) else "刂"
+		var distance := minf(radius * (0.42 + absf(spread) * 0.12), radius - 0.35)
+		distance = maxf(distance, 1.15 + absf(spread) * 0.26)
+		_spawn_afterimage_glyph(
+			origin + slash_direction * distance,
+			glyph_text,
+			tint.lightened(0.08 + absf(spread) * 0.1),
+			slash_direction,
+			1.0 - absf(spread) * 0.12,
+			1.08 + absf(spread) * 0.12,
+			0.42
+		)
+
+
+func _spawn_player_impact_afterimages(world_position: Vector3, tint: Color, label: String) -> void:
+	if not _visual_effects_enabled():
+		return
+	var count: int = int(PERFORMANCE_IMPACT_AFTERIMAGES.get(_performance_mode(), PERFORMANCE_IMPACT_AFTERIMAGES["balanced"]))
+	for index in range(count):
+		var angle: float = TAU * float(index) / float(max(count, 1))
+		var drift := Vector3(cos(angle), 0.0, sin(angle))
+		var glyph_text := label if index == 0 else "丶"
+		_spawn_afterimage_glyph(
+			world_position + drift * 0.18,
+			glyph_text,
+			tint.lightened(0.16),
+			drift,
+			0.72 if index > 0 else 0.82,
+			0.56,
+			0.32
+		)
+
+
+func _spawn_afterimage_glyph(
+	world_position: Vector3,
+	glyph_text: String,
+	tint: Color,
+	drift_direction: Vector3,
+	size: float,
+	height_offset: float,
+	duration: float
+) -> void:
+	if not _visual_effects_enabled():
+		return
+	_ensure_decorative_effects_root()
+	var root := Node3D.new()
+	root.position = world_position + Vector3(0.0, height_offset, 0.0)
+	decorative_effects_root.add_child(root)
+
+	var normalized_drift := drift_direction
+	normalized_drift.y = 0.0
+	if normalized_drift.length_squared() < 0.001:
+		normalized_drift = Vector3.FORWARD
+	normalized_drift = normalized_drift.normalized()
+
+	var disc := MeshInstance3D.new()
+	var disc_mesh := CylinderMesh.new()
+	disc_mesh.top_radius = 0.18 * size
+	disc_mesh.bottom_radius = 0.18 * size
+	disc_mesh.height = 0.04
+	disc.mesh = disc_mesh
+	var disc_material := StandardMaterial3D.new()
+	disc_material.albedo_color = Color(tint.r * 0.2, tint.g * 0.2, tint.b * 0.22, 0.2)
+	disc_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	disc_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	disc_material.emission_enabled = true
+	disc_material.emission = tint
+	disc_material.emission_energy_multiplier = 0.16
+	disc.material_override = disc_material
+	root.add_child(disc)
+
+	var glyph := Label3D.new()
+	glyph.text = glyph_text
+	glyph.font = CJKFont.get_font()
+	glyph.font_size = int(round(34.0 * size))
+	glyph.position = Vector3(0.0, 0.03, 0.0)
+	glyph.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	glyph.modulate = Color(1.0, 0.95, 0.88, 0.92)
+	root.add_child(glyph)
+
+	var tween := create_tween()
+	var travel_target := root.position + normalized_drift * (0.72 + size * 0.18) + Vector3(0.0, 0.42 + size * 0.08, 0.0)
+	tween.parallel().tween_property(root, "position", travel_target, duration)
+	tween.parallel().tween_property(root, "scale", Vector3.ONE * (1.18 + size * 0.12), duration)
+	tween.parallel().tween_property(glyph, "modulate:a", 0.0, duration)
+	tween.tween_callback(root.queue_free)
 
 
 func _spawn_enemy_death_effect(world_position: Vector3, enemy_type: String) -> void:
