@@ -26,6 +26,13 @@ const SUPPLY_DATA := {
 		"glow": Color(1.0, 0.76, 0.62, 1.0),
 		"amount": 1.0
 	},
+	"beacon": {
+		"glyph": "奖",
+		"title": "卷间奖印",
+		"color": Color(0.98, 0.76, 0.4, 1.0),
+		"glow": Color(1.0, 0.94, 0.76, 1.0),
+		"amount": 0.0
+	},
 	"magnet": {
 		"glyph": "聚",
 		"title": "聚墨符",
@@ -100,7 +107,7 @@ func _physics_process(delta: float) -> void:
 		visual_root.rotation_degrees.y += delta * (42.0 if supply_id == "paper" else 54.0)
 		visual_root.scale = Vector3.ONE * (1.0 + sin(hover_time * 5.6) * 0.05)
 	if orbit_root != null:
-		orbit_root.rotation_degrees.y -= delta * (78.0 if supply_id == "seal" else 58.0)
+		orbit_root.rotation_degrees.y -= delta * (78.0 if supply_id in ["seal", "beacon"] else 58.0)
 	if halo_node != null:
 		halo_node.scale = Vector3.ONE * (1.0 + sin(hover_time * 4.2 + 0.5) * 0.08)
 	if core_node != null:
@@ -142,7 +149,7 @@ func _build_visuals() -> void:
 
 	halo_node = MeshInstance3D.new()
 	var halo_mesh := CylinderMesh.new()
-	halo_mesh.top_radius = 0.5 if supply_id in ["seal", "magnet", "fury", "potion"] else 0.42
+	halo_mesh.top_radius = 0.5 if supply_id in ["seal", "beacon", "magnet", "fury", "potion"] else 0.42
 	halo_mesh.bottom_radius = halo_mesh.top_radius
 	halo_mesh.height = 0.02
 	halo_node.mesh = halo_mesh
@@ -155,6 +162,8 @@ func _build_visuals() -> void:
 			_build_ink_visuals()
 		"seal":
 			_build_seal_visuals()
+		"beacon":
+			_build_beacon_visuals()
 		"magnet":
 			_build_magnet_visuals()
 		"fury":
@@ -259,6 +268,53 @@ func _build_seal_visuals() -> void:
 		shard.material_override = cap_material
 		orbit_root.add_child(shard)
 		detail_nodes.append(shard)
+
+
+func _build_beacon_visuals() -> void:
+	var core_material := _make_solid_material(tint, glow)
+	var trim_material := _make_solid_material(glow, Color(1.0, 0.96, 0.84, 1.0))
+
+	core_node = MeshInstance3D.new()
+	var core_mesh := CylinderMesh.new()
+	core_mesh.top_radius = 0.18
+	core_mesh.bottom_radius = 0.28
+	core_mesh.height = 0.54
+	core_node.mesh = core_mesh
+	core_node.rotation_degrees = Vector3(0.0, 18.0, 0.0)
+	core_node.material_override = core_material
+	visual_root.add_child(core_node)
+
+	var crown := MeshInstance3D.new()
+	var crown_mesh := CylinderMesh.new()
+	crown_mesh.top_radius = 0.22
+	crown_mesh.bottom_radius = 0.34
+	crown_mesh.height = 0.16
+	crown.mesh = crown_mesh
+	crown.position = Vector3(0.0, 0.24, 0.0)
+	crown.material_override = trim_material
+	visual_root.add_child(crown)
+
+	var collar := MeshInstance3D.new()
+	var collar_mesh := TorusMesh.new()
+	collar_mesh.inner_radius = 0.04
+	collar_mesh.outer_radius = 0.26
+	collar.mesh = collar_mesh
+	collar.rotation_degrees = Vector3(90.0, 0.0, 0.0)
+	collar.position = Vector3(0.0, 0.08, 0.0)
+	collar.material_override = trim_material
+	visual_root.add_child(collar)
+
+	for index in range(4):
+		var ribbon := MeshInstance3D.new()
+		var ribbon_mesh := BoxMesh.new()
+		ribbon_mesh.size = Vector3(0.08, 0.22, 0.28)
+		ribbon.mesh = ribbon_mesh
+		var angle: float = TAU * float(index) / 4.0
+		ribbon.position = Vector3(cos(angle) * 0.26, 0.05, sin(angle) * 0.26)
+		ribbon.rotation_degrees = Vector3(12.0, rad_to_deg(angle), 6.0)
+		ribbon.material_override = trim_material
+		orbit_root.add_child(ribbon)
+		detail_nodes.append(ribbon)
 
 
 func _build_magnet_visuals() -> void:

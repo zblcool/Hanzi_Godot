@@ -213,6 +213,7 @@ const CHAMBER_LAYOUTS := {
 			Vector3(-17.0, 0.0, -4.0),
 			Vector3(9.0, 0.0, 16.5)
 		],
+		"break_beacon_position": Vector3(0.0, 0.0, 1.0),
 		"utility_pickups": [
 			{"position": Vector3(-11.5, 0.0, 0.5), "supply_id": "magnet"},
 			{"position": Vector3(14.5, 0.0, 4.5), "supply_id": "fury"}
@@ -405,6 +406,7 @@ var chamber_modifier_expires_after_bosses: int = 0
 var room_objective_id: String = ""
 var room_objective_total: int = 0
 var room_objective_remaining: int = 0
+var chamber_break_beacon_active := false
 
 var radical_counts: Dictionary = {}
 var skill_levels: Dictionary = {}
@@ -678,6 +680,61 @@ func _clear_room_objective_state() -> void:
 	room_objective_remaining = 0
 
 
+func _clear_chamber_break_beacon_state() -> void:
+	chamber_break_beacon_active = false
+
+
+func _current_chamber_break_beacon_position() -> Vector3:
+	var chamber_data := _current_chamber_data()
+	var beacon_position_variant: Variant = chamber_data.get("break_beacon_position", Vector3.ZERO)
+	if beacon_position_variant is Vector3:
+		return beacon_position_variant
+	return Vector3.ZERO
+
+
+func _spawn_chamber_break_beacon() -> void:
+	if chamber_break_beacon_active or not chamber_break_pending:
+		return
+	chamber_break_beacon_active = true
+	var accent := _current_chamber_accent()
+	_spawn_world_supply_pickup(
+		_current_chamber_break_beacon_position(),
+		"beacon",
+		0.0,
+		{
+			"chamber_break_beacon": true,
+			"chamber_break_beacon_glyph": "奖"
+		}
+	)
+	if hud != null:
+		hud.show_banner(
+			"Reward Beacon Raised" if _is_english() else "卷间奖印显形",
+			accent,
+			1.8
+		)
+		hud.show_reveal(
+			"Reward Beacon" if _is_english() else "卷间奖印",
+			_current_chamber_name(),
+			(
+				"The chamber break is nearby now. Reach the reward beacon to resolve one between-chambers choice."
+				if _is_english()
+				else "卷间抉择已经显在附近。先走到这枚奖印前，才能真正定下下一条路。"
+			),
+			accent,
+			"奖",
+			2.5
+		)
+		hud.set_tip(
+			"The chamber reward beacon is now active. Walk to it before the next chamber choice can resolve."
+			if _is_english()
+			else "卷间奖印已经亮起。先亲自走到奖印前，卷间抉择才会真正打开。"
+		)
+	_log_battle_event(
+		"Reward Beacon · Reach the chamber prize" if _is_english() else "卷间奖印 · 靠近后再定下一路",
+		accent
+	)
+
+
 func _try_start_chamber_exit_objective() -> bool:
 	if _room_objective_active():
 		return true
@@ -752,24 +809,20 @@ func _advance_room_objective(pickup_ref, tint: Color) -> bool:
 	_clear_room_objective_state()
 	if hud != null:
 		hud.show_banner(
-			("%s  Chamber break unlocked" if _is_english() else "%s  卷间抉择开启") % objective_name,
+			("%s  Reward beacon raised" if _is_english() else "%s  奖印显形") % objective_name,
 			accent,
-			1.8
+			1.7
 		)
-		hud.show_reveal(
-			"Seal Unlocked" if _is_english() else "封门已开",
-			objective_name,
-			"The chamber break is now open." if _is_english() else "三枚封印已收束，卷间抉择现已开启。",
-			accent,
-			glyph,
-			2.3
+		hud.set_tip(
+			"The seals are bound. Reach the reward beacon before the between-chambers choice can resolve."
+			if _is_english()
+			else "封印已经收束。先走到奖印前，卷间抉择才会真正打开。"
 		)
-		hud.set_tip("The chamber break is now open. Resolve one between-chambers choice before going deeper." if _is_english() else "卷间抉择已经开启，先定下一条路，再继续入深层。")
 	_log_battle_event(
-		("%s complete · Chamber break unlocked" if _is_english() else "%s完成 · 卷间抉择开启") % objective_name,
+		("%s complete · Reward beacon raised" if _is_english() else "%s完成 · 奖印显形") % objective_name,
 		accent
 	)
-	_open_chamber_break_gate()
+	_spawn_chamber_break_beacon()
 	return true
 
 
@@ -1177,7 +1230,7 @@ func _process(delta: float) -> void:
 	_update_boss_flow()
 	if chamber_break_pending and active_boss == null and _enemy_count() == 0:
 		if not _try_start_chamber_exit_objective():
-			_open_chamber_break_gate()
+			_spawn_chamber_break_beacon()
 			return
 
 	if not chamber_break_pending:
@@ -1353,6 +1406,7 @@ func _clear_chamber_scene(clear_pickups: bool = false) -> void:
 	tree_fade_entries.clear()
 	inkstones.clear()
 	active_inkstone = null
+	_clear_chamber_break_beacon_state()
 	for child in props_root.get_children():
 		if is_instance_valid(child) and not child.is_queued_for_deletion():
 			child.queue_free()
@@ -1423,6 +1477,7 @@ func _transition_to_chamber(next_chamber_id: String) -> void:
 	if next_chamber_id.is_empty() or next_chamber_id == current_chamber_id:
 		return
 	_clear_room_objective_state()
+	_clear_chamber_break_beacon_state()
 	current_chamber_id = next_chamber_id
 	_clear_chamber_scene(true)
 	_spawn_props()
@@ -2142,6 +2197,13 @@ func _on_supply_collected(world_position: Vector3, supply_id: String, amount: fl
 		pulse_label = String(pickup_ref.get_meta("room_objective_glyph", label))
 	if objective_pickup_consumed and is_equal_approx(amount, 0.0):
 		_spawn_wave_effect(world_position, 1.18, tint, pulse_label)
+		_sync_hud()
+		return
+	if pickup_ref != null and is_instance_valid(pickup_ref) and bool(pickup_ref.get_meta("chamber_break_beacon", false)):
+		chamber_break_beacon_active = false
+		pulse_label = String(pickup_ref.get_meta("chamber_break_beacon_glyph", label))
+		_spawn_wave_effect(world_position, 1.36, tint, pulse_label)
+		_open_chamber_break_gate()
 		_sync_hud()
 		return
 	match supply_id:
