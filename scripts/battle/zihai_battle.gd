@@ -27,6 +27,10 @@ const FIELD_PHASE_GLYPH_SEQUENCE := ["天", "地", "玄", "黄", "宇", "宙", "
 const BASE_ENEMY_CAP := 28
 const MAX_REGULAR_ENEMY_CAP := 38
 const BIG_WAVE_ENEMY_CAP := 46
+const ENEMY_UTILITY_ACTIVE_LIMIT := 2
+const ENEMY_POTION_ACTIVE_LIMIT := 2
+const HEALTH_POTION_DROP_METER_STEP := 0.05
+const HEALTH_POTION_HEAL_RATIO := 0.3
 const TREE_FADE_RADIUS := 2.65
 const TREE_FADE_ALPHA := 0.28
 const TREE_FADE_SPEED := 4.8
@@ -189,6 +193,7 @@ var field_phase_stamp_root: Node3D
 var field_phase_stamp_entries: Array[Dictionary] = []
 var current_soundtrack_id: String = ""
 var current_soundtrack_cue: String = ""
+var health_potion_drop_meter: float = 0.0
 
 var level: int = 1
 var experience: int = 0
@@ -877,7 +882,7 @@ func _spawn_supply_drops(world_position: Vector3, enemy_type: String) -> void:
 
 func _spawn_supply_bundle(world_position: Vector3, drops: Dictionary) -> void:
 	var active_supply_ids: Array[String] = []
-	for supply_id_variant in ["paper", "ink", "seal"]:
+	for supply_id_variant in ["paper", "ink", "seal", "magnet", "fury", "potion"]:
 		var supply_id := String(supply_id_variant)
 		if float(drops.get(supply_id, 0.0)) > 0.0:
 			active_supply_ids.append(supply_id)
@@ -898,7 +903,10 @@ func _build_supply_drops(enemy_type: String) -> Dictionary:
 	var drops := {
 		"paper": 0.0,
 		"ink": 0.0,
-		"seal": 0.0
+		"seal": 0.0,
+		"magnet": 0.0,
+		"fury": 0.0,
+		"potion": 0.0
 	}
 
 	match enemy_type:
@@ -943,11 +951,58 @@ func _build_supply_drops(enemy_type: String) -> Dictionary:
 	if kills > 0 and kills % 21 == 0:
 		_add_supply_drop(drops, "ink", 16.0)
 
+	_add_enemy_utility_drop(drops, enemy_type)
+	_add_health_potion_drop(drops)
 	return drops
 
 
 func _add_supply_drop(drops: Dictionary, supply_id: String, amount: float) -> void:
 	drops[supply_id] = float(drops.get(supply_id, 0.0)) + amount
+
+
+func _add_enemy_utility_drop(drops: Dictionary, enemy_type: String) -> void:
+	if enemy_type == "boss":
+		_add_supply_drop(drops, "magnet", 1.0)
+		_add_supply_drop(drops, "fury", 10.0)
+		return
+
+	if _count_active_supply_pickups(["magnet", "fury"]) >= ENEMY_UTILITY_ACTIVE_LIMIT:
+		return
+
+	var pickup_id := "magnet" if rng.randf() < 0.5 else "fury"
+	var pickup_amount := 1.0 if pickup_id == "magnet" else 10.0
+	if enemy_type == "elite":
+		if rng.randf() < 0.7:
+			_add_supply_drop(drops, pickup_id, pickup_amount)
+		return
+
+	if rng.randf() < 0.035:
+		_add_supply_drop(drops, pickup_id, pickup_amount)
+
+
+func _add_health_potion_drop(drops: Dictionary) -> void:
+	if _count_active_supply_pickups(["potion"]) >= ENEMY_POTION_ACTIVE_LIMIT:
+		return
+
+	health_potion_drop_meter = min(1.0, health_potion_drop_meter + HEALTH_POTION_DROP_METER_STEP)
+	if rng.randf() >= health_potion_drop_meter:
+		return
+
+	_add_supply_drop(drops, "potion", HEALTH_POTION_HEAL_RATIO)
+	health_potion_drop_meter = max(0.0, health_potion_drop_meter - 1.0)
+
+
+func _count_active_supply_pickups(supply_ids: Array[String]) -> int:
+	var total := 0
+	for pickup in pickups_root.get_children():
+		if not is_instance_valid(pickup) or pickup.is_queued_for_deletion():
+			continue
+		if not pickup.has_method("get_supply_id"):
+			continue
+		var active_supply_id := String(pickup.get_supply_id())
+		if supply_ids.has(active_supply_id):
+			total += 1
+	return total
 
 
 func _on_xp_collected(value: int) -> void:
@@ -1002,6 +1057,13 @@ func _on_supply_collected(world_position: Vector3, supply_id: String, amount: fl
 				hud.show_banner("拾得疾书令  攻速移速提升 %d 秒" % int(round(duration)), tint, 1.85)
 				hud.set_tip("疾书令会短时间拉高攻速与移速，适合强开精英或抢一波散落补给。")
 			pulse_radius = 1.24
+		"potion":
+			if is_instance_valid(player):
+				var heal_ratio := clampf(amount if amount > 0.0 else HEALTH_POTION_HEAL_RATIO, 0.12, 0.9)
+				player.heal(player.max_health * heal_ratio)
+				hud.show_banner("拾得回春丹  回复 %d%% 气血" % int(round(heal_ratio * 100.0)), tint, 1.8)
+				hud.set_tip("回春丹会按最大气血比例回气，适合硬吃一波精英或卷主技能后迅速稳住局势。")
+			pulse_radius = 1.22
 		"brush":
 			if is_instance_valid(player):
 				var duration: float = max(amount, 6.0)

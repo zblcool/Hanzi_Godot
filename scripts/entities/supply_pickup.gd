@@ -40,6 +40,13 @@ const SUPPLY_DATA := {
 		"glow": Color(1.0, 0.84, 0.72, 1.0),
 		"amount": 10.0
 	},
+	"potion": {
+		"glyph": "丹",
+		"title": "回春丹",
+		"color": Color(0.8, 0.18, 0.22, 1.0),
+		"glow": Color(1.0, 0.78, 0.74, 1.0),
+		"amount": 0.3
+	},
 	"brush": {
 		"glyph": "笔",
 		"title": "文笔",
@@ -80,6 +87,10 @@ func _ready() -> void:
 	_build_visuals()
 	drift_velocity = Vector3(randf_range(-0.8, 0.8), 0.0, randf_range(-0.8, 0.8))
 	set_physics_process(true)
+
+
+func get_supply_id() -> String:
+	return supply_id
 
 
 func _physics_process(delta: float) -> void:
@@ -131,7 +142,7 @@ func _build_visuals() -> void:
 
 	halo_node = MeshInstance3D.new()
 	var halo_mesh := CylinderMesh.new()
-	halo_mesh.top_radius = 0.48 if supply_id in ["seal", "magnet", "fury"] else 0.42
+	halo_mesh.top_radius = 0.5 if supply_id in ["seal", "magnet", "fury", "potion"] else 0.42
 	halo_mesh.bottom_radius = halo_mesh.top_radius
 	halo_mesh.height = 0.02
 	halo_node.mesh = halo_mesh
@@ -148,6 +159,8 @@ func _build_visuals() -> void:
 			_build_magnet_visuals()
 		"fury":
 			_build_fury_visuals()
+		"potion":
+			_build_potion_visuals()
 		"brush":
 			_build_brush_visuals()
 		_:
@@ -316,6 +329,71 @@ func _build_fury_visuals() -> void:
 		ribbon.material_override = ribbon_material
 		orbit_root.add_child(ribbon)
 		detail_nodes.append(ribbon)
+
+
+func _build_potion_visuals() -> void:
+	var glass_material := StandardMaterial3D.new()
+	glass_material.albedo_color = Color(0.86, 0.24, 0.24, 0.98)
+	glass_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	glass_material.roughness = 0.18
+	glass_material.metallic = 0.04
+	glass_material.emission_enabled = true
+	glass_material.emission = Color(0.56, 0.08, 0.12, 1.0)
+
+	var stopper_material := _make_solid_material(Color(0.95, 0.88, 0.74, 1.0), Color(1.0, 0.94, 0.82, 1.0))
+	var trim_material := _make_solid_material(tint, glow)
+
+	core_node = MeshInstance3D.new()
+	var bottle_mesh := CylinderMesh.new()
+	bottle_mesh.top_radius = 0.11
+	bottle_mesh.bottom_radius = 0.16
+	bottle_mesh.height = 0.34
+	core_node.mesh = bottle_mesh
+	core_node.position.y = -0.03
+	core_node.material_override = glass_material
+	visual_root.add_child(core_node)
+
+	var shoulder := MeshInstance3D.new()
+	var shoulder_mesh := SphereMesh.new()
+	shoulder_mesh.radius = 0.14
+	shoulder_mesh.height = 0.22
+	shoulder.mesh = shoulder_mesh
+	shoulder.position = Vector3(0.0, 0.08, 0.0)
+	shoulder.scale = Vector3(1.0, 0.72, 0.92)
+	shoulder.material_override = glass_material
+	visual_root.add_child(shoulder)
+
+	var neck := MeshInstance3D.new()
+	var neck_mesh := CylinderMesh.new()
+	neck_mesh.top_radius = 0.055
+	neck_mesh.bottom_radius = 0.07
+	neck_mesh.height = 0.14
+	neck.mesh = neck_mesh
+	neck.position = Vector3(0.0, 0.22, 0.0)
+	neck.material_override = glass_material
+	visual_root.add_child(neck)
+
+	var stopper := MeshInstance3D.new()
+	var stopper_mesh := CylinderMesh.new()
+	stopper_mesh.top_radius = 0.07
+	stopper_mesh.bottom_radius = 0.07
+	stopper_mesh.height = 0.08
+	stopper.mesh = stopper_mesh
+	stopper.position = Vector3(0.0, 0.32, 0.0)
+	stopper.material_override = stopper_material
+	visual_root.add_child(stopper)
+
+	for index in range(3):
+		var seal_strip := MeshInstance3D.new()
+		var strip_mesh := BoxMesh.new()
+		strip_mesh.size = Vector3(0.08, 0.03, 0.18)
+		seal_strip.mesh = strip_mesh
+		var angle: float = TAU * float(index) / 3.0
+		seal_strip.position = Vector3(cos(angle) * 0.24, 0.04, sin(angle) * 0.24)
+		seal_strip.rotation_degrees = Vector3(18.0, rad_to_deg(angle), 10.0)
+		seal_strip.material_override = trim_material
+		orbit_root.add_child(seal_strip)
+		detail_nodes.append(seal_strip)
 
 
 func _build_brush_visuals() -> void:
