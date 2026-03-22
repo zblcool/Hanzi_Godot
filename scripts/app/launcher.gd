@@ -281,12 +281,23 @@ func _on_viewport_size_changed() -> void:
 func _compute_ui_scale() -> float:
 	var viewport_size := get_viewport_rect().size
 	var min_scale := 0.44 if _is_portrait_layout() else MIN_UI_SCALE
+	if _is_web_platform():
+		if _is_portrait_layout():
+			min_scale = 0.36
+		elif viewport_size.y < 780.0 or viewport_size.x < 1280.0:
+			min_scale = 0.48
+		else:
+			min_scale = 0.54
 	return clamp(min(viewport_size.x / BASE_VIEWPORT.x, viewport_size.y / BASE_VIEWPORT.y), min_scale, 1.0)
 
 
 func _is_portrait_layout() -> bool:
 	var viewport_size := get_viewport_rect().size
 	return viewport_size.x <= viewport_size.y
+
+
+func _is_web_platform() -> bool:
+	return OS.has_feature("web")
 
 
 func _safe_area_insets() -> Dictionary:
