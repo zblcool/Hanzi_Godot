@@ -1461,6 +1461,8 @@ func _build_leaderboard_overlay() -> void:
 	box.add_theme_constant_override("separation", _i(14))
 	margin.add_child(box)
 
+	var leaderboard_content := FrontEndContent.menu_leaderboard_content()
+
 	box.add_child(_make_label(String(overlay_content.get("title", "残卷战绩")), 36, Color(1.0, 0.95, 0.86, 1.0)))
 	box.add_child(_make_label(String(overlay_content.get("summary", "现在可以在二级菜单里直接查看本地排行榜，并顺手回看每局 build 走向，不必先打到结算页。")), 18, Color(0.88, 0.92, 0.96, 0.95)))
 
@@ -1482,11 +1484,11 @@ func _build_leaderboard_overlay() -> void:
 	switch_row.add_theme_constant_override("separation", _i(12))
 	box.add_child(switch_row)
 
-	leaderboard_manual_button = _make_pill_button("主卷榜", _v(0.0, 48.0), Callable(self, "_on_leaderboard_manual_pressed"))
+	leaderboard_manual_button = _make_pill_button(_localize_text(String(leaderboard_content.get("main_board", "主卷榜"))), _v(0.0, 48.0), Callable(self, "_on_leaderboard_manual_pressed"))
 	leaderboard_manual_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	switch_row.add_child(leaderboard_manual_button)
 
-	leaderboard_test_button = _make_pill_button("试阵榜", _v(0.0, 48.0), Callable(self, "_on_leaderboard_test_pressed"))
+	leaderboard_test_button = _make_pill_button(_localize_text(String(leaderboard_content.get("test_board", "试阵榜"))), _v(0.0, 48.0), Callable(self, "_on_leaderboard_test_pressed"))
 	leaderboard_test_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	switch_row.add_child(leaderboard_test_button)
 
@@ -1499,15 +1501,15 @@ func _build_leaderboard_overlay() -> void:
 	sort_row.add_theme_constant_override("separation", _i(10))
 	sort_shell.add_child(sort_row)
 
-	leaderboard_sort_wave_button = _make_pill_button("按波次", _v(0.0, 46.0), Callable(self, "_on_leaderboard_sort_wave_pressed"))
+	leaderboard_sort_wave_button = _make_pill_button(_localize_text(String(leaderboard_content.get("sort_wave", "按波次"))), _v(0.0, 46.0), Callable(self, "_on_leaderboard_sort_wave_pressed"))
 	leaderboard_sort_wave_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	sort_row.add_child(leaderboard_sort_wave_button)
 
-	leaderboard_sort_kills_button = _make_pill_button("按击破", _v(0.0, 46.0), Callable(self, "_on_leaderboard_sort_kills_pressed"))
+	leaderboard_sort_kills_button = _make_pill_button(_localize_text(String(leaderboard_content.get("sort_kills", "按击破"))), _v(0.0, 46.0), Callable(self, "_on_leaderboard_sort_kills_pressed"))
 	leaderboard_sort_kills_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	sort_row.add_child(leaderboard_sort_kills_button)
 
-	leaderboard_sort_time_button = _make_pill_button("按存活", _v(0.0, 46.0), Callable(self, "_on_leaderboard_sort_time_pressed"))
+	leaderboard_sort_time_button = _make_pill_button(_localize_text(String(leaderboard_content.get("sort_time", "按存活"))), _v(0.0, 46.0), Callable(self, "_on_leaderboard_sort_time_pressed"))
 	leaderboard_sort_time_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	sort_row.add_child(leaderboard_sort_time_button)
 
