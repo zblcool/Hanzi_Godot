@@ -394,9 +394,12 @@ const MENU_ARCHIVE_CONTENT := {
 const MENU_RECIPE_CONTENT := {
 	"intro_line_1": "偏旁先补齐成字，成字满级后再去砚台磨成词技。",
 	"intro_line_2": "进入残卷前先看一眼路线，升级三选一时会更容易判断当前该补哪一笔。",
+	"recipe_header_format": "%s  %s",
 	"glyph_format": "成字：%s  Lv.%d",
+	"description_format": "  %s",
 	"phrase_format": "磨词：%s  Lv.%d  砚台消耗 %d",
-	"independent_title": "独立偏旁"
+	"independent_title": "独立偏旁",
+	"independent_entry_format": "%s  %s"
 }
 
 const MENU_LEADERBOARD_CONTENT := {
@@ -423,11 +426,14 @@ const MENU_LEADERBOARD_CONTENT := {
 	"kills_label": "击破",
 	"level_label": "等级",
 	"time_label": "存活",
+	"entry_format": "%d. %s  %s  %s %d  %s %d  %s %d  %s %d  %s %s",
+	"detail_prefix_format": "   %s",
 	"detail_radicals": "偏旁 %s",
 	"detail_glyphs": "成字 %s",
 	"detail_phrases": "词技 %s",
 	"detail_blade_xia": "剑势",
 	"detail_blade_scholar": "笔锋",
+	"detail_blade_level_format": "%s Lv.%d",
 	"detail_takedowns": "击倒 %s"
 }
 

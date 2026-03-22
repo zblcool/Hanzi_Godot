@@ -1802,18 +1802,18 @@ func _build_recipe_atlas_text() -> String:
 		if word_id != "":
 			word = _localized_word_data(word_id)
 
-		lines.append("%s  %s" % [String(recipe.get("display", "")), " + ".join(radical_texts)])
+		lines.append(String(recipe_content.get("recipe_header_format", "%s  %s")) % [String(recipe.get("display", "")), " + ".join(radical_texts)])
 		lines.append(_localize_text(String(recipe_content.get("glyph_format", "成字：%s  Lv.%d"))) % [String(recipe.get("title", "")), int(recipe.get("max_level", 1))])
-		lines.append("  %s" % String(recipe.get("description", "")))
+		lines.append(String(recipe_content.get("description_format", "  %s")) % String(recipe.get("description", "")))
 		if not word.is_empty():
 			lines.append(_localize_text(String(recipe_content.get("phrase_format", "磨词：%s  Lv.%d  砚台消耗 %d"))) % [String(word.get("title", "")), int(word.get("max_level", 1)), int(word.get("unlock_cost", 0))])
-			lines.append("  %s" % String(word.get("description", "")))
+			lines.append(String(recipe_content.get("description_format", "  %s")) % String(word.get("description", "")))
 		lines.append("")
 
 	var blade_data: Dictionary = _localized_radical_data("刂")
 	lines.append(_localize_text(String(recipe_content.get("independent_title", "独立偏旁"))))
-	lines.append("刂  %s" % String(blade_data.get("name", "")))
-	lines.append("  %s" % String(blade_data.get("description", "")))
+	lines.append(String(recipe_content.get("independent_entry_format", "%s  %s")) % ["刂", String(blade_data.get("name", ""))])
+	lines.append(String(recipe_content.get("description_format", "  %s")) % String(blade_data.get("description", "")))
 	return "\n".join(lines)
 
 
@@ -2326,7 +2326,7 @@ func _build_local_leaderboard_text(view: String = "manual", limit: int = 8, sort
 		var level_label := _localize_text(String(leaderboard_content.get("level_label", "等级")))
 		var elapsed_label := _localize_text(String(leaderboard_content.get("time_label", "存活")))
 		lines.append(
-			"%d. %s  %s  %s %d  %s %d  %s %d  %s %d  %s %s" % [
+			String(leaderboard_content.get("entry_format", "%d. %s  %s  %s %d  %s %d  %s %d  %s %d  %s %s")) % [
 				index + 1,
 				_format_leaderboard_identity(entry),
 				run_label,
@@ -2344,7 +2344,7 @@ func _build_local_leaderboard_text(view: String = "manual", limit: int = 8, sort
 		)
 		var detail_line := _build_local_leaderboard_detail_line(entry)
 		if not detail_line.is_empty():
-			lines.append("   %s" % detail_line)
+			lines.append(String(leaderboard_content.get("detail_prefix_format", "   %s")) % detail_line)
 		lines.append("")
 	while not lines.is_empty() and String(lines[lines.size() - 1]).is_empty():
 		lines.remove_at(lines.size() - 1)
@@ -2544,7 +2544,7 @@ func _build_local_leaderboard_detail_line(entry: Dictionary) -> String:
 		var blade_key := "detail_blade_xia" if String(entry.get("hero_id", "scholar")) == "xia" else "detail_blade_scholar"
 		var blade_fallback := "剑势" if String(entry.get("hero_id", "scholar")) == "xia" else "笔锋"
 		var blade_label := _localize_text(String(leaderboard_content.get(blade_key, blade_fallback)))
-		segments.append("%s Lv.%d" % [blade_label, blade_level])
+		segments.append(String(leaderboard_content.get("detail_blade_level_format", "%s Lv.%d")) % [blade_label, blade_level])
 
 	var enemy_text := _summarize_enemy_kills(entry.get("enemy_kills", {}))
 	if not enemy_text.is_empty():
