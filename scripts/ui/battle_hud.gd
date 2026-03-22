@@ -802,6 +802,84 @@ func _build_route_focus_summary(hero_data: Dictionary) -> Dictionary:
 	}
 
 
+func _build_pause_state_body(elapsed: float, kills: int, threat: int, level: int) -> String:
+	var lines: Array[String] = []
+	if _is_english():
+		lines.append("Current run")
+		lines.append("Time %s" % _format_time(elapsed))
+		lines.append("Wave %d   Kills %d   Level Lv.%d" % [threat, kills, level])
+	else:
+		lines.append("当前进度")
+		lines.append("存活 %s" % _format_time(elapsed))
+		lines.append("波次 %d   击破 %d   等级 Lv.%d" % [threat, kills, level])
+	var route_lines := _build_route_focus_state_lines()
+	if not route_lines.is_empty():
+		lines.append("")
+		lines.append_array(route_lines)
+	lines.append("")
+	lines.append("Press E or Esc to resume, or R to restart immediately." if _is_english() else "按 E 或 Esc 继续，按 R 立即重开。")
+	return "\n".join(lines)
+
+
+func _build_game_over_state_body(summary: String, elapsed: float, kills: int, threat: int, level: int, leaderboard_view: String) -> String:
+	var lines: Array[String] = []
+	var trimmed_summary := summary.strip_edges()
+	if not trimmed_summary.is_empty():
+		lines.append(trimmed_summary)
+		lines.append("")
+	lines.append(("Test Run" if leaderboard_view == "test" else "Main Scroll") if _is_english() else ("本轮试阵" if leaderboard_view == "test" else "本轮残卷"))
+	lines.append(("Time %s" if _is_english() else "存活 %s") % _format_time(elapsed))
+	lines.append(("Wave %d   Kills %d   Level Lv.%d" if _is_english() else "波次 %d   击破 %d   等级 Lv.%d") % [threat, kills, level])
+	var route_lines := _build_route_focus_state_lines()
+	if not route_lines.is_empty():
+		lines.append("")
+		lines.append_array(route_lines)
+	return "\n".join(lines)
+
+
+func _build_route_focus_state_lines() -> Array[String]:
+	if configured_hero_data.is_empty():
+		var empty_lines: Array[String] = []
+		return empty_lines
+	var localized_hero := _localized_hero_data(configured_hero_data)
+	var summary := _build_route_focus_summary(localized_hero)
+	var lines: Array[String] = []
+	lines.append("Route Focus" if _is_english() else "路线参考")
+	var title := String(summary.get("title", "")).strip_edges()
+	if not title.is_empty():
+		lines.append(title)
+	var stage := String(summary.get("stage", "")).strip_edges()
+	if not stage.is_empty():
+		lines.append(stage)
+	lines.append(_build_route_progress_text())
+	var detail := String(summary.get("detail", "")).strip_edges()
+	if not detail.is_empty():
+		lines.append(detail)
+	return lines
+
+
+func _build_route_progress_text() -> String:
+	var radical_total := 0
+	for radical_variant in Session.RADICAL_ORDER:
+		radical_total += int(cached_radicals.get(String(radical_variant), 0))
+
+	var formed_recipe_count := 0
+	for recipe_id_variant in Session.RECIPE_ORDER:
+		if int(cached_recipe_levels.get(String(recipe_id_variant), 0)) > 0:
+			formed_recipe_count += 1
+
+	var formed_word_count := 0
+	for word_id_variant in Session.WORD_ORDER:
+		if int(cached_word_levels.get(String(word_id_variant), 0)) > 0:
+			formed_word_count += 1
+
+	return (
+		"Build: radicals %d  ·  glyphs %d  ·  phrases %d"
+		if _is_english()
+		else "构筑进度：偏旁 %d  ·  成字 %d  ·  词技 %d"
+	) % [radical_total, formed_recipe_count, formed_word_count]
+
+
 func _resolve_route_stage_card(hero_data: Dictionary) -> Dictionary:
 	var cards: Array[Dictionary] = []
 	var cards_variant: Variant = hero_data.get("progression_cards", [])
@@ -1193,20 +1271,7 @@ func show_pause_menu(elapsed: float, kills: int, threat: int, level: int) -> voi
 	}
 	state_mode = "pause"
 	state_title_label.text = "Inkfield Interlude" if _is_english() else "墨阵暂歇"
-	if _is_english():
-		state_body_label.text = "Current run\nTime %s\nWave %d   Kills %d   Level Lv.%d\n\nPress E or Esc to resume, or R to restart immediately." % [
-			_format_time(elapsed),
-			threat,
-			kills,
-			level
-		]
-	else:
-		state_body_label.text = "当前进度\n存活 %s\n波次 %d   击破 %d   等级 Lv.%d\n\n按 E 或 Esc 继续，按 R 立即重开。" % [
-			_format_time(elapsed),
-			threat,
-			kills,
-			level
-		]
+	state_body_label.text = _build_pause_state_body(elapsed, kills, threat, level)
 	_configure_state_button(state_primary_button, "Resume Battle" if _is_english() else "继续战斗", Callable(self, "_emit_pause_resume"))
 	_configure_state_button(state_secondary_button, "Battle Setup" if _is_english() else "战场布置", Callable(self, "_show_settings_menu"))
 	_configure_state_button(state_tertiary_button, "Restart Run" if _is_english() else "重新开始", Callable(self, "_emit_restart"))
@@ -1259,25 +1324,7 @@ func set_game_over(
 		"leaderboard_view": normalized_view
 	}
 	state_title_label.text = "The Ink Sea Sinks" if _is_english() else "字海沉没"
-	var run_header := ("Test Run" if normalized_view == "test" else "Main Scroll") if _is_english() else ("本轮试阵" if normalized_view == "test" else "本轮残卷")
-	if _is_english():
-		state_body_label.text = "%s\n\n%s\nTime %s\nWave %d   Kills %d   Level Lv.%d" % [
-			summary,
-			run_header,
-			_format_time(elapsed),
-			threat,
-			kills,
-			level
-		]
-	else:
-		state_body_label.text = "%s\n\n%s\n存活 %s\n波次 %d   击破 %d   等级 Lv.%d" % [
-			summary,
-			run_header,
-			_format_time(elapsed),
-			threat,
-			kills,
-			level
-		]
+	state_body_label.text = _build_game_over_state_body(summary, elapsed, kills, threat, level, normalized_view)
 	var leaderboard_detail := "This run was written into the main-scroll board. You can rename it here, or leave the field blank to keep the default Player Sigil alias." if _is_english() else "本轮记录已经写入主卷榜。你可以直接改成想显示的名字；留空则保留玩家名帖里的默认署名。"
 	if normalized_view == "test":
 		leaderboard_detail = "This test run was written into the test board and will not affect the main-scroll ranking. You can rename it here, or leave the field blank to keep the default Player Sigil alias." if _is_english() else "本轮试阵记录已经写入试阵榜，不会影响主卷榜排序。你可以直接改成想显示的名字；留空则保留玩家名帖里的默认署名。"
@@ -2295,10 +2342,10 @@ func _build_state_overlay(root: Control) -> void:
 
 	var panel := PanelContainer.new()
 	panel.set_anchors_preset(Control.PRESET_CENTER)
-	panel.offset_left = -360.0
-	panel.offset_top = -270.0
-	panel.offset_right = 360.0
-	panel.offset_bottom = 270.0
+	panel.offset_left = -380.0
+	panel.offset_top = -300.0
+	panel.offset_right = 380.0
+	panel.offset_bottom = 300.0
 	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.06, 0.08, 0.1, 0.96), Color(0.94, 0.7, 0.4, 0.92), 24))
 	state_overlay.add_child(panel)
 
