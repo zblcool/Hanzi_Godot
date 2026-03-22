@@ -51,7 +51,7 @@ Status legend:
 - `[done]` Stage phase-shift themes. Notes: Godot now rotates every 4 waves through `碑林 / 墨潮 / 雷纹 / 残卷`, blends fog/ground/backdrop mood, and stamps giant lingering hanzi near the player when the realm shifts.
 - `[pending]` Wider radical / recipe / word pool. Notes: hanziHero already has a broader content set; Godot currently centers on 明 / 休 / 海 plus blade growth.
 - `[done]` Static `聚墨符 / 疾书令` battlefield pickups. Notes: hanziHero ships one-shot utility pickups for full-map ink recall and burst haste; Godot now has fixed battlefield placements with matching core effects.
-- `[pending]` Enemy-dropped utility pickup routing and `回春丹` parity. Notes: source key enemies / bosses can also drop utility pickups and recovery drops; Godot still keeps the safer static-only slice today.
+- `[done]` Enemy-dropped utility pickup routing and `回春丹` parity. Notes: Godot elites / bosses can now seed `聚墨符 / 疾书令`, regular enemies can occasionally route those pickups back into the field, and a `回春丹` drop meter restores the source-style max-health recovery pickup instead of relying on static-only utility spawns.
 
 ## Progression
 
