@@ -15,6 +15,7 @@ const BATTLE_HUD_SCENE := preload("res://scenes/ui/battle_hud.tscn")
 const TOUCH_CONTROLS_OVERLAY := preload("res://scripts/ui/touch_controls_overlay.gd")
 const CJKFont := preload("res://scripts/core/cjk_font.gd")
 const GROUND_SURFACE_SHADER := preload("res://assets/shaders/ink_ground.gdshader")
+const SHANSHUI_BACKDROP_SHADER := preload("res://assets/shaders/shanshui_backdrop.gdshader")
 const DEFAULT_BATTLE_TIP := "击倒字灵收集字力与补给，升级时三选一偏旁。靠近砚台按 E 磨词。"
 const BOSS_SPAWN_TIMES := [65.0, 130.0]
 const MAP_WORLD_RADIUS := 28.0
@@ -93,6 +94,7 @@ var ambient_glyph_entries: Array[Dictionary] = []
 var ground_detail_nodes: Array[Node3D] = []
 var ground_surface_materials: Array = []
 var ground_ripple_focus: Vector3 = Vector3.ZERO
+var backdrop_root: Node3D
 var current_soundtrack_id: String = ""
 var current_soundtrack_cue: String = ""
 
@@ -2067,30 +2069,31 @@ func _update_camera(delta: float) -> void:
 func _setup_environment() -> void:
 	var environment := Environment.new()
 	environment.background_mode = Environment.BG_COLOR
-	environment.background_color = Color(0.05, 0.07, 0.09, 1.0)
+	environment.background_color = Color(0.86, 0.77, 0.62, 1.0)
 	environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	environment.ambient_light_color = Color(0.7, 0.75, 0.8, 1.0)
-	environment.ambient_light_energy = 0.85
+	environment.ambient_light_color = Color(0.82, 0.78, 0.68, 1.0)
+	environment.ambient_light_energy = 0.78
 	environment.fog_enabled = true
-	environment.fog_density = 0.012
-	environment.fog_light_color = Color(0.12, 0.16, 0.2, 1.0)
+	environment.fog_density = 0.01
+	environment.fog_light_color = Color(0.84, 0.8, 0.72, 1.0)
 	world_environment.environment = environment
 
 
 func _build_ground() -> void:
 	ground_detail_nodes.clear()
 	ground_surface_materials.clear()
+	ground_ripple_focus = Vector3.ZERO
 	var floor := MeshInstance3D.new()
 	var plane := PlaneMesh.new()
 	plane.size = Vector2(180.0, 180.0)
 	floor.mesh = plane
 	var floor_material := _make_ground_material(
-		Color(0.08, 0.095, 0.11, 1.0),
-		Color(0.46, 0.66, 0.68, 1.0),
-		Color(0.18, 0.2, 0.18, 1.0),
+		Color(0.28, 0.25, 0.2, 1.0),
+		Color(0.42, 0.5, 0.43, 1.0),
+		Color(0.74, 0.69, 0.58, 1.0),
+		0.2,
+		0.34,
 		0.16,
-		0.28,
-		0.12,
 		0.0
 	)
 	floor.material_override = floor_material
@@ -2109,11 +2112,11 @@ func _build_ground() -> void:
 		)
 		mound.scale = Vector3(1.2, 0.4, 1.0 + randf() * 0.8)
 		var mound_material := _make_ground_material(
-			Color(0.12, 0.13, 0.14, 1.0),
-			Color(0.32, 0.46, 0.5, 1.0),
-			Color(0.22, 0.22, 0.2, 1.0),
+			Color(0.24, 0.21, 0.18, 1.0),
+			Color(0.36, 0.42, 0.39, 1.0),
+			Color(0.56, 0.52, 0.46, 1.0),
 			0.08,
-			0.18,
+			0.24,
 			0.06,
 			float(index) * 0.41
 		)
@@ -2124,6 +2127,7 @@ func _build_ground() -> void:
 	ambient_glyph_root = Node3D.new()
 	ambient_glyph_root.name = "AmbientGlyphs"
 	ground_root.add_child(ambient_glyph_root)
+	_build_shanshui_backdrop()
 
 
 func _make_ground_material(base_color: Color, ink_color: Color, paper_color: Color, ripple_strength: float, detail_mix: float, emission_strength: float, phase_offset: float) -> ShaderMaterial:
@@ -2149,12 +2153,96 @@ func _update_ground_shader(delta: float) -> void:
 	if ground_ripple_focus == Vector3.ZERO:
 		ground_ripple_focus = target_focus
 	else:
-		ground_ripple_focus = ground_ripple_focus.lerp(target_focus, clamp(delta * 3.6, 0.0, 1.0))
+		ground_ripple_focus = ground_ripple_focus.lerp(target_focus, clamp(delta * 1.7, 0.0, 1.0))
 	for material_variant in ground_surface_materials:
 		var material: ShaderMaterial = material_variant
 		if material == null:
 			continue
 		material.set_shader_parameter("focus_position", ground_ripple_focus)
+
+
+func _build_shanshui_backdrop() -> void:
+	if is_instance_valid(backdrop_root):
+		backdrop_root.queue_free()
+
+	backdrop_root = Node3D.new()
+	backdrop_root.name = "ShanshuiBackdrop"
+	ground_root.add_child(backdrop_root)
+
+	var layers := [
+		{
+			"radius": 52.0,
+			"height": 11.0,
+			"width": 28.0,
+			"elevation": 5.0,
+			"mountain": Color(0.4, 0.34, 0.27, 0.78),
+			"mist": Color(0.9, 0.84, 0.74, 0.34),
+			"paper": Color(0.94, 0.86, 0.72, 0.18),
+			"alpha": 0.9,
+			"phase_step": 0.6
+		},
+		{
+			"radius": 46.0,
+			"height": 9.4,
+			"width": 24.0,
+			"elevation": 4.2,
+			"mountain": Color(0.5, 0.43, 0.34, 0.66),
+			"mist": Color(0.94, 0.88, 0.8, 0.4),
+			"paper": Color(0.98, 0.92, 0.82, 0.2),
+			"alpha": 0.8,
+			"phase_step": 1.1
+		},
+		{
+			"radius": 39.5,
+			"height": 7.8,
+			"width": 20.0,
+			"elevation": 3.4,
+			"mountain": Color(0.56, 0.47, 0.38, 0.5),
+			"mist": Color(0.98, 0.92, 0.86, 0.42),
+			"paper": Color(0.99, 0.95, 0.88, 0.18),
+			"alpha": 0.68,
+			"phase_step": 1.7
+		}
+	]
+
+	for layer_index in range(layers.size()):
+		var layer: Dictionary = layers[layer_index]
+		for segment_index in range(6):
+			var plane := MeshInstance3D.new()
+			var mesh := PlaneMesh.new()
+			mesh.size = Vector2(float(layer["width"]), float(layer["height"]))
+			plane.mesh = mesh
+			var angle: float = TAU * float(segment_index) / 6.0 + float(layer_index) * 0.22
+			var radius: float = float(layer["radius"])
+			plane.position = Vector3(cos(angle) * radius, float(layer["elevation"]), sin(angle) * radius)
+			plane.rotation.y = angle + PI
+			var material := ShaderMaterial.new()
+			material.shader = SHANSHUI_BACKDROP_SHADER
+			material.set_shader_parameter("mountain_color", Color(layer["mountain"]))
+			material.set_shader_parameter("mist_color", Color(layer["mist"]))
+			material.set_shader_parameter("paper_tint", Color(layer["paper"]))
+			material.set_shader_parameter("alpha_strength", float(layer["alpha"]))
+			material.set_shader_parameter("phase_offset", float(segment_index) * float(layer["phase_step"]) + float(layer_index) * 1.8)
+			material.set_shader_parameter("ridge_height", 0.54 - float(layer_index) * 0.08)
+			plane.material_override = material
+			backdrop_root.add_child(plane)
+
+	var mist_disc := MeshInstance3D.new()
+	var mist_mesh := CylinderMesh.new()
+	mist_mesh.top_radius = 58.0
+	mist_mesh.bottom_radius = 58.0
+	mist_mesh.height = 0.12
+	mist_disc.mesh = mist_mesh
+	mist_disc.position = Vector3(0.0, 0.16, 0.0)
+	var mist_material := StandardMaterial3D.new()
+	mist_material.albedo_color = Color(0.95, 0.9, 0.82, 0.22)
+	mist_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mist_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mist_material.emission_enabled = true
+	mist_material.emission = Color(0.88, 0.82, 0.72, 1.0)
+	mist_material.emission_energy_multiplier = 0.12
+	mist_disc.material_override = mist_material
+	backdrop_root.add_child(mist_disc)
 
 
 func _create_tree(position: Vector3) -> void:

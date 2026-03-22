@@ -28,8 +28,8 @@ void fragment() {
 	float grid_y = smoothstep(0.42, 0.5, abs(fract((ambient_p.y - phase_offset) * 0.18) - 0.5));
 	float dist = distance(p, focus_position.xz);
 	float ambient_flow = 0.5 + 0.5 * sin((ambient_p.x - ambient_p.y) * 0.58 + TIME * 0.72 + phase_offset * 2.0);
-	float ripple_wave = sin(dist * 3.9 - TIME * 4.2 + phase_offset * 2.0);
-	float ripple_mask = exp(-dist * 0.18);
+	float ripple_wave = sin(dist * 5.4 - TIME * 4.1 + phase_offset * 2.0);
+	float ripple_mask = 1.0 - smoothstep(1.0, 3.7, dist);
 	float ripple = max(ripple_wave, 0.0) * ripple_mask;
 	float shimmer = 0.5 + 0.5 * sin(dist * 1.6 - TIME * 1.4 + phase_offset);
 	float line_mask = max(grid_x, grid_y) * 0.16;
