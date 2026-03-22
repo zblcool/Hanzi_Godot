@@ -15,7 +15,7 @@ Status legend:
 - `[done]` Theme toggle parity for launcher and about surface. Notes: hanziHero supports a paper-ink theme switch; Godot launcher and about overlay now expose a remembered `夜墨 / 纸墨` toggle while preserving the existing night-ink default.
 - `[done]` Launcher-side latest update spotlight. Notes: hanziHero's homepage surfaces a recent version / changelog spotlight; Godot launcher now mirrors that front-page role with an in-launcher migration progress card.
 - `[done]` Launcher-side changelog history overlay. Notes: the source launcher can open a dedicated changelog panel; Godot launcher now exposes a matching in-launcher update-history overlay from the latest-update card instead of stopping at a single snapshot.
-- `[pending]` Bilingual launcher copy and runtime language toggle. Notes: hanziHero ships zh/en launcher strings; Godot still shows placeholder `EN` pills without behavior.
+- `[done]` Bilingual launcher copy and runtime language toggle. Notes: hanziHero ships zh/en launcher strings; Godot launcher now remembers a runtime `中 / EN` toggle, translates the main portal/front-page copy, and carries the preference across rebuilds.
 - `[in progress]` Cangjie portal follow-through. Notes: Godot launcher now gives `仓颉之路` a dedicated portal overlay with deckbuilder status, card/fusion/relic/tower sections, but a true playable Godot scene or direct prototype hand-off is still pending.
 
 ## Menus
@@ -27,9 +27,9 @@ Status legend:
 - `[done]` Character archive lore and trait dossier. Notes: hanziHero's 人物志 surfaces role background, quoted thread, and role-trait guidance; Godot now mirrors that in the menu detail panel and 人物志 copy instead of stopping at flat combat stats.
 - `[done]` Player Sigil default-name flow in launcher and menu. Notes: hanziHero lets the launcher / portal maintain a device signature reused by leaderboard entries; Godot now mirrors that with a persistent `玩家名帖` overlay backed by `user://leaderboard_identity.json`.
 - `[done]` Theme toggle parity inside the menu layer. Notes: source launcher/menu surfaces share the remembered paper-ink theme; Godot Zihai menu and its overlays now inherit the same `夜墨 / 纸墨` preference and expose a matching top-bar toggle.
-- `[pending]` Language toggle parity inside the menu layer. Notes: source menu can switch zh/en on the front portal; Godot menu still keeps the placeholder `EN` pill without runtime behavior.
+- `[done]` Language toggle parity inside the menu layer. Notes: the Godot Zihai menu now remembers the same `中 / EN` preference, exposes a working runtime toggle, and translates the hero/front-end menu flow instead of keeping a dead placeholder pill.
 - `[done]` Menu-side leaderboard build snapshots. Notes: hanziHero's menu leaderboard cards surface build lanes and kill mix; Godot menu leaderboard now appends `偏旁 / 成字 / 词技 / 击倒` 摘要 under each entry instead of stopping at flat score lines.
-- `[in progress]` More menu-side build and progression surfacing beyond leaderboard snapshots. Notes: Godot now combines the richer hero dossier with actual `起笔落点` cues, source-side `源稿字技` preview, and new `残卷路线` cards in the menu detail panel and 人物志, including the xia's real `亻 / 心` opening loadout plus early/mid/inkstone build reminders; bilingual framing still remains beyond this slice.
+- `[in progress]` More menu-side build and progression surfacing beyond leaderboard snapshots. Notes: Godot now combines the richer hero dossier with actual `起笔落点` cues, source-side `源稿字技` preview, `残卷路线` cards, and a remembered zh/en front-end toggle across the menu detail panel and 人物志; deeper battle-side parity still remains.
 
 ## Battle HUD
 
@@ -90,6 +90,6 @@ Status legend:
 ## Technical Debt
 
 - `[done]` Long-lived migration tracking in repo root. Notes: `MIGRATION_CHECKLIST.md` remains the source of truth and now has a matching long-lived GitHub tracker issue for checklist/body sync instead of one-off progress issues.
-- `[pending]` Shared localization layer for launcher, menu, and battle UI. Notes: hanziHero already centralizes zh/en strings; Godot will need a similar data layer before toggles are practical.
+- `[in progress]` Shared localization layer for launcher, menu, and battle UI. Notes: launcher and menu now have a practical remembered zh/en runtime toggle, but the strings still live inline in GDScript and battle/HUD localization remains a separate follow-through item.
 - `[pending]` Break up `scripts/battle/zihai_battle.gd` into smaller systems. Notes: source JS has already started splitting combat/rendering/data concerns; Godot battle logic is still concentrated in one large script.
 - `[pending]` Move launcher / menu content into data-driven definitions. Notes: current Godot UI is built inline in GDScript; data-backed cards would make future theme and language parity safer.

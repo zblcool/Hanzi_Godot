@@ -167,12 +167,110 @@ const CANGJIE_PORTAL_SECTIONS := [
 		]
 	}
 ]
+const EN_TEXT := {
+	"玩家名帖": "Player Sigil",
+	"关于字海": "About",
+	"汉字游戏启动器": "Hanzi Game Launcher",
+	"从字形、部件到战斗系统，把汉字本身做成游戏的核心机制。": "Turn Chinese glyphs, radicals, and combat systems into the core mechanics of the game.",
+	"微信内打开": "Opening from WeChat",
+	"如果是微信内置浏览器，尽量切到系统浏览器再进入。": "If this opens inside WeChat, switch to the system browser when possible.",
+	"这样更容易拿到稳定的全屏、音频和触控体验。": "That usually gives more stable fullscreen, audio, and touch behavior.",
+	"iPhone / iPad": "iPhone / iPad",
+	"可以用“分享 -> 添加到主屏幕”把启动器放到桌面。": "Use Share -> Add to Home Screen to pin the launcher like an app.",
+	"主屏幕入口会更接近独立应用的打开方式。": "The home-screen shortcut feels much closer to launching a standalone app.",
+	"字海残卷": "Ink-Sea Remnant Scroll",
+	"在墨阵里活下去，把偏旁一步步磨成成字与词技。": "Survive inside the ink array and turn radicals into formed glyph skills and refined phrase arts.",
+	"3D 自动战斗": "3D auto-battle",
+	"偏旁三选一": "Three radical picks",
+	"合字 -> 磨词": "Fuse glyphs -> refine phrases",
+	"进入字海残卷": "Enter Ink-Sea",
+	"仓颉之路": "Cangjie Road",
+	"把字形拆解、语义路线和出牌构筑压进同一条爬塔曲线。": "Fold glyph structure, semantic routes, and deckbuilding into one climb.",
+	"卡牌构筑": "Deckbuilding",
+	"字形拼装": "Glyph assembly",
+	"进入仓颉入口": "Open Cangjie Portal",
+	"迁移阶段": "Migration Status",
+	"入口 -> 二级菜单 -> 战斗 的层级已经稳定。": "Launcher -> sub-menu -> battle is now a stable front-end stack.",
+	"字海残卷保持 3D 俯视角，不回退到纯占位原型。": "Ink-Sea stays a 3D top-down game instead of falling back to placeholder screens.",
+	"敌人轮廓、字核和 UI 正在向 web 端气质统一。": "Enemy silhouettes, glyph cores, and UI are converging toward the web prototype tone.",
+	"当前目标": "Current Focus",
+	"把偏旁、合字、词技做成真正的成长主线。": "Turn radicals, fused glyphs, and phrase arts into the real growth spine.",
+	"让战斗里的字、墨、纸和敌人轮廓属于同一世界。": "Make glyphs, ink, paper, and enemy silhouettes feel like one world.",
+	"把菜单和 HUD 提到可展示、可录像的完成度。": "Push the menu and HUD to a presentable, recordable level of polish.",
+	"启动器更新日志入口已补齐": "Launcher changelog entry restored",
+	"Godot 启动器首页现在既保留最近更新聚光卡，也能直接打开内置更新历史面板，继续向 web 原型首页的 changelog panel 对齐。": "The Godot launcher now keeps the recent update spotlight and can open an in-app changelog panel, moving closer to the web prototype front page.",
+	"Godot 启动器": "Godot Launcher",
+	"更新日志": "Update History",
+	"首页“最近更新”卡现在可以直接展开最近几次迁移里程碑，不再只停在单条快照。": "The recent update card can now expand into several migration milestones instead of staying as one snapshot.",
+	"前台已补齐主题联动、玩家名帖与场景 smoke 检查，近期推进可以留在同一层里回看。": "Theme sync, player sigils, and scene smoke checks now live in the same front-end layer.",
+	"启动器层剩余更大的缺口仍是双语切换与仓颉入口接入。": "The bigger launcher gaps were bilingual support and the Cangjie portal.",
+	"完整长期追踪仍以仓库根目录的 MIGRATION_CHECKLIST 为准。": "The long-running migration checklist in the repo root remains the source of truth.",
+	"查看更新记录": "View Update History",
+	"关于汉字工坊": "About Hanzi Workshop",
+	"这里先讲清这款游戏为什么会被做出来，再继续介绍当前已经迁进 Godot 的部分，以及还留在 web 原型里的目标。": "This page explains why the project exists, what has already migrated into Godot, and what still lives in the web prototype.",
+	"作为生活在海外的中国人，多种文化之间的碰撞与交流，让我重新看见自己的母语。汉字像古老而仍然鲜活的图画，从甲骨文到小篆、从繁体到简体，每一次演变都藏着故事，也延续着几千年的文化脉络。": "Living overseas keeps bringing me back to my mother tongue. Chinese characters feel like ancient yet living pictures, with each evolution carrying story and culture across thousands of years.",
+	"一直以来，我都想做一款和中文有关的游戏。直到孩子出生，这个念头变得更具体了。身处英语环境，我开始更认真地想：能不能用游戏去点燃他，也点燃更多孩子，对汉字与中华文化的兴趣？对我来说，这既是一次实验，也是一个父亲的愿望。": "I had long wanted to make a game about Chinese, but after my child was born that wish became much more concrete. In an English-speaking environment, I kept asking whether a game could spark curiosity about Chinese characters and culture for him and for more children.",
+	"这个项目会持续借助 AI 参与开发，但归根结底，它更像是一封写给汉字、写给中文文化的情书。现在 Godot 主线先把《字海残卷》的启动器、二级菜单和 3D 战斗接牢，再继续把 web 原型里更完整的内容一项项迁回来。": "AI helps build this project, but at heart it is a love letter to Chinese characters and Chinese culture. The Godot branch is first stabilizing the launcher, sub-menu, and 3D battle before migrating the richer web prototype piece by piece.",
+	"自动攻击、生存走位、偏旁合字、词技磨成与字阵地图。像幸存者类，但核心成长来自汉字结构和语义。": "Auto-attacks, survival movement, radical fusion, phrase refinement, and glyph-array maps. It feels like a survivors-like game, but its progression comes from Chinese structure and meaning.",
+	"偏旁收集、合字成技、词技进阶": "Collect radicals, fuse glyphs, refine phrase arts",
+	"波次、关键怪、卷主、地图地标": "Waves, key enemies, scroll lords, landmarks",
+	"移动端横屏保护与战斗适配": "Mobile landscape guardrails and battle adaptation",
+	"类杀戮尖塔的卡牌爬塔原型。每张牌同时是战斗动作与汉字学习卡，字形、语义和组合路线都能进入构筑。": "A Slay-the-Spire-like deckbuilder climb where each card is both a combat action and a Chinese learning card.",
+	"地图节点、卡牌战斗、奖励选牌": "Map nodes, card battles, reward drafts",
+	"中英双语辅助，更适合非中文母语玩家": "Chinese-English assist for non-native Chinese players",
+	"当前仍在 web 原型，等待 Godot 迁入": "Still lives in the web prototype and awaits Godot migration",
+	"面向谁": "Who It Is For",
+	"不仅面向中文母语者，也面向中文学习者、教育者，以及想通过游戏认识汉字结构、字义和词感的玩家。": "It is for native speakers, Chinese learners, educators, and players who want to understand character structure and meaning through games.",
+	"适合传播": "Easy To Share",
+	"先保留浏览器可试玩 demo，更适合在中文学习社区、独立游戏圈和语言社群里直接分享与验证。": "Keeping a browser demo makes it easier to share in Chinese-learning communities, indie circles, and language groups.",
+	"迁移重点": "Migration Priorities",
+	"Godot 主线优先补齐启动器、菜单、HUD 和战斗成长链，再追赶 web 端的音乐、设置、双语和仓颉玩法。": "The Godot branch first fills in the launcher, menus, HUD, and battle growth chain before catching up on music, settings, bilingual support, and Cangjie gameplay.",
+	"下一步产品化": "Next Product Step",
+	"先把 Godot 版做成稳定可展示的 vertical slice，验证玩法和学习体验，再决定哪些角色、卡组、塔层与字阵系统进入完整版本。": "First make the Godot build a stable vertical slice, validate both play and learning value, then decide which heroes, decks, tower layers, and glyph systems graduate into the full game.",
+	"返回启动器": "Back to Launcher",
+	"先把 deckbuilder 原型的核心结构、迁移状态和后续切入点收进同一层入口里，避免第二项目继续停在一张静态卡片。": "This portal gathers the deckbuilder prototype structure, migration status, and next entry points in one layer so the second project no longer stalls as a static card.",
+	"返回游戏选择": "Back to Game Select",
+	"首页最近更新卡现在会把近期 Godot 迁移里程碑一并展开，方便直接对照前台推进节奏。": "The home update spotlight now expands recent Godot milestones so the front-end pace is easy to review.",
+	"完整变更记录仍保留在仓库根目录 CHANGELOG.md；长期迁移状态仍以 MIGRATION_CHECKLIST.md 为准。": "The full history still lives in CHANGELOG.md, while MIGRATION_CHECKLIST.md tracks the long migration state.",
+	"像 web 原型那样，为这台设备保存默认排行榜署名。结算页里留空时，后续战绩会直接复用这里的名字。": "Save a default leaderboard alias for this device just like the web prototype. Future runs reuse it whenever the result screen is left blank.",
+	"当前署名": "Current Alias",
+	"默认排行榜署名": "Default Leaderboard Alias",
+	"输入想显示的名字": "Enter the name you want to show",
+	"随机侠名": "Random Wuxia Name",
+	"保存署名": "Save Alias",
+	"恢复默认": "Restore Default",
+	"夜墨": "Night Ink",
+	"纸墨": "Paper Ink",
+	"切换到夜墨主题": "Switch to Night Ink theme",
+	"切换到纸墨主题": "Switch to Paper Ink theme",
+	"仓颉之路入口": "Cangjie Road Portal",
+	"迁移前台": "Front-end Migration",
+	"新增": "Added",
+	"同步": "Synced",
+	"下一步": "Next",
+	"打磨": "Polish",
+	"系统": "Systems",
+	"近期的主题联动、玩家名帖、战场乐题提示和 utility 掉落迁移成果都被收进同一条前台历史里。": "Recent work such as theme sync, player sigils, battle callouts, and utility drops is now reflected in one front-end history.",
+	"继续对齐 hanziHero web 启动器里的 changelog panel 角色，但先保留当前 Godot 单语结构。": "This keeps aligning with the hanziHero web launcher changelog panel while still respecting the current Godot front-end.",
+	"如果继续做前台层，小而稳的下一步更适合补菜单侧的 build / progression 展示。": "A small, steady next step on the front end is to strengthen build and progression presentation in the menu.",
+	"Godot 主线把启动器后的字海二级菜单、局外资料面板和本地排行榜署名链路接成了更完整的一段 vertical slice。": "The Godot branch linked the launcher, sub-menu, reference overlays, and local leaderboard alias flow into a fuller vertical slice.",
+	"补上人物志、合字图谱、怪物图鉴和本地排行榜这些字海二级菜单 overlays。": "Added character archive, fusion atlas, enemy archive, and local leaderboard overlays to the Ink-Sea menu layer.",
+	"启动器和菜单都能维护玩家名帖，后续结算页留空时会自动复用默认署名。": "Both launcher and menu can now manage player sigils that flow into later result screens.",
+	"移动端战斗入口、暂停和小屏 UI 进一步压实，不再只是桌面演示。": "Mobile battle entry, pause flow, and small-screen UI have all been tightened beyond desktop-only demos.",
+	"场景 smoke 检查、README 与迁移清单开始持续跟着当前主线一起维护。": "Scene smoke checks, the README, and the migration checklist now move forward with the main branch.",
+	"Godot 仓库完成了启动器、菜单、3D 战斗、地图、导出与移动端守护的第一轮闭环，字海残卷开始脱离占位原型。": "The Godot repo completed its first playable loop across launcher, menu, 3D battle, map, export, and mobile support.",
+	"搭出 Godot 版启动器、字海战斗原型、地图 modal、暂停层和移动端横屏保护。": "Built the Godot launcher, Ink-Sea battle prototype, map modal, pause layer, and mobile landscape guardrails.",
+	"接通 Web 导出脚本、Vercel 部署路径，以及基础本地排行榜存档。": "Wired web export scripts, the Vercel path, and the first local leaderboard save flow.",
+	"敌人谱系、宝箱与场景道具、波次推进和核心偏旁成长链路开始在 Godot 内成型。": "Enemy families, chests, map props, wave pacing, and the core radical growth chain all took shape in Godot.",
+	"Launcher -> 字海菜单 -> 3D 战斗 的仓库主线从这一天开始可持续迭代。": "From that point on, the launcher -> menu -> 3D battle branch became an iteration-worthy mainline."
+}
 
 var title_font: Font
 var ui_scale := 1.0
 var floating_symbols: Array[Dictionary] = []
 var preview_motifs: Array[Dictionary] = []
 var current_theme := "night-ink"
+var current_language := "zh"
 var about_overlay: Control
 var cangjie_overlay: Control
 var cangjie_section_title_label: Label
@@ -192,6 +290,7 @@ var profile_preview_copy_label: Label
 func _ready() -> void:
 	title_font = CJKFont.get_font()
 	current_theme = Session.get_launcher_theme()
+	current_language = Session.get_launcher_language()
 	_build_floating_symbols()
 	get_viewport().size_changed.connect(_on_viewport_size_changed)
 	_rebuild_ui()
@@ -387,16 +486,36 @@ func _is_paper_theme() -> bool:
 	return current_theme == "paper-ink"
 
 
+func _is_english() -> bool:
+	return current_language == "en"
+
+
 func _get_theme_palette() -> Dictionary:
 	return PAPER_THEME if _is_paper_theme() else NIGHT_THEME
 
 
 func _get_theme_toggle_label() -> String:
-	return "纸墨" if _is_paper_theme() else "夜墨"
+	return "Paper Ink" if _is_english() and _is_paper_theme() else ("Night Ink" if _is_english() else ("纸墨" if _is_paper_theme() else "夜墨"))
 
 
 func _get_theme_toggle_tooltip() -> String:
-	return "切换到夜墨主题" if _is_paper_theme() else "切换到纸墨主题"
+	return "Switch to Night Ink theme" if _is_english() and _is_paper_theme() else ("Switch to Paper Ink theme" if _is_english() else ("切换到夜墨主题" if _is_paper_theme() else "切换到纸墨主题"))
+
+
+func _get_language_toggle_label() -> String:
+	return "中" if _is_english() else "EN"
+
+
+func _get_language_toggle_tooltip() -> String:
+	return "切换到中文" if _is_english() else "Switch to English"
+
+
+func _localize_text(text: String) -> String:
+	if not _is_english():
+		return text
+	if text.begins_with("• "):
+		return "• %s" % _localize_text(text.substr(2))
+	return String(EN_TEXT.get(text, text))
 
 
 func _resolve_surface_fill(fill_color: Color) -> Color:
@@ -449,6 +568,12 @@ func _make_theme_toggle_button(size: Vector2) -> Button:
 	return button
 
 
+func _make_language_toggle_button(size: Vector2) -> Button:
+	var button := _make_pill_button(_get_language_toggle_label(), size, Callable(self, "_on_toggle_language_pressed"))
+	button.tooltip_text = _get_language_toggle_tooltip()
+	return button
+
+
 func _build_ui() -> void:
 	var portrait_layout := _is_portrait_layout()
 	var root := MarginContainer.new()
@@ -492,7 +617,7 @@ func _build_ui() -> void:
 		_make_pill_button("玩家名帖", _v(152.0, 54.0), Callable(self, "_show_profile")),
 		_make_pill_button("关于字海", _v(136.0, 54.0), Callable(self, "_show_about")),
 		_make_theme_toggle_button(_v(94.0, 54.0)),
-		_make_static_pill("EN", _v(78.0, 54.0))
+		_make_language_toggle_button(_v(78.0, 54.0))
 	]
 	for button in top_buttons:
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL if portrait_layout else 0
@@ -898,7 +1023,7 @@ func _build_about_overlay() -> void:
 	footer_row.add_child(theme_button)
 
 	var close_button := Button.new()
-	close_button.text = "返回启动器"
+	close_button.text = _localize_text("返回启动器")
 	close_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	close_button.custom_minimum_size = _v(0.0, 52.0)
 	close_button.add_theme_font_override("font", title_font)
@@ -1005,7 +1130,7 @@ func _build_cangjie_overlay() -> void:
 	footer_row.add_child(theme_button)
 
 	var close_button := Button.new()
-	close_button.text = "返回游戏选择"
+	close_button.text = _localize_text("返回游戏选择")
 	close_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	close_button.custom_minimum_size = _v(0.0, 52.0)
 	close_button.add_theme_font_override("font", title_font)
@@ -1030,10 +1155,13 @@ func _refresh_cangjie_portal() -> void:
 			active_section = section
 			break
 
-	cangjie_section_title_label.text = "%s  ·  %s" % [String(active_section.get("title", "")), String(active_section.get("eyebrow", ""))]
-	var lines: Array[String] = [String(active_section.get("summary", ""))]
+	cangjie_section_title_label.text = "%s  ·  %s" % [
+		_localize_text(String(active_section.get("title", ""))),
+		_localize_text(String(active_section.get("eyebrow", "")))
+	]
+	var lines: Array[String] = [_localize_text(String(active_section.get("summary", "")))]
 	for point in active_section.get("points", []):
-		lines.append("• %s" % String(point))
+		lines.append("• %s" % _localize_text(String(point)))
 	cangjie_section_body_label.text = "\n\n".join(lines)
 
 	for section_id in cangjie_nav_buttons.keys():
@@ -1102,7 +1230,7 @@ func _build_changelog_overlay() -> void:
 	footer_row.add_child(theme_button)
 
 	var close_button := Button.new()
-	close_button.text = "返回启动器"
+	close_button.text = _localize_text("返回启动器")
 	close_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	close_button.custom_minimum_size = _v(0.0, 52.0)
 	close_button.add_theme_font_override("font", title_font)
@@ -1233,7 +1361,7 @@ func _build_profile_overlay() -> void:
 	action_row.add_child(random_button)
 
 	var save_button := Button.new()
-	save_button.text = "保存署名"
+	save_button.text = _localize_text("保存署名")
 	save_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	save_button.custom_minimum_size = _v(0.0, 48.0)
 	save_button.add_theme_font_override("font", title_font)
@@ -1403,7 +1531,7 @@ func _make_changelog_section_card(title: String, items: Array, accent: Color) ->
 func _make_text_input(placeholder_text: String) -> LineEdit:
 	var input := LineEdit.new()
 	input.custom_minimum_size = _v(0.0, 52.0)
-	input.placeholder_text = placeholder_text
+	input.placeholder_text = _localize_text(placeholder_text)
 	input.clear_button_enabled = true
 	input.add_theme_font_override("font", title_font)
 	input.add_theme_font_size_override("font_size", _i(20))
@@ -1418,7 +1546,7 @@ func _make_text_input(placeholder_text: String) -> LineEdit:
 
 func _make_label(text: String, font_size: int, color: Color) -> Label:
 	var label := Label.new()
-	label.text = text
+	label.text = _localize_text(text)
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	var settings := LabelSettings.new()
 	settings.font = title_font
@@ -1459,7 +1587,7 @@ func _make_button_style(fill_color: Color, radius: int) -> StyleBoxFlat:
 
 func _make_pill_button(text: String, size: Vector2, callback: Callable) -> Button:
 	var button := Button.new()
-	button.text = text
+	button.text = _localize_text(text)
 	button.custom_minimum_size = size
 	button.add_theme_font_override("font", title_font)
 	button.add_theme_font_size_override("font_size", _i(20))
@@ -1475,7 +1603,7 @@ func _make_static_pill(text: String, size: Vector2) -> PanelContainer:
 	var pill := PanelContainer.new()
 	pill.custom_minimum_size = size
 	pill.add_theme_stylebox_override("panel", _make_panel_style(Color(0.04, 0.06, 0.08, 0.76), Color(0.2, 0.26, 0.32, 0.56)))
-	var label := _make_label(text, 20, Color(0.98, 0.92, 0.82, 0.98))
+	var label := _make_label(_localize_text(text), 20, Color(0.98, 0.92, 0.82, 0.98))
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -1524,6 +1652,12 @@ func _build_floating_symbols() -> void:
 func _on_toggle_theme_pressed() -> void:
 	current_theme = "paper-ink" if current_theme == "night-ink" else "night-ink"
 	Session.set_launcher_theme(current_theme)
+	_rebuild_ui()
+
+
+func _on_toggle_language_pressed() -> void:
+	current_language = "zh" if _is_english() else "en"
+	Session.set_launcher_language(current_language)
 	_rebuild_ui()
 
 
@@ -1611,11 +1745,19 @@ func _refresh_profile_preview_from_input() -> void:
 	profile_preview_name_label.text = preview_name
 	profile_preview_glyph_label.text = _get_profile_monogram(preview_name)
 	if custom_name.is_empty():
-		profile_preview_copy_label.text = "当前仍使用设备默认侠名；保存自定义署名后，后续战绩会覆盖成这个名字。"
-		profile_hint_label.text = "如果不另外保存自定义署名，系统会继续使用本机默认侠名：%s" % device_alias
+		if _is_english():
+			profile_preview_copy_label.text = "The device is still using its default wuxia alias. Saving a custom alias will replace later records with this name."
+			profile_hint_label.text = "If you do not save a custom alias, the system will keep using this device default: %s" % device_alias
+		else:
+			profile_preview_copy_label.text = "当前仍使用设备默认侠名；保存自定义署名后，后续战绩会覆盖成这个名字。"
+			profile_hint_label.text = "如果不另外保存自定义署名，系统会继续使用本机默认侠名：%s" % device_alias
 	else:
-		profile_preview_copy_label.text = "当前默认署名会直接复用到之后的本地排行榜记录里。"
-		profile_hint_label.text = "清空或恢复默认后，会重新回退到本机默认侠名：%s" % device_alias
+		if _is_english():
+			profile_preview_copy_label.text = "The saved alias will be reused automatically for later local leaderboard entries."
+			profile_hint_label.text = "Clear or reset it to fall back to the device default again: %s" % device_alias
+		else:
+			profile_preview_copy_label.text = "当前默认署名会直接复用到之后的本地排行榜记录里。"
+			profile_hint_label.text = "清空或恢复默认后，会重新回退到本机默认侠名：%s" % device_alias
 
 
 func _on_profile_random_pressed() -> void:
@@ -1631,9 +1773,9 @@ func _on_profile_save_pressed() -> void:
 	var resolved_name := Session.set_preferred_leaderboard_name(profile_name_input.text)
 	var identity: Dictionary = Session.get_leaderboard_identity()
 	profile_name_input.text = String(identity.get("custom_name", ""))
-	var status_text := "已保存默认署名：%s" % resolved_name
+	var status_text := "Saved default alias: %s" % resolved_name if _is_english() else "已保存默认署名：%s" % resolved_name
 	if String(identity.get("custom_name", "")).is_empty():
-		status_text = "已恢复设备默认侠名：%s" % resolved_name
+		status_text = "Restored device default alias: %s" % resolved_name if _is_english() else "已恢复设备默认侠名：%s" % resolved_name
 	_refresh_profile_overlay(status_text)
 
 
@@ -1641,7 +1783,7 @@ func _on_profile_reset_pressed() -> void:
 	if profile_name_input != null:
 		profile_name_input.text = ""
 	var resolved_name := Session.clear_preferred_leaderboard_name()
-	_refresh_profile_overlay("已恢复设备默认侠名：%s" % resolved_name)
+	_refresh_profile_overlay("Restored device default alias: %s" % resolved_name if _is_english() else "已恢复设备默认侠名：%s" % resolved_name)
 
 
 func _get_profile_monogram(name: String) -> String:

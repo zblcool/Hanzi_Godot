@@ -11,6 +11,8 @@ const LOCAL_LEADERBOARD_LIMIT := 20
 const LEADERBOARD_NAME_LIMIT := 18
 const DEFAULT_LAUNCHER_THEME := "night-ink"
 const LAUNCHER_THEME_IDS := ["paper-ink", "night-ink"]
+const DEFAULT_LAUNCHER_LANGUAGE := "zh"
+const LAUNCHER_LANGUAGE_IDS := ["zh", "en"]
 const FALLBACK_RUN_NAME_SURNAMES := ["沈", "陆", "谢", "顾", "裴", "苏", "闻", "叶", "秦", "燕", "柳", "程"]
 const FALLBACK_RUN_NAME_GIVENS := ["孤舟", "青崖", "听雨", "照夜", "长风", "归云", "惊鸿", "秋水", "横雪", "寻梅", "渡川", "鸣泉"]
 const BATTLE_PERFORMANCE_MODES := ["performance", "balanced", "quality"]
@@ -620,6 +622,7 @@ var local_leaderboard_loaded: bool = false
 var last_recorded_leaderboard_run: Dictionary = {}
 var battle_settings: Dictionary = DEFAULT_BATTLE_SETTINGS.duplicate(true)
 var launcher_theme := DEFAULT_LAUNCHER_THEME
+var launcher_language := DEFAULT_LAUNCHER_LANGUAGE
 
 
 func _ready() -> void:
@@ -925,6 +928,16 @@ func set_launcher_theme(raw_theme: String) -> String:
 	return launcher_theme
 
 
+func get_launcher_language() -> String:
+	return _sanitize_launcher_language(launcher_language)
+
+
+func set_launcher_language(raw_language: String) -> String:
+	launcher_language = _sanitize_launcher_language(raw_language)
+	_save_launcher_theme()
+	return launcher_language
+
+
 func update_last_recorded_run_player_name(raw_name: String) -> String:
 	if last_recorded_leaderboard_run.is_empty():
 		return ""
@@ -1061,6 +1074,7 @@ func _save_battle_settings() -> void:
 
 func _load_launcher_theme() -> void:
 	launcher_theme = DEFAULT_LAUNCHER_THEME
+	launcher_language = DEFAULT_LAUNCHER_LANGUAGE
 
 	if not FileAccess.file_exists(LAUNCHER_THEME_PATH):
 		return
@@ -1072,6 +1086,7 @@ func _load_launcher_theme() -> void:
 	var parsed: Variant = JSON.parse_string(file.get_as_text())
 	if parsed is Dictionary:
 		launcher_theme = _sanitize_launcher_theme(String(parsed.get("theme", launcher_theme)))
+		launcher_language = _sanitize_launcher_language(String(parsed.get("language", launcher_language)))
 	elif parsed is String:
 		launcher_theme = _sanitize_launcher_theme(String(parsed))
 
@@ -1081,7 +1096,10 @@ func _save_launcher_theme() -> void:
 	if file == null:
 		return
 
-	file.store_string(JSON.stringify({"theme": launcher_theme}))
+	file.store_string(JSON.stringify({
+		"theme": launcher_theme,
+		"language": launcher_language
+	}))
 
 
 func _normalize_leaderboard_entry(raw_entry: Variant) -> Dictionary:
@@ -1217,6 +1235,12 @@ func _sanitize_launcher_theme(raw_theme: String) -> String:
 	if LAUNCHER_THEME_IDS.has(raw_theme):
 		return raw_theme
 	return DEFAULT_LAUNCHER_THEME
+
+
+func _sanitize_launcher_language(raw_language: String) -> String:
+	if LAUNCHER_LANGUAGE_IDS.has(raw_language):
+		return raw_language
+	return DEFAULT_LAUNCHER_LANGUAGE
 
 
 func _sort_local_leaderboard() -> void:

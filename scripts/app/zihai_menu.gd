@@ -22,6 +22,181 @@ const PAPER_THEME := {
 	"shadow": Color(0.18, 0.14, 0.1, 0.08),
 	"outline": Color(0.95, 0.92, 0.86, 0.4)
 }
+const MENU_EN_TEXT := {
+	"返回启动器": "Back to Launcher",
+	"人物志": "Character Archive",
+	"合字图谱": "Fusion Atlas",
+	"怪物图鉴": "Enemy Archive",
+	"玩家名帖": "Player Sigil",
+	"查看排行榜": "Leaderboard",
+	"直接开始": "Start Now",
+	"字海残卷": "Ink-Sea Remnant Scroll",
+	"先进入残卷，再决定谁来执笔。每名角色都会把同一套偏旁系统，写成完全不同的战斗节奏。": "Enter the remnant scroll first, then decide who will write it. The same radical system becomes a different battle rhythm for each hero.",
+	"可选执笔者": "Available Scribes",
+	"执笔者档案": "Scribe Dossier",
+	"执笔回应": "Scribe Response",
+	"起笔落点": "Opening Route",
+	"源稿字技（待迁移）": "Source Skill (Pending Migration)",
+	"当前只在菜单里保留 hanziHero 的字技预览，Godot 战斗内仍未接入独立主动输入。": "This menu currently keeps the hanziHero active-skill preview only as a reference. The Godot battle scene still does not have separate manual skill input.",
+	"残卷路线": "Scroll Route",
+	"把开卷补笔、中盘续写与砚台磨词顺序先记住，进入战斗后更容易判断本轮 build 该补哪一笔。": "Memorize the opening, midgame, and inkstone phrase order first so it is easier to choose your next build step in battle.",
+	"战斗轮廓": "Combat Outline",
+	"快速试阵": "Quick Test Runs",
+	"对照 web 原型保留第 10 / 20 波捷径，便于快速检查 HUD、混编敌潮与角色 build。试阵入口会单独写入试阵榜，不影响主卷榜。": "Wave 10 and wave 20 shortcuts remain for quick HUD, mixed-wave, and hero-build checks. Test entries go into a separate leaderboard and never affect the main scroll board.",
+	"标准入卷": "Standard Entry",
+	"试阵 · 第10波": "Test Run · Wave 10",
+	"压测 · 第20波": "Stress Run · Wave 20",
+	"把偏旁、成字与砚台磨词路线收进二级菜单，开局前就能快速确认成长链。": "Keep radicals, formed glyphs, and inkstone phrase routes inside the menu so you can review the growth chain before entering battle.",
+	"当前先集中展示已经接入的偏旁、合字等级、词技等级与独立武器偏旁。真正的磨词仍然发生在战场砚台旁。": "This screen currently focuses on migrated radicals, glyph levels, phrase levels, and the independent weapon radical. Actual phrase refinement still happens beside the battlefield inkstone.",
+	"把已经接入的执笔者档案收进二级菜单，进入残卷前先确认每名角色的身份与战斗轮廓。": "Keep the migrated hero dossiers inside the menu so you can confirm each fighter's identity and combat profile before entering the scroll.",
+	"文本直接取自当前 Godot 迁移版的角色数据，不额外编造尚未落地的职业或成长线。": "The text comes directly from the current Godot migration data and does not invent classes or growth lines that are not implemented yet.",
+	"残卷战绩": "Run Records",
+	"现在可以在二级菜单里直接查看本地排行榜，并顺手回看每局 build 走向，不必先打到结算页。": "You can now inspect the local leaderboard directly from the sub-menu and review each build path without first reaching the result screen.",
+	"像 source web 原型一样，先在菜单里维护这台设备的默认排行榜署名。结算页留空时，会自动复用这里的名字。": "Just like the source web prototype, keep the default leaderboard alias for this device inside the menu. Result screens reuse it automatically when left blank.",
+	"当前署名": "Current Alias",
+	"默认排行榜署名": "Default Leaderboard Alias",
+	"输入想显示的名字": "Enter the name you want to show",
+	"随机侠名": "Random Wuxia Name",
+	"保存署名": "Save Alias",
+	"恢复默认": "Restore Default",
+	"把已经接入的敌人谱系收进二级菜单，开局前先记住预警和应对重点。": "Keep the migrated enemy families inside the sub-menu so you can remember their warnings and counters before battle.",
+	"图鉴文本直接对应当前 Godot 迁移版已经写进战斗脚本的敌人行为，不额外虚构未接入兵种。": "Archive text maps directly to behaviors already implemented in the current Godot battle scripts instead of inventing unshipped units.",
+	"收起人物志": "Close Archive",
+	"收起图谱": "Close Atlas",
+	"收起图鉴": "Close Archive",
+	"墨线正在收束，字潮即将开启。": "Ink lines are closing. The glyph tide is about to begin.",
+	"卷中文字": "Text Within the Scroll",
+	"机动": "Mobility",
+	"气血": "Vitality",
+	"伤害": "Damage",
+	"射程": "Range",
+	"夜墨": "Night Ink",
+	"纸墨": "Paper Ink",
+	"切换到夜墨主题": "Switch to Night Ink theme",
+	"切换到纸墨主题": "Switch to Paper Ink theme"
+}
+const HERO_EN := {
+	"scholar": {
+		"name": "Scholar",
+		"title": "Ink Volley",
+		"role_label": "Ranged control",
+		"focus": "Collect radicals with steady pacing and bring fused glyphs online earlier.",
+		"tags": ["Lock-on", "Volley", "Stable fusion"],
+		"weapon": "Brush array / auto-targeting bolts",
+		"description": "Build radicals safely and hold the field open through steady ink volleys.",
+		"record_title": "A scholar who tests the scroll with words",
+		"record_body": "He treats the remnant scroll like a page that still answers back. Instead of forcing one solution, he wins by writing the board open through patience, coverage, and steady glyph growth.",
+		"record_excerpt": "Set down one stroke first, then see how the scroll answers.",
+		"record_source": "Remnant Scroll Notes",
+		"trait_label": "Blank Page Opening",
+		"trait_description": "Without the burden of frontline melee, he is best at nurturing any route from the first radical until a phrase art is ready.",
+		"active_skill_name": "Paperweight Array",
+		"active_skill_description": "Mirroring the hanziHero web prototype, the scholar slams down a paper array ahead of him to push enemies back and leave a protective glyph zone that damages and slows.",
+		"route_hint": "Secure the first formed glyph, then decide whether this run wants sustain, area control, or lock-on pressure. The scholar is strongest when one route gets written deep first.",
+		"progression_cards": [
+			{
+				"title": "Open the Scroll",
+				"description": "Without a fixed opener, follow the first drops into a stable clear or sustain line, then decide which glyph route this run should deepen.",
+				"tags": ["明", "海", "休"]
+			},
+			{
+				"title": "Midgame Continuation",
+				"description": "Once the first glyph stands, add crowd control or target pressure to keep safe distance instead of spreading into every side route.",
+				"tags": ["雷", "明", "海"]
+			},
+			{
+				"title": "Inkstone Phrase",
+				"description": "Refine the most reliable main route first so it can take over the midgame. The scholar prefers depth over even spread.",
+				"tags": ["明月", "海啸", "休养"]
+			}
+		],
+		"select_quotes": [
+			"Set down one stroke first, then see how the scroll answers.",
+			"The radicals will speak for themselves. I only need to write them down.",
+			"This run wants a steady hand. Let the glyphs grow into pressure."
+		]
+	},
+	"xia": {
+		"name": "Xia",
+		"title": "Longblade Assault",
+		"role_label": "Melee breaker",
+		"focus": "Push into the enemy tide and turn `刂` directly into weapon growth.",
+		"tags": ["Point-blank", "Burst", "Blade growth"],
+		"weapon": "Great blade / fan-shaped slash",
+		"description": "Cut open the tide up close. Each `刂` makes the blade line hit harder.",
+		"record_title": "One who writes the word xia by guarding others up close",
+		"record_body": "He is not a backline planner. He steps into the crowd, wins space with close-range slashes, and turns the remnant scroll into a promise delivered face to face.",
+		"record_excerpt": "What he says, he fulfills. What he promises, he sees through.",
+		"record_source": "Records of the Grand Historian",
+		"trait_label": "Close-Range Pressure",
+		"trait_description": "Higher vitality and point-blank slashes make him ideal for standing in the center of the tide and converting `刂`, endurance, and shockwave routes into control.",
+		"active_skill_name": "Severing Dash",
+		"active_skill_description": "Mirroring the hanziHero web prototype, Xia dashes and cleaves along the facing direction, briefly ignoring harm while cutting every enemy on the path.",
+		"route_hint": "First secure a glyph route that keeps melee space open, then use blade growth and shockwave skills to turn close-range risk into pressure.",
+		"progression_cards": [
+			{
+				"title": "Open the Scroll",
+				"description": "Because Xia starts with `亻 / 心`, look for `木` or `刂` early and form a first glyph that protects melee space or bursts the tide back.",
+				"tags": ["休", "忍"]
+			},
+			{
+				"title": "Build the Edge",
+				"description": "Once the close-range pocket is stable, add waves, lightning, or flame routes so the risk of diving in becomes forward pressure.",
+				"tags": ["海", "雷", "炎"]
+			},
+			{
+				"title": "Inkstone Phrase",
+				"description": "Use the inkstone first on the route that protects you or opens lanes for melee. Do not wait for every line to be complete.",
+				"tags": ["休养", "忍心", "海啸"]
+			}
+		],
+		"select_quotes": [
+			"Step closer. I will split this run open.",
+			"The word xia does not hide in the back. First drive the crowd away.",
+			"I will hold this scroll today. You just keep moving forward."
+		]
+	}
+}
+const RADICAL_EN := {
+	"亻": {"name": "person radical", "description": "Combine with `木` into `休`, leaning toward sustain and recovery."},
+	"木": {"name": "wood radical", "description": "The other half of `休`, and the route that keeps healing lines climbing."},
+	"日": {"name": "sun radical", "description": "Combine with `月` into `明` to strengthen your main damage tempo."},
+	"月": {"name": "moon radical", "description": "Advances the `明` route and pushes the weapon toward phrase arts sooner."},
+	"氵": {"name": "water radical", "description": "Combine with `每` into `海` for wave-based crowd clear."},
+	"每": {"name": "every base", "description": "Completes `海` and helps refine it into stronger sea phrase arts."},
+	"雨": {"name": "rain radical", "description": "Combine with `田` into `雷` for lock-on lightning and mid-field control."},
+	"田": {"name": "field frame", "description": "Completes `雷` and later refines into a lightning-rain field."},
+	"心": {"name": "heart radical", "description": "Combine with `刂` into `忍` and trade low health for fiercer pressure."},
+	"火": {"name": "fire radical", "description": "Two fires form `炎`, turning the area around you into a ring of flame shots."},
+	"刂": {"name": "blade radical", "description": "Both sharpens your weapon and combines with `心` into `忍`."}
+}
+const RECIPE_EN := {
+	"ming": {"title": "Sun-Moon Wheels", "description": "Strengthens your main attack rhythm and periodically releases twin pursuit wheels."},
+	"xiu": {"title": "Forest Rest", "description": "Heals over time and knocks back nearby enemies to stretch survivability."},
+	"hai": {"title": "Sea Tide", "description": "Detonates ink-wave ripples on a timer to clear nearby swarms."},
+	"lei": {"title": "Falling Thunder", "description": "Locks onto the nearest cluster and slams the mid-field with lightning."},
+	"ren": {"title": "Endurance Instinct", "description": "Below half health, gain attack speed, damage, and move speed together."},
+	"yan": {"title": "Flame Surge", "description": "Periodically sprays flame glyph volleys in all directions to burn open space."}
+}
+const WORD_EN := {
+	"ming_guang": {"title": "Moonbright Verse", "description": "Twin wheels add a moon-chasing volley and lift the main weapon with them."},
+	"xiu_yang": {"title": "Restful Phrase", "description": "Turns healing into stable sustain and raises the margin for mistakes."},
+	"hai_xiao": {"title": "Sea Howl", "description": "Refines the tide into a fiercer ink wave with shorter cycles and larger reach."},
+	"lei_yu": {"title": "Rain of Thunder", "description": "Lightning impacts spread into a rain field, turning burst into control."},
+	"ren_xin": {"title": "Ruthless Heart", "description": "When endurance triggers, recover health and cut out periodic aftershocks."},
+	"yan_chao": {"title": "Flame Surge Scroll", "description": "Makes flame volleys denser and faster, with scorching waves erupting on hit."}
+}
+const ENEMY_EN := {
+	"basic": {"name": "Night Thrall", "title": "Frontline Pursuit", "summary": "The base melee glyph spirit that walks straight in and forces constant repositioning.", "warning": "No extra tell. The danger comes from numbers and body collisions.", "counter": "Use them early to build radicals, but do not let them seal off your retreat path."},
+	"swift": {"name": "Swift Thrall", "title": "High-Speed Flank", "summary": "Moves faster and cuts into your side with more lateral motion.", "warning": "There is no obvious wind-up, but its path drifts and fills gaps quickly.", "counter": "Keep strafing and clear them first before they help surround you."},
+	"tank": {"name": "Ink Armor", "title": "Heavy Frontline", "summary": "Tough, large, and built to slow your clear while buying time for backliners.", "warning": "It mostly pressures through raw durability instead of unique skills.", "counter": "Do not get glued to it. Bleed it with area damage while you remove the backline."},
+	"archer": {"name": "Archer", "title": "Ranged Pressure", "summary": "Keeps its distance, strafes, and repeatedly fires projectiles from mid range.", "warning": "After a short wind-up in range, it fires a straight glyph arrow.", "counter": "Cut off its spacing first instead of taking a long duel from afar."},
+	"assassin": {"name": "Assassin", "title": "Piercing Dash", "summary": "Slides at mid range to find an angle, then suddenly lunges in a straight line.", "warning": "A short purple warning line appears on the ground before the dash.", "counter": "Cut diagonally away as soon as the line appears. Do not retreat along it."},
+	"cavalry": {"name": "Ink Cavalry", "title": "Heavy Charge", "summary": "Larger and heavier, it cuts across the arena with long straight charges.", "warning": "It draws a longer, wider route warning before charging and can briefly stun on hit.", "counter": "Step off the line first, then punish during the recovery after it rushes through."},
+	"ritualist": {"name": "Ritualist", "title": "Ground Array Pressure", "summary": "Keeps distance and places glyph circles that slowly carve up safe space.", "warning": "Circular warnings appear under you or nearby before turning into danger zones.", "counter": "Do not greed damage. Clear your footing first, then keep dragging the pack."},
+	"elite": {"name": "Elite", "title": "Rotating Skills", "summary": "Cycles explosions, volleys, flower spreads, and large charges to set the pace of mixed fights.", "warning": "Different skills have different warnings, especially the blast ring and charge.", "counter": "Track its rotation first so the second skill does not catch you while you clean the swarm."},
+	"boss": {"name": "Scroll Lord", "title": "Remnant Boss", "summary": "Layers forbidden arrays, fan volleys, straight charges, and cross-shaped ruptures together.", "warning": "The large arrays and charges are clearly telegraphed, while other volleys arrive after short wind-ups.", "counter": "Survive the large skills first, then chase damage during the gaps between boss patterns."}
+}
 
 var ui_font: Font
 var ui_scale := 1.0
@@ -30,6 +205,7 @@ var preview_motifs: Array[Dictionary] = []
 var selected_hero := "scholar"
 var hero_quote_indices: Dictionary = {}
 var current_theme := "night-ink"
+var current_language := "zh"
 
 var hero_panels: Dictionary = {}
 var detail_name_label: Label
@@ -81,6 +257,7 @@ func _ready() -> void:
 	ui_font = CJKFont.get_font()
 	selected_hero = Session.selected_hero
 	current_theme = Session.get_launcher_theme()
+	current_language = Session.get_launcher_language()
 	_build_floating_symbols()
 	get_viewport().size_changed.connect(_on_viewport_size_changed)
 	_rebuild_ui()
@@ -297,16 +474,36 @@ func _is_paper_theme() -> bool:
 	return current_theme == "paper-ink"
 
 
+func _is_english() -> bool:
+	return current_language == "en"
+
+
 func _get_theme_palette() -> Dictionary:
 	return PAPER_THEME if _is_paper_theme() else NIGHT_THEME
 
 
 func _get_theme_toggle_label() -> String:
-	return "纸墨" if _is_paper_theme() else "夜墨"
+	return "Paper Ink" if _is_english() and _is_paper_theme() else ("Night Ink" if _is_english() else ("纸墨" if _is_paper_theme() else "夜墨"))
 
 
 func _get_theme_toggle_tooltip() -> String:
-	return "切换到夜墨主题" if _is_paper_theme() else "切换到纸墨主题"
+	return "Switch to Night Ink theme" if _is_english() and _is_paper_theme() else ("Switch to Paper Ink theme" if _is_english() else ("切换到夜墨主题" if _is_paper_theme() else "切换到纸墨主题"))
+
+
+func _get_language_toggle_label() -> String:
+	return "中" if _is_english() else "EN"
+
+
+func _get_language_toggle_tooltip() -> String:
+	return "切换到中文" if _is_english() else "Switch to English"
+
+
+func _localize_text(text: String) -> String:
+	if not _is_english():
+		return text
+	if text.begins_with("• "):
+		return "• %s" % _localize_text(text.substr(2))
+	return String(MENU_EN_TEXT.get(text, text))
 
 
 func _resolve_surface_fill(fill_color: Color) -> Color:
@@ -359,6 +556,12 @@ func _make_theme_toggle_button(size: Vector2) -> Button:
 	return button
 
 
+func _make_language_toggle_button(size: Vector2) -> Button:
+	var button := _make_pill_button(_get_language_toggle_label(), size, Callable(self, "_on_toggle_language_pressed"))
+	button.tooltip_text = _get_language_toggle_tooltip()
+	return button
+
+
 func _build_ui() -> void:
 	var portrait_layout := _is_portrait_layout()
 	var root := MarginContainer.new()
@@ -407,7 +610,7 @@ func _build_ui() -> void:
 		_make_pill_button("查看排行榜", _v(172.0, 54.0), Callable(self, "_on_leaderboard_pressed")),
 		_make_pill_button("直接开始", _v(152.0, 54.0), Callable(self, "_on_start_pressed")),
 		_make_theme_toggle_button(_v(94.0, 54.0)),
-		_make_static_pill("EN", _v(74.0, 54.0))
+		_make_language_toggle_button(_v(74.0, 54.0))
 	]
 	for button in top_buttons:
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL if portrait_layout else 0
@@ -463,7 +666,7 @@ func _build_ui() -> void:
 
 	for hero_variant in Session.HERO_ORDER:
 		var hero_id := String(hero_variant)
-		var hero_data: Dictionary = Session.get_hero_data(hero_id)
+		var hero_data: Dictionary = _localized_hero_data(hero_id)
 		var hero_card := _make_hero_card(hero_id, hero_data)
 		hero_panels[hero_id] = hero_card
 		cards_column.add_child(hero_card)
@@ -692,7 +895,7 @@ func _make_hero_card(hero_id: String, hero_data: Dictionary) -> PanelContainer:
 	text_col.add_theme_constant_override("separation", _i(8))
 	row.add_child(text_col)
 
-	text_col.add_child(_make_label("%s  ·  %s" % [String(hero_data["name"]), String(hero_data["title"])], 30, Color(1.0, 0.95, 0.86, 1.0)))
+	text_col.add_child(_make_label("%s  ·  %s" % [_localize_text(String(hero_data["name"])), _localize_text(String(hero_data["title"]))], 30, Color(1.0, 0.95, 0.86, 1.0)))
 	text_col.add_child(_make_label(String(hero_data["role_label"]), 18, accent))
 	text_col.add_child(_make_label(String(hero_data["description"]), 17, Color(0.91, 0.92, 0.9, 0.95)))
 
@@ -706,7 +909,8 @@ func _make_hero_card(hero_id: String, hero_data: Dictionary) -> PanelContainer:
 	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	text_col.add_child(spacer)
 
-	var select_button := _make_action_button("选择 %s" % String(hero_data["name"]), accent)
+	var select_label := "Choose %s" % String(hero_data["name"]) if _is_english() else "选择 %s" % String(hero_data["name"])
+	var select_button := _make_action_button(select_label, accent)
 	select_button.pressed.connect(func() -> void:
 		_on_select_hero(hero_id)
 	)
@@ -857,7 +1061,7 @@ func _make_stat_row(parent: VBoxContainer, title: String) -> Dictionary:
 
 func _make_action_button(text: String, accent: Color) -> Button:
 	var button := Button.new()
-	button.text = text
+	button.text = _localize_text(text)
 	button.custom_minimum_size = _v(0.0, 52.0)
 	button.add_theme_font_override("font", ui_font)
 	button.add_theme_font_size_override("font_size", _i(21))
@@ -879,7 +1083,7 @@ func _make_quick_start_button(text: String, accent: Color, callback: Callable) -
 
 func _make_label(text: String, font_size: int, color: Color) -> Label:
 	var label := Label.new()
-	label.text = text
+	label.text = _localize_text(text)
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	var settings := LabelSettings.new()
 	settings.font = ui_font
@@ -894,7 +1098,7 @@ func _make_label(text: String, font_size: int, color: Color) -> Label:
 func _make_text_input(placeholder_text: String) -> LineEdit:
 	var input := LineEdit.new()
 	input.custom_minimum_size = _v(0.0, 50.0)
-	input.placeholder_text = placeholder_text
+	input.placeholder_text = _localize_text(placeholder_text)
 	input.clear_button_enabled = true
 	input.add_theme_font_override("font", ui_font)
 	input.add_theme_font_size_override("font_size", _i(19))
@@ -963,7 +1167,7 @@ func _make_fill_style(fill_color: Color, radius: int) -> StyleBoxFlat:
 
 func _make_pill_button(text: String, size: Vector2, callback: Callable) -> Button:
 	var button := Button.new()
-	button.text = text
+	button.text = _localize_text(text)
 	button.custom_minimum_size = size
 	button.add_theme_font_override("font", ui_font)
 	button.add_theme_font_size_override("font_size", _i(19))
@@ -979,7 +1183,7 @@ func _make_static_pill(text: String, size: Vector2) -> PanelContainer:
 	var pill := PanelContainer.new()
 	pill.custom_minimum_size = size
 	pill.add_theme_stylebox_override("panel", _make_panel_style(Color(0.04, 0.06, 0.08, 0.78), Color(0.2, 0.26, 0.32, 0.54)))
-	var label := _make_label(text, 18, Color(0.98, 0.92, 0.82, 0.98))
+	var label := _make_label(_localize_text(text), 18, Color(0.98, 0.92, 0.82, 0.98))
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -1479,37 +1683,101 @@ func _build_transition_overlay() -> void:
 	box.add_child(_make_label("墨线正在收束，字潮即将开启。", 18, Color(0.96, 0.82, 0.54, 0.92)))
 
 
+func _localized_hero_data(hero_id: String) -> Dictionary:
+	var hero := Session.get_hero_data(hero_id).duplicate(true)
+	if not _is_english():
+		return hero
+	var patch: Dictionary = HERO_EN.get(hero_id, {})
+	for key in patch.keys():
+		hero[key] = patch[key]
+	return hero
+
+
+func _localized_recipe_data(recipe_id: String) -> Dictionary:
+	var recipe := Session.get_recipe_data(recipe_id).duplicate(true)
+	if not _is_english():
+		return recipe
+	var patch: Dictionary = RECIPE_EN.get(recipe_id, {})
+	for key in patch.keys():
+		recipe[key] = patch[key]
+	return recipe
+
+
+func _localized_word_data(word_id: String) -> Dictionary:
+	var word := Session.get_word_data(word_id).duplicate(true)
+	if not _is_english():
+		return word
+	var patch: Dictionary = WORD_EN.get(word_id, {})
+	for key in patch.keys():
+		word[key] = patch[key]
+	return word
+
+
+func _localized_radical_data(radical: String) -> Dictionary:
+	var radical_data := Session.get_radical_data(radical).duplicate(true)
+	if not _is_english():
+		return radical_data
+	var patch: Dictionary = RADICAL_EN.get(radical, {})
+	for key in patch.keys():
+		radical_data[key] = patch[key]
+	return radical_data
+
+
+func _localized_enemy_data(enemy_id: String) -> Dictionary:
+	var enemy := Session.get_enemy_data(enemy_id).duplicate(true)
+	if not _is_english():
+		return enemy
+	var patch: Dictionary = ENEMY_EN.get(enemy_id, {})
+	for key in patch.keys():
+		enemy[key] = patch[key]
+	return enemy
+
+
 func _build_recipe_atlas_text() -> String:
-	var lines: Array[String] = [
-		"偏旁先补齐成字，成字满级后再去砚台磨成词技。",
-		"进入残卷前先看一眼路线，升级三选一时会更容易判断当前该补哪一笔。",
-		""
-	]
+	var lines: Array[String]
+	if _is_english():
+		lines = [
+			"Complete radicals into formed glyphs first, then refine them into phrase arts at the inkstone once they are maxed.",
+			"Review the route before entering battle so each three-choice level-up is easier to judge.",
+			""
+		]
+	else:
+		lines = [
+			"偏旁先补齐成字，成字满级后再去砚台磨成词技。",
+			"进入残卷前先看一眼路线，升级三选一时会更容易判断当前该补哪一笔。",
+			""
+		]
 	for recipe_id_variant in Session.RECIPE_ORDER:
 		var recipe_id := String(recipe_id_variant)
-		var recipe: Dictionary = Session.get_recipe_data(recipe_id)
+		var recipe: Dictionary = _localized_recipe_data(recipe_id)
 		var radicals: Array = recipe.get("radicals", [])
 		var radical_texts: Array[String] = []
 		for radical_variant in radicals:
 			var radical := String(radical_variant)
-			var radical_data: Dictionary = Session.get_radical_data(radical)
+			var radical_data: Dictionary = _localized_radical_data(radical)
 			radical_texts.append("%s %s" % [radical, String(radical_data.get("name", ""))])
 
 		var word_id := String(recipe.get("word_id", ""))
 		var word: Dictionary = {}
 		if word_id != "":
-			word = Session.get_word_data(word_id)
+			word = _localized_word_data(word_id)
 
 		lines.append("%s  %s" % [String(recipe.get("display", "")), " + ".join(radical_texts)])
-		lines.append("成字：%s  Lv.%d" % [String(recipe.get("title", "")), int(recipe.get("max_level", 1))])
+		if _is_english():
+			lines.append("Glyph: %s  Lv.%d" % [String(recipe.get("title", "")), int(recipe.get("max_level", 1))])
+		else:
+			lines.append("成字：%s  Lv.%d" % [String(recipe.get("title", "")), int(recipe.get("max_level", 1))])
 		lines.append("  %s" % String(recipe.get("description", "")))
 		if not word.is_empty():
-			lines.append("磨词：%s  Lv.%d  砚台消耗 %d" % [String(word.get("title", "")), int(word.get("max_level", 1)), int(word.get("unlock_cost", 0))])
+			if _is_english():
+				lines.append("Phrase: %s  Lv.%d  Inkstone cost %d" % [String(word.get("title", "")), int(word.get("max_level", 1)), int(word.get("unlock_cost", 0))])
+			else:
+				lines.append("磨词：%s  Lv.%d  砚台消耗 %d" % [String(word.get("title", "")), int(word.get("max_level", 1)), int(word.get("unlock_cost", 0))])
 			lines.append("  %s" % String(word.get("description", "")))
 		lines.append("")
 
-	var blade_data: Dictionary = Session.get_radical_data("刂")
-	lines.append("独立偏旁")
+	var blade_data: Dictionary = _localized_radical_data("刂")
+	lines.append("Independent Radical" if _is_english() else "独立偏旁")
 	lines.append("刂  %s" % String(blade_data.get("name", "")))
 	lines.append("  %s" % String(blade_data.get("description", "")))
 	return "\n".join(lines)
@@ -1519,22 +1787,24 @@ func _build_hero_opening_summary(hero: Dictionary) -> String:
 	var hero_id := String(hero.get("id", "scholar"))
 	var starting_radicals: Array[String] = Session.get_hero_starting_radicals(hero_id)
 	if starting_radicals.is_empty():
-		return "当前 Godot 保持无固定起手偏旁，第一批掉落更适合顺势决定这一局往哪条合字线转。"
+		return "The current Godot build keeps this hero without fixed opening radicals, so the first drops are meant to decide which fusion line the run should follow." if _is_english() else "当前 Godot 保持无固定起手偏旁，第一批掉落更适合顺势决定这一局往哪条合字线转。"
 	var radical_labels: Array[String] = []
 	for radical in starting_radicals:
-		var radical_data: Dictionary = Session.get_radical_data(radical)
+		var radical_data: Dictionary = _localized_radical_data(radical)
 		radical_labels.append("%s %s" % [radical, String(radical_data.get("name", ""))])
-	return "当前 Godot 会带着 %s 入卷，让这名执笔者更早摸到自己的开场路线。" % " / ".join(radical_labels)
+	return "This Godot build starts with %s, letting the hero reach their opening route earlier." % " / ".join(radical_labels) if _is_english() else "当前 Godot 会带着 %s 入卷，让这名执笔者更早摸到自己的开场路线。" % " / ".join(radical_labels)
 
 
 func _build_hero_starting_tags(hero: Dictionary) -> Array[String]:
 	var hero_id := String(hero.get("id", "scholar"))
 	var starting_radicals: Array[String] = Session.get_hero_starting_radicals(hero_id)
 	if starting_radicals.is_empty():
-		return ["无固定起手"]
+		var fallback_tags: Array[String] = []
+		fallback_tags.append("No fixed opener" if _is_english() else "无固定起手")
+		return fallback_tags
 	var tags: Array[String] = []
 	for radical in starting_radicals:
-		var radical_data: Dictionary = Session.get_radical_data(radical)
+		var radical_data: Dictionary = _localized_radical_data(radical)
 		tags.append("%s %s" % [radical, String(radical_data.get("name", ""))])
 	return tags
 
@@ -1549,17 +1819,17 @@ func _build_hero_active_skill_headline(hero: Dictionary) -> String:
 	if not name.is_empty():
 		parts.append(name)
 	if cooldown > 0.0:
-		parts.append("%.1f 秒冷却" % cooldown)
+		parts.append("%.1fs cooldown" % cooldown if _is_english() else "%.1f 秒冷却" % cooldown)
 	if parts.is_empty():
-		return "当前还没有可对照的源稿字技条目。"
+		return "There is no matching source skill entry for this hero yet." if _is_english() else "当前还没有可对照的源稿字技条目。"
 	return " · ".join(parts)
 
 
 func _build_hero_active_skill_body(hero: Dictionary) -> String:
 	var description := String(hero.get("active_skill_description", "")).strip_edges()
 	if description.is_empty():
-		return "当前这名执笔者还没有额外记录到独立字技说明。"
-	return description
+		return "This hero does not yet have an extra source-skill note." if _is_english() else "当前这名执笔者还没有额外记录到独立字技说明。"
+	return _localize_text(description)
 
 
 func _make_progression_card(card: Dictionary, accent: Color, compact: bool = false) -> PanelContainer:
@@ -1662,10 +1932,10 @@ func _make_character_archive_card(hero: Dictionary) -> PanelContainer:
 	summary_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	summary_box.add_theme_constant_override("separation", _i(8))
 	head_row.add_child(summary_box)
-	summary_box.add_child(_make_label("%s  ·  %s" % [String(hero.get("name", "")), String(hero.get("title", ""))], 30, Color(1.0, 0.95, 0.86, 1.0)))
+	summary_box.add_child(_make_label("%s  ·  %s" % [_localize_text(String(hero.get("name", ""))), _localize_text(String(hero.get("title", "")))], 30, Color(1.0, 0.95, 0.86, 1.0)))
 	summary_box.add_child(_make_label(String(hero.get("role_label", "")), 18, accent))
 	summary_box.add_child(_make_label(String(hero.get("description", "")), 17, Color(0.9, 0.92, 0.95, 0.96)))
-	summary_box.add_child(_make_label("执笔焦点：%s" % String(hero.get("focus", "")), 16, Color(0.82, 0.9, 1.0, 0.94)))
+	summary_box.add_child(_make_label("Hero focus: %s" % String(hero.get("focus", "")) if _is_english() else "执笔焦点：%s" % String(hero.get("focus", "")), 16, Color(0.82, 0.9, 1.0, 0.94)))
 
 	var tag_row := HFlowContainer.new()
 	tag_row.add_theme_constant_override("h_separation", _i(10))
@@ -1826,7 +2096,7 @@ func _populate_character_archive_cards() -> void:
 		child.queue_free()
 	for hero_id_variant in Session.HERO_ORDER:
 		var hero_id := String(hero_id_variant)
-		var hero: Dictionary = Session.get_hero_data(hero_id)
+		var hero: Dictionary = _localized_hero_data(hero_id)
 		character_archive_cards_root.add_child(_make_character_archive_card(hero))
 
 
@@ -1835,28 +2105,36 @@ func _build_local_leaderboard_text(view: String = "manual", limit: int = 8) -> S
 	var entries: Array[Dictionary] = Session.get_local_leaderboard(limit, normalized_view)
 	if entries.is_empty():
 		if normalized_view == "test":
-			return "当前还没有试阵记录。用第 10 / 20 波捷径打一轮后，这里会单独留下试阵榜。"
-		return "当前还没有可展示的主卷战绩。下一次从第 1 波真正开卷后，这里会留下你的记录。"
+			return "There are no test-run records yet. Use the wave 10 or wave 20 shortcut once and this board will fill in separately." if _is_english() else "当前还没有试阵记录。用第 10 / 20 波捷径打一轮后，这里会单独留下试阵榜。"
+		return "There are no main-scroll results to show yet. Finish a true run from wave 1 and your record will appear here." if _is_english() else "当前还没有可展示的主卷战绩。下一次从第 1 波真正开卷后，这里会留下你的记录。"
 
 	var lines: Array[String] = []
 	if normalized_view == "test":
-		lines.append("试阵榜会单独记录第 10 / 20 波捷径，不与主卷榜混排。")
+		lines.append("Test runs keep wave 10 and wave 20 shortcuts on a separate board." if _is_english() else "试阵榜会单独记录第 10 / 20 波捷径，不与主卷榜混排。")
 	else:
-		lines.append("主卷榜只统计从第 1 波真正开卷的正式战绩。")
+		lines.append("The main-scroll board only tracks full runs that begin at wave 1." if _is_english() else "主卷榜只统计从第 1 波真正开卷的正式战绩。")
 	lines.append("")
 	for index in range(entries.size()):
 		var entry: Dictionary = entries[index]
-		var run_label := "试阵 W%d" % int(entry.get("start_wave", 1))
+		var run_label := "Test W%d" % int(entry.get("start_wave", 1)) if _is_english() else "试阵 W%d" % int(entry.get("start_wave", 1))
 		if normalized_view == "manual":
-			run_label = "定卷" if bool(entry.get("chapter_complete", false)) else "残卷"
+			run_label = ("Completed" if bool(entry.get("chapter_complete", false)) else "Scroll") if _is_english() else ("定卷" if bool(entry.get("chapter_complete", false)) else "残卷")
+		var bosses_label := "Bosses" if _is_english() else "卷主"
+		var threat_label := "Wave" if _is_english() else "波次"
+		var kills_label := "Kills" if _is_english() else "击破"
+		var elapsed_label := "Time" if _is_english() else "存活"
 		lines.append(
-			"%d. %s  %s  卷主 %d  波次 %d  击破 %d  存活 %s" % [
+			"%d. %s  %s  %s %d  %s %d  %s %d  %s %s" % [
 				index + 1,
 				_format_leaderboard_identity(entry),
 				run_label,
+				bosses_label,
 				int(entry.get("bosses", 0)),
+				threat_label,
 				int(entry.get("threat", 1)),
+				kills_label,
 				int(entry.get("kills", 0)),
+				elapsed_label,
 				_format_elapsed(float(entry.get("elapsed", 0.0)))
 			]
 		)
@@ -1883,13 +2161,13 @@ func _refresh_leaderboard_overlay() -> void:
 		leaderboard_view = _normalize_leaderboard_view(leaderboard_view)
 
 	if leaderboard_view == "test":
-		leaderboard_summary_label.text = "试阵榜单独收录第 10 / 20 波捷径，方便检查敌潮、build 与 HUD；每条记录下方也会补充本轮偏旁 / 成字 / 词技与击倒构成。"
+		leaderboard_summary_label.text = "The test board keeps wave 10 and wave 20 shortcuts separate so you can inspect enemy mixes, builds, and HUD behavior. Each entry also lists the run's radicals, glyphs, phrase arts, and kill spread." if _is_english() else "试阵榜单独收录第 10 / 20 波捷径，方便检查敌潮、build 与 HUD；每条记录下方也会补充本轮偏旁 / 成字 / 词技与击倒构成。"
 	else:
-		leaderboard_summary_label.text = "主卷榜只收从第 1 波真正开卷的战绩；条目下方会顺带标出偏旁 / 成字 / 词技和主要击倒构成，方便开局前回看 build 方向。"
+		leaderboard_summary_label.text = "The main-scroll board only keeps real runs that start from wave 1. Each entry also shows radicals, glyphs, phrase arts, and the main kill spread so you can review build direction before the next run." if _is_english() else "主卷榜只收从第 1 波真正开卷的战绩；条目下方会顺带标出偏旁 / 成字 / 词技和主要击倒构成，方便开局前回看 build 方向。"
 
 	leaderboard_body_label.text = _build_local_leaderboard_text(leaderboard_view, 8)
-	_apply_leaderboard_view_button(leaderboard_manual_button, "主卷榜", manual_count, leaderboard_view == "manual")
-	_apply_leaderboard_view_button(leaderboard_test_button, "试阵榜", test_count, leaderboard_view == "test")
+	_apply_leaderboard_view_button(leaderboard_manual_button, "Main Board" if _is_english() else "主卷榜", manual_count, leaderboard_view == "manual")
+	_apply_leaderboard_view_button(leaderboard_test_button, "Test Board" if _is_english() else "试阵榜", test_count, leaderboard_view == "test")
 
 
 func _apply_leaderboard_view_button(button: Button, title: String, count: int, active: bool) -> void:
@@ -1911,7 +2189,7 @@ func _apply_leaderboard_view_button(button: Button, title: String, count: int, a
 
 func _format_leaderboard_identity(entry: Dictionary) -> String:
 	var player_name := String(entry.get("player_name", "")).strip_edges()
-	var hero_name := String(entry.get("hero_name", "书生")).strip_edges()
+	var hero_name := _localize_text(String(entry.get("hero_name", "书生")).strip_edges())
 	if player_name.is_empty():
 		return hero_name
 	if hero_name.is_empty():
@@ -1924,23 +2202,26 @@ func _build_local_leaderboard_detail_line(entry: Dictionary) -> String:
 
 	var radicals_text := _summarize_run_counts(entry.get("radicals", {}), Session.RADICAL_ORDER, "radical")
 	if not radicals_text.is_empty():
-		segments.append("偏旁 %s" % radicals_text)
+		segments.append("Radicals %s" % radicals_text if _is_english() else "偏旁 %s" % radicals_text)
 
 	var recipes_text := _summarize_run_counts(entry.get("recipes", {}), Session.RECIPE_ORDER, "recipe")
 	if not recipes_text.is_empty():
-		segments.append("成字 %s" % recipes_text)
+		segments.append("Glyphs %s" % recipes_text if _is_english() else "成字 %s" % recipes_text)
 
 	var words_text := _summarize_run_counts(entry.get("words", {}), Session.WORD_ORDER, "word")
 	if not words_text.is_empty():
-		segments.append("词技 %s" % words_text)
+		segments.append("Phrases %s" % words_text if _is_english() else "词技 %s" % words_text)
 
 	var blade_level: int = int(entry.get("blade_level", 0))
 	if blade_level > 0:
-		segments.append("%s Lv.%d" % ["剑势" if String(entry.get("hero_id", "scholar")) == "xia" else "笔锋", blade_level])
+		var blade_label := "Blade Arc" if String(entry.get("hero_id", "scholar")) == "xia" else "Brush Edge"
+		if not _is_english():
+			blade_label = "剑势" if String(entry.get("hero_id", "scholar")) == "xia" else "笔锋"
+		segments.append("%s Lv.%d" % [blade_label, blade_level])
 
 	var enemy_text := _summarize_enemy_kills(entry.get("enemy_kills", {}))
 	if not enemy_text.is_empty():
-		segments.append("击倒 %s" % enemy_text)
+		segments.append("Takedowns %s" % enemy_text if _is_english() else "击倒 %s" % enemy_text)
 
 	return " | ".join(segments)
 
@@ -2014,20 +2295,20 @@ func _normalize_leaderboard_view(view: String) -> String:
 
 func _build_enemy_archive_text() -> String:
 	var lines: Array[String] = [
-		"以下条目对应当前残卷里已经接入的敌人谱系、预警方式与最实用的临场处理思路。",
+		"The entries below describe enemy families, warnings, and counters that are already implemented in the current remnant scroll." if _is_english() else "以下条目对应当前残卷里已经接入的敌人谱系、预警方式与最实用的临场处理思路。",
 		""
 	]
 	for enemy_id_variant in Session.ENEMY_ORDER:
 		var enemy_id := String(enemy_id_variant)
-		var enemy: Dictionary = Session.get_enemy_data(enemy_id)
+		var enemy: Dictionary = _localized_enemy_data(enemy_id)
 		lines.append("%s  %s  ·  %s" % [
 			String(enemy.get("glyph", "")),
 			String(enemy.get("name", "")),
 			String(enemy.get("title", ""))
 		])
 		lines.append("  %s" % String(enemy.get("summary", "")))
-		lines.append("  预警：%s" % String(enemy.get("warning", "")))
-		lines.append("  应对：%s" % String(enemy.get("counter", "")))
+		lines.append("  Warning: %s" % String(enemy.get("warning", "")) if _is_english() else "  预警：%s" % String(enemy.get("warning", "")))
+		lines.append("  Counter: %s" % String(enemy.get("counter", "")) if _is_english() else "  应对：%s" % String(enemy.get("counter", "")))
 		lines.append("")
 	return "\n".join(lines)
 
@@ -2133,11 +2414,19 @@ func _refresh_profile_preview_from_input() -> void:
 	profile_preview_name_label.text = preview_name
 	profile_preview_glyph_label.text = _get_profile_monogram(preview_name)
 	if custom_name.is_empty():
-		profile_preview_copy_label.text = "当前仍使用设备默认侠名；保存自定义署名后，之后的战绩会直接切到这个名字。"
-		profile_hint_label.text = "如果不另外保存自定义署名，系统会继续沿用本机默认侠名：%s" % device_alias
+		if _is_english():
+			profile_preview_copy_label.text = "The device is still using its default wuxia alias. Saving a custom alias will switch later records to this name."
+			profile_hint_label.text = "If you do not save a custom alias, the system keeps using the device default: %s" % device_alias
+		else:
+			profile_preview_copy_label.text = "当前仍使用设备默认侠名；保存自定义署名后，之后的战绩会直接切到这个名字。"
+			profile_hint_label.text = "如果不另外保存自定义署名，系统会继续沿用本机默认侠名：%s" % device_alias
 	else:
-		profile_preview_copy_label.text = "当前默认署名会自动复用到之后的本地排行榜记录里。"
-		profile_hint_label.text = "清空或恢复默认后，会重新回退到本机默认侠名：%s" % device_alias
+		if _is_english():
+			profile_preview_copy_label.text = "The saved alias will be reused automatically for later local leaderboard records."
+			profile_hint_label.text = "Clear or reset it to fall back to the device default again: %s" % device_alias
+		else:
+			profile_preview_copy_label.text = "当前默认署名会自动复用到之后的本地排行榜记录里。"
+			profile_hint_label.text = "清空或恢复默认后，会重新回退到本机默认侠名：%s" % device_alias
 
 
 func _on_profile_random_pressed() -> void:
@@ -2153,9 +2442,9 @@ func _on_profile_save_pressed() -> void:
 	var resolved_name := Session.set_preferred_leaderboard_name(profile_name_input.text)
 	var identity: Dictionary = Session.get_leaderboard_identity()
 	profile_name_input.text = String(identity.get("custom_name", ""))
-	var status_text := "已保存默认署名：%s" % resolved_name
+	var status_text := "Saved default alias: %s" % resolved_name if _is_english() else "已保存默认署名：%s" % resolved_name
 	if String(identity.get("custom_name", "")).is_empty():
-		status_text = "已恢复设备默认侠名：%s" % resolved_name
+		status_text = "Restored device default alias: %s" % resolved_name if _is_english() else "已恢复设备默认侠名：%s" % resolved_name
 	_refresh_profile_overlay(status_text)
 
 
@@ -2163,7 +2452,7 @@ func _on_profile_reset_pressed() -> void:
 	if profile_name_input != null:
 		profile_name_input.text = ""
 	var resolved_name := Session.clear_preferred_leaderboard_name()
-	_refresh_profile_overlay("已恢复设备默认侠名：%s" % resolved_name)
+	_refresh_profile_overlay("Restored device default alias: %s" % resolved_name if _is_english() else "已恢复设备默认侠名：%s" % resolved_name)
 
 
 func _get_profile_monogram(name: String) -> String:
@@ -2274,20 +2563,26 @@ func _on_toggle_theme_pressed() -> void:
 	_rebuild_ui()
 
 
+func _on_toggle_language_pressed() -> void:
+	current_language = "zh" if _is_english() else "en"
+	Session.set_launcher_language(current_language)
+	_rebuild_ui()
+
+
 func _refresh_selection(trigger_reaction: bool = false) -> void:
 	Session.select_hero(selected_hero)
 	for hero_id_variant in hero_panels.keys():
 		var hero_id := String(hero_id_variant)
 		var panel: PanelContainer = hero_panels[hero_id]
-		var hero_data: Dictionary = Session.get_hero_data(hero_id)
+		var hero_data: Dictionary = _localized_hero_data(hero_id)
 		panel.add_theme_stylebox_override("panel", _make_card_style(hero_id == selected_hero, hero_data["accent"]))
 
-	var selected_data: Dictionary = Session.get_selected_hero()
+	var selected_data: Dictionary = _localized_hero_data(selected_hero)
 	var accent: Color = selected_data["accent"]
 	detail_name_label.text = "%s  ·  %s" % [String(selected_data["name"]), String(selected_data["title"])]
 	detail_role_label.text = "%s  ·  %s" % [String(selected_data["role_label"]), String(selected_data["weapon"])]
-	detail_weapon_label.text = "主战描述：%s" % String(selected_data["description"])
-	detail_desc_label.text = "战斗焦点：%s" % String(selected_data["focus"])
+	detail_weapon_label.text = "Primary profile: %s" % String(selected_data["description"]) if _is_english() else "主战描述：%s" % String(selected_data["description"])
+	detail_desc_label.text = "Combat focus: %s" % String(selected_data["focus"]) if _is_english() else "战斗焦点：%s" % String(selected_data["focus"])
 	var record_title := String(selected_data.get("record_title", "")).strip_edges()
 	var record_excerpt := String(selected_data.get("record_excerpt", "")).strip_edges()
 	var record_source := String(selected_data.get("record_source", "")).strip_edges()
@@ -2295,25 +2590,25 @@ func _refresh_selection(trigger_reaction: bool = false) -> void:
 	var trait_description := String(selected_data.get("trait_description", "")).strip_edges()
 	var route_hint := String(selected_data.get("route_hint", "")).strip_edges()
 	if record_title.is_empty():
-		detail_focus_label.text = "进入残卷后，同样的偏旁路线会因为角色武器而产生不同输出手感。"
+		detail_focus_label.text = "Once you enter the scroll, the same radical route feels different depending on the hero's weapon." if _is_english() else "进入残卷后，同样的偏旁路线会因为角色武器而产生不同输出手感。"
 	else:
-		detail_focus_label.text = "人物来路：%s" % record_title
+		detail_focus_label.text = "Origin: %s" % record_title if _is_english() else "人物来路：%s" % record_title
 	if trait_label.is_empty() and trait_description.is_empty():
 		detail_dossier_label.text = ""
 	elif trait_description.is_empty():
-		detail_dossier_label.text = "角色特性：%s" % trait_label
+		detail_dossier_label.text = "Trait: %s" % trait_label if _is_english() else "角色特性：%s" % trait_label
 	elif trait_label.is_empty():
-		detail_dossier_label.text = "角色特性：%s" % trait_description
+		detail_dossier_label.text = "Trait: %s" % trait_description if _is_english() else "角色特性：%s" % trait_description
 	else:
-		detail_dossier_label.text = "角色特性：%s · %s" % [trait_label, trait_description]
+		detail_dossier_label.text = "Trait: %s · %s" % [trait_label, trait_description] if _is_english() else "角色特性：%s · %s" % [trait_label, trait_description]
 	var quote_lines: Array[String] = []
 	if not route_hint.is_empty():
-		quote_lines.append("入卷建议：%s" % route_hint)
+		quote_lines.append("Run advice: %s" % route_hint if _is_english() else "入卷建议：%s" % route_hint)
 	if not record_excerpt.is_empty():
 		if record_source.is_empty():
-			quote_lines.append("摘句：%s" % record_excerpt)
+			quote_lines.append("Excerpt: %s" % record_excerpt if _is_english() else "摘句：%s" % record_excerpt)
 		else:
-			quote_lines.append("摘句：%s · %s" % [record_excerpt, record_source])
+			quote_lines.append("Excerpt: %s · %s" % [record_excerpt, record_source] if _is_english() else "摘句：%s · %s" % [record_excerpt, record_source])
 	detail_quote_label.text = "\n".join(quote_lines)
 
 	detail_preview_core.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.24, accent.g * 0.2, accent.b * 0.16, 0.94), Color(accent.r, accent.g, accent.b, 0.26)))
@@ -2353,7 +2648,7 @@ func _show_hero_reaction(hero_id: String, hero_data: Dictionary) -> void:
 			Color(accent.r, accent.g, accent.b, 0.34)
 		)
 	)
-	detail_reaction_label.text = "“%s”" % quote
+	detail_reaction_label.text = "“%s”" % _localize_text(quote)
 	reaction_time_remaining = HERO_REACTION_DURATION
 
 
@@ -2383,10 +2678,10 @@ func _set_stat_value(stat_id: String, value: float, max_value: float, format_tex
 func _start_battle_transition() -> void:
 	transition_busy = true
 	_hide_secondary_overlays()
-	var hero_data: Dictionary = Session.get_selected_hero()
+	var hero_data: Dictionary = _localized_hero_data(selected_hero)
 	transition_glyph_label.text = String(hero_data["glyph"])
-	transition_title_label.text = "残卷一·入墨"
-	transition_subtitle_label.text = "%s 执笔，落字入卷。" % String(hero_data["name"])
+	transition_title_label.text = "Scroll I · Inkfall" if _is_english() else "残卷一·入墨"
+	transition_subtitle_label.text = "%s enters the scroll and sets the first glyph." % String(hero_data["name"]) if _is_english() else "%s 执笔，落字入卷。" % String(hero_data["name"])
 	transition_overlay.visible = true
 	transition_overlay.modulate = Color(1.0, 1.0, 1.0, 0.0)
 	var tween := create_tween()
