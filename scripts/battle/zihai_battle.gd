@@ -1691,12 +1691,12 @@ func _pick_callout_line(pool: Array, history_key: String) -> String:
 	return selected
 
 
-func _show_battle_callout(title: String, text: String, accent: Color, log_prefix: String = "", duration: float = 3.1) -> void:
+func _show_battle_callout(title: String, text: String, accent: Color, log_prefix: String = "", duration: float = 3.1, detail: String = "") -> void:
 	var trimmed_text := text.strip_edges()
 	if trimmed_text.is_empty():
 		return
 	if hud != null and hud.has_method("show_callout"):
-		hud.show_callout(title, trimmed_text, accent, duration)
+		hud.show_callout(title, trimmed_text, accent, duration, detail.strip_edges())
 	var log_text := trimmed_text if log_prefix.is_empty() else "%s%s" % [log_prefix, trimmed_text]
 	_log_battle_event(log_text, accent)
 
@@ -1711,12 +1711,16 @@ func _show_hero_callout(context: String, duration: float = 3.2) -> void:
 	var localized_hero := _localized_hero_data(hero_data)
 	var hero_name := String(localized_hero.get("name", "Scribe" if _is_english() else "执笔者"))
 	var accent: Color = hero_data.get("accent", Color(0.92, 0.76, 0.48, 1.0))
+	var detail := ""
+	if context == "intro" and hud != null and hud.has_method("build_intro_callout_detail"):
+		detail = String(hud.build_intro_callout_detail())
 	_show_battle_callout(
 		("%s Responds" % hero_name) if _is_english() else "%s应声" % hero_name,
 		line,
 		accent,
 		("%s: " % hero_name) if _is_english() else "%s：" % hero_name,
-		duration
+		duration,
+		detail
 	)
 
 

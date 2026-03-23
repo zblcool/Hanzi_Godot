@@ -391,6 +391,7 @@ var guidance_text_label: Label
 var callout_panel: PanelContainer
 var callout_title_label: Label
 var callout_text_label: Label
+var callout_detail_label: Label
 var skills_panel: PanelContainer
 var compact_skill_panel: PanelContainer
 var compact_skill_chip_container: HFlowContainer
@@ -952,6 +953,30 @@ func build_intro_identity_reveal() -> Dictionary:
 	}
 
 
+func build_intro_callout_detail() -> String:
+	if configured_hero_data.is_empty():
+		return ""
+
+	var localized_hero := _localized_hero_data(configured_hero_data)
+	var detail_lines: Array[String] = []
+	var identity_parts: Array[String] = []
+	var writer_mark := String(localized_hero.get("trait_label", "")).strip_edges()
+	if writer_mark.is_empty():
+		writer_mark = String(localized_hero.get("focus", localized_hero.get("description", ""))).strip_edges()
+	if not writer_mark.is_empty():
+		identity_parts.append(("Mark · %s" if _is_english() else "印记 · %s") % writer_mark)
+	var route_seal := _build_primary_route_seal(localized_hero)
+	if not route_seal.is_empty():
+		identity_parts.append(("Route Seal · %s" if _is_english() else "路印 · %s") % route_seal)
+	if not identity_parts.is_empty():
+		detail_lines.append("  ·  ".join(identity_parts))
+
+	var source := String(localized_hero.get("record_source", "")).strip_edges()
+	if not source.is_empty():
+		detail_lines.append(("Source · %s" if _is_english() else "出处 · %s") % source)
+	return "\n".join(detail_lines)
+
+
 func _build_intro_opening_label(hero_id: String) -> String:
 	var starting_radicals: Array[String] = Session.get_hero_starting_radicals(hero_id)
 	if starting_radicals.is_empty():
@@ -1318,10 +1343,11 @@ func show_reveal(kicker: String, title: String, detail: String, accent: Color, g
 	reveal_time = reveal_duration
 
 
-func show_callout(title: String, text: String, accent: Color, duration: float = 3.0) -> void:
+func show_callout(title: String, text: String, accent: Color, duration: float = 3.0, detail: String = "") -> void:
 	if callout_panel == null:
 		return
 
+	var trimmed_detail := detail.strip_edges()
 	callout_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.14, accent.g * 0.14, accent.b * 0.18, 0.9), Color(accent.r, accent.g, accent.b, 0.54), 24))
 	if callout_title_label != null:
 		callout_title_label.text = title
@@ -1329,9 +1355,14 @@ func show_callout(title: String, text: String, accent: Color, duration: float = 
 	if callout_text_label != null:
 		callout_text_label.text = text
 		callout_text_label.add_theme_color_override("font_color", Color(0.98, 0.96, 0.91, 0.98))
+	if callout_detail_label != null:
+		callout_detail_label.visible = not trimmed_detail.is_empty()
+		callout_detail_label.text = trimmed_detail
+		callout_detail_label.add_theme_color_override("font_color", Color(accent.r * 0.18 + 0.72, accent.g * 0.18 + 0.76, accent.b * 0.16 + 0.78, 0.94))
 	callout_panel.visible = true
 	callout_panel.modulate = Color(1.0, 1.0, 1.0, 1.0)
 	callout_time = max(duration, 0.8)
+	_refresh_layout()
 
 
 func set_soundtrack(title: String, mood: String, cue: String, accent: Color, announce: bool = false) -> void:
@@ -2074,7 +2105,7 @@ func _build_ui() -> void:
 	compact_route_label = _make_label("墨守流  ·  开卷补笔", 13, Color(0.96, 0.82, 0.56, 0.9))
 	compact_box.add_child(compact_route_label)
 
-	callout_panel = _make_panel(Color(0.05, 0.07, 0.09, 0.84), Color(0.92, 0.69, 0.38, 0.42), Vector2(340.0, 92.0))
+	callout_panel = _make_panel(Color(0.05, 0.07, 0.09, 0.84), Color(0.92, 0.69, 0.38, 0.42), Vector2(340.0, 120.0))
 	callout_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	callout_panel.visible = false
 	top_right_stack.add_child(callout_panel)
@@ -2084,6 +2115,9 @@ func _build_ui() -> void:
 	callout_box.add_child(callout_title_label)
 	callout_text_label = _make_label("字潮翻动时，呼应会在这里出现。", 16, Color(0.98, 0.96, 0.91, 0.98))
 	callout_box.add_child(callout_text_label)
+	callout_detail_label = _make_label("印记 · 白纸起卷", 13, Color(0.9, 0.9, 0.96, 0.9), 2.0)
+	callout_detail_label.visible = false
+	callout_box.add_child(callout_detail_label)
 
 	objective_panel = _make_panel(Color(0.05, 0.07, 0.09, 0.76), Color(0.94, 0.7, 0.4, 0.6), Vector2(340.0, 150.0))
 	top_right_stack.add_child(objective_panel)
@@ -2310,7 +2344,10 @@ func _refresh_layout() -> void:
 	if compact_summary_panel != null:
 		compact_summary_panel.custom_minimum_size = Vector2(stack_width, 182.0 if micro_layout else (198.0 if web_tight_layout else 218.0))
 	if callout_panel != null:
-		callout_panel.custom_minimum_size = Vector2(stack_width, 78.0 if micro_layout else (84.0 if compact_layout else 88.0))
+		var callout_height := 78.0 if micro_layout else (84.0 if compact_layout else 88.0)
+		if callout_detail_label != null and callout_detail_label.visible:
+			callout_height += 28.0 if micro_layout else (32.0 if compact_layout else 36.0)
+		callout_panel.custom_minimum_size = Vector2(stack_width, callout_height)
 	if objective_panel != null:
 		objective_panel.custom_minimum_size = Vector2(stack_width, 204.0 if web_tight_layout else 230.0)
 	if skills_panel != null:
@@ -2553,6 +2590,7 @@ func _refresh_layout() -> void:
 	_set_label_font_size(compact_route_label, 12 if micro_layout else 13)
 	_set_label_font_size(callout_title_label, 13 if micro_layout else 14)
 	_set_label_font_size(callout_text_label, 14 if micro_layout else 16)
+	_set_label_font_size(callout_detail_label, 11 if micro_layout else (12 if compact_layout else 13))
 	_set_label_font_size(soundtrack_toast_title_label, 20 if micro_layout else (22 if web_tight_layout else 24))
 	_set_label_font_size(soundtrack_toast_detail_label, 13 if micro_layout else 15)
 	_set_label_font_size(tip_label, 16 if web_tight_layout else 18)
