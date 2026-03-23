@@ -3042,10 +3042,11 @@ func _build_local_leaderboard_detail_line(entry: Dictionary) -> String:
 
 
 func _build_local_leaderboard_time_zone_line(entry: Dictionary) -> String:
+	var leaderboard_content := FrontEndContent.menu_leaderboard_content()
 	var time_zone_text := Session.format_leaderboard_time_zone(entry)
 	if time_zone_text.is_empty():
 		return ""
-	return "Time Zone %s" % time_zone_text if _is_english() else "时区 %s" % time_zone_text
+	return _localize_text(String(leaderboard_content.get("time_zone_format", "时区 %s"))) % time_zone_text
 
 
 func _summarize_run_counts(raw_counts: Variant, order: Array, category: String) -> String:
