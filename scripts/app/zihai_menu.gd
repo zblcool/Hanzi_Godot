@@ -903,6 +903,54 @@ func _build_ui() -> void:
 	detail_reaction_label = _make_label("", 17, Color(0.96, 0.95, 0.9, 0.98))
 	reaction_box.add_child(detail_reaction_label)
 
+	var spotlight_context_panel := PanelContainer.new()
+	spotlight_context_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	spotlight_context_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.08, 0.12, 0.16, 0.72), Color(0.42, 0.68, 0.86, 0.26)))
+	spotlight_box.add_child(spotlight_context_panel)
+
+	var spotlight_context_margin := MarginContainer.new()
+	spotlight_context_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	spotlight_context_margin.add_theme_constant_override("margin_left", _i(14))
+	spotlight_context_margin.add_theme_constant_override("margin_top", _i(14))
+	spotlight_context_margin.add_theme_constant_override("margin_right", _i(14))
+	spotlight_context_margin.add_theme_constant_override("margin_bottom", _i(14))
+	spotlight_context_panel.add_child(spotlight_context_margin)
+
+	var spotlight_context_box := VBoxContainer.new()
+	spotlight_context_box.add_theme_constant_override("separation", _i(10))
+	spotlight_context_margin.add_child(spotlight_context_box)
+
+	var opening_box := VBoxContainer.new()
+	opening_box.add_theme_constant_override("separation", _i(6))
+	spotlight_context_box.add_child(opening_box)
+	opening_box.add_child(_make_label(String(page_content.get("opening_title", "起笔落点")), 14, Color(0.96, 0.82, 0.54, 0.88)))
+	detail_opening_label = _make_label("", 14, Color(0.88, 0.92, 0.96, 0.94))
+	opening_box.add_child(detail_opening_label)
+
+	detail_opening_radicals_row = HFlowContainer.new()
+	detail_opening_radicals_row.add_theme_constant_override("h_separation", _i(8))
+	detail_opening_radicals_row.add_theme_constant_override("v_separation", _i(8))
+	opening_box.add_child(detail_opening_radicals_row)
+
+	var source_skill_box := VBoxContainer.new()
+	source_skill_box.add_theme_constant_override("separation", _i(6))
+	spotlight_context_box.add_child(source_skill_box)
+	source_skill_box.add_child(_make_label(String(page_content.get("source_skill_title", "源稿字技（待迁移）")), 14, Color(0.96, 0.82, 0.54, 0.88)))
+	detail_source_skill_title_label = _make_label("", 15, Color(0.98, 0.95, 0.9, 0.98))
+	source_skill_box.add_child(detail_source_skill_title_label)
+	detail_source_skill_body_label = _make_label("", 14, Color(0.88, 0.92, 0.96, 0.94))
+	source_skill_box.add_child(detail_source_skill_body_label)
+	source_skill_box.add_child(_make_label(String(page_content.get("source_skill_note", "当前只在菜单里保留 hanziHero 的字技预览，Godot 战斗内仍未接入独立主动输入。")), 13, Color(0.82, 0.9, 1.0, 0.88)))
+
+	var build_route_box := VBoxContainer.new()
+	build_route_box.add_theme_constant_override("separation", _i(8))
+	spotlight_context_box.add_child(build_route_box)
+	build_route_box.add_child(_make_label(String(page_content.get("build_route_title", "源稿构筑方向")), 14, Color(0.96, 0.82, 0.54, 0.88)))
+	detail_build_route_cards_root = VBoxContainer.new()
+	detail_build_route_cards_root.add_theme_constant_override("separation", _i(8))
+	build_route_box.add_child(detail_build_route_cards_root)
+	build_route_box.add_child(_make_label(String(page_content.get("detail_archive_hint", "长说明和 build 路线请看人物志与图谱。")), 13, Color(0.82, 0.9, 1.0, 0.88)))
+
 	var support_row: BoxContainer = VBoxContainer.new() if portrait_layout else HBoxContainer.new()
 	support_row.add_theme_constant_override("separation", _i(12))
 	detail_side_column.add_child(support_row)
@@ -2183,6 +2231,47 @@ func _populate_build_route_cards(root: VBoxContainer, hero: Dictionary, accent: 
 				root.add_child(_make_build_route_card(card_variant as Dictionary, accent, compact))
 
 
+func _build_route_hint_text(card: Dictionary) -> String:
+	var glyph := String(card.get("glyph", "")).strip_edges()
+	var title := String(card.get("title", "")).strip_edges()
+	var subtitle := String(card.get("subtitle", "")).strip_edges()
+	var label := title
+	if not glyph.is_empty():
+		label = ("%s %s" % [glyph, title]).strip_edges()
+	if not subtitle.is_empty():
+		if label.is_empty():
+			label = subtitle
+		else:
+			label += " · %s" % subtitle
+	return label
+
+
+func _populate_detail_build_route_preview(root: VBoxContainer, hero: Dictionary, accent: Color) -> void:
+	if root == null:
+		return
+	for child in root.get_children():
+		child.queue_free()
+	var cards_variant: Variant = hero.get("build_route_cards", [])
+	if not (cards_variant is Array):
+		return
+	var cards: Array = cards_variant as Array
+	if cards.is_empty():
+		return
+	var first_card_variant: Variant = cards[0]
+	if first_card_variant is Dictionary:
+		root.add_child(_make_build_route_card(first_card_variant as Dictionary, accent, true))
+	if cards.size() <= 1:
+		return
+	var hint_row := HFlowContainer.new()
+	hint_row.add_theme_constant_override("h_separation", _i(8))
+	hint_row.add_theme_constant_override("v_separation", _i(8))
+	root.add_child(hint_row)
+	for index in range(1, cards.size()):
+		var card_variant: Variant = cards[index]
+		if card_variant is Dictionary:
+			hint_row.add_child(_make_tag(_build_route_hint_text(card_variant as Dictionary), Color(accent.r * 0.16, accent.g * 0.16, accent.b * 0.2, 0.88), Color(0.98, 0.95, 0.9, 0.96)))
+
+
 func _make_archive_stat_item(title: String, value: String, accent: Color) -> PanelContainer:
 	var panel := PanelContainer.new()
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -3083,6 +3172,18 @@ func _refresh_selection(trigger_reaction: bool = false) -> void:
 	detail_desc_label.text = String(selected_data["focus"])
 	detail_focus_label.text = _build_hero_stage_summary(selected_data)
 	detail_dossier_label.text = _localize_text(String(page_content.get("detail_archive_hint", "长说明和 build 路线请看人物志与图谱。")))
+	if detail_opening_label != null:
+		detail_opening_label.text = _build_hero_opening_summary(selected_data)
+	if detail_opening_radicals_row != null:
+		for child in detail_opening_radicals_row.get_children():
+			child.queue_free()
+		for tag_text in _build_hero_starting_tags(selected_data):
+			detail_opening_radicals_row.add_child(_make_tag(tag_text, Color(accent.r * 0.16, accent.g * 0.16, accent.b * 0.2, 0.88), Color(0.98, 0.95, 0.9, 0.96)))
+	if detail_source_skill_title_label != null:
+		detail_source_skill_title_label.text = _build_hero_active_skill_headline(selected_data)
+	if detail_source_skill_body_label != null:
+		detail_source_skill_body_label.text = _build_hero_active_skill_body(selected_data)
+	_populate_detail_build_route_preview(detail_build_route_cards_root, selected_data, accent)
 
 	var preview_theme := _preview_theme_for_hero(selected_data)
 	var body_color: Color = preview_theme["body"]
