@@ -969,6 +969,7 @@ const MENU_LEADERBOARD_CONTENT := {
 	"detail_blade_level_format": "%s Lv.%d",
 	"detail_takedowns": "击倒 %s",
 	"detail_joiner": " | ",
+	"recorded_on_format": "记录于 %s",
 	"time_zone_format": "时区 %s",
 	"enemy_kill_entry_format": "%s%d",
 	"enemy_kill_joiner": " "
@@ -1074,6 +1075,7 @@ const MENU_EN_TEXT := {
 	"成字：%s  Lv.%d": "Glyph: %s  Lv.%d",
 	"磨词：%s  Lv.%d  砚台消耗 %d": "Phrase: %s  Lv.%d  Inkstone cost %d",
 	"独立偏旁": "Independent Radical",
+	"记录于 %s": "Logged %s",
 	"当前还没有试阵记录。用第 10 / 20 波捷径打一轮后，这里会单独留下试阵榜。": "There are no test-run records yet. Use the wave 10 or wave 20 shortcut once and this board will fill in separately.",
 	"当前还没有可展示的主卷战绩。下一次从第 1 波真正开卷后，这里会留下你的记录。": "There are no main-scroll results to show yet. Finish a true run from wave 1 and your record will appear here.",
 	"试阵榜会单独记录第 10 / 20 波捷径，不与主卷榜混排。": "Test runs keep wave 10 and wave 20 shortcuts on a separate board.",

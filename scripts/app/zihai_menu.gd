@@ -2832,6 +2832,9 @@ func _build_local_leaderboard_text(view: String = "manual", limit: int = 8, sort
 		var detail_line := _build_local_leaderboard_detail_line(entry)
 		if not detail_line.is_empty():
 			lines.append(String(leaderboard_content.get("detail_prefix_format", "   %s")) % detail_line)
+		var recorded_line := _build_local_leaderboard_recorded_line(entry)
+		if not recorded_line.is_empty():
+			lines.append(String(leaderboard_content.get("detail_prefix_format", "   %s")) % recorded_line)
 		var time_zone_line := _build_local_leaderboard_time_zone_line(entry)
 		if not time_zone_line.is_empty():
 			lines.append(String(leaderboard_content.get("detail_prefix_format", "   %s")) % time_zone_line)
@@ -3050,6 +3053,14 @@ func _build_local_leaderboard_time_zone_line(entry: Dictionary) -> String:
 	if time_zone_text.is_empty():
 		return ""
 	return _localize_text(String(leaderboard_content.get("time_zone_format", "时区 %s"))) % time_zone_text
+
+
+func _build_local_leaderboard_recorded_line(entry: Dictionary) -> String:
+	var leaderboard_content := FrontEndContent.menu_leaderboard_content()
+	var recorded_date_text := Session.format_leaderboard_recorded_date(entry)
+	if recorded_date_text.is_empty():
+		return ""
+	return _localize_text(String(leaderboard_content.get("recorded_on_format", "记录于 %s"))) % recorded_date_text
 
 
 func _summarize_run_counts(raw_counts: Variant, order: Array, category: String) -> String:

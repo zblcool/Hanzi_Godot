@@ -1829,6 +1829,9 @@ func _build_local_leaderboard_text(view: String = "manual") -> String:
 		var detail_line := _build_local_leaderboard_detail_line(entry)
 		if not detail_line.is_empty():
 			lines.append("   %s" % detail_line)
+		var recorded_line := _build_local_leaderboard_recorded_line(entry)
+		if not recorded_line.is_empty():
+			lines.append("   %s" % recorded_line)
 		var time_zone_line := _build_local_leaderboard_time_zone_line(entry)
 		if not time_zone_line.is_empty():
 			lines.append("   %s" % time_zone_line)
@@ -1869,6 +1872,13 @@ func _build_local_leaderboard_time_zone_line(entry: Dictionary) -> String:
 	if time_zone_text.is_empty():
 		return ""
 	return "Time Zone %s" % time_zone_text if _is_english() else "时区 %s" % time_zone_text
+
+
+func _build_local_leaderboard_recorded_line(entry: Dictionary) -> String:
+	var recorded_date_text := Session.format_leaderboard_recorded_date(entry)
+	if recorded_date_text.is_empty():
+		return ""
+	return "Logged %s" % recorded_date_text if _is_english() else "记录于 %s" % recorded_date_text
 
 
 func _format_leaderboard_identity(entry: Dictionary) -> String:

@@ -959,6 +959,22 @@ func format_leaderboard_time_zone(entry: Dictionary) -> String:
 	return utc_offset_label
 
 
+func format_leaderboard_recorded_date(entry: Dictionary) -> String:
+	var recorded_at := int(entry.get("recorded_at", 0))
+	if recorded_at <= 0:
+		return ""
+	var utc_offset_minutes: Variant = _resolve_leaderboard_utc_offset_minutes(entry)
+	if utc_offset_minutes != null:
+		recorded_at += int(utc_offset_minutes) * 60
+	var datetime := Time.get_datetime_dict_from_unix_time(recorded_at)
+	var year := int(datetime.get("year", 0))
+	var month := int(datetime.get("month", 0))
+	var day := int(datetime.get("day", 0))
+	if year <= 0 or month <= 0 or day <= 0:
+		return ""
+	return "%04d-%02d-%02d" % [year, month, day]
+
+
 func get_battle_settings() -> Dictionary:
 	return battle_settings.duplicate(true)
 
