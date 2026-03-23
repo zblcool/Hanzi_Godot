@@ -2372,6 +2372,9 @@ func _build_local_leaderboard_text(view: String = "manual", limit: int = 8, sort
 		var detail_line := _build_local_leaderboard_detail_line(entry)
 		if not detail_line.is_empty():
 			lines.append(String(leaderboard_content.get("detail_prefix_format", "   %s")) % detail_line)
+		var time_zone_line := _build_local_leaderboard_time_zone_line(entry)
+		if not time_zone_line.is_empty():
+			lines.append(String(leaderboard_content.get("detail_prefix_format", "   %s")) % time_zone_line)
 		lines.append("")
 	while not lines.is_empty() and String(lines[lines.size() - 1]).is_empty():
 		lines.remove_at(lines.size() - 1)
@@ -2579,6 +2582,13 @@ func _build_local_leaderboard_detail_line(entry: Dictionary) -> String:
 		segments.append(_localize_text(String(leaderboard_content.get("detail_takedowns", "击倒 %s"))) % enemy_text)
 
 	return String(leaderboard_content.get("detail_joiner", " | ")).join(segments)
+
+
+func _build_local_leaderboard_time_zone_line(entry: Dictionary) -> String:
+	var time_zone_text := Session.format_leaderboard_time_zone(entry)
+	if time_zone_text.is_empty():
+		return ""
+	return "Time Zone %s" % time_zone_text if _is_english() else "时区 %s" % time_zone_text
 
 
 func _summarize_run_counts(raw_counts: Variant, order: Array, category: String) -> String:

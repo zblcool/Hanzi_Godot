@@ -813,6 +813,7 @@ func record_local_run(summary: Dictionary, hero_id: String = selected_hero) -> v
 	_ensure_local_leaderboard_loaded()
 
 	var recorded_at: int = int(Time.get_unix_time_from_system())
+	var time_zone_metadata := _build_record_time_zone_metadata()
 	var start_wave := maxi(1, int(summary.get("start_wave", 1)))
 	var leaderboard_view := _normalize_leaderboard_view(
 		String(summary.get("leaderboard_view", "")),
@@ -836,7 +837,9 @@ func record_local_run(summary: Dictionary, hero_id: String = selected_hero) -> v
 		"enemy_kills": summary.get("enemy_kills", {}),
 		"start_wave": start_wave,
 		"leaderboard_view": leaderboard_view,
-		"recorded_at": recorded_at
+		"recorded_at": recorded_at,
+		"time_zone": String(time_zone_metadata.get("time_zone", "")),
+		"utc_offset_minutes": time_zone_metadata.get("utc_offset_minutes", null)
 	})
 	if normalized_entry.is_empty():
 		last_recorded_leaderboard_run = {}
@@ -944,6 +947,16 @@ func clear_preferred_leaderboard_name() -> String:
 
 func generate_random_wuxia_name() -> String:
 	return _build_random_wuxia_name()
+
+
+func format_leaderboard_time_zone(entry: Dictionary) -> String:
+	var time_zone := _normalize_time_zone_name(entry.get("time_zone", entry.get("timeZone", "")))
+	var utc_offset_label := _format_utc_offset_label(_resolve_leaderboard_utc_offset_minutes(entry))
+	if not time_zone.is_empty() and not utc_offset_label.is_empty():
+		return "%s (%s)" % [time_zone, utc_offset_label]
+	if not time_zone.is_empty():
+		return time_zone
+	return utc_offset_label
 
 
 func get_battle_settings() -> Dictionary:
@@ -1173,7 +1186,9 @@ func _normalize_leaderboard_entry(raw_entry: Variant) -> Dictionary:
 		"enemy_kills": _normalize_run_counts(data.get("enemy_kills", {}), ENEMY_ORDER),
 		"start_wave": start_wave,
 		"leaderboard_view": leaderboard_view,
-		"recorded_at": recorded_at
+		"recorded_at": recorded_at,
+		"time_zone": _normalize_time_zone_name(data.get("time_zone", data.get("timeZone", ""))),
+		"utc_offset_minutes": _resolve_leaderboard_utc_offset_minutes(data)
 	}
 	return entry
 
@@ -1225,6 +1240,15 @@ func _build_random_wuxia_name() -> String:
 	]
 
 
+func _build_record_time_zone_metadata() -> Dictionary:
+	# Godot reports east-of-UTC bias in minutes, so Brisbane returns +600.
+	var raw_time_zone := Time.get_time_zone_from_system()
+	return {
+		"time_zone": _normalize_time_zone_name(raw_time_zone.get("name", "")),
+		"utc_offset_minutes": _normalize_utc_offset_minutes(raw_time_zone.get("bias", null))
+	}
+
+
 func _sanitize_leaderboard_name(raw_name: String) -> String:
 	var compact := raw_name.strip_edges().replace("\r", " ").replace("\n", " ").replace("\t", " ")
 	while compact.find("  ") != -1:
@@ -1232,6 +1256,59 @@ func _sanitize_leaderboard_name(raw_name: String) -> String:
 	if compact.length() > LEADERBOARD_NAME_LIMIT:
 		compact = compact.substr(0, LEADERBOARD_NAME_LIMIT)
 	return compact
+
+
+func _normalize_time_zone_name(raw_time_zone: Variant) -> String:
+	var normalized := String(raw_time_zone if raw_time_zone != null else "").strip_edges()
+	if normalized.length() > 64:
+		normalized = normalized.substr(0, 64)
+	return normalized
+
+
+func _normalize_utc_offset_minutes(raw_offset: Variant):
+	if raw_offset == null:
+		return null
+
+	var normalized: int
+	if raw_offset is int:
+		normalized = int(raw_offset)
+	elif raw_offset is float:
+		normalized = int(round(float(raw_offset)))
+	elif raw_offset is String:
+		var trimmed := String(raw_offset).strip_edges()
+		if trimmed.is_empty() or not trimmed.is_valid_float():
+			return null
+		normalized = int(round(trimmed.to_float()))
+	else:
+		return null
+
+	if abs(normalized) > 1440:
+		return null
+	return normalized
+
+
+func _resolve_leaderboard_utc_offset_minutes(data: Dictionary):
+	var local_offset: Variant = _normalize_utc_offset_minutes(
+		data.get("utc_offset_minutes", data.get("time_zone_offset_minutes", null))
+	)
+	if local_offset != null:
+		return local_offset
+
+	var legacy_js_offset: Variant = _normalize_utc_offset_minutes(data.get("timeZoneOffsetMinutes", null))
+	if legacy_js_offset != null:
+		return -int(legacy_js_offset)
+	return null
+
+
+func _format_utc_offset_label(raw_offset: Variant) -> String:
+	var normalized_offset: Variant = _normalize_utc_offset_minutes(raw_offset)
+	if normalized_offset == null:
+		return ""
+
+	var total_minutes := int(normalized_offset)
+	var sign := "+" if total_minutes >= 0 else "-"
+	var absolute_minutes: int = abs(total_minutes)
+	return "UTC%s%02d:%02d" % [sign, absolute_minutes / 60, absolute_minutes % 60]
 
 
 func _normalize_run_counts(raw_counts: Variant, order: Array) -> Dictionary:

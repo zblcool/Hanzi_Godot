@@ -70,6 +70,7 @@ Status legend:
 ## Progression
 
 - `[done]` Local leaderboard persistence with player naming, hero, bosses, kills, radicals, recipes, words, and enemy counts. Notes: hanziHero already records local runs; Godot mirrors that in `user://local_leaderboard.json`.
+- `[done]` Leaderboard time-zone metadata in local run records. Notes: the source web prototype keeps each run's time zone and UTC offset for cross-region testing; Godot now saves the system zone/offset with each local record and surfaces it in both menu-side and result-side leaderboard views.
 - `[done]` Word-grind gating at the inkstone rather than passive auto-unlock. Notes: the source moved word skills behind an explicit station interaction; Godot follows that rule.
 - `[done]` Dedicated test-run leaderboard view. Notes: hanziHero keeps separate main/test boards; Godot now records wave 10 / 20 shortcuts into a dedicated `试阵榜` while keeping wave 1 runs on the main board.
 - `[pending]` Cloud leaderboard sync. Notes: hanziHero has online leaderboard plumbing; Godot only keeps local records today.
