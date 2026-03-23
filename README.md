@@ -20,6 +20,7 @@
 - 当前仓库主线已经落地 `字海残卷` 的 Godot 迁移链路：`启动器 -> 字海二级菜单 -> 3D 战斗`
 - `仓颉之路` 目前已经有独立的启动器 portal overlay，会预览 `起笔登塔 / Start Climb`、`卡牌字库`、`合字图谱`、`遗物架`、`战后抉择 / Post-Battle Flow`、`塔路导览`，并在入口页补上一段可点按的对峙舞台与本地 `3D 特效` 开关；但还没有在这个仓库里落成独立可玩的 Godot 场景
 - Web 导出通过 `./scripts/export_web.sh` 生成到 `build/index.html`，`vercel.json` 负责部署入口
+- 当前默认开发流程已经切到 `develop -> staging -> main`：`develop` 承接日常开发与自动化，`staging` 只做线上验收，`main` 保持稳定主干
 - `README.md`、`CHANGELOG.md`、`CONTRIBUTING.md` 持续同步当前迁移状态
 
 ## 启动器 / 首页现状
@@ -266,6 +267,25 @@
 - `仓颉之路` 的迁移前原型已经不是 barebones，而是有自己汉字 identity 的 deckbuilder 方向；当前 Godot 仓库里仍待后续接入
 - 整个项目现在最重要的价值，不只是“会显示汉字”，而是“汉字结构和语义已经变成玩法系统”
 
+## 开发与验收分支
+- 稳定主干：`main`
+- 线上验收分支：`staging`
+- 日常开发分支：`develop`
+- 历史遗留分支：`test`（暂时保留作回退参考，不再作为默认开发落点）
+
+配套脚本：
+- `./scripts/lan-preview.sh`：先导出 Godot Web 产物，再启动本地 / 局域网预览服务
+- `./scripts/promote-to-staging.sh`：把当前 `develop` 批次推进到 `staging`
+- `./scripts/vercel-ignored-build.sh`：给 Vercel Ignored Build Step 使用，只允许 `staging` 和 `main` 自动部署
+
+如果你只是想在局域网里让别的设备试玩，不需要推远端，直接运行：
+
+```bash
+./scripts/lan-preview.sh
+```
+
+更完整的日常流程见 [`SOP.md`](./SOP.md)。
+
 ## 当前 Godot 迁移最值得继续保留的核心
 优先保留这几条设计主轴：
 1. 首页启动器 -> 游戏二级菜单 -> 真正进入战斗 的层级体验
@@ -277,10 +297,19 @@
 7. 双语 / 学习向定位
 
 ## Vercel 预览部署
-- 仓库现在带了 `vercel.json`，把 GitHub 仓库接到 Vercel 之后，每次 push 都会自动触发一次 web 导出和部署。
+- 仓库现在带了 `vercel.json`，构建命令仍然是 `./scripts/export_web.sh`，输出目录仍然是 `build/`。
+- 推荐把 Vercel 的 Git 自动部署限制在 `staging` 和 `main`，不要让 `develop` 的每次 push 都触发线上导出。
+- 在 Vercel 项目设置里，把 Ignored Build Step 配成：
+
+```bash
+./scripts/vercel-ignored-build.sh
+```
+
+- 这样 `staging` 用来做线上验收，`main` 用来发正式版本，`develop` 继续承担日常开发和自动化推进。
 - 构建命令是 `./scripts/export_web.sh`；实际使用的 Web 导出预设保存在仓库根目录的 `export_presets.cfg` 中。脚本会先导入资源，再导出到 `build/index.html`，所以不需要把 `build/` 产物提交进仓库。
 - 本地在导出前可以先跑 `./scripts/smoke_test_scenes.sh`：它会先导入资源，再用独立的临时 Godot runtime 逐个无头启动 `scenes/` 下的场景，尽早发现缺脚本、缺资源或启动时报错。
 - 在 Linux / Vercel 环境里，脚本会自动下载 `Godot 4.6.1` 编辑器和 export templates；本地如果已经装了 Godot，则直接复用本机安装。
 - 如果需要临时切到别的 Godot 发布号，也可以覆盖脚本内置默认值，例如 `GODOT_VERSION=4.6.1-stable` 与 `GODOT_TEMPLATE_VERSION=4.6.1.stable`；这两个变量需要保持同一版本系。
 - 如果本地 Godot 不在默认路径，也可以直接这样跑：`GODOT_BIN=/path/to/Godot ./scripts/smoke_test_scenes.sh` 或 `GODOT_BIN=/path/to/Godot ./scripts/export_web.sh`。如需改导出目录，则可以用 `HANZI_EXPORT_DIR` 或 `HANZI_EXPORT_HTML` 覆盖默认输出位置。
 - 本地手动验证也可以直接跑同一条命令：`./scripts/export_web.sh`
+- 如果你想直接给同一局域网里的设备试玩，用 `./scripts/lan-preview.sh` 即可；默认会先导出，再在 `0.0.0.0` 上启动 HTTP 服务并打印局域网地址。
