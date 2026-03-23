@@ -235,9 +235,14 @@ var profile_preview_name_label: Label
 var profile_preview_glyph_label: Label
 var profile_preview_copy_label: Label
 var transition_overlay: Control
+var transition_panel: PanelContainer
+var transition_glyph_shell: PanelContainer
 var transition_glyph_label: Label
 var transition_title_label: Label
 var transition_subtitle_label: Label
+var transition_focus_label: Label
+var transition_tag_row: HFlowContainer
+var transition_note_label: Label
 var transition_busy: bool = false
 var reaction_time_remaining := 0.0
 var active_card_reaction_hero := ""
@@ -396,9 +401,14 @@ func _rebuild_ui() -> void:
 	profile_preview_glyph_label = null
 	profile_preview_copy_label = null
 	transition_overlay = null
+	transition_panel = null
+	transition_glyph_shell = null
 	transition_glyph_label = null
 	transition_title_label = null
 	transition_subtitle_label = null
+	transition_focus_label = null
+	transition_tag_row = null
+	transition_note_label = null
 	selection_pulse_time_remaining = 0.0
 	for child in get_children():
 		remove_child(child)
@@ -2232,10 +2242,10 @@ func _build_transition_overlay() -> void:
 	scrim.color = Color(0.02, 0.03, 0.04, 0.88)
 	transition_overlay.add_child(scrim)
 
-	var panel := PanelContainer.new()
-	_set_center_overlay_panel(panel, 680.0, 420.0 if portrait_layout else 340.0)
-	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.06, 0.08, 0.1, 0.96), Color(0.92, 0.68, 0.42, 0.72)))
-	transition_overlay.add_child(panel)
+	transition_panel = PanelContainer.new()
+	_set_center_overlay_panel(transition_panel, 760.0, 520.0 if portrait_layout else 390.0)
+	transition_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.06, 0.08, 0.1, 0.96), Color(0.92, 0.68, 0.42, 0.72)))
+	transition_overlay.add_child(transition_panel)
 
 	var margin := MarginContainer.new()
 	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -2243,27 +2253,37 @@ func _build_transition_overlay() -> void:
 	margin.add_theme_constant_override("margin_top", _i(24))
 	margin.add_theme_constant_override("margin_right", _i(30))
 	margin.add_theme_constant_override("margin_bottom", _i(24))
-	panel.add_child(margin)
+	transition_panel.add_child(margin)
 
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", _i(14))
 	margin.add_child(box)
 
-	var glyph_shell := PanelContainer.new()
-	glyph_shell.custom_minimum_size = _v(0.0, 116.0)
-	glyph_shell.add_theme_stylebox_override("panel", _make_panel_style(Color(0.14, 0.1, 0.08, 0.92), Color(0.92, 0.68, 0.42, 0.34)))
-	box.add_child(glyph_shell)
+	transition_glyph_shell = PanelContainer.new()
+	transition_glyph_shell.custom_minimum_size = _v(0.0, 116.0)
+	transition_glyph_shell.add_theme_stylebox_override("panel", _make_panel_style(Color(0.14, 0.1, 0.08, 0.92), Color(0.92, 0.68, 0.42, 0.34)))
+	box.add_child(transition_glyph_shell)
 	transition_glyph_label = _make_label(String(transition_content.get("glyph", "书")), 62, Color(1.0, 0.95, 0.86, 1.0))
 	transition_glyph_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	transition_glyph_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	transition_glyph_label.set_anchors_preset(Control.PRESET_FULL_RECT)
-	glyph_shell.add_child(transition_glyph_label)
+	transition_glyph_shell.add_child(transition_glyph_label)
 
 	transition_title_label = _make_label(String(transition_content.get("title", "残卷一·入墨")), 38, Color(1.0, 0.95, 0.86, 1.0))
 	transition_subtitle_label = _make_label(String(transition_content.get("subtitle", "执笔者正落字入卷。")), 20, Color(0.9, 0.92, 0.96, 0.96))
 	box.add_child(transition_title_label)
 	box.add_child(transition_subtitle_label)
-	box.add_child(_make_label(String(transition_content.get("note", "墨线正在收束，字潮即将开启。")), 18, Color(0.96, 0.82, 0.54, 0.92)))
+
+	transition_focus_label = _make_label("", 18, Color(0.96, 0.82, 0.54, 0.94))
+	box.add_child(transition_focus_label)
+
+	transition_tag_row = HFlowContainer.new()
+	transition_tag_row.add_theme_constant_override("h_separation", _i(8))
+	transition_tag_row.add_theme_constant_override("v_separation", _i(8))
+	box.add_child(transition_tag_row)
+
+	transition_note_label = _make_label(String(transition_content.get("note", "墨线正在收束，字潮即将开启。")), 17, Color(0.88, 0.92, 0.96, 0.92))
+	box.add_child(transition_note_label)
 
 
 func _localized_hero_data(hero_id: String) -> Dictionary:
@@ -2347,6 +2367,65 @@ func _build_hero_stage_summary(hero: Dictionary) -> String:
 		var radical_data: Dictionary = _localized_radical_data(radical)
 		radical_labels.append("%s %s" % [radical, String(radical_data.get("name", ""))])
 	return _localize_text(String(archive_content.get("stage_started_summary", "起手自带 %s。"))) % " / ".join(radical_labels)
+
+
+func _refresh_transition_overlay(hero: Dictionary, start_wave: int = 1) -> void:
+	if transition_overlay == null:
+		return
+	var transition_content := FrontEndContent.menu_transition_content()
+	var archive_content := FrontEndContent.menu_archive_content()
+	var accent: Color = hero.get("accent", Color(0.92, 0.68, 0.42, 1.0))
+	if transition_panel != null:
+		transition_panel.add_theme_stylebox_override(
+			"panel",
+			_make_panel_style(
+				Color(accent.r * 0.08, accent.g * 0.08, accent.b * 0.1, 0.96),
+				Color(accent.r, accent.g, accent.b, 0.64)
+			)
+		)
+	if transition_glyph_shell != null:
+		transition_glyph_shell.add_theme_stylebox_override(
+			"panel",
+			_make_panel_style(
+				Color(accent.r * 0.16, accent.g * 0.14, accent.b * 0.12, 0.92),
+				Color(accent.r, accent.g, accent.b, 0.34)
+			)
+		)
+	if transition_glyph_label != null:
+		transition_glyph_label.text = String(hero.get("glyph", transition_content.get("glyph", "书")))
+	if transition_title_label != null:
+		var preset: Dictionary = Session.get_quick_start_preset(start_wave)
+		var fallback_title := String(preset.get("title", transition_content.get("runtime_title", "残卷一·入墨")))
+		transition_title_label.text = HanziLocalization.localized_intro_title(start_wave, fallback_title, current_language)
+	if transition_subtitle_label != null:
+		transition_subtitle_label.text = _localize_text(String(transition_content.get("runtime_subtitle_format", "%s 执笔，落字入卷。"))) % String(hero.get("name", ""))
+	if transition_focus_label != null:
+		transition_focus_label.text = _localize_text(String(archive_content.get("focus_format", "执笔焦点：%s"))) % String(hero.get("focus", hero.get("description", "")))
+	if transition_note_label != null:
+		var route_hint := String(hero.get("route_hint", "")).strip_edges()
+		if route_hint.is_empty():
+			transition_note_label.text = _localize_text(String(transition_content.get("note", "墨线正在收束，字潮即将开启。")))
+		else:
+			transition_note_label.text = _localize_text(String(archive_content.get("route_hint_format", "入卷建议：%s"))) % route_hint
+	if transition_tag_row == null:
+		return
+	for child in transition_tag_row.get_children():
+		child.queue_free()
+	var tag_fill := Color(accent.r * 0.16, accent.g * 0.16, accent.b * 0.2, 0.88)
+	var tag_text_color := Color(0.98, 0.95, 0.9, 0.96)
+	for tag_text in _build_hero_starting_tags(hero):
+		transition_tag_row.add_child(_make_tag(tag_text, tag_fill, tag_text_color))
+	var route_cards_variant: Variant = hero.get("build_route_cards", [])
+	if route_cards_variant is Array:
+		var route_cards := route_cards_variant as Array
+		if not route_cards.is_empty() and route_cards[0] is Dictionary:
+			transition_tag_row.add_child(
+				_make_tag(
+					_build_route_hint_text(route_cards[0] as Dictionary),
+					Color(accent.r * 0.22, accent.g * 0.18, accent.b * 0.14, 0.9),
+					tag_text_color
+				)
+			)
 
 
 func _build_hero_starting_tags(hero: Dictionary) -> Array[String]:
@@ -3446,7 +3525,7 @@ func _start_with_wave(start_wave: int) -> void:
 	_hide_secondary_overlays()
 	Session.select_hero(selected_hero)
 	Session.prepare_battle_intro("zihai_menu", start_wave)
-	_start_battle_transition()
+	_start_battle_transition(start_wave)
 
 
 func _on_back_pressed() -> void:
@@ -3520,6 +3599,7 @@ func _refresh_selection(trigger_reaction: bool = false) -> void:
 		if source.is_empty():
 			source = String(selected_data.get("role_label", ""))
 		detail_preview_source_label.text = _localize_text(String(page_content.get("detail_preview_source_format", "出处 · %s"))) % source
+	_refresh_transition_overlay(selected_data)
 
 	var preview_theme := _preview_theme_for_hero(selected_data)
 	_apply_active_preview_theme(preview_theme, accent)
@@ -3611,14 +3691,11 @@ func _set_stat_value(stat_id: String, value: float, max_value: float, format_tex
 	bar.value = clamp(value / max_value * 100.0, 0.0, 100.0)
 
 
-func _start_battle_transition() -> void:
+func _start_battle_transition(start_wave: int = 1) -> void:
 	transition_busy = true
 	_hide_secondary_overlays()
 	var hero_data: Dictionary = _localized_hero_data(selected_hero)
-	var transition_content := FrontEndContent.menu_transition_content()
-	transition_glyph_label.text = String(hero_data["glyph"])
-	transition_title_label.text = _localize_text(String(transition_content.get("runtime_title", "残卷一·入墨")))
-	transition_subtitle_label.text = _localize_text(String(transition_content.get("runtime_subtitle_format", "%s 执笔，落字入卷。"))) % String(hero_data["name"])
+	_refresh_transition_overlay(hero_data, start_wave)
 	transition_overlay.visible = true
 	transition_overlay.modulate = Color(1.0, 1.0, 1.0, 0.0)
 	var tween := create_tween()
