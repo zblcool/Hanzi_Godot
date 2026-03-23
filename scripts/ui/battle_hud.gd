@@ -497,6 +497,17 @@ func _localize_text(text: String) -> String:
 	return FrontEndContent.localize_menu_text(text, true)
 
 
+func _battle_state_text(state_content: Dictionary, key: String, fallback_zh: String, fallback_en: String = "") -> String:
+	var entry_variant = state_content.get(key, {})
+	if entry_variant is Dictionary:
+		var entry := entry_variant as Dictionary
+		var fallback_text := fallback_en if _is_english() and not fallback_en.is_empty() else fallback_zh
+		return String(entry.get("en" if _is_english() else "zh", fallback_text))
+	if _is_english() and not fallback_en.is_empty():
+		return fallback_en
+	return fallback_zh
+
+
 func _localized_hero_data(hero_data: Dictionary) -> Dictionary:
 	return HanziLocalization.localized_hero_data(String(hero_data.get("id", "")), current_language)
 
@@ -1003,33 +1014,53 @@ func _build_route_hint_text(card: Dictionary) -> String:
 
 
 func _build_pause_state_body(elapsed: float, kills: int, threat: int, level: int) -> String:
+	var state_content := FrontEndContent.battle_state_content()
 	var lines: Array[String] = []
 	var compact_copy := _should_use_micro_layout() or _should_use_web_tight_layout()
 	if compact_copy:
-		lines.append("Current run" if _is_english() else "当前进度")
+		lines.append(_battle_state_text(state_content, "summary_title", "当前进度", "Current run"))
 		lines.append(
-			("Time %s  ·  W%d  ·  K%d  ·  Lv.%d" if _is_english() else "存活 %s  ·  波次 %d  ·  击破 %d  ·  Lv.%d")
+			_battle_state_text(
+				state_content,
+				"summary_compact_format",
+				"存活 %s  ·  波次 %d  ·  击破 %d  ·  Lv.%d",
+				"Time %s  ·  W%d  ·  K%d  ·  Lv.%d"
+			)
 			% [_format_time(elapsed), threat, kills, level]
 		)
 	else:
-		if _is_english():
-			lines.append("Current run")
-			lines.append("Time %s" % _format_time(elapsed))
-			lines.append("Wave %d   Kills %d   Level Lv.%d" % [threat, kills, level])
-		else:
-			lines.append("当前进度")
-			lines.append("存活 %s" % _format_time(elapsed))
-			lines.append("波次 %d   击破 %d   等级 Lv.%d" % [threat, kills, level])
+		lines.append(_battle_state_text(state_content, "summary_title", "当前进度", "Current run"))
+		lines.append(
+			_battle_state_text(state_content, "summary_time_format", "存活 %s", "Time %s")
+			% _format_time(elapsed)
+		)
+		lines.append(
+			_battle_state_text(
+				state_content,
+				"summary_stats_format",
+				"波次 %d   击破 %d   等级 Lv.%d",
+				"Wave %d   Kills %d   Level Lv.%d"
+			)
+			% [threat, kills, level]
+		)
 	var route_lines := _build_route_focus_state_lines(compact_copy)
 	if not route_lines.is_empty():
 		lines.append("")
 		lines.append_array(route_lines)
 	lines.append("")
-	lines.append("E / Esc resume · R restart" if _is_english() and compact_copy else ("按 E / Esc 继续，R 重开" if compact_copy else ("Press E or Esc to resume, or R to restart immediately." if _is_english() else "按 E 或 Esc 继续，按 R 立即重开。")))
+	lines.append(
+		_battle_state_text(
+			state_content,
+			"pause_controls_compact" if compact_copy else "pause_controls_full",
+			"按 E / Esc 继续，R 重开" if compact_copy else "按 E 或 Esc 继续，按 R 立即重开。",
+			"E / Esc resume · R restart" if compact_copy else "Press E or Esc to resume, or R to restart immediately."
+		)
+	)
 	return "\n".join(lines)
 
 
 func _build_game_over_state_body(summary: String, elapsed: float, kills: int, threat: int, level: int, leaderboard_view: String) -> String:
+	var state_content := FrontEndContent.battle_state_content()
 	var lines: Array[String] = []
 	var compact_copy := _should_use_micro_layout() or _should_use_web_tight_layout()
 	var leaderboard_content := FrontEndContent.local_leaderboard_content()
@@ -1039,11 +1070,28 @@ func _build_game_over_state_body(summary: String, elapsed: float, kills: int, th
 		lines.append("")
 	lines.append(_localize_text(String(leaderboard_content.get("result_label_test" if leaderboard_view == "test" else "result_label_manual", "本轮试阵" if leaderboard_view == "test" else "本轮残卷"))))
 	lines.append(
-		("Time %s  ·  W%d  ·  K%d  ·  Lv.%d" if _is_english() and compact_copy else ("存活 %s  ·  波次 %d  ·  击破 %d  ·  Lv.%d" if compact_copy else ("Time %s" if _is_english() else "存活 %s")))
+		(
+			_battle_state_text(
+				state_content,
+				"summary_compact_format",
+				"存活 %s  ·  波次 %d  ·  击破 %d  ·  Lv.%d",
+				"Time %s  ·  W%d  ·  K%d  ·  Lv.%d"
+			)
+			if compact_copy
+			else _battle_state_text(state_content, "summary_time_format", "存活 %s", "Time %s")
+		)
 		% ([_format_time(elapsed), threat, kills, level] if compact_copy else [_format_time(elapsed)])
 	)
 	if not compact_copy:
-		lines.append(("Wave %d   Kills %d   Level Lv.%d" if _is_english() else "波次 %d   击破 %d   等级 Lv.%d") % [threat, kills, level])
+		lines.append(
+			_battle_state_text(
+				state_content,
+				"summary_stats_format",
+				"波次 %d   击破 %d   等级 Lv.%d",
+				"Wave %d   Kills %d   Level Lv.%d"
+			)
+			% [threat, kills, level]
+		)
 	var route_lines := _build_route_focus_state_lines(compact_copy)
 	if not route_lines.is_empty():
 		lines.append("")
@@ -1485,6 +1533,7 @@ func hide_choice_overlay() -> void:
 
 
 func show_pause_menu(elapsed: float, kills: int, threat: int, level: int) -> void:
+	var state_content := FrontEndContent.battle_state_content()
 	hide_choice_overlay()
 	hide_map_overlay()
 	overlay_label.visible = false
@@ -1498,18 +1547,19 @@ func show_pause_menu(elapsed: float, kills: int, threat: int, level: int) -> voi
 		"level": level
 	}
 	state_mode = "pause"
-	state_title_label.text = "Inkfield Interlude" if _is_english() else "墨阵暂歇"
+	state_title_label.text = _battle_state_text(state_content, "pause_title", "墨阵暂歇", "Inkfield Interlude")
 	state_body_label.text = _build_pause_state_body(elapsed, kills, threat, level)
-	_configure_state_button(state_primary_button, "Resume Battle" if _is_english() else "继续战斗", Callable(self, "_emit_pause_resume"))
-	_configure_state_button(state_secondary_button, "Battle Setup" if _is_english() else "战场布置", Callable(self, "_show_settings_menu"))
-	_configure_state_button(state_tertiary_button, "Restart Run" if _is_english() else "重新开始", Callable(self, "_emit_restart"))
-	_configure_state_button(state_quaternary_button, "Return to Menu" if _is_english() else "返回菜单", Callable(self, "_emit_return_menu"))
+	_configure_state_button(state_primary_button, _battle_state_text(state_content, "action_resume_battle", "继续战斗", "Resume Battle"), Callable(self, "_emit_pause_resume"))
+	_configure_state_button(state_secondary_button, _battle_state_text(state_content, "action_open_settings", "战场布置", "Battle Setup"), Callable(self, "_show_settings_menu"))
+	_configure_state_button(state_tertiary_button, _battle_state_text(state_content, "action_restart_run", "重新开始", "Restart Run"), Callable(self, "_emit_restart"))
+	_configure_state_button(state_quaternary_button, _battle_state_text(state_content, "action_return_menu", "返回菜单", "Return to Menu"), Callable(self, "_emit_return_menu"))
 	_hide_state_button(state_quinary_button)
 	_hide_state_button(state_senary_button)
 	state_overlay.visible = true
 
 
 func show_chamber_transition(title: String, body: String, preview_lines: Array[String] = []) -> void:
+	var state_content := FrontEndContent.battle_state_content()
 	hide_choice_overlay()
 	hide_map_overlay()
 	overlay_label.visible = false
@@ -1518,9 +1568,9 @@ func show_chamber_transition(title: String, body: String, preview_lines: Array[S
 	state_title_label.text = title
 	state_body_label.text = body
 	_show_state_preview(_localize_text("下一段预览"), preview_lines)
-	_configure_state_button(state_primary_button, "Continue Deeper" if _is_english() else "续卷入深层", Callable(self, "_emit_pause_resume"))
-	_configure_state_button(state_secondary_button, "Restart Run" if _is_english() else "重新开始", Callable(self, "_emit_restart"))
-	_configure_state_button(state_tertiary_button, "Return to Menu" if _is_english() else "返回菜单", Callable(self, "_emit_return_menu"))
+	_configure_state_button(state_primary_button, _battle_state_text(state_content, "action_continue_deeper", "续卷入深层", "Continue Deeper"), Callable(self, "_emit_pause_resume"))
+	_configure_state_button(state_secondary_button, _battle_state_text(state_content, "action_restart_run", "重新开始", "Restart Run"), Callable(self, "_emit_restart"))
+	_configure_state_button(state_tertiary_button, _battle_state_text(state_content, "action_return_menu", "返回菜单", "Return to Menu"), Callable(self, "_emit_return_menu"))
 	_hide_state_button(state_quaternary_button)
 	_hide_state_button(state_quinary_button)
 	_hide_state_button(state_senary_button)
@@ -1528,6 +1578,7 @@ func show_chamber_transition(title: String, body: String, preview_lines: Array[S
 
 
 func show_chamber_interlude(title: String, body: String, options: Array[Dictionary], preview_lines: Array[String] = []) -> void:
+	var state_content := FrontEndContent.battle_state_content()
 	hide_choice_overlay()
 	hide_map_overlay()
 	overlay_label.visible = false
@@ -1551,8 +1602,8 @@ func show_chamber_interlude(title: String, body: String, options: Array[Dictiona
 		else:
 			_hide_state_button(option_button)
 
-	_configure_state_button(state_quaternary_button, "Restart Run" if _is_english() else "重新开始", Callable(self, "_emit_restart"))
-	_configure_state_button(state_quinary_button, "Return to Menu" if _is_english() else "返回菜单", Callable(self, "_emit_return_menu"))
+	_configure_state_button(state_quaternary_button, _battle_state_text(state_content, "action_restart_run", "重新开始", "Restart Run"), Callable(self, "_emit_restart"))
+	_configure_state_button(state_quinary_button, _battle_state_text(state_content, "action_return_menu", "返回菜单", "Return to Menu"), Callable(self, "_emit_return_menu"))
 	_hide_state_button(state_senary_button)
 	state_overlay.visible = true
 
@@ -1565,19 +1616,20 @@ func hide_state_overlay() -> void:
 
 
 func _show_settings_menu() -> void:
+	var state_content := FrontEndContent.battle_state_content()
 	state_mode = "settings"
-	state_title_label.text = "Battle Setup" if _is_english() else "战场布置"
+	state_title_label.text = _battle_state_text(state_content, "settings_title", "战场布置", "Battle Setup")
 	state_body_label.text = _build_settings_body()
 	_hide_state_name_editor()
 	_hide_state_preview()
 	overlay_label.visible = false
 	_hide_reveal()
-	_configure_state_button(state_primary_button, ("%s: %s" % ["Performance", _performance_mode_label()] if _is_english() else "演出档：%s" % _performance_mode_label()), Callable(self, "_cycle_performance_mode"))
-	_configure_state_button(state_secondary_button, ("%s: %s" % ["Glyph FX", _visual_effects_label()] if _is_english() else "视觉字效：%s" % _visual_effects_label()), Callable(self, "_toggle_visual_effects"))
-	_configure_state_button(state_tertiary_button, ("%s: %s" % ["Enemy Health Bars", _enemy_health_bar_label()] if _is_english() else "敌方血条：%s" % _enemy_health_bar_label()), Callable(self, "_toggle_enemy_health_bars"))
-	_configure_state_button(state_quaternary_button, ("%s: %s" % ["Ambient Glyphs", _ambient_density_label()] if _is_english() else "环境字影：%s" % _ambient_density_label()), Callable(self, "_cycle_ambient_density"))
-	_configure_state_button(state_quinary_button, ("%s: %s" % ["Distant Enemy Detail", _enemy_detail_label()] if _is_english() else "远敌细节：%s" % _enemy_detail_label()), Callable(self, "_toggle_enemy_detail"))
-	_configure_state_button(state_senary_button, "Back to Pause" if _is_english() else "返回暂停", Callable(self, "_return_to_pause_menu"))
+	_configure_state_button(state_primary_button, _battle_state_text(state_content, "settings_performance_format", "演出档：%s", "Performance: %s") % _performance_mode_label(), Callable(self, "_cycle_performance_mode"))
+	_configure_state_button(state_secondary_button, _battle_state_text(state_content, "settings_visual_effects_format", "视觉字效：%s", "Glyph FX: %s") % _visual_effects_label(), Callable(self, "_toggle_visual_effects"))
+	_configure_state_button(state_tertiary_button, _battle_state_text(state_content, "settings_enemy_health_bars_format", "敌方血条：%s", "Enemy Health Bars: %s") % _enemy_health_bar_label(), Callable(self, "_toggle_enemy_health_bars"))
+	_configure_state_button(state_quaternary_button, _battle_state_text(state_content, "settings_ambient_density_format", "环境字影：%s", "Ambient Glyphs: %s") % _ambient_density_label(), Callable(self, "_cycle_ambient_density"))
+	_configure_state_button(state_quinary_button, _battle_state_text(state_content, "settings_enemy_detail_format", "远敌细节：%s", "Distant Enemy Detail: %s") % _enemy_detail_label(), Callable(self, "_toggle_enemy_detail"))
+	_configure_state_button(state_senary_button, _battle_state_text(state_content, "action_back_to_pause", "返回暂停", "Back to Pause"), Callable(self, "_return_to_pause_menu"))
 	state_overlay.visible = true
 
 
@@ -1603,7 +1655,7 @@ func set_game_over(
 		"leaderboard_view": normalized_view
 	}
 	var leaderboard_content := FrontEndContent.local_leaderboard_content()
-	state_title_label.text = "The Ink Sea Sinks" if _is_english() else "字海沉没"
+	state_title_label.text = _battle_state_text(FrontEndContent.battle_state_content(), "game_over_title", "字海沉没", "The Ink Sea Sinks")
 	state_body_label.text = _build_game_over_state_body(summary, elapsed, kills, threat, level, normalized_view)
 	var leaderboard_detail := _localize_text(String(leaderboard_content.get("game_over_alias_detail_manual", "本轮记录已经写入主卷榜。你可以直接改成想显示的名字；留空则保留玩家名帖里的默认署名。")))
 	if normalized_view == "test":
@@ -1612,8 +1664,9 @@ func set_game_over(
 		_localize_text(String(leaderboard_content.get("run_alias_title", "战绩署名"))),
 		leaderboard_detail
 	)
-	_configure_state_button(state_primary_button, "Restart Run" if _is_english() else "重新开始", Callable(self, "_emit_restart"))
-	_configure_state_button(state_secondary_button, "Return to Menu" if _is_english() else "返回菜单", Callable(self, "_emit_return_menu"))
+	var state_content := FrontEndContent.battle_state_content()
+	_configure_state_button(state_primary_button, _battle_state_text(state_content, "action_restart_run", "重新开始", "Restart Run"), Callable(self, "_emit_restart"))
+	_configure_state_button(state_secondary_button, _battle_state_text(state_content, "action_return_menu", "返回菜单", "Return to Menu"), Callable(self, "_emit_return_menu"))
 	_configure_state_button(
 		state_tertiary_button,
 		_localize_text(String(leaderboard_content.get("view_board_format", "查看%s"))) % _localize_text(String(leaderboard_content.get("test_board" if normalized_view == "test" else "main_board", "试阵榜" if normalized_view == "test" else "主卷榜"))),
@@ -1680,8 +1733,9 @@ func _refresh_local_leaderboard_overlay() -> void:
 	else:
 		_configure_state_button(state_primary_button, _localize_text(String(leaderboard_content.get("switch_to_main_format", "切到主卷榜 · %d"))) % manual_count, Callable(self, "_show_manual_leaderboard"))
 	_configure_state_button(state_secondary_button, _localize_text(String(leaderboard_content.get("back_to_summary", "返回结算"))), Callable(self, "_show_game_over_summary"))
-	_configure_state_button(state_tertiary_button, "Restart Run" if _is_english() else "重新开始", Callable(self, "_emit_restart"))
-	_configure_state_button(state_quaternary_button, "Return to Menu" if _is_english() else "返回菜单", Callable(self, "_emit_return_menu"))
+	var state_content := FrontEndContent.battle_state_content()
+	_configure_state_button(state_tertiary_button, _battle_state_text(state_content, "action_restart_run", "重新开始", "Restart Run"), Callable(self, "_emit_restart"))
+	_configure_state_button(state_quaternary_button, _battle_state_text(state_content, "action_return_menu", "返回菜单", "Return to Menu"), Callable(self, "_emit_return_menu"))
 	_hide_state_button(state_quinary_button)
 	_hide_state_button(state_senary_button)
 	overlay_label.visible = false
@@ -1702,15 +1756,13 @@ func _return_to_pause_menu() -> void:
 
 
 func _build_settings_body() -> String:
-	if _is_english():
-		return "Mirroring the hanziHero Performance / LOD panel, the Godot battlefield now keeps a complete first-pass set of safe presentation toggles. Changes apply immediately and are saved locally.\n\nCurrent\nPerformance: %s\nGlyph FX: %s\nEnemy Health Bars: %s\nAmbient Glyphs: %s\nDistant Enemy Detail: %s" % [
-			_performance_mode_label(),
-			_visual_effects_label(),
-			_enemy_health_bar_label(),
-			_ambient_density_label(),
-			_enemy_detail_label()
-		]
-	return "对照 hanziHero 的 Performance / LOD 面板，当前战场布置已经补齐完整的低风险首轮矩阵。改动会立即生效，并写入本地运行设置。\n\n当前\n演出档：%s\n视觉字效：%s\n敌方血条：%s\n环境字影：%s\n远敌细节：%s" % [
+	var state_content := FrontEndContent.battle_state_content()
+	return _battle_state_text(
+		state_content,
+		"settings_body_format",
+		"对照 hanziHero 的 Performance / LOD 面板，当前战场布置已经补齐完整的低风险首轮矩阵。改动会立即生效，并写入本地运行设置。\n\n当前\n演出档：%s\n视觉字效：%s\n敌方血条：%s\n环境字影：%s\n远敌细节：%s",
+		"Mirroring the hanziHero Performance / LOD panel, the Godot battlefield now keeps a complete first-pass set of safe presentation toggles. Changes apply immediately and are saved locally.\n\nCurrent\nPerformance: %s\nGlyph FX: %s\nEnemy Health Bars: %s\nAmbient Glyphs: %s\nDistant Enemy Detail: %s"
+	) % [
 		_performance_mode_label(),
 		_visual_effects_label(),
 		_enemy_health_bar_label(),
@@ -1720,35 +1772,52 @@ func _build_settings_body() -> String:
 
 
 func _performance_mode_label() -> String:
+	var state_content := FrontEndContent.battle_state_content()
 	match String(battle_settings.get("performance_mode", "balanced")):
 		"performance":
-			return "Performance" if _is_english() else "轻量"
+			return _battle_state_text(state_content, "performance_mode_performance", "轻量", "Performance")
 		"quality":
-			return "Quality" if _is_english() else "质感"
+			return _battle_state_text(state_content, "performance_mode_quality", "质感", "Quality")
 		_:
-			return "Balanced" if _is_english() else "平衡"
+			return _battle_state_text(state_content, "performance_mode_balanced", "平衡", "Balanced")
 
 
 func _enemy_health_bar_label() -> String:
-	return ("Show" if _is_english() else "显示") if bool(battle_settings.get("enemy_health_bars", true)) else ("Hide" if _is_english() else "隐藏")
+	var state_content := FrontEndContent.battle_state_content()
+	return (
+		_battle_state_text(state_content, "toggle_show", "显示", "Show")
+		if bool(battle_settings.get("enemy_health_bars", true))
+		else _battle_state_text(state_content, "toggle_hide", "隐藏", "Hide")
+	)
 
 
 func _visual_effects_label() -> String:
-	return ("Enabled" if _is_english() else "开启") if bool(battle_settings.get("visual_effects", true)) else ("Reduced" if _is_english() else "收束")
+	var state_content := FrontEndContent.battle_state_content()
+	return (
+		_battle_state_text(state_content, "toggle_enabled", "开启", "Enabled")
+		if bool(battle_settings.get("visual_effects", true))
+		else _battle_state_text(state_content, "toggle_reduced", "收束", "Reduced")
+	)
 
 
 func _ambient_density_label() -> String:
+	var state_content := FrontEndContent.battle_state_content()
 	match String(battle_settings.get("ambient_glyph_density", "medium")):
 		"off":
-			return "Off" if _is_english() else "关闭"
+			return _battle_state_text(state_content, "ambient_density_off", "关闭", "Off")
 		"high":
-			return "Dense" if _is_english() else "浓"
+			return _battle_state_text(state_content, "ambient_density_high", "浓", "Dense")
 		_:
-			return "Sparse" if _is_english() else "疏"
+			return _battle_state_text(state_content, "ambient_density_medium", "疏", "Sparse")
 
 
 func _enemy_detail_label() -> String:
-	return ("Full" if _is_english() else "完整") if bool(battle_settings.get("enemy_detail", true)) else ("Near Only" if _is_english() else "近距")
+	var state_content := FrontEndContent.battle_state_content()
+	return (
+		_battle_state_text(state_content, "enemy_detail_full", "完整", "Full")
+		if bool(battle_settings.get("enemy_detail", true))
+		else _battle_state_text(state_content, "enemy_detail_near_only", "近距", "Near Only")
+	)
 
 
 func _cycle_performance_mode() -> void:

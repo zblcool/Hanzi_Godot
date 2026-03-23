@@ -995,6 +995,45 @@ const MENU_LEADERBOARD_CONTENT := {
 	"enemy_kill_joiner": " "
 }
 
+const BATTLE_STATE_CONTENT := {
+	"pause_title": {"zh": "墨阵暂歇", "en": "Inkfield Interlude"},
+	"summary_title": {"zh": "当前进度", "en": "Current run"},
+	"summary_compact_format": {"zh": "存活 %s  ·  波次 %d  ·  击破 %d  ·  Lv.%d", "en": "Time %s  ·  W%d  ·  K%d  ·  Lv.%d"},
+	"summary_time_format": {"zh": "存活 %s", "en": "Time %s"},
+	"summary_stats_format": {"zh": "波次 %d   击破 %d   等级 Lv.%d", "en": "Wave %d   Kills %d   Level Lv.%d"},
+	"pause_controls_compact": {"zh": "按 E / Esc 继续，R 重开", "en": "E / Esc resume · R restart"},
+	"pause_controls_full": {"zh": "按 E 或 Esc 继续，按 R 立即重开。", "en": "Press E or Esc to resume, or R to restart immediately."},
+	"game_over_title": {"zh": "字海沉没", "en": "The Ink Sea Sinks"},
+	"settings_title": {"zh": "战场布置", "en": "Battle Setup"},
+	"settings_body_format": {
+		"zh": "对照 hanziHero 的 Performance / LOD 面板，当前战场布置已经补齐完整的低风险首轮矩阵。改动会立即生效，并写入本地运行设置。\n\n当前\n演出档：%s\n视觉字效：%s\n敌方血条：%s\n环境字影：%s\n远敌细节：%s",
+		"en": "Mirroring the hanziHero Performance / LOD panel, the Godot battlefield now keeps a complete first-pass set of safe presentation toggles. Changes apply immediately and are saved locally.\n\nCurrent\nPerformance: %s\nGlyph FX: %s\nEnemy Health Bars: %s\nAmbient Glyphs: %s\nDistant Enemy Detail: %s"
+	},
+	"settings_performance_format": {"zh": "演出档：%s", "en": "Performance: %s"},
+	"settings_visual_effects_format": {"zh": "视觉字效：%s", "en": "Glyph FX: %s"},
+	"settings_enemy_health_bars_format": {"zh": "敌方血条：%s", "en": "Enemy Health Bars: %s"},
+	"settings_ambient_density_format": {"zh": "环境字影：%s", "en": "Ambient Glyphs: %s"},
+	"settings_enemy_detail_format": {"zh": "远敌细节：%s", "en": "Distant Enemy Detail: %s"},
+	"performance_mode_performance": {"zh": "轻量", "en": "Performance"},
+	"performance_mode_quality": {"zh": "质感", "en": "Quality"},
+	"performance_mode_balanced": {"zh": "平衡", "en": "Balanced"},
+	"toggle_show": {"zh": "显示", "en": "Show"},
+	"toggle_hide": {"zh": "隐藏", "en": "Hide"},
+	"toggle_enabled": {"zh": "开启", "en": "Enabled"},
+	"toggle_reduced": {"zh": "收束", "en": "Reduced"},
+	"ambient_density_off": {"zh": "关闭", "en": "Off"},
+	"ambient_density_high": {"zh": "浓", "en": "Dense"},
+	"ambient_density_medium": {"zh": "疏", "en": "Sparse"},
+	"enemy_detail_full": {"zh": "完整", "en": "Full"},
+	"enemy_detail_near_only": {"zh": "近距", "en": "Near Only"},
+	"action_resume_battle": {"zh": "继续战斗", "en": "Resume Battle"},
+	"action_open_settings": {"zh": "战场布置", "en": "Battle Setup"},
+	"action_restart_run": {"zh": "重新开始", "en": "Restart Run"},
+	"action_return_menu": {"zh": "返回菜单", "en": "Return to Menu"},
+	"action_back_to_pause": {"zh": "返回暂停", "en": "Back to Pause"},
+	"action_continue_deeper": {"zh": "续卷入深层", "en": "Continue Deeper"}
+}
+
 const MENU_ENEMY_CONTENT := {
 	"intro": "以下条目对应当前残卷里已经接入的敌人谱系、预警方式与最实用的临场处理思路。",
 	"entry_format": "%s  %s  ·  %s",
@@ -1249,6 +1288,10 @@ static func menu_recipe_content() -> Dictionary:
 
 static func local_leaderboard_content() -> Dictionary:
 	return MENU_LEADERBOARD_CONTENT.duplicate(true)
+
+
+static func battle_state_content() -> Dictionary:
+	return BATTLE_STATE_CONTENT.duplicate(true)
 
 
 static func menu_leaderboard_content() -> Dictionary:
