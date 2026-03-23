@@ -1035,6 +1035,19 @@ func _short_rest_modifier_active() -> bool:
 	return chamber_modifier_id == "short_rest"
 
 
+func _intro_override_chamber_id() -> String:
+	if battle_intro.is_empty():
+		return ""
+	var preset_variant: Variant = battle_intro.get("start_preset", {})
+	if not (preset_variant is Dictionary):
+		return ""
+	var preset := preset_variant as Dictionary
+	var chamber_id := String(preset.get("start_chamber_id", ""))
+	if chamber_id.is_empty() or not CHAMBER_LAYOUTS.has(chamber_id):
+		return ""
+	return chamber_id
+
+
 func _chamber_id_for_completed_bosses(completed_bosses: int) -> String:
 	var chamber_index := mini(maxi(completed_bosses, 0), CHAMBER_ORDER.size() - 1)
 	return String(CHAMBER_ORDER[chamber_index])
@@ -1922,7 +1935,8 @@ func _ready() -> void:
 	_spawn_player()
 	_apply_intro_preset()
 	last_player_health_value = player.health if is_instance_valid(player) else 0.0
-	current_chamber_id = _chamber_id_for_completed_bosses(int(Session.chapter_progress.get("completed_bosses", 0)))
+	var intro_chamber_id := _intro_override_chamber_id()
+	current_chamber_id = intro_chamber_id if not intro_chamber_id.is_empty() else _chamber_id_for_completed_bosses(int(Session.chapter_progress.get("completed_bosses", 0)))
 	_setup_phrase_events()
 	_spawn_props()
 	_reveal_map_around_position(player.global_position)
@@ -3781,7 +3795,8 @@ func _enemy_effect_glyph(enemy_type: String) -> String:
 
 
 func _on_player_health_changed(current: float, maximum: float) -> void:
-	hud.set_health(current, maximum)
+	if hud != null:
+		hud.set_health(current, maximum)
 	if current < last_player_health_value:
 		_play_player_hurt_sfx((last_player_health_value - current) / maxf(maximum, 1.0))
 	last_player_health_value = current

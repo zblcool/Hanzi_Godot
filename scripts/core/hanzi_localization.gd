@@ -262,7 +262,7 @@ static func localized_intro_title(start_wave: int, fallback: String, language: S
 		10:
 			return "Scroll X · Test Run"
 		20:
-			return "Scroll XX · Stress Test"
+			return "Scroll XX · Abyss Stress Test"
 		_:
 			return "Scroll I · Inkfall"
 
@@ -274,6 +274,6 @@ static func localized_intro_tip(start_wave: int, fallback: String, language: Str
 		10:
 			return "Start with a midgame build already in motion and focus on mixed waves, warnings, and HUD pacing."
 		20:
-			return "Enter with a more complete late build and use this run to inspect elites, major surges, and HUD rhythm under pressure."
+			return "Enter directly inside Abyss Sanctum with a fuller late build and use this run to inspect final-room spacing, major surges, and HUD rhythm under pressure."
 		_:
 			return "Secure the first radical and form your opening glyph as quickly as possible."
