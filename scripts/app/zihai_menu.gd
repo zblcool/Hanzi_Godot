@@ -550,6 +550,118 @@ func _resolve_symbol_color(color: Color) -> Color:
 	return themed
 
 
+func _anchor_control(control: Control, left: float, top: float, right: float, bottom: float) -> void:
+	control.anchor_left = left
+	control.anchor_top = top
+	control.anchor_right = right
+	control.anchor_bottom = bottom
+	control.offset_left = 0.0
+	control.offset_top = 0.0
+	control.offset_right = 0.0
+	control.offset_bottom = 0.0
+
+
+func _preview_theme_for_hero(hero_data: Dictionary) -> Dictionary:
+	match String(hero_data.get("id", "")):
+		"scholar":
+			return {
+				"body": Color(0.1, 0.21, 0.25, 0.96),
+				"glow": Color(0.43, 0.78, 0.76, 1.0),
+				"ring": Color(0.94, 0.56, 0.14, 1.0),
+				"aura": Color(0.15, 0.33, 0.39, 0.66)
+			}
+		"xia":
+			return {
+				"body": Color(0.26, 0.19, 0.25, 0.96),
+				"glow": Color(0.95, 0.76, 0.66, 1.0),
+				"ring": Color(0.83, 0.44, 0.28, 1.0),
+				"aura": Color(0.44, 0.27, 0.29, 0.7)
+			}
+	var accent: Color = hero_data.get("accent", Color(0.82, 0.62, 0.34, 1.0))
+	return {
+		"body": accent.darkened(0.56),
+		"glow": accent.lightened(0.18),
+		"ring": accent.lightened(0.08),
+		"aura": Color(accent.r * 0.34, accent.g * 0.34, accent.b * 0.34, 0.62)
+	}
+
+
+func _make_avatar_style(fill_color: Color, border_color: Color = Color(0.0, 0.0, 0.0, 0.0), border_width: float = 0.0, shadow_size: float = 0.0) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = _resolve_surface_fill(fill_color)
+	var resolved_border_width := maxi(0, int(round(border_width * ui_scale)))
+	style.border_width_left = resolved_border_width
+	style.border_width_top = resolved_border_width
+	style.border_width_right = resolved_border_width
+	style.border_width_bottom = resolved_border_width
+	style.border_color = _resolve_surface_border(border_color)
+	style.corner_radius_top_left = _i(999)
+	style.corner_radius_top_right = _i(999)
+	style.corner_radius_bottom_left = _i(999)
+	style.corner_radius_bottom_right = _i(999)
+	if shadow_size > 0.0:
+		style.shadow_color = _get_theme_palette()["shadow"]
+		style.shadow_size = _i(shadow_size)
+	return style
+
+
+func _make_avatar_panel(parent: Control, left: float, top: float, right: float, bottom: float, fill_color: Color, border_color: Color = Color(0.0, 0.0, 0.0, 0.0), border_width: float = 0.0, shadow_size: float = 0.0) -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_anchor_control(panel, left, top, right, bottom)
+	panel.add_theme_stylebox_override("panel", _make_avatar_style(fill_color, border_color, border_width, shadow_size))
+	parent.add_child(panel)
+	return panel
+
+
+func _populate_hero_avatar(container: Control, hero_data: Dictionary, glyph_size: int) -> Label:
+	for child in container.get_children():
+		container.remove_child(child)
+		child.queue_free()
+
+	var preview_theme := _preview_theme_for_hero(hero_data)
+	var body_color: Color = preview_theme["body"]
+	var glow_color: Color = preview_theme["glow"]
+	var ring_color: Color = preview_theme["ring"]
+	var aura_color: Color = preview_theme["aura"]
+	var hero_id := String(hero_data.get("id", ""))
+
+	var avatar := Control.new()
+	avatar.set_anchors_preset(Control.PRESET_FULL_RECT)
+	avatar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	container.add_child(avatar)
+
+	_make_avatar_panel(avatar, 0.26, 0.46, 0.74, 0.92, Color(aura_color.r, aura_color.g, aura_color.b, 0.6), Color(0.0, 0.0, 0.0, 0.0), 0.0, 10.0)
+	_make_avatar_panel(avatar, 0.2, 0.76, 0.8, 0.88, Color(ring_color.r, ring_color.g, ring_color.b, 0.12), Color(0.0, 0.0, 0.0, 0.0), 0.0, 4.0)
+	_make_avatar_panel(avatar, 0.17, 0.69, 0.83, 0.84, Color(0.0, 0.0, 0.0, 0.0), Color(ring_color.r, ring_color.g, ring_color.b, 0.9), 2.0, 4.0)
+
+	var body_bounds := Rect2(0.34, 0.41, 0.32, 0.37)
+	if hero_id == "xia":
+		body_bounds = Rect2(0.43, 0.39, 0.14, 0.39)
+		_make_avatar_panel(avatar, 0.3, 0.47, 0.39, 0.8, body_color.lightened(0.18), Color(glow_color.r, glow_color.g, glow_color.b, 0.24), 1.0, 4.0)
+		_make_avatar_panel(avatar, 0.61, 0.47, 0.7, 0.8, body_color.lightened(0.18), Color(glow_color.r, glow_color.g, glow_color.b, 0.24), 1.0, 4.0)
+		_make_avatar_panel(avatar, 0.72, 0.17, 0.79, 0.78, Color(1.0, 0.96, 0.9, 0.96), Color(ring_color.r, ring_color.g, ring_color.b, 0.32), 1.0, 6.0)
+
+	_make_avatar_panel(
+		avatar,
+		body_bounds.position.x,
+		body_bounds.position.y,
+		body_bounds.position.x + body_bounds.size.x,
+		body_bounds.position.y + body_bounds.size.y,
+		body_color,
+		Color(glow_color.r, glow_color.g, glow_color.b, 0.24),
+		1.0,
+		6.0
+	)
+
+	var rune := _make_label(String(hero_data.get("glyph", "书")), glyph_size, Color(1.0, 0.95, 0.86, 1.0))
+	rune.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	rune.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_anchor_control(rune, 0.22, 0.06, 0.78, 0.42)
+	avatar.add_child(rune)
+	return rune
+
+
 func _make_theme_toggle_button(size: Vector2) -> Button:
 	var button := _make_pill_button(_get_theme_toggle_label(), size, Callable(self, "_on_toggle_theme_pressed"))
 	button.tooltip_text = _get_theme_toggle_tooltip()
@@ -995,7 +1107,11 @@ func _make_card_reaction_bubble(accent: Color) -> PanelContainer:
 
 
 func _build_card_preview(panel: PanelContainer, hero_data: Dictionary) -> void:
-	var accent: Color = hero_data["accent"]
+	var preview_theme := _preview_theme_for_hero(hero_data)
+	var body_color: Color = preview_theme["body"]
+	var glow_color: Color = preview_theme["glow"]
+	var ring_color: Color = preview_theme["ring"]
+	var aura_color: Color = preview_theme["aura"]
 	var stage := Control.new()
 	stage.set_anchors_preset(Control.PRESET_FULL_RECT)
 	stage.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -1004,31 +1120,26 @@ func _build_card_preview(panel: PanelContainer, hero_data: Dictionary) -> void:
 	var ring_a := PanelContainer.new()
 	ring_a.size = _v(108.0, 108.0)
 	ring_a.position = _v(34.0, 24.0)
-	ring_a.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.12, accent.g * 0.12, accent.b * 0.16, 0.12), Color(accent.r, accent.g, accent.b, 0.24)))
+	ring_a.add_theme_stylebox_override("panel", _make_panel_style(Color(aura_color.r, aura_color.g, aura_color.b, 0.38), Color(ring_color.r, ring_color.g, ring_color.b, 0.22)))
 	stage.add_child(ring_a)
 
 	var ring_b := PanelContainer.new()
 	ring_b.size = _v(72.0, 72.0)
 	ring_b.position = _v(52.0, 42.0)
-	ring_b.add_theme_stylebox_override("panel", _make_panel_style(Color(0.12, 0.16, 0.2, 0.0), Color(accent.r, accent.g, accent.b, 0.18)))
+	ring_b.add_theme_stylebox_override("panel", _make_panel_style(Color(0.12, 0.16, 0.2, 0.0), Color(glow_color.r, glow_color.g, glow_color.b, 0.18)))
 	stage.add_child(ring_b)
 
 	var core := PanelContainer.new()
 	core.size = _v(84.0, 84.0)
 	core.position = _v(46.0, 50.0)
-	core.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.24, accent.g * 0.2, accent.b * 0.16, 0.94), Color(accent.r, accent.g, accent.b, 0.24)))
+	core.add_theme_stylebox_override("panel", _make_panel_style(Color(body_color.r, body_color.g, body_color.b, 0.24), Color(ring_color.r, ring_color.g, ring_color.b, 0.24)))
 	stage.add_child(core)
-
-	var glyph := _make_label(String(hero_data["glyph"]), 46, Color(1.0, 0.95, 0.86, 1.0))
-	glyph.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	glyph.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	glyph.set_anchors_preset(Control.PRESET_FULL_RECT)
-	core.add_child(glyph)
+	_populate_hero_avatar(core, hero_data, _i(32))
 
 	var shards: Array = []
 	for index in range(2):
 		var shard := ColorRect.new()
-		shard.color = Color(accent.r, accent.g, accent.b, 0.86)
+		shard.color = Color(ring_color.r, ring_color.g, ring_color.b, 0.86)
 		shard.size = _v(28.0, 7.0)
 		shard.position = _v(18.0 + float(index) * 92.0, 118.0 - float(index) * 24.0)
 		shard.rotation = -0.48 + float(index) * 0.86
@@ -1070,12 +1181,7 @@ func _build_detail_preview(panel: PanelContainer) -> void:
 	detail_preview_core.position = _v(84.0, 52.0)
 	detail_preview_core.add_theme_stylebox_override("panel", _make_panel_style(Color(0.26, 0.2, 0.16, 0.94), Color(0.88, 0.64, 0.34, 0.26)))
 	stage.add_child(detail_preview_core)
-
-	detail_preview_glyph = _make_label(String(FrontEndContent.menu_page_content().get("detail_preview_fallback_glyph", "书")), 68, Color(1.0, 0.95, 0.86, 1.0))
-	detail_preview_glyph.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	detail_preview_glyph.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	detail_preview_glyph.set_anchors_preset(Control.PRESET_FULL_RECT)
-	detail_preview_core.add_child(detail_preview_glyph)
+	detail_preview_glyph = null
 
 	var shards: Array = []
 	for index in range(4):
@@ -2978,8 +3084,11 @@ func _refresh_selection(trigger_reaction: bool = false) -> void:
 	detail_focus_label.text = _build_hero_stage_summary(selected_data)
 	detail_dossier_label.text = _localize_text(String(page_content.get("detail_archive_hint", "长说明和 build 路线请看人物志与图谱。")))
 
-	detail_preview_core.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.24, accent.g * 0.2, accent.b * 0.16, 0.94), Color(accent.r, accent.g, accent.b, 0.26)))
-	detail_preview_glyph.text = String(selected_data["glyph"])
+	var preview_theme := _preview_theme_for_hero(selected_data)
+	var body_color: Color = preview_theme["body"]
+	var ring_color: Color = preview_theme["ring"]
+	detail_preview_core.add_theme_stylebox_override("panel", _make_panel_style(Color(body_color.r, body_color.g, body_color.b, 0.26), Color(ring_color.r, ring_color.g, ring_color.b, 0.26)))
+	detail_preview_glyph = _populate_hero_avatar(detail_preview_core, selected_data, _i(56))
 
 	for child in detail_tags_row.get_children():
 		child.queue_free()
