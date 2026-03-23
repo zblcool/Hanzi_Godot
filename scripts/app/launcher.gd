@@ -134,6 +134,8 @@ var cangjie_section_title_label: Label
 var cangjie_section_content_box: VBoxContainer
 var cangjie_nav_buttons: Dictionary = {}
 var cangjie_section := "start_climb"
+var cangjie_stage_fx_enabled := true
+var cangjie_duelist_line_indices := {}
 var changelog_overlay: Control
 var profile_overlay: Control
 var profile_name_input: LineEdit
@@ -1040,6 +1042,9 @@ func _refresh_cangjie_portal() -> void:
 	var points_variant: Variant = active_section.get("points", [])
 	if points_variant is Array and not (points_variant as Array).is_empty():
 		cangjie_section_content_box.add_child(_make_cangjie_focus_panel(points_variant as Array, accent))
+	var duel_preview_variant: Variant = active_section.get("duel_preview", {})
+	if duel_preview_variant is Dictionary and not (duel_preview_variant as Dictionary).is_empty():
+		cangjie_section_content_box.add_child(_make_cangjie_duel_preview(duel_preview_variant as Dictionary, accent))
 	var groups_variant: Variant = active_section.get("sample_groups", [])
 	if groups_variant is Array:
 		for group_variant in groups_variant:
@@ -1073,6 +1078,160 @@ func _make_cangjie_focus_panel(points: Array, accent: Color) -> PanelContainer:
 	for point_variant in points:
 		box.add_child(_make_label("• %s" % _localize_cangjie_text(point_variant), 16, Color(0.88, 0.92, 0.96, 0.94)))
 	return panel
+
+
+func _make_cangjie_duel_preview(preview: Dictionary, accent: Color) -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.08, accent.g * 0.08, accent.b * 0.1, 0.78), Color(accent.r, accent.g, accent.b, 0.28)))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", _i(18))
+	margin.add_theme_constant_override("margin_top", _i(16))
+	margin.add_theme_constant_override("margin_right", _i(18))
+	margin.add_theme_constant_override("margin_bottom", _i(16))
+	panel.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", _i(10))
+	margin.add_child(box)
+	box.add_child(_make_label(_localize_cangjie_text(preview.get("title", "")), 20, Color(1.0, 0.95, 0.86, 1.0)))
+
+	var summary_text := _localize_cangjie_text(preview.get("summary", ""))
+	if not summary_text.is_empty():
+		box.add_child(_make_label(summary_text, 16, Color(0.88, 0.92, 0.96, 0.92)))
+
+	var action_row: BoxContainer = VBoxContainer.new() if _is_portrait_layout() else HBoxContainer.new()
+	action_row.add_theme_constant_override("separation", _i(10))
+	box.add_child(action_row)
+
+	var fx_button := _make_pill_button(_localize_cangjie_text(preview.get("fx_button", "3D 特效")), _v(0.0, 46.0), Callable(self, "_on_toggle_cangjie_stage_fx_pressed"))
+	fx_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	action_row.add_child(fx_button)
+
+	var fx_state_key := "fx_state_on" if cangjie_stage_fx_enabled else "fx_state_off"
+	var fx_state := _make_static_pill(_localize_cangjie_text(preview.get(fx_state_key, "")), _v(0.0, 46.0))
+	fx_state.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	action_row.add_child(fx_state)
+
+	var duel_row: BoxContainer = VBoxContainer.new() if _is_portrait_layout() else HBoxContainer.new()
+	duel_row.add_theme_constant_override("separation", _i(10))
+	box.add_child(duel_row)
+
+	var duelists_variant: Variant = preview.get("duelists", [])
+	if duelists_variant is Array:
+		for duelist_variant in duelists_variant:
+			if duelist_variant is Dictionary:
+				duel_row.add_child(_make_cangjie_duelist_card(duelist_variant as Dictionary, accent))
+
+	var hint_text := _localize_cangjie_text(preview.get("hint", ""))
+	if not hint_text.is_empty():
+		box.add_child(_make_label(hint_text, 15, Color(0.82, 0.9, 0.96, 0.82)))
+
+	return panel
+
+
+func _make_cangjie_duelist_card(duelist: Dictionary, accent: Color) -> Button:
+	var tone: Color = duelist.get("tone", accent)
+	var button := Button.new()
+	button.text = ""
+	button.flat = true
+	button.clip_contents = false
+	button.focus_mode = Control.FOCUS_ALL
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.custom_minimum_size = _v(0.0, 232.0)
+	button.add_theme_stylebox_override("normal", _make_panel_style(Color(tone.r * 0.14, tone.g * 0.14, tone.b * 0.16, 0.86), Color(tone.r, tone.g, tone.b, 0.3 if cangjie_stage_fx_enabled else 0.2)))
+	button.add_theme_stylebox_override("hover", _make_panel_style(Color(tone.r * 0.16, tone.g * 0.16, tone.b * 0.18, 0.92), Color(tone.r, tone.g, tone.b, 0.42 if cangjie_stage_fx_enabled else 0.28)))
+	button.add_theme_stylebox_override("pressed", _make_panel_style(Color(tone.r * 0.18, tone.g * 0.18, tone.b * 0.2, 0.94), Color(tone.r, tone.g, tone.b, 0.5 if cangjie_stage_fx_enabled else 0.32)))
+
+	var margin := MarginContainer.new()
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left", _i(16))
+	margin.add_theme_constant_override("margin_top", _i(14))
+	margin.add_theme_constant_override("margin_right", _i(16))
+	margin.add_theme_constant_override("margin_bottom", _i(14))
+	button.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", _i(10))
+	margin.add_child(box)
+
+	var bubble_panel := PanelContainer.new()
+	bubble_panel.visible = false
+	bubble_panel.modulate = Color(1.0, 1.0, 1.0, 0.0)
+	bubble_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(tone.r * 0.2, tone.g * 0.18, tone.b * 0.16, 0.88), Color(tone.r, tone.g, tone.b, 0.34)))
+	box.add_child(bubble_panel)
+
+	var bubble_margin := MarginContainer.new()
+	bubble_margin.add_theme_constant_override("margin_left", _i(12))
+	bubble_margin.add_theme_constant_override("margin_top", _i(10))
+	bubble_margin.add_theme_constant_override("margin_right", _i(12))
+	bubble_margin.add_theme_constant_override("margin_bottom", _i(10))
+	bubble_panel.add_child(bubble_margin)
+
+	var bubble_label := _make_label("", 14, Color(0.98, 0.95, 0.9, 0.96))
+	bubble_margin.add_child(bubble_label)
+
+	var header := HBoxContainer.new()
+	header.add_theme_constant_override("separation", _i(12))
+	box.add_child(header)
+
+	var stage := Control.new()
+	stage.custom_minimum_size = _v(108.0, 92.0)
+	header.add_child(stage)
+
+	var aura_outer := PanelContainer.new()
+	aura_outer.size = _v(86.0, 86.0)
+	aura_outer.position = _v(6.0, 2.0)
+	aura_outer.add_theme_stylebox_override("panel", _make_panel_style(Color(tone.r * 0.12, tone.g * 0.12, tone.b * 0.14, 0.16 if cangjie_stage_fx_enabled else 0.06), Color(tone.r, tone.g, tone.b, 0.22 if cangjie_stage_fx_enabled else 0.08)))
+	stage.add_child(aura_outer)
+
+	var aura_inner := PanelContainer.new()
+	aura_inner.size = _v(62.0, 62.0)
+	aura_inner.position = _v(18.0, 14.0)
+	aura_inner.add_theme_stylebox_override("panel", _make_panel_style(Color(tone.r * 0.18, tone.g * 0.16, tone.b * 0.14, 0.22 if cangjie_stage_fx_enabled else 0.1), Color(tone.r, tone.g, tone.b, 0.18 if cangjie_stage_fx_enabled else 0.08)))
+	stage.add_child(aura_inner)
+
+	var beam := ColorRect.new()
+	beam.color = Color(tone.r, tone.g, tone.b, 0.76 if cangjie_stage_fx_enabled else 0.24)
+	beam.position = _v(78.0, 42.0)
+	beam.size = _v(24.0, 5.0)
+	stage.add_child(beam)
+
+	var glyph_panel := PanelContainer.new()
+	glyph_panel.size = _v(62.0, 62.0)
+	glyph_panel.position = _v(18.0, 14.0)
+	glyph_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(tone.r * 0.22, tone.g * 0.18, tone.b * 0.16, 0.94), Color(tone.r, tone.g, tone.b, 0.34)))
+	stage.add_child(glyph_panel)
+
+	var glyph_label := _make_label(String(duelist.get("glyph", "")), 30, Color(1.0, 0.95, 0.86, 1.0))
+	glyph_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	glyph_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	glyph_label.set_anchors_preset(Control.PRESET_FULL_RECT)
+	glyph_panel.add_child(glyph_label)
+
+	var heading_box := VBoxContainer.new()
+	heading_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	heading_box.add_theme_constant_override("separation", _i(4))
+	header.add_child(heading_box)
+	heading_box.add_child(_make_tag(_localize_cangjie_text(duelist.get("kicker", "")), Color(tone.r * 0.16, tone.g * 0.16, tone.b * 0.18, 0.86), Color(0.98, 0.94, 0.88, 0.96)))
+	heading_box.add_child(_make_label(_localize_cangjie_text(duelist.get("title", "")), 18, Color(1.0, 0.95, 0.86, 1.0)))
+
+	var primary_text := _localize_cangjie_text(duelist.get("primary", ""))
+	if not primary_text.is_empty():
+		box.add_child(_make_label(primary_text, 15, Color(0.9, 0.92, 0.96, 0.94)))
+	var secondary_text := _localize_cangjie_text(duelist.get("secondary", ""))
+	if not secondary_text.is_empty():
+		box.add_child(_make_label(secondary_text, 14, Color(0.8, 0.88, 0.95, 0.82)))
+
+	var prompt := _make_label("点按角色试试" if not _is_english() else "Tap to preview a response", 13, Color(tone.r, tone.g, tone.b, 0.92))
+	prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	box.add_child(prompt)
+
+	button.set_meta("bubble_panel", bubble_panel)
+	button.set_meta("bubble_label", bubble_label)
+	button.pressed.connect(Callable(self, "_on_cangjie_duelist_pressed").bind(button, duelist))
+	return button
 
 
 func _make_cangjie_group_panel(group: Dictionary, accent: Color) -> PanelContainer:
@@ -1653,6 +1812,60 @@ func _on_toggle_language_pressed() -> void:
 	current_language = "zh" if _is_english() else "en"
 	Session.set_launcher_language(current_language)
 	_rebuild_ui()
+
+
+func _on_toggle_cangjie_stage_fx_pressed() -> void:
+	cangjie_stage_fx_enabled = not cangjie_stage_fx_enabled
+	_refresh_cangjie_portal()
+
+
+func _on_cangjie_duelist_pressed(card_button: Button, duelist: Dictionary) -> void:
+	if card_button == null or not is_instance_valid(card_button):
+		return
+
+	var responses_variant: Variant = duelist.get("responses", [])
+	if not (responses_variant is Array) or (responses_variant as Array).is_empty():
+		return
+
+	var duelist_id := String(duelist.get("id", "duelist"))
+	var responses := responses_variant as Array
+	var response_index := int(cangjie_duelist_line_indices.get(duelist_id, 0))
+	cangjie_duelist_line_indices[duelist_id] = response_index + 1
+	var response_text := _localize_cangjie_text(responses[response_index % responses.size()])
+
+	var bubble_panel := card_button.get_meta("bubble_panel") as PanelContainer
+	var bubble_label := card_button.get_meta("bubble_label") as Label
+	if bubble_label != null:
+		bubble_label.text = response_text
+	if bubble_panel != null:
+		var token := Time.get_ticks_msec()
+		bubble_panel.set_meta("token", token)
+		bubble_panel.visible = true
+		bubble_panel.modulate = Color(1.0, 1.0, 1.0, 0.0)
+		var bubble_tween := create_tween()
+		bubble_tween.tween_property(bubble_panel, "modulate", Color(1.0, 1.0, 1.0, 1.0), 0.12)
+		bubble_tween.tween_interval(1.25)
+		bubble_tween.tween_property(bubble_panel, "modulate", Color(1.0, 1.0, 1.0, 0.0), 0.2)
+		bubble_tween.tween_callback(Callable(self, "_hide_cangjie_duelist_bubble").bind(bubble_panel, token))
+
+	card_button.pivot_offset = card_button.size * 0.5
+	card_button.rotation_degrees = 0.0
+	card_button.scale = Vector2.ONE
+	var bounce_tween := create_tween()
+	bounce_tween.tween_property(card_button, "rotation_degrees", 4.0, 0.06)
+	bounce_tween.parallel().tween_property(card_button, "scale", Vector2(1.03, 1.03), 0.06)
+	bounce_tween.tween_property(card_button, "rotation_degrees", -4.0, 0.08)
+	bounce_tween.parallel().tween_property(card_button, "scale", Vector2(0.99, 0.99), 0.08)
+	bounce_tween.tween_property(card_button, "rotation_degrees", 0.0, 0.06)
+	bounce_tween.parallel().tween_property(card_button, "scale", Vector2.ONE, 0.06)
+
+
+func _hide_cangjie_duelist_bubble(bubble_panel: PanelContainer, token: int) -> void:
+	if bubble_panel == null or not is_instance_valid(bubble_panel):
+		return
+	if int(bubble_panel.get_meta("token", -1)) != token:
+		return
+	bubble_panel.visible = false
 
 
 func _show_about() -> void:

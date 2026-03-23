@@ -222,6 +222,72 @@ const CANGJIE_PORTAL_SECTIONS := [
 				"en": "The Godot branch brings this entry framing back into the launcher first, then wires a real run start once the card-combat foundation is ready."
 			}
 		],
+		"duel_preview": {
+			"title": {"zh": "舞台对峙", "en": "Stage Faceoff"},
+			"summary": {
+				"zh": "source《仓颉之路》入口不会只停在文案，它还会给一小段可交互的对峙舞台，点按双方就会抖动并吐出一句回应。",
+				"en": "The source Cangjie Road portal does not stop at copy alone. It also gives a small interactive faceoff stage where each duelist shakes and answers when tapped."
+			},
+			"hint": {
+				"zh": "点按左右执牌者，预览 source 的开场回应；`3D 特效` 会收束或放开舞台辉光。",
+				"en": "Tap either duelist to preview the source opening banter. `3D Effects` tightens or opens the stage glow."
+			},
+			"fx_button": {"zh": "3D 特效", "en": "3D Effects"},
+			"fx_state_on": {"zh": "舞台辉光开启", "en": "Stage glow enabled"},
+			"fx_state_off": {"zh": "舞台辉光收束", "en": "Stage glow reduced"},
+			"duelists": [
+				{
+					"id": "hero",
+					"glyph": "仓",
+					"tone": Color(0.92, 0.68, 0.38, 1.0),
+					"kicker": {"zh": "登塔者", "en": "Climber"},
+					"title": {"zh": "字路执笔", "en": "Glyph Route"},
+					"primary": {
+						"zh": "先读塔路，再决定把哪条字线真正推成主牌组。",
+						"en": "Read the route first, then decide which character line becomes the real deck."
+					},
+					"secondary": {
+						"zh": "学习辅助要跟着塔路一起露出来，而不是进战后才补一句英文。",
+						"en": "Learning assist should surface with the route framing instead of appearing only after battle starts."
+					},
+					"responses": [
+						{
+							"zh": "这一层先看节点，不急着把手牌全交出去。",
+							"en": "Read the nodes first. No need to cash every card in immediately."
+						},
+						{
+							"zh": "若要走学读线，拼音和义项要跟着一起露出来。",
+							"en": "If the run leans into learning assist, pinyin and gloss should stay visible too."
+						}
+					]
+				},
+				{
+					"id": "enemy",
+					"glyph": "妄",
+					"tone": Color(0.48, 0.74, 0.96, 1.0),
+					"kicker": {"zh": "敌方", "en": "Enemy"},
+					"title": {"zh": "残页守望者", "en": "Fragment Sentinel"},
+					"primary": {
+						"zh": "真正进战后才会亮出敌意与压迫节奏。",
+						"en": "Intent and pressure only fully show once the duel actually starts."
+					},
+					"secondary": {
+						"zh": "你若只看字面，不看节点，这层塔会先吞掉你的节奏。",
+						"en": "If you read only the glyph and ignore the route, the tower will eat your tempo first."
+					},
+					"responses": [
+						{
+							"zh": "这层塔先考你何时定下主线，不只是考伤害。",
+							"en": "This floor first tests when you commit to a line, not only how much damage you can deal."
+						},
+						{
+							"zh": "等你真正起笔时，我的敌意才会完整亮出来。",
+							"en": "My full intent only lights up once you truly start the climb."
+						}
+					]
+				}
+			]
+		},
 		"sample_groups": [
 			{
 				"title": {"zh": "入口预览", "en": "Entry Preview"},
