@@ -131,9 +131,9 @@ var current_language := "zh"
 var about_overlay: Control
 var cangjie_overlay: Control
 var cangjie_section_title_label: Label
-var cangjie_section_body_label: Label
+var cangjie_section_content_box: VBoxContainer
 var cangjie_nav_buttons: Dictionary = {}
-var cangjie_section := "overview"
+var cangjie_section := "start_climb"
 var changelog_overlay: Control
 var profile_overlay: Control
 var profile_name_input: LineEdit
@@ -247,7 +247,7 @@ func _rebuild_ui() -> void:
 	about_overlay = null
 	cangjie_overlay = null
 	cangjie_section_title_label = null
-	cangjie_section_body_label = null
+	cangjie_section_content_box = null
 	cangjie_nav_buttons.clear()
 	changelog_overlay = null
 	profile_overlay = null
@@ -384,6 +384,15 @@ func _localize_text(text: String) -> String:
 	if text.begins_with("• "):
 		return "• %s" % _localize_text(text.substr(2))
 	return String(EN_TEXT.get(text, text))
+
+
+func _localize_cangjie_text(value: Variant) -> String:
+	if value is Dictionary:
+		var localized: Dictionary = value
+		if _is_english():
+			return String(localized.get("en", localized.get("zh", "")))
+		return String(localized.get("zh", localized.get("en", "")))
+	return _localize_text(String(value))
 
 
 func _resolve_surface_fill(fill_color: Color) -> Color:
@@ -944,7 +953,7 @@ func _build_cangjie_overlay() -> void:
 	cangjie_nav_buttons.clear()
 	for section in portal_sections:
 		var section_id := String(section.get("id", "overview"))
-		var button := _make_pill_button(String(section.get("title", section_id)), _v(0.0, 48.0), Callable(self, "_on_cangjie_section_pressed").bind(section_id))
+		var button := _make_pill_button(_localize_cangjie_text(section.get("title", section_id)), _v(0.0, 48.0), Callable(self, "_on_cangjie_section_pressed").bind(section_id))
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		nav_container.add_child(button)
 		cangjie_nav_buttons[section_id] = button
@@ -974,10 +983,10 @@ func _build_cangjie_overlay() -> void:
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	content_box.add_child(scroll)
 
-	cangjie_section_body_label = _make_label("", 18, Color(0.9, 0.92, 0.96, 0.96))
-	cangjie_section_body_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	cangjie_section_body_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.add_child(cangjie_section_body_label)
+	cangjie_section_content_box = VBoxContainer.new()
+	cangjie_section_content_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	cangjie_section_content_box.add_theme_constant_override("separation", _i(12))
+	scroll.add_child(cangjie_section_content_box)
 
 	var footer_row: BoxContainer = VBoxContainer.new() if portrait_layout else HBoxContainer.new()
 	footer_row.add_theme_constant_override("separation", _i(10))
@@ -1004,7 +1013,7 @@ func _build_cangjie_overlay() -> void:
 
 
 func _refresh_cangjie_portal() -> void:
-	if cangjie_section_title_label == null or cangjie_section_body_label == null:
+	if cangjie_section_title_label == null or cangjie_section_content_box == null:
 		return
 
 	var sections := FrontEndContent.cangjie_portal_sections()
@@ -1016,23 +1025,143 @@ func _refresh_cangjie_portal() -> void:
 		if String(section.get("id", "")) == cangjie_section:
 			active_section = section
 			break
+	cangjie_section = String(active_section.get("id", cangjie_section))
 
 	cangjie_section_title_label.text = "%s  ·  %s" % [
-		_localize_text(String(active_section.get("title", ""))),
-		_localize_text(String(active_section.get("eyebrow", "")))
+		_localize_cangjie_text(active_section.get("title", "")),
+		_localize_cangjie_text(active_section.get("eyebrow", ""))
 	]
-	var lines: Array[String] = [_localize_text(String(active_section.get("summary", "")))]
-	for point in active_section.get("points", []):
-		lines.append("• %s" % _localize_text(String(point)))
-	cangjie_section_body_label.text = "\n\n".join(lines)
+	for child in cangjie_section_content_box.get_children():
+		cangjie_section_content_box.remove_child(child)
+		child.queue_free()
+
+	var accent: Color = active_section.get("accent", Color(0.44, 0.68, 0.94, 1.0))
+	cangjie_section_content_box.add_child(_make_label(_localize_cangjie_text(active_section.get("summary", "")), 18, Color(0.9, 0.92, 0.96, 0.96)))
+	var points_variant: Variant = active_section.get("points", [])
+	if points_variant is Array and not (points_variant as Array).is_empty():
+		cangjie_section_content_box.add_child(_make_cangjie_focus_panel(points_variant as Array, accent))
+	var groups_variant: Variant = active_section.get("sample_groups", [])
+	if groups_variant is Array:
+		for group_variant in groups_variant:
+			if group_variant is Dictionary:
+				cangjie_section_content_box.add_child(_make_cangjie_group_panel(group_variant as Dictionary, accent))
 
 	for section_id in cangjie_nav_buttons.keys():
 		var button: Button = cangjie_nav_buttons[section_id]
 		var active: bool = String(section_id) == cangjie_section
-		var accent := Color(0.38, 0.58, 0.9, 1.0) if active else Color(0.16, 0.22, 0.3, 0.86)
-		button.add_theme_stylebox_override("normal", _make_panel_style(accent if active else Color(0.04, 0.06, 0.08, 0.78), Color(0.44, 0.68, 0.94, 0.46)))
+		var button_fill := Color(0.38, 0.58, 0.9, 1.0) if active else Color(0.16, 0.22, 0.3, 0.86)
+		button.add_theme_stylebox_override("normal", _make_panel_style(button_fill if active else Color(0.04, 0.06, 0.08, 0.78), Color(0.44, 0.68, 0.94, 0.46)))
 		button.add_theme_stylebox_override("hover", _make_panel_style(Color(0.46, 0.66, 0.98, 1.0) if active else Color(0.08, 0.1, 0.12, 0.84), Color(0.44, 0.68, 0.94, 0.54)))
 		button.add_theme_stylebox_override("pressed", _make_panel_style(Color(0.3, 0.5, 0.84, 1.0) if active else Color(0.08, 0.1, 0.12, 0.9), Color(0.44, 0.68, 0.94, 0.62)))
+
+
+func _make_cangjie_focus_panel(points: Array, accent: Color) -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.08, accent.g * 0.08, accent.b * 0.1, 0.78), Color(accent.r, accent.g, accent.b, 0.28)))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", _i(18))
+	margin.add_theme_constant_override("margin_top", _i(16))
+	margin.add_theme_constant_override("margin_right", _i(18))
+	margin.add_theme_constant_override("margin_bottom", _i(16))
+	panel.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", _i(8))
+	margin.add_child(box)
+	box.add_child(_make_label("迁移重点", 18, Color(1.0, 0.94, 0.82, 0.96)))
+	for point_variant in points:
+		box.add_child(_make_label("• %s" % _localize_cangjie_text(point_variant), 16, Color(0.88, 0.92, 0.96, 0.94)))
+	return panel
+
+
+func _make_cangjie_group_panel(group: Dictionary, accent: Color) -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.06, accent.g * 0.08, accent.b * 0.1, 0.72), Color(accent.r, accent.g, accent.b, 0.26)))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", _i(18))
+	margin.add_theme_constant_override("margin_top", _i(16))
+	margin.add_theme_constant_override("margin_right", _i(18))
+	margin.add_theme_constant_override("margin_bottom", _i(16))
+	panel.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", _i(10))
+	margin.add_child(box)
+	box.add_child(_make_label(_localize_cangjie_text(group.get("title", "")), 20, Color(1.0, 0.95, 0.86, 1.0)))
+
+	var summary_text := _localize_cangjie_text(group.get("summary", ""))
+	if not summary_text.is_empty():
+		box.add_child(_make_label(summary_text, 16, Color(0.88, 0.92, 0.96, 0.92)))
+
+	var cards_variant: Variant = group.get("cards", [])
+	if cards_variant is Array and not (cards_variant as Array).is_empty():
+		var cards := cards_variant as Array
+		var grid := GridContainer.new()
+		grid.columns = 1 if _is_portrait_layout() else mini(3, maxi(1, cards.size()))
+		grid.add_theme_constant_override("h_separation", _i(10))
+		grid.add_theme_constant_override("v_separation", _i(10))
+		box.add_child(grid)
+		for card_variant in cards:
+			if card_variant is Dictionary:
+				grid.add_child(_make_cangjie_sample_card(card_variant as Dictionary, accent))
+	return panel
+
+
+func _make_cangjie_sample_card(card: Dictionary, accent: Color) -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = _v(0.0, 216.0)
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.12, accent.g * 0.12, accent.b * 0.14, 0.84), Color(accent.r, accent.g, accent.b, 0.32)))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", _i(16))
+	margin.add_theme_constant_override("margin_top", _i(14))
+	margin.add_theme_constant_override("margin_right", _i(16))
+	margin.add_theme_constant_override("margin_bottom", _i(14))
+	panel.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", _i(10))
+	margin.add_child(box)
+
+	var header := HBoxContainer.new()
+	header.add_theme_constant_override("separation", _i(12))
+	box.add_child(header)
+
+	var glyph_panel := PanelContainer.new()
+	glyph_panel.custom_minimum_size = _v(68.0, 68.0)
+	glyph_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.18, accent.g * 0.16, accent.b * 0.14, 0.88), Color(accent.r, accent.g, accent.b, 0.22)))
+	header.add_child(glyph_panel)
+
+	var glyph_label := _make_label(String(card.get("glyph", "")), 34, Color(1.0, 0.95, 0.86, 1.0))
+	glyph_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	glyph_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	glyph_label.set_anchors_preset(Control.PRESET_FULL_RECT)
+	glyph_panel.add_child(glyph_label)
+
+	var heading_box := VBoxContainer.new()
+	heading_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	heading_box.add_theme_constant_override("separation", _i(4))
+	header.add_child(heading_box)
+	heading_box.add_child(_make_label(_localize_cangjie_text(card.get("title", "")), 18, Color(1.0, 0.95, 0.86, 1.0)))
+	var subtitle_text := _localize_cangjie_text(card.get("subtitle", ""))
+	if not subtitle_text.is_empty():
+		heading_box.add_child(_make_label(subtitle_text, 14, Color(0.92, 0.82, 0.62, 0.92)))
+
+	box.add_child(_make_label(_localize_cangjie_text(card.get("body", "")), 15, Color(0.88, 0.92, 0.96, 0.94)))
+
+	var tags_variant: Variant = card.get("tags", [])
+	if tags_variant is Array and not (tags_variant as Array).is_empty():
+		var tag_row := HFlowContainer.new()
+		tag_row.add_theme_constant_override("h_separation", _i(8))
+		tag_row.add_theme_constant_override("v_separation", _i(8))
+		box.add_child(tag_row)
+		for tag_variant in tags_variant:
+			tag_row.add_child(_make_tag(_localize_cangjie_text(tag_variant), Color(accent.r * 0.16, accent.g * 0.16, accent.b * 0.18, 0.86), Color(0.98, 0.94, 0.88, 0.96)))
+
+	return panel
 
 
 func _build_changelog_overlay() -> void:

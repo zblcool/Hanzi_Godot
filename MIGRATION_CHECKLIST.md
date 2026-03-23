@@ -16,7 +16,7 @@ Status legend:
 - `[done]` Launcher-side latest update spotlight. Notes: hanziHero's homepage surfaces a recent version / changelog spotlight; Godot launcher now mirrors that front-page role with an in-launcher migration progress card.
 - `[done]` Launcher-side changelog history overlay. Notes: the source launcher can open a dedicated changelog panel; Godot launcher now exposes a matching in-launcher update-history overlay from the latest-update card instead of stopping at a single snapshot.
 - `[done]` Bilingual launcher copy and runtime language toggle. Notes: hanziHero ships zh/en launcher strings; Godot launcher now remembers a runtime `中 / EN` toggle, translates the main portal/front-page copy, and carries the preference across rebuilds.
-- `[in progress]` Cangjie portal follow-through. Notes: Godot launcher now gives `仓颉之路` a dedicated portal overlay with deckbuilder status, card/fusion/relic/tower sections, but a true playable Godot scene or direct prototype hand-off is still pending.
+- `[in progress]` Cangjie portal follow-through. Notes: Godot launcher now gives `仓颉之路` a dedicated portal overlay that previews the source-style `Start Climb` framing plus concrete sample cards, fusion routes, relics, tower nodes, and enemy intent beats; a true playable Godot scene or direct prototype hand-off is still pending.
 
 ## Menus
 

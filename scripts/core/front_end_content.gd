@@ -200,58 +200,397 @@ const LAUNCHER_CHANGELOG_HISTORY := [
 
 const CANGJIE_PORTAL_SECTIONS := [
 	{
-		"id": "overview",
-		"title": "仓颉之路",
-		"eyebrow": "Deckbuilder Climb",
-		"summary": "原项目里的《仓颉之路》已经不是空概念，而是一条可玩的 deckbuilder 爬塔原型。当前 Godot 仓库还没有把这条战斗/地图基础迁进来，所以这里先把它做成正式入口页，而不是继续停在“后续接入”。",
+		"id": "start_climb",
+		"title": {"zh": "起笔登塔", "en": "Start Climb"},
+		"eyebrow": "Tower Entry",
+		"accent": Color(0.9, 0.68, 0.38, 1.0),
+		"summary": {
+			"zh": "source portal 不只是一张静态卡片，它会先说明为什么这条线暂不做人物选择、真正的差异来自哪里，以及双语学习辅助要怎么读。",
+			"en": "The source portal is more than a static card. It explains why the climb skips hero select for now, where run variety really comes from, and how the bilingual learning assist should be read."
+		},
 		"points": [
-			"核心节奏是爬塔、抽牌、出牌和字形组合，不走字海残卷那套自动攻击幸存者循环。",
-			"战斗舞台会把卡牌信息直接浮在场中，强调“字形 + 动作 + 语义”的同时反馈。",
-			"当前最适合在 Godot 里先迁的是入口层、图谱层和长期设计说明，再等真正的卡牌战斗基础跟上。"
+			{
+				"zh": "当前 source 先固定一名登塔者，真正的变化更多来自牌组路线、遗物和节点抉择。",
+				"en": "The current source fixes one climber first, so most variation comes from deck lines, relics, and node choices."
+			},
+			{
+				"zh": "英文模式会同时保留汉字、拼音和义项，方便非中文母语玩家边打边认字。",
+				"en": "English mode keeps hanzi, pinyin, and gloss together so non-native readers can learn while climbing."
+			},
+			{
+				"zh": "Godot 端先把这段入口说明迁回启动器，等卡牌战斗基础成熟后再接真实开局。",
+				"en": "The Godot branch brings this entry framing back into the launcher first, then wires a real run start once the card-combat foundation is ready."
+			}
+		],
+		"sample_groups": [
+			{
+				"title": {"zh": "入口预览", "en": "Entry Preview"},
+				"cards": [
+					{
+						"glyph": "塔",
+						"title": {"zh": "从底层起笔", "en": "Begin At The Base"},
+						"subtitle": {"zh": "单角色主线", "en": "One-core climber"},
+						"body": {
+							"zh": "先不上人物选择，差异先交给路线、遗物和节点。",
+							"en": "Hero select stays out for now so route, relic, and node choices define the run first."
+						},
+						"tags": [
+							{"zh": "主线入口", "en": "Main entry"},
+							{"zh": "路线差异", "en": "Route variance"}
+						]
+					},
+					{
+						"glyph": "文",
+						"title": {"zh": "双语学读", "en": "Bilingual Read"},
+						"subtitle": {"zh": "汉字 + 拼音 + 义项", "en": "Hanzi + pinyin + gloss"},
+						"body": {
+							"zh": "入口文案会把学习辅助说清楚，而不只是在战斗里临时出现英文。",
+							"en": "The entry copy frames the learning assist up front instead of dropping English in only during battle."
+						},
+						"tags": [
+							{"zh": "学习辅助", "en": "Learning assist"},
+							{"zh": "前台说明", "en": "Front-end framing"}
+						]
+					},
+					{
+						"glyph": "路",
+						"title": {"zh": "路线先行", "en": "Route First"},
+						"subtitle": {"zh": "牌组 / 遗物 / 节点", "en": "Deck / relic / nodes"},
+						"body": {
+							"zh": "先读塔路，再决定把哪条合字线真正推成主牌组。",
+							"en": "Read the tower route first, then decide which character line deserves to become the real deck spine."
+						},
+						"tags": [
+							{"zh": "路线判断", "en": "Route read"},
+							{"zh": "构筑方向", "en": "Build line"}
+						]
+					}
+				]
+			}
 		]
 	},
 	{
 		"id": "card_codex",
-		"title": "卡牌字库",
+		"title": {"zh": "卡牌字库", "en": "Card Codex"},
 		"eyebrow": "Card Codex",
-		"summary": "web 原型已经把牌分成偏旁基牌、合字牌和引擎牌三层，不是单一数值卡堆。",
+		"accent": Color(0.46, 0.72, 0.88, 1.0),
+		"summary": {
+			"zh": "web 原型已经把牌分成偏旁基牌、合字牌和引擎牌三层，不是单一数值卡堆。",
+			"en": "The web prototype already splits cards into radical starters, formed-character cards, and engine pieces instead of one flat stack of numbers."
+		},
 		"points": [
-			"偏旁牌负责起手和过渡，是后续合字路线的材料层。",
-			"合字牌会把结构真正写成战斗效果，让“组字”变成卡组成长的一部分。",
-			"引擎牌继续推进抽牌、留牌、回气或连锁，让 deckbuilder 身份成立。"
+			{
+				"zh": "偏旁牌负责起手和过渡，是后续合字路线的材料层。",
+				"en": "Radical cards handle the opener and bridge turns, acting as the material layer for later fusions."
+			},
+			{
+				"zh": "合字牌会把结构真正写成战斗效果，让“组字”变成卡组成长的一部分。",
+				"en": "Fusion cards turn structure into combat effects, so assembling characters becomes part of deck growth."
+			},
+			{
+				"zh": "引擎牌继续推进抽牌、留牌、墨流或连锁，让 deckbuilder 身份成立。",
+				"en": "Engine cards keep draw, retention, Ink flow, or chaining alive so the deckbuilder identity holds."
+			}
+		],
+		"sample_groups": [
+			{
+				"title": {"zh": "源稿样张", "en": "Source Samples"},
+				"cards": [
+					{
+						"glyph": "日",
+						"title": {"zh": "日 · 起手偏旁", "en": "日 · Sun Trace"},
+						"subtitle": {"zh": "偏旁起手", "en": "Radical opener"},
+						"body": {
+							"zh": "先用直白伤害起手，并把「明」这条线写进牌库。",
+							"en": "Open with clean damage and seed the 明 line into the deck early."
+						},
+						"tags": [
+							{"zh": "偏旁", "en": "Radical"},
+							{"zh": "铺垫", "en": "Setup"}
+						]
+					},
+					{
+						"glyph": "明",
+						"title": {"zh": "明 · 节奏成字", "en": "明 · Tempo Fusion"},
+						"subtitle": {"zh": "日 + 月", "en": "Sun + moon"},
+						"body": {
+							"zh": "成型后同时补伤害、抽牌和墨流，是很标准的节奏成字。",
+							"en": "Once formed it supplies damage, draw, and Ink flow together, making it a classic tempo fusion."
+						},
+						"tags": [
+							{"zh": "成字", "en": "Fusion"},
+							{"zh": "节奏", "en": "Tempo"}
+						]
+					},
+					{
+						"glyph": "学",
+						"title": {"zh": "学 · 抽墨引擎", "en": "学 · Study Thread"},
+						"subtitle": {"zh": "引擎牌", "en": "Engine card"},
+						"body": {
+							"zh": "抽 2 并补 1 墨，提醒这条线不只有合字，还有真正维持牌组运转的引擎牌。",
+							"en": "Draw 2 and gain 1 Ink, showing the line needs real engine cards instead of only fusions."
+						},
+						"tags": [
+							{"zh": "引擎", "en": "Engine"},
+							{"zh": "抽墨", "en": "Draw + Ink"}
+						]
+					}
+				]
+			}
 		]
 	},
 	{
 		"id": "fusion_atlas",
-		"title": "合字图谱",
+		"title": {"zh": "合字图谱", "en": "Fusion Atlas"},
 		"eyebrow": "Fusion Atlas",
-		"summary": "《仓颉之路》不是只把汉字当皮肤，而是把合字路线直接做成牌组构筑图谱。",
+		"accent": Color(0.74, 0.82, 0.46, 1.0),
+		"summary": {
+			"zh": "《仓颉之路》不是只把汉字当皮肤，而是把合字路线直接做成牌组构筑图谱。",
+			"en": "Cangjie Road does not use hanzi as skin only. It turns fusion routes into a deckbuilding atlas."
+		},
 		"points": [
-			"不同合字路线会决定你这次爬塔偏向爆发、连锁、续航还是控制。",
-			"图谱层会比字海残卷更强调“先收什么，再往哪条组合线转”。",
-			"Godot 当前已经有字海的偏旁 -> 合字 -> 词技主线，后面可以把这套图谱思路反向迁回来。"
+			{
+				"zh": "不同合字路线会决定你这次爬塔偏向爆发、连锁、续航还是控制。",
+				"en": "Different fusion routes decide whether a climb leans into burst, chains, sustain, or control."
+			},
+			{
+				"zh": "图谱层会比字海残卷更强调“先收什么，再往哪条组合线转”。",
+				"en": "This atlas layer cares more than Ink-Sea about what you collect first and which combination line you pivot into."
+			},
+			{
+				"zh": "Godot 当前已经有字海的偏旁 -> 合字 -> 词技主线，后面可以把这套图谱思路反向迁回来。",
+				"en": "Godot already has the Ink-Sea radical -> glyph -> phrase loop, so this atlas logic can later migrate back in the other direction."
+			}
+		],
+		"sample_groups": [
+			{
+				"title": {"zh": "路线样例", "en": "Route Samples"},
+				"cards": [
+					{
+						"glyph": "明",
+						"title": {"zh": "明 · 节奏线", "en": "Bright · Tempo Line"},
+						"subtitle": {"zh": "日 + 月", "en": "Sun + moon"},
+						"body": {
+							"zh": "补格挡、抽牌和墨流，适合作为标准中速节奏主线。",
+							"en": "Adds Block, draw, and Ink flow, making it a clean mid-speed tempo spine."
+						},
+						"tags": [
+							{"zh": "节奏", "en": "Tempo"},
+							{"zh": "中速", "en": "Mid-speed"}
+						]
+					},
+					{
+						"glyph": "雷",
+						"title": {"zh": "雷 · 控爆线", "en": "Thunder · Control Burst"},
+						"subtitle": {"zh": "雨 + 田", "en": "Rain + field"},
+						"body": {
+							"zh": "更偏进攻与控制，适合把易伤和爆发串成一条线。",
+							"en": "Leans into attack and control, especially when chaining Vulnerable into burst."
+						},
+						"tags": [
+							{"zh": "控制", "en": "Control"},
+							{"zh": "爆发", "en": "Burst"}
+						]
+					},
+					{
+						"glyph": "休",
+						"title": {"zh": "休 · 稳健线", "en": "Rest · Sustain Line"},
+						"subtitle": {"zh": "人 + 木", "en": "Human + wood"},
+						"body": {
+							"zh": "把抽牌、防御和续航缝在一起，更像能扛中层压力的慢线。",
+							"en": "Stitches draw, defense, and sustain together into a steadier line that can absorb mid-floor pressure."
+						},
+						"tags": [
+							{"zh": "续航", "en": "Sustain"},
+							{"zh": "稳健", "en": "Steady"}
+						]
+					}
+				]
+			}
 		]
 	},
 	{
 		"id": "relic_shelf",
-		"title": "遗物架",
+		"title": {"zh": "遗物架", "en": "Relic Shelf"},
 		"eyebrow": "Relic Shelf",
-		"summary": "web 原型里《仓颉之路》有独立遗物层，负责给整套牌组和路线额外偏转。",
+		"accent": Color(0.88, 0.58, 0.62, 1.0),
+		"summary": {
+			"zh": "web 原型里《仓颉之路》有独立遗物层，负责给整套牌组和路线额外偏转。",
+			"en": "The web prototype gives Cangjie Road an independent relic layer that can bend both the deck and the route."
+		},
 		"points": [
-			"遗物不会只加一点基础数值，而是会改变抽牌、留牌、字形连锁和节点选择价值。",
-			"这条系统也正是 Godot 《字海残卷》当前还缺的第二成长线之一。",
-			"后续如果先在启动器把遗物架说明、样例和目标整理好，会更适合衔接真正的系统迁移。"
+			{
+				"zh": "遗物不会只加一点基础数值，而是会改变抽牌、留牌、字形连锁和节点选择价值。",
+				"en": "Relics matter less because they add flat stats and more because they reshape draw, retention, combo value, and node choices."
+			},
+			{
+				"zh": "这条系统也正是 Godot 《字海残卷》当前还缺的第二成长线之一。",
+				"en": "This is also one of the big second growth lanes still missing from Godot Ink-Sea."
+			},
+			{
+				"zh": "先把遗物架的说明和样例放回启动器，会更容易衔接后续真正的系统迁移。",
+				"en": "Putting the relic shelf framing and examples back into the launcher makes later system migration easier to stage safely."
+			}
+		],
+		"sample_groups": [
+			{
+				"title": {"zh": "遗物样例", "en": "Relic Samples"},
+				"cards": [
+					{
+						"glyph": "砚",
+						"title": {"zh": "砚 · 开局多抽", "en": "Inkstone · Opening Draw"},
+						"subtitle": {"zh": "战斗起手", "en": "Battle opener"},
+						"body": {
+							"zh": "每场战斗开局多抽 1，让慢线更快碰到关键偏旁与成字。",
+							"en": "Draw 1 extra card at the start of each battle so slower lines reach key radicals and fusions sooner."
+						},
+						"tags": [
+							{"zh": "起手抽牌", "en": "Opening draw"},
+							{"zh": "节奏提速", "en": "Tempo boost"}
+						]
+					},
+					{
+						"glyph": "镜",
+						"title": {"zh": "镜 · 重复返抽", "en": "Mirror Slip · Repeat Draw"},
+						"subtitle": {"zh": "重复偏旁", "en": "Repeated radical"},
+						"body": {
+							"zh": "每回合第一次打出重复偏旁时抽 1，直接改写你对重复材料的价值判断。",
+							"en": "The first repeated radical each turn draws 1, directly changing how valuable duplicate material feels."
+						},
+						"tags": [
+							{"zh": "重复利用", "en": "Repeat use"},
+							{"zh": "资源再估值", "en": "Revalue resources"}
+						]
+					},
+					{
+						"glyph": "契",
+						"title": {"zh": "契 · 商店折扣", "en": "Broker Seal · Shop Cut"},
+						"subtitle": {"zh": "牌 / 遗物更便宜", "en": "Cheaper cards / relics"},
+						"body": {
+							"zh": "让路线能更激进，也更愿意在买牌、买遗物和修薄之间重新分配 Gold。",
+							"en": "Makes routes greedier and shifts how willingly you spend Gold on cards, relics, or thinning."
+						},
+						"tags": [
+							{"zh": "商店", "en": "Shop"},
+							{"zh": "路线偏转", "en": "Route bend"}
+						]
+					}
+				]
+			}
 		]
 	},
 	{
 		"id": "tower_guide",
-		"title": "塔路导览",
+		"title": {"zh": "塔路导览", "en": "Tower Guide"},
 		"eyebrow": "Tower Guide",
-		"summary": "原型里塔路节点和敌人意图已经是独立设计，不只是打完一场接一场的线性战斗。",
+		"accent": Color(0.66, 0.68, 0.94, 1.0),
+		"summary": {
+			"zh": "原型里塔路节点和敌人意图已经是独立设计，不只是打完一场接一场的线性战斗。",
+			"en": "In the prototype, tower nodes and enemy intents are already their own design layer instead of one linear fight after another."
+		},
 		"points": [
-			"路线会混合战斗、恢复、事件和构筑节点，逼你在短期强度和长期牌组之间做取舍。",
-			"敌人不是字海那种大群追击，而是更接近回合制对局里的意图压迫和节奏管理。",
-			"Godot 端现在先用这层 portal 把路线、节点和敌意图整理清楚，避免第二项目继续只剩一张静态卡片。"
+			{
+				"zh": "路线会混合战斗、恢复、事件和构筑节点，逼你在短期强度和长期牌组之间做取舍。",
+				"en": "Routes mix battles, rests, events, and build nodes, forcing tradeoffs between short-term power and long-term deck shape."
+			},
+			{
+				"zh": "敌人不是字海那种大群追击，而是更接近回合制对局里的意图压迫和节奏管理。",
+				"en": "Enemies do not pressure like Ink-Sea swarms. They lean closer to turn-based intent reading and tempo management."
+			},
+			{
+				"zh": "Godot 端先把路线、节点和敌意图整理清楚，避免第二项目继续只剩一张静态卡片。",
+				"en": "The Godot launcher now stages routes, nodes, and enemy intent clearly so the second project stops reading like a single static card."
+			}
+		],
+		"sample_groups": [
+			{
+				"title": {"zh": "节点类型", "en": "Node Types"},
+				"cards": [
+					{
+						"glyph": "战",
+						"title": {"zh": "战斗", "en": "Battle"},
+						"subtitle": {"zh": "稳定读牌组", "en": "Read the deck steadily"},
+						"body": {
+							"zh": "最稳定地拿牌、拿 Gold，也是在前几层读自己主线最直接的地方。",
+							"en": "The steadiest place to gain cards and Gold, and to learn what line the deck is really on."
+						},
+						"tags": [
+							{"zh": "拿牌", "en": "Cards"},
+							{"zh": "Gold", "en": "Gold"}
+						]
+					},
+					{
+						"glyph": "魁",
+						"title": {"zh": "精英", "en": "Elite"},
+						"subtitle": {"zh": "高风险高定向", "en": "High risk, high direction"},
+						"body": {
+							"zh": "更危险，但也更容易把构筑真正推向某个方向。",
+							"en": "Riskier, but much more likely to push the build into a real direction."
+						},
+						"tags": [
+							{"zh": "方向锁定", "en": "Direction lock"},
+							{"zh": "高压", "en": "Pressure"}
+						]
+					},
+					{
+						"glyph": "宝",
+						"title": {"zh": "遗物", "en": "Treasure"},
+						"subtitle": {"zh": "改写后续 pick", "en": "Rewrite future picks"},
+						"body": {
+							"zh": "真正改变牌张价值判断的节点，经常会让你改写后续奖励顺序。",
+							"en": "The node that most often changes how future cards are valued, not just a bigger number room."
+						},
+						"tags": [
+							{"zh": "遗物节点", "en": "Relic node"},
+							{"zh": "后续偏转", "en": "Future bend"}
+						]
+					}
+				]
+			},
+			{
+				"title": {"zh": "敌意样本", "en": "Enemy Samples"},
+				"cards": [
+					{
+						"glyph": "妄",
+						"title": {"zh": "妄墨徒", "en": "Mad Ink Acolyte"},
+						"subtitle": {"zh": "污染 / 基础压血", "en": "Smudge / chip pressure"},
+						"body": {
+							"zh": "会在普通攻击和污染抽牌之间切换，逼你更认真看前期节奏。",
+							"en": "Swaps between regular attacks and dirtying your draws, forcing more careful early tempo reads."
+						},
+						"tags": [
+							{"zh": "战斗层", "en": "Battle floor"},
+							{"zh": "前期压力", "en": "Early pressure"}
+						]
+					},
+					{
+						"glyph": "劫",
+						"title": {"zh": "劫文兽", "en": "Calamity Script Beast"},
+						"subtitle": {"zh": "吸血 / 污染 / 爆发", "en": "Drain / smudge / burst"},
+						"body": {
+							"zh": "半成型回合很难回答它，必须把控制、防御和兑现一起写清楚。",
+							"en": "Half-built turns stop being enough, so the deck must answer with cleaner control, defense, and payoff."
+						},
+						"tags": [
+							{"zh": "精英层", "en": "Elite floor"},
+							{"zh": "综合试压", "en": "Mixed exam"}
+						]
+					},
+					{
+						"glyph": "渊",
+						"title": {"zh": "卷渊之主", "en": "Lord Of The Abyssal Scroll"},
+						"subtitle": {"zh": "长回合耐压", "en": "Long-form pressure"},
+						"body": {
+							"zh": "会把蓄势、连击、污染和重击串成塔顶总检验，要求整副牌都站得住。",
+							"en": "It chains charges, multi-hits, smudges, and heavy blows into a summit exam for the whole deck."
+						},
+						"tags": [
+							{"zh": "Boss", "en": "Boss"},
+							{"zh": "综合检验", "en": "Full build check"}
+						]
+					}
+				]
+			}
 		]
 	}
 ]
