@@ -220,17 +220,28 @@ const CHAMBER_LAYOUTS := {
 			{"position": Vector3(14.5, 0.0, 4.5), "supply_id": "fury"}
 		],
 		"exit_objective": {
-			"id": "seal_cleanup",
-			"name": "封门清印",
-			"english_name": "Seal Cleanup",
+			"id": "seal_gatekeeper",
+			"name": "前庭启门印",
+			"english_name": "Courtyard Gate Seal",
 			"glyph": "封",
-			"tip": "卷主退散后，还要先收束散落的三枚封印，卷间抉择才会真正打开。",
-			"english_tip": "Once the scroll lord falls, gather the three ward seals scattered across Entry Court before the between-chambers choice can open.",
+			"tip": "卷主退散后，先触碰这枚封门印，逼出守关魁首。只有守魁倒下，卷间奖印才会真正显形。",
+			"english_tip": "Once the scroll lord falls, touch the sealed ward to force out its gatekeeper. Only after that warden falls will the chamber reward beacon rise.",
 			"pickup_positions": [
-				Vector3(-15.0, 0.0, -2.5),
-				Vector3(1.5, 0.0, 16.0),
-				Vector3(14.0, 0.0, -12.5)
-			]
+				Vector3(0.0, 0.0, 1.0)
+			],
+			"seal_tint": Color(0.94, 0.44, 0.34, 1.0),
+			"seal_glow": Color(1.0, 0.82, 0.66, 1.0),
+			"gatekeeper": {
+				"id": "entry_court_gatekeeper",
+				"type": "elite",
+				"name": "砚门守魁",
+				"english_name": "Ink Gate Warden",
+				"glyph": "砚",
+				"taunt": "封门未开，先过我。",
+				"english_taunt": "The seal stays shut until I fall.",
+				"tint": Color(0.82, 0.54, 0.34, 1.0),
+				"health_scale": 1.18
+			}
 		}
 	},
 	"slip_archive": {
@@ -409,6 +420,8 @@ var chamber_modifier_expires_after_bosses: int = 0
 var room_objective_id: String = ""
 var room_objective_total: int = 0
 var room_objective_remaining: int = 0
+var room_objective_gatekeeper_active := false
+var room_objective_gatekeeper_id: String = ""
 var chamber_break_beacon_active := false
 
 var radical_counts: Dictionary = {}
@@ -667,12 +680,26 @@ func _localized_room_objective_name(objective: Dictionary) -> String:
 
 
 func _room_objective_active() -> bool:
-	return not room_objective_id.is_empty() and room_objective_remaining > 0
+	return not room_objective_id.is_empty() and (room_objective_remaining > 0 or room_objective_gatekeeper_active)
 
 
 func _room_objective_status_text(objective: Dictionary, remaining: int) -> String:
 	var objective_name := _localized_room_objective_name(objective)
 	var base_tip := String(objective.get("english_tip" if _is_english() else "tip", _current_chamber_tip()))
+	if String(objective.get("id", "")) == "seal_gatekeeper":
+		var gatekeeper_variant: Variant = objective.get("gatekeeper", {})
+		var gatekeeper_name := (
+			String(gatekeeper_variant.get("english_name" if _is_english() else "name", "Gatekeeper" if _is_english() else "守关魁首"))
+			if gatekeeper_variant is Dictionary
+			else ("Gatekeeper" if _is_english() else "守关魁首")
+		)
+		if room_objective_gatekeeper_active:
+			if _is_english():
+				return "%s · %s Defeat %s to unseal the reward beacon." % [objective_name, base_tip, gatekeeper_name]
+			return "%s · %s 击败%s后，卷间奖印才会解封。" % [objective_name, base_tip, gatekeeper_name]
+		if _is_english():
+			return "%s · %s Reach the sealed ward to draw the gatekeeper out." % [objective_name, base_tip]
+		return "%s · %s 先靠近封门印，逼出守关魁首。" % [objective_name, base_tip]
 	if _is_english():
 		return "%s · %s Remaining seals %d/%d." % [objective_name, base_tip, remaining, room_objective_total]
 	return "%s · %s 当前还差 %d / %d 枚封印。" % [objective_name, base_tip, remaining, room_objective_total]
@@ -682,6 +709,8 @@ func _clear_room_objective_state() -> void:
 	room_objective_id = ""
 	room_objective_total = 0
 	room_objective_remaining = 0
+	room_objective_gatekeeper_active = false
+	room_objective_gatekeeper_id = ""
 
 
 func _clear_chamber_break_beacon_state() -> void:
@@ -726,11 +755,13 @@ func _current_guidance_target() -> Dictionary:
 		return {}
 	var accent := _current_chamber_accent()
 	if _room_objective_active():
+		var objective := _current_chamber_exit_objective()
+		var objective_text := ("Sealed Ward" if _is_english() else "封门印") if String(objective.get("id", "")) == "seal_gatekeeper" else (("Seals %d/%d" if _is_english() else "封印 %d/%d") % [room_objective_remaining, room_objective_total])
 		var objective_pickup := _nearest_pickup_target(_active_pickups_for_meta("room_objective_id", room_objective_id))
 		if objective_pickup != null:
 			return {
 				"world_position": objective_pickup.global_position + Vector3(0.0, 1.5, 0.0),
-				"text": ("Seals %d/%d" if _is_english() else "封印 %d/%d") % [room_objective_remaining, room_objective_total],
+				"text": objective_text,
 				"accent": accent
 			}
 	if chamber_break_beacon_active:
@@ -830,7 +861,7 @@ func _spawn_chamber_break_beacon() -> void:
 
 
 func _try_start_chamber_exit_objective() -> bool:
-	if _room_objective_active():
+	if _room_objective_active() or chamber_break_beacon_active:
 		return true
 	var objective := _current_chamber_exit_objective()
 	var objective_id := String(objective.get("id", ""))
@@ -844,14 +875,21 @@ func _try_start_chamber_exit_objective() -> bool:
 	var glyph := String(objective.get("glyph", "封"))
 	for position_variant in pickup_positions:
 		if position_variant is Vector3:
+			var pickup_supply_id := "seal"
+			var pickup_meta := {
+				"room_objective_id": objective_id,
+				"room_objective_glyph": glyph
+			}
+			if objective_id == "seal_gatekeeper":
+				pickup_supply_id = "beacon"
+				pickup_meta["pickup_label"] = glyph
+				pickup_meta["pickup_tint"] = objective.get("seal_tint", Color(0.94, 0.44, 0.34, 1.0))
+				pickup_meta["pickup_glow"] = objective.get("seal_glow", Color(1.0, 0.82, 0.66, 1.0))
 			_spawn_world_supply_pickup(
 				position_variant,
-				"seal",
+				pickup_supply_id,
 				0.0,
-				{
-					"room_objective_id": objective_id,
-					"room_objective_glyph": glyph
-				}
+				pickup_meta
 			)
 	if hud != null:
 		hud.show_banner(
@@ -884,6 +922,33 @@ func _advance_room_objective(pickup_ref, tint: Color) -> bool:
 	var objective := _current_chamber_exit_objective()
 	var objective_name := _localized_room_objective_name(objective)
 	var accent := _current_chamber_accent().lerp(tint, 0.4)
+	if objective_id == "seal_gatekeeper":
+		room_objective_remaining = 0
+		var gatekeeper_name := _spawn_room_objective_gatekeeper(objective, pickup_ref.global_position if pickup_ref != null else Vector3.ZERO)
+		if gatekeeper_name.is_empty():
+			_complete_room_objective(objective, accent)
+			return true
+		room_objective_gatekeeper_active = true
+		if hud != null:
+			hud.show_banner(
+				("%s  Gatekeeper waiting" if _is_english() else "%s  守关现身") % objective_name,
+				accent,
+				1.9
+			)
+			hud.show_reveal(
+				"Seal Warden" if _is_english() else "封门守魁",
+				gatekeeper_name,
+				("Defeat %s to unseal the reward beacon." if _is_english() else "击败%s后，卷间奖印才会真正解封。") % gatekeeper_name,
+				accent,
+				String(pickup_ref.get_meta("room_objective_glyph", objective.get("glyph", "封"))),
+				2.8
+			)
+			hud.set_tip(_room_objective_status_text(objective, room_objective_remaining))
+		_log_battle_event(
+			("%s · %s emerges" if _is_english() else "%s · %s拦路") % [objective_name, gatekeeper_name],
+			accent
+		)
+		return true
 	room_objective_remaining = max(room_objective_remaining - 1, 0)
 	if room_objective_remaining > 0:
 		if hud != null:
@@ -899,7 +964,74 @@ func _advance_room_objective(pickup_ref, tint: Color) -> bool:
 		)
 		return true
 
-	var glyph := String(pickup_ref.get_meta("room_objective_glyph", objective.get("glyph", "封")))
+	_complete_room_objective(objective, accent)
+	return true
+
+
+func _spawn_room_objective_gatekeeper(objective: Dictionary, beacon_position: Vector3) -> String:
+	var gatekeeper_variant: Variant = objective.get("gatekeeper", {})
+	if not (gatekeeper_variant is Dictionary) or not is_instance_valid(player):
+		return ""
+	var gatekeeper := gatekeeper_variant as Dictionary
+	var gatekeeper_id := String(gatekeeper.get("id", ""))
+	if gatekeeper_id.is_empty():
+		gatekeeper_id = "%s_gatekeeper" % String(objective.get("id", "room_objective"))
+	var enemy = ENEMY_SCENE.instantiate()
+	var gatekeeper_type := String(gatekeeper.get("type", "elite"))
+	var spawn_direction := Vector3.ZERO - beacon_position
+	spawn_direction.y = 0.0
+	if spawn_direction.length_squared() <= 0.001:
+		spawn_direction = Vector3.BACK
+	else:
+		spawn_direction = spawn_direction.normalized()
+	enemy.position = beacon_position + spawn_direction * 3.8
+	enemy.position.y = 0.0
+	enemy.configure(gatekeeper_type, 1.1 + elapsed_time / 76.0, player)
+	enemy.enemy_name = String(
+		gatekeeper.get("english_name" if _is_english() else "name", "Gatekeeper" if _is_english() else "守关魁首")
+	)
+	enemy.glyph = String(gatekeeper.get("glyph", "魁"))
+	enemy.tint = Color(gatekeeper.get("tint", Color(0.82, 0.54, 0.34, 1.0)))
+	enemy.max_health *= maxf(float(gatekeeper.get("health_scale", 1.0)), 0.35)
+	enemy.health = enemy.max_health
+	enemy.display_health = enemy.health
+	if enemy.has_method("set_health_bar_visible"):
+		enemy.set_health_bar_visible(bool(battle_settings.get("enemy_health_bars", true)))
+	if enemy.has_method("set_detail_visible"):
+		enemy.set_detail_visible(_should_show_enemy_detail(enemy))
+	enemy.defeated.connect(_on_enemy_defeated)
+	if enemy.has_signal("damaged"):
+		enemy.damaged.connect(_on_enemy_damaged)
+	enemy.defeated.connect(Callable(self, "_on_room_objective_gatekeeper_defeated").bind(gatekeeper_id))
+	enemy.request_hazard.connect(_on_enemy_request_hazard)
+	enemy.request_line_hazard.connect(_on_enemy_request_line_hazard)
+	enemy.request_projectile.connect(_on_enemy_request_projectile)
+	enemies_root.add_child(enemy)
+	room_objective_gatekeeper_id = gatekeeper_id
+	var taunt := String(gatekeeper.get("english_taunt" if _is_english() else "taunt", ""))
+	if not taunt.is_empty():
+		_show_battle_callout(
+			("%s Challenges You" % enemy.enemy_name) if _is_english() else "%s拦路" % enemy.enemy_name,
+			taunt,
+			Color(enemy.tint),
+			("%s: " % enemy.enemy_name) if _is_english() else "%s：" % enemy.enemy_name,
+			3.0
+		)
+	_spawn_wave_effect(enemy.global_position, 3.9, Color(enemy.tint), String(enemy.glyph))
+	return String(enemy.enemy_name)
+
+
+func _on_room_objective_gatekeeper_defeated(_world_position: Vector3, _enemy_type: String, gatekeeper_id: String) -> void:
+	if gatekeeper_id.is_empty() or gatekeeper_id != room_objective_gatekeeper_id:
+		return
+	var objective := _current_chamber_exit_objective()
+	var accent := Color(objective.get("seal_tint", _current_chamber_accent()))
+	room_objective_gatekeeper_active = false
+	_complete_room_objective(objective, accent)
+
+
+func _complete_room_objective(objective: Dictionary, accent: Color) -> void:
+	var objective_name := _localized_room_objective_name(objective)
 	_clear_room_objective_state()
 	if hud != null:
 		hud.show_banner(
@@ -908,16 +1040,15 @@ func _advance_room_objective(pickup_ref, tint: Color) -> bool:
 			1.7
 		)
 		hud.set_tip(
-			"The seals are bound. Reach the reward beacon before the between-chambers choice can resolve."
+			"The reward beacon is now active. Reach it before the next chamber choice can resolve."
 			if _is_english()
-			else "封印已经收束。先走到奖印前，卷间抉择才会真正打开。"
+			else "卷间奖印已经显形。先亲自走到奖印前，卷间抉择才会真正打开。"
 		)
 	_log_battle_event(
 		("%s complete · Reward beacon raised" if _is_english() else "%s完成 · 奖印显形") % objective_name,
 		accent
 	)
 	_spawn_chamber_break_beacon()
-	return true
 
 
 func _setup_phrase_events() -> void:
@@ -1368,7 +1499,7 @@ func _process(delta: float) -> void:
 	_update_phrase_events()
 	_reveal_map_around_position(player.global_position)
 	_update_guidance_indicator()
-	if _room_objective_active():
+	if _room_objective_active() or chamber_break_beacon_active:
 		hud.set_status(elapsed_time, kills, threat_level)
 		return
 
@@ -2228,6 +2359,12 @@ func _spawn_world_supply_pickup(world_position: Vector3, supply_id: String, amou
 	var pickup = SUPPLY_PICKUP_SCENE.instantiate()
 	pickup.position = world_position + Vector3(0.0, 0.45, 0.0)
 	pickup.configure(player, supply_id, amount)
+	if pickup_meta.has("pickup_label"):
+		pickup.label = String(pickup_meta["pickup_label"])
+	if pickup_meta.has("pickup_tint"):
+		pickup.tint = Color(pickup_meta["pickup_tint"])
+	if pickup_meta.has("pickup_glow"):
+		pickup.glow = Color(pickup_meta["pickup_glow"])
 	for meta_key_variant in pickup_meta.keys():
 		var meta_key := String(meta_key_variant)
 		if meta_key.is_empty():
