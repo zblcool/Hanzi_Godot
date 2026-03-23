@@ -1251,6 +1251,47 @@ const BATTLE_STATE_CONTENT := {
 	"action_continue_deeper": {"zh": "续卷入深层", "en": "Continue Deeper"}
 }
 
+const BATTLE_PICKUP_CONTENT := {
+	"paper_banner_format": {"zh": "拾得残纸  +%d 字墨", "en": "Paper Scrap  +%d Ink"},
+	"paper_log_format": {"zh": "拾得残纸 · +%d 字墨", "en": "Paper Scrap · +%d Ink"},
+	"ink_banner_format": {"zh": "拾得墨团  回气 %d", "en": "Ink Cluster  Heal %d"},
+	"ink_log_format": {"zh": "拾得墨团 · 回气 %d", "en": "Ink Cluster · Heal %d"},
+	"seal_banner_format": {"zh": "拾得战印  %s +%d", "en": "Battle Seal  %s +%d"},
+	"seal_log_format": {"zh": "拾得战印 · %s +%d", "en": "Battle Seal · %s +%d"},
+	"magnet_banner_gain_format": {"zh": "拾得聚墨符  收束 %d 字墨", "en": "Ink Magnet  Gathered %d Ink"},
+	"magnet_banner_empty": {"zh": "拾得聚墨符  场上已无散墨", "en": "Ink Magnet  No loose ink remains"},
+	"magnet_tip": {
+		"zh": "聚墨符会把战场上遗落的字墨尽数回收，适合在绕场之后一口气补等级。",
+		"en": "The ink magnet recalls every loose ink pickup on the field, making it ideal after a long kite around the arena."
+	},
+	"magnet_log_gain_format": {"zh": "拾得聚墨符 · 收束 %d 字墨", "en": "Ink Magnet · Gathered %d Ink"},
+	"magnet_log_empty": {"zh": "拾得聚墨符 · 场上已无散墨", "en": "Ink Magnet · No loose ink remains"},
+	"fury_banner_format": {"zh": "拾得疾书令  攻速移速提升 %d 秒", "en": "Swift Edict  Attack and move speed up for %d s"},
+	"fury_tip": {
+		"zh": "疾书令会短时间拉高攻速与移速，适合强开精英或抢一波散落补给。",
+		"en": "Swift Edict boosts attack and movement speed for a short burst, which is perfect for forcing elites or sweeping pickups."
+	},
+	"fury_log_format": {"zh": "拾得疾书令 · 提速 %d 秒", "en": "Swift Edict · Speed up for %d s"},
+	"potion_banner_format": {"zh": "拾得回春丹  回复 %d%% 气血", "en": "Spring Pill  Restore %d%% Vitality"},
+	"potion_tip": {
+		"zh": "回春丹会按最大气血比例回气，适合硬吃一波精英或卷主技能后迅速稳住局势。",
+		"en": "Spring Pill heals a percentage of your maximum vitality, making it ideal after tanking an elite or boss pattern."
+	},
+	"potion_log_format": {"zh": "拾得回春丹 · 回复 %d%% 气血", "en": "Spring Pill · Restore %d%% Vitality"},
+	"brush_banner_format": {"zh": "拾得文笔  机动提升 %d 秒", "en": "Writers Brush  Mobility up for %d s"},
+	"brush_tip": {
+		"zh": "文笔加身，短时间内移动更快，适合拉扯敌群和抢补给。",
+		"en": "The writer's brush speeds you up for a short window, which is ideal for dragging the crowd or scooping supplies."
+	},
+	"brush_log_format": {"zh": "拾得文笔 · 机动提升 %d 秒", "en": "Writers Brush · Mobility up for %d s"},
+	"chest_banner": {"zh": "宝箱开启", "en": "Chest Opened"},
+	"chest_tip": {
+		"zh": "宝箱散出补给。先收残纸与墨团，再决定是压等级还是补状态。",
+		"en": "The chest spills supplies across the field. Grab paper scraps and ink first, then decide whether to push levels or recover."
+	},
+	"chest_log": {"zh": "宝箱开启 · 补给散落", "en": "Chest Opened · Supplies scattered"}
+}
+
 const BATTLE_HUD_EN_TEXT := {
 	"待入曲": "Awaiting Cue",
 	"战场乐题": "Battle Track",
@@ -1653,6 +1694,10 @@ static func local_leaderboard_content() -> Dictionary:
 
 static func battle_state_content() -> Dictionary:
 	return BATTLE_STATE_CONTENT.duplicate(true)
+
+
+static func battle_pickup_content() -> Dictionary:
+	return BATTLE_PICKUP_CONTENT.duplicate(true)
 
 
 static func localize_battle_text(text: String, english: bool) -> String:

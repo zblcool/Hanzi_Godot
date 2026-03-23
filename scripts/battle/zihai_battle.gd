@@ -3077,6 +3077,7 @@ func _on_supply_collected(world_position: Vector3, supply_id: String, amount: fl
 	var pulse_radius: float = 1.05
 	var event_text := ""
 	var pulse_label := label
+	var pickup_content := FrontEndContent.battle_pickup_content()
 	var objective_pickup_consumed := _advance_room_objective(pickup_ref, tint)
 	if objective_pickup_consumed and pickup_ref != null and is_instance_valid(pickup_ref):
 		pulse_label = String(pickup_ref.get_meta("room_objective_glyph", label))
@@ -3095,59 +3096,59 @@ func _on_supply_collected(world_position: Vector3, supply_id: String, amount: fl
 		"paper":
 			var xp_gain: int = int(round(amount))
 			_gain_experience(xp_gain)
-			hud.show_banner(("Paper Scrap  +%d Ink" if _is_english() else "拾得残纸  +%d 字墨") % xp_gain, tint, 1.45)
-			event_text = ("Paper Scrap · +%d Ink" if _is_english() else "拾得残纸 · +%d 字墨") % xp_gain
+			hud.show_banner(_front_end_text(pickup_content, "paper_banner_format", "拾得残纸  +%d 字墨", "Paper Scrap  +%d Ink") % xp_gain, tint, 1.45)
+			event_text = _front_end_text(pickup_content, "paper_log_format", "拾得残纸 · +%d 字墨", "Paper Scrap · +%d Ink") % xp_gain
 		"ink":
 			if is_instance_valid(player):
 				player.heal(amount)
-				hud.show_banner(("Ink Cluster  Heal %d" if _is_english() else "拾得墨团  回气 %d") % int(round(amount)), tint, 1.5)
-				event_text = ("Ink Cluster · Heal %d" if _is_english() else "拾得墨团 · 回气 %d") % int(round(amount))
+				hud.show_banner(_front_end_text(pickup_content, "ink_banner_format", "拾得墨团  回气 %d", "Ink Cluster  Heal %d") % int(round(amount)), tint, 1.5)
+				event_text = _front_end_text(pickup_content, "ink_log_format", "拾得墨团 · 回气 %d", "Ink Cluster · Heal %d") % int(round(amount))
 			pulse_radius = 1.12
 		"seal":
 			if is_instance_valid(player):
 				var blade_gain: int = max(1, int(round(amount)))
 				player.apply_blade_upgrade(blade_gain)
 				hud.show_banner(
-					("%s  %s +%d" % ["Battle Seal", _weapon_core_label(), blade_gain]) if _is_english() else "拾得战印  %s +%d" % [_weapon_core_label(), blade_gain],
+					_front_end_text(pickup_content, "seal_banner_format", "拾得战印  %s +%d", "Battle Seal  %s +%d") % [_weapon_core_label(), blade_gain],
 					tint,
 					1.7
 				)
-				event_text = ("Battle Seal · %s +%d" if _is_english() else "拾得战印 · %s +%d") % [_weapon_core_label(), blade_gain]
+				event_text = _front_end_text(pickup_content, "seal_log_format", "拾得战印 · %s +%d", "Battle Seal · %s +%d") % [_weapon_core_label(), blade_gain]
 			pulse_radius = 1.22
 		"magnet":
 			var gathered_xp: int = _collect_all_xp_pickups()
 			if gathered_xp > 0:
 				_gain_experience(gathered_xp)
-				hud.show_banner(("Ink Magnet  Gathered %d Ink" if _is_english() else "拾得聚墨符  收束 %d 字墨") % gathered_xp, tint, 1.8)
-				event_text = ("Ink Magnet · Gathered %d Ink" if _is_english() else "拾得聚墨符 · 收束 %d 字墨") % gathered_xp
+				hud.show_banner(_front_end_text(pickup_content, "magnet_banner_gain_format", "拾得聚墨符  收束 %d 字墨", "Ink Magnet  Gathered %d Ink") % gathered_xp, tint, 1.8)
+				event_text = _front_end_text(pickup_content, "magnet_log_gain_format", "拾得聚墨符 · 收束 %d 字墨", "Ink Magnet · Gathered %d Ink") % gathered_xp
 			else:
-				hud.show_banner("Ink Magnet  No loose ink remains" if _is_english() else "拾得聚墨符  场上已无散墨", tint, 1.6)
-				event_text = "Ink Magnet · No loose ink remains" if _is_english() else "拾得聚墨符 · 场上已无散墨"
-			hud.set_tip("The ink magnet recalls every loose ink pickup on the field, making it ideal after a long kite around the arena." if _is_english() else "聚墨符会把战场上遗落的字墨尽数回收，适合在绕场之后一口气补等级。")
+				hud.show_banner(_front_end_text(pickup_content, "magnet_banner_empty", "拾得聚墨符  场上已无散墨", "Ink Magnet  No loose ink remains"), tint, 1.6)
+				event_text = _front_end_text(pickup_content, "magnet_log_empty", "拾得聚墨符 · 场上已无散墨", "Ink Magnet · No loose ink remains")
+			hud.set_tip(_front_end_text(pickup_content, "magnet_tip", "聚墨符会把战场上遗落的字墨尽数回收，适合在绕场之后一口气补等级。", "The ink magnet recalls every loose ink pickup on the field, making it ideal after a long kite around the arena."))
 			pulse_radius = 1.26
 		"fury":
 			if is_instance_valid(player):
 				var duration: float = max(amount, 10.0)
 				player.apply_fury_haste(duration)
-				hud.show_banner(("Swift Edict  Attack and move speed up for %d s" if _is_english() else "拾得疾书令  攻速移速提升 %d 秒") % int(round(duration)), tint, 1.85)
-				hud.set_tip("Swift Edict boosts attack and movement speed for a short burst, which is perfect for forcing elites or sweeping pickups." if _is_english() else "疾书令会短时间拉高攻速与移速，适合强开精英或抢一波散落补给。")
-				event_text = ("Swift Edict · Speed up for %d s" if _is_english() else "拾得疾书令 · 提速 %d 秒") % int(round(duration))
+				hud.show_banner(_front_end_text(pickup_content, "fury_banner_format", "拾得疾书令  攻速移速提升 %d 秒", "Swift Edict  Attack and move speed up for %d s") % int(round(duration)), tint, 1.85)
+				hud.set_tip(_front_end_text(pickup_content, "fury_tip", "疾书令会短时间拉高攻速与移速，适合强开精英或抢一波散落补给。", "Swift Edict boosts attack and movement speed for a short burst, which is perfect for forcing elites or sweeping pickups."))
+				event_text = _front_end_text(pickup_content, "fury_log_format", "拾得疾书令 · 提速 %d 秒", "Swift Edict · Speed up for %d s") % int(round(duration))
 			pulse_radius = 1.24
 		"potion":
 			if is_instance_valid(player):
 				var heal_ratio := clampf(amount if amount > 0.0 else HEALTH_POTION_HEAL_RATIO, 0.12, 0.9)
 				player.heal(player.max_health * heal_ratio)
-				hud.show_banner(("Spring Pill  Restore %d%% Vitality" if _is_english() else "拾得回春丹  回复 %d%% 气血") % int(round(heal_ratio * 100.0)), tint, 1.8)
-				hud.set_tip("Spring Pill heals a percentage of your maximum vitality, making it ideal after tanking an elite or boss pattern." if _is_english() else "回春丹会按最大气血比例回气，适合硬吃一波精英或卷主技能后迅速稳住局势。")
-				event_text = ("Spring Pill · Restore %d%% Vitality" if _is_english() else "拾得回春丹 · 回复 %d%% 气血") % int(round(heal_ratio * 100.0))
+				hud.show_banner(_front_end_text(pickup_content, "potion_banner_format", "拾得回春丹  回复 %d%% 气血", "Spring Pill  Restore %d%% Vitality") % int(round(heal_ratio * 100.0)), tint, 1.8)
+				hud.set_tip(_front_end_text(pickup_content, "potion_tip", "回春丹会按最大气血比例回气，适合硬吃一波精英或卷主技能后迅速稳住局势。", "Spring Pill heals a percentage of your maximum vitality, making it ideal after tanking an elite or boss pattern."))
+				event_text = _front_end_text(pickup_content, "potion_log_format", "拾得回春丹 · 回复 %d%% 气血", "Spring Pill · Restore %d%% Vitality") % int(round(heal_ratio * 100.0))
 			pulse_radius = 1.22
 		"brush":
 			if is_instance_valid(player):
 				var duration: float = max(amount, 6.0)
 				player.apply_brush_haste(duration)
-				hud.show_banner(("Writers Brush  Mobility up for %d s" if _is_english() else "拾得文笔  机动提升 %d 秒") % int(round(duration)), tint, 1.7)
-				hud.set_tip("The writer's brush speeds you up for a short window, which is ideal for dragging the crowd or scooping supplies." if _is_english() else "文笔加身，短时间内移动更快，适合拉扯敌群和抢补给。")
-				event_text = ("Writers Brush · Mobility up for %d s" if _is_english() else "拾得文笔 · 机动提升 %d 秒") % int(round(duration))
+				hud.show_banner(_front_end_text(pickup_content, "brush_banner_format", "拾得文笔  机动提升 %d 秒", "Writers Brush  Mobility up for %d s") % int(round(duration)), tint, 1.7)
+				hud.set_tip(_front_end_text(pickup_content, "brush_tip", "文笔加身，短时间内移动更快，适合拉扯敌群和抢补给。", "The writer's brush speeds you up for a short window, which is ideal for dragging the crowd or scooping supplies."))
+				event_text = _front_end_text(pickup_content, "brush_log_format", "拾得文笔 · 机动提升 %d 秒", "Writers Brush · Mobility up for %d s") % int(round(duration))
 			pulse_radius = 1.18
 
 	if not event_text.is_empty():
@@ -3891,10 +3892,11 @@ func _on_bush_activated(message: String) -> void:
 
 
 func _on_treasure_chest_opened(world_position: Vector3, drops: Dictionary) -> void:
+	var pickup_content := FrontEndContent.battle_pickup_content()
 	_spawn_supply_bundle(world_position, drops)
-	hud.show_banner("Chest Opened" if _is_english() else "宝箱开启", Color(1.0, 0.84, 0.52, 1.0), 1.7)
-	hud.set_tip("The chest spills supplies across the field. Grab paper scraps and ink first, then decide whether to push levels or recover." if _is_english() else "宝箱散出补给。先收残纸与墨团，再决定是压等级还是补状态。")
-	_log_battle_event("Chest Opened · Supplies scattered" if _is_english() else "宝箱开启 · 补给散落", Color(1.0, 0.84, 0.52, 1.0))
+	hud.show_banner(_front_end_text(pickup_content, "chest_banner", "宝箱开启", "Chest Opened"), Color(1.0, 0.84, 0.52, 1.0), 1.7)
+	hud.set_tip(_front_end_text(pickup_content, "chest_tip", "宝箱散出补给。先收残纸与墨团，再决定是压等级还是补状态。", "The chest spills supplies across the field. Grab paper scraps and ink first, then decide whether to push levels or recover."))
+	_log_battle_event(_front_end_text(pickup_content, "chest_log", "宝箱开启 · 补给散落", "Chest Opened · Supplies scattered"), Color(1.0, 0.84, 0.52, 1.0))
 
 
 func _sync_hud() -> void:
