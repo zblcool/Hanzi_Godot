@@ -744,6 +744,10 @@ func _front_end_text(content: Dictionary, key: String, fallback_zh: String, fall
 	return String(value)
 
 
+func _battle_guidance_text(key: String, fallback_zh: String, fallback_en: String = "") -> String:
+	return _front_end_text(FrontEndContent.battle_guidance_content(), key, fallback_zh, fallback_en)
+
+
 func _localized_hero_data(hero_data: Dictionary) -> Dictionary:
 	return HanziLocalization.localized_hero_data(String(hero_data.get("id", "")), Session.get_launcher_language())
 
@@ -777,9 +781,11 @@ func _localized_soundtrack_cue(cue: String) -> String:
 
 
 func _default_battle_tip() -> String:
-	if _is_english():
-		return "Defeat glyph spirits to collect ink power and supplies. Choose one of three radicals on level-up, then press E near the inkstone to refine phrases."
-	return DEFAULT_BATTLE_TIP
+	return _battle_guidance_text(
+		"default_tip",
+		DEFAULT_BATTLE_TIP,
+		"Defeat glyph spirits to collect ink power and supplies. Choose one of three radicals on level-up, then press E near the inkstone to refine phrases."
+	)
 
 
 func _weapon_core_label() -> String:
@@ -4910,11 +4916,11 @@ func _update_inkstone_interaction() -> void:
 		return
 
 	if _has_grindable_words():
-		hud.set_tip("Move close to the inkstone and press E to refine phrases. Phrase arts can only be formed here." if _is_english() else "靠近砚台，按 E 磨词。词技只会在这里成型。")
+		hud.set_tip(_battle_guidance_text("inkstone_ready_tip", "靠近砚台，按 E 磨词。词技只会在这里成型。", "Move close to the inkstone and press E to refine phrases. Phrase arts can only be formed here."))
 		if Input.is_action_just_pressed("interact"):
 			_handle_inkstone_interact()
 	else:
-		hud.set_tip("The inkstone waits. Max a fused glyph first, then bring its related radicals here for phrase refinement." if _is_english() else "砚台静候。先把合字升满，再带着相关偏旁来磨词。")
+		hud.set_tip(_battle_guidance_text("inkstone_waiting_tip", "砚台静候。先把合字升满，再带着相关偏旁来磨词。", "The inkstone waits. Max a fused glyph first, then bring its related radicals here for phrase refinement."))
 		if Input.is_action_just_pressed("interact"):
 			_handle_inkstone_interact()
 

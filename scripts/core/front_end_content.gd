@@ -1436,6 +1436,21 @@ const BATTLE_INTERLUDE_CONTENT := {
 	"recovery_default_log_format": {"zh": "卷间抉择 · 歇笔回气 %d%%", "en": "Between Chambers · Short Rest %d%%"}
 }
 
+const BATTLE_GUIDANCE_CONTENT := {
+	"default_tip": {
+		"zh": "击倒字灵收集字力与补给，升级时三选一偏旁。靠近砚台按 E 磨词。",
+		"en": "Defeat glyph spirits to collect ink power and supplies. Choose one of three radicals on level-up, then press E near the inkstone to refine phrases."
+	},
+	"inkstone_ready_tip": {
+		"zh": "靠近砚台，按 E 磨词。词技只会在这里成型。",
+		"en": "Move close to the inkstone and press E to refine phrases. Phrase arts can only be formed here."
+	},
+	"inkstone_waiting_tip": {
+		"zh": "砚台静候。先把合字升满，再带着相关偏旁来磨词。",
+		"en": "The inkstone waits. Max a fused glyph first, then bring its related radicals here for phrase refinement."
+	}
+}
+
 const MENU_ENEMY_CONTENT := {
 	"intro": "以下条目对应当前残卷里已经接入的敌人谱系、预警方式与最实用的临场处理思路。",
 	"entry_format": "%s  %s  ·  %s",
@@ -1710,6 +1725,10 @@ static func localize_battle_text(text: String, english: bool) -> String:
 
 static func battle_interlude_content() -> Dictionary:
 	return BATTLE_INTERLUDE_CONTENT.duplicate(true)
+
+
+static func battle_guidance_content() -> Dictionary:
+	return BATTLE_GUIDANCE_CONTENT.duplicate(true)
 
 
 static func menu_leaderboard_content() -> Dictionary:
