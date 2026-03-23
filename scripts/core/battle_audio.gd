@@ -290,6 +290,14 @@ func debug_music_state() -> Dictionary:
 	}
 
 
+func _normalize_enemy_audio_type(enemy_type: String) -> String:
+	match enemy_type:
+		"swift", "tank", "archer", "assassin", "cavalry", "ritualist", "elite", "boss":
+			return enemy_type
+		_:
+			return "basic"
+
+
 func play_attack(kind: String, intensity: float = 1.0) -> void:
 	var power := clampf(intensity, 0.72, 1.6)
 	match kind:
@@ -338,80 +346,94 @@ func play_attack(kind: String, intensity: float = 1.0) -> void:
 
 
 func play_enemy_hit(enemy_type: String, hit_radius: float) -> void:
+	var normalized_type := _normalize_enemy_audio_type(enemy_type)
+	if not _can_play("enemy_hit_mix", 0.02):
+		return
+	var type_cooldown := 0.045 if normalized_type in ["tank", "elite", "boss"] else 0.035
+	if not _can_play("enemy_hit_%s" % normalized_type, type_cooldown):
+		return
 	var weight := clampf(hit_radius / 1.2, 0.7, 1.5)
-	match enemy_type:
-		"tank", "cavalry":
-			if not _can_play("enemy_hit_brute", 0.045):
-				return
-			var brute_power := weight * (1.12 if enemy_type == "cavalry" else 1.0)
-			_push_voice({"waveform": "triangle", "start_freq": 92.0 / weight + rng.randf_range(0.0, 10.0), "end_freq": 42.0 / weight, "amplitude": 0.18 * brute_power, "duration": 0.1, "release": 0.14, "pan": _small_pan()})
-			_push_voice({"waveform": "saw", "start_freq": 180.0, "end_freq": 88.0, "amplitude": 0.1 * brute_power, "duration": 0.08, "release": 0.1, "pan": _small_pan()})
-			_push_voice({"waveform": "noise", "start_freq": 220.0, "end_freq": 170.0, "amplitude": 0.038 * brute_power, "duration": 0.04, "release": 0.05, "delay": 0.01, "pan": _small_pan()})
-		"archer", "assassin", "ritualist":
-			if not _can_play("enemy_hit_skirmish", 0.034):
-				return
-			var skirmish_power := weight * (1.04 if enemy_type == "assassin" else 1.0)
-			_push_voice({"waveform": "saw", "start_freq": 280.0, "end_freq": 160.0, "amplitude": 0.1 * skirmish_power, "duration": 0.08, "release": 0.1, "pan": _small_pan()})
-			_push_voice({"waveform": "noise", "start_freq": 920.0, "end_freq": 560.0, "amplitude": 0.032 * skirmish_power, "duration": 0.03, "release": 0.04, "pan": _small_pan()})
-			if enemy_type == "assassin":
-				_push_voice({"waveform": "triangle", "start_freq": 640.0, "end_freq": 420.0, "amplitude": 0.045 * skirmish_power, "duration": 0.05, "release": 0.06, "delay": 0.008, "pan": _small_pan()})
-			elif enemy_type == "ritualist":
-				_push_voice({"waveform": "sine", "start_freq": 560.0, "end_freq": 760.0, "amplitude": 0.04 * skirmish_power, "duration": 0.07, "release": 0.08, "delay": 0.014, "pan": _small_pan()})
+	var jitter := rng.randf_range(0.0, 14.0)
+	match normalized_type:
+		"swift":
+			var swift_power := weight * 0.94
+			_push_voice({"waveform": "saw", "start_freq": 208.0 / weight + jitter, "end_freq": 98.0 / weight, "amplitude": 0.11 * swift_power, "duration": 0.055, "release": 0.07, "pan": _small_pan()})
+			_push_voice({"waveform": "noise", "start_freq": 1180.0, "end_freq": 480.0, "amplitude": 0.034 * swift_power, "duration": 0.028, "release": 0.034, "pan": _small_pan()})
+			_push_voice({"waveform": "triangle", "start_freq": 340.0, "end_freq": 220.0, "amplitude": 0.038 * swift_power, "duration": 0.04, "release": 0.05, "delay": 0.008, "pan": _small_pan()})
+		"tank":
+			var tank_power := weight * 1.14
+			_push_voice({"waveform": "square", "start_freq": 92.0 / weight + jitter * 0.45, "end_freq": 46.0 / weight, "amplitude": 0.17 * tank_power, "duration": 0.1, "release": 0.15, "pan": _small_pan()})
+			_push_voice({"waveform": "triangle", "start_freq": 158.0, "end_freq": 78.0, "amplitude": 0.082 * tank_power, "duration": 0.12, "release": 0.15, "delay": 0.012, "pan": _small_pan()})
+		"archer":
+			var archer_power := weight * 0.92
+			_push_voice({"waveform": "triangle", "start_freq": 184.0 / weight + jitter, "end_freq": 94.0 / weight, "amplitude": 0.105 * archer_power, "duration": 0.06, "release": 0.08, "pan": _small_pan()})
+			_push_voice({"waveform": "sine", "start_freq": 520.0, "end_freq": 360.0, "amplitude": 0.046 * archer_power, "duration": 0.05, "release": 0.06, "delay": 0.01, "pan": _small_pan()})
+			_push_voice({"waveform": "noise", "start_freq": 760.0, "end_freq": 320.0, "amplitude": 0.02 * archer_power, "duration": 0.024, "release": 0.03, "pan": _small_pan()})
+		"assassin":
+			var assassin_power := weight * 0.9
+			_push_voice({"waveform": "square", "start_freq": 238.0 / weight + jitter, "end_freq": 110.0 / weight, "amplitude": 0.092 * assassin_power, "duration": 0.05, "release": 0.06, "pan": _small_pan()})
+			_push_voice({"waveform": "noise", "start_freq": 1420.0, "end_freq": 620.0, "amplitude": 0.032 * assassin_power, "duration": 0.026, "release": 0.03, "pan": _small_pan()})
+			_push_voice({"waveform": "sine", "start_freq": 640.0, "end_freq": 430.0, "amplitude": 0.034 * assassin_power, "duration": 0.034, "release": 0.044, "delay": 0.008, "pan": _small_pan()})
+		"cavalry":
+			var cavalry_power := weight * 1.08
+			_push_voice({"waveform": "saw", "start_freq": 138.0 / weight + jitter * 0.7, "end_freq": 64.0 / weight, "amplitude": 0.148 * cavalry_power, "duration": 0.072, "release": 0.092, "pan": _small_pan()})
+			_push_voice({"waveform": "noise", "start_freq": 420.0, "end_freq": 180.0, "amplitude": 0.042 * cavalry_power, "duration": 0.034, "release": 0.04, "pan": _small_pan()})
+			_push_voice({"waveform": "square", "start_freq": 284.0, "end_freq": 142.0, "amplitude": 0.048 * cavalry_power, "duration": 0.048, "release": 0.06, "delay": 0.008, "pan": _small_pan()})
+		"ritualist":
+			var ritualist_power := weight * 0.98
+			_push_voice({"waveform": "triangle", "start_freq": 156.0 / weight + jitter, "end_freq": 82.0 / weight, "amplitude": 0.106 * ritualist_power, "duration": 0.08, "release": 0.1, "pan": _small_pan()})
+			_push_voice({"waveform": "sine", "start_freq": 480.0, "end_freq": 720.0, "amplitude": 0.05 * ritualist_power, "duration": 0.1, "release": 0.12, "delay": 0.012, "pan": _small_pan()})
+			_push_voice({"waveform": "noise", "start_freq": 720.0, "end_freq": 280.0, "amplitude": 0.024 * ritualist_power, "duration": 0.04, "release": 0.05, "pan": _small_pan()})
 		"elite":
-			if not _can_play("enemy_hit_elite", 0.04):
-				return
-			var elite_power := weight * 1.08
-			_push_voice({"waveform": "triangle", "start_freq": 150.0 / weight + rng.randf_range(0.0, 8.0), "end_freq": 70.0 / weight, "amplitude": 0.18 * elite_power, "duration": 0.1, "release": 0.14, "pan": _small_pan()})
-			_push_voice({"waveform": "square", "start_freq": 290.0, "end_freq": 140.0, "amplitude": 0.065 * elite_power, "duration": 0.08, "release": 0.1, "delay": 0.008, "pan": _small_pan()})
-			_push_voice({"waveform": "noise", "start_freq": 360.0, "end_freq": 200.0, "amplitude": 0.045 * elite_power, "duration": 0.05, "release": 0.06, "pan": _small_pan()})
+			var elite_power := weight * 1.16
+			_push_voice({"waveform": "square", "start_freq": 110.0 / weight + jitter * 0.5, "end_freq": 54.0 / weight, "amplitude": 0.18 * elite_power, "duration": 0.092, "release": 0.13, "pan": _small_pan()})
+			_push_voice({"waveform": "triangle", "start_freq": 220.0, "end_freq": 104.0, "amplitude": 0.088 * elite_power, "duration": 0.12, "release": 0.16, "delay": 0.014, "pan": _small_pan()})
+			_push_voice({"waveform": "noise", "start_freq": 280.0, "end_freq": 160.0, "amplitude": 0.05 * elite_power, "duration": 0.04, "release": 0.05, "pan": _small_pan()})
 		"boss":
-			if not _can_play("enemy_hit_boss", 0.055):
-				return
-			var boss_power := weight * 1.22
-			_push_voice({"waveform": "square", "start_freq": 120.0 / weight + rng.randf_range(0.0, 6.0), "end_freq": 58.0 / weight, "amplitude": 0.2 * boss_power, "duration": 0.12, "release": 0.16, "pan": _small_pan()})
-			_push_voice({"waveform": "saw", "start_freq": 210.0, "end_freq": 92.0, "amplitude": 0.1 * boss_power, "duration": 0.1, "release": 0.12, "delay": 0.01, "pan": _small_pan()})
-			_push_voice({"waveform": "noise", "start_freq": 320.0, "end_freq": 180.0, "amplitude": 0.05 * boss_power, "duration": 0.06, "release": 0.08, "delay": 0.016, "pan": _small_pan()})
+			var boss_power := weight * 1.2
+			_push_voice({"waveform": "saw", "start_freq": 96.0 / weight + jitter * 0.35, "end_freq": 42.0 / weight, "amplitude": 0.2 * boss_power, "duration": 0.1, "release": 0.15, "pan": _small_pan()})
+			_push_voice({"waveform": "square", "start_freq": 204.0, "end_freq": 92.0, "amplitude": 0.1 * boss_power, "duration": 0.13, "release": 0.16, "delay": 0.014, "pan": _small_pan()})
+			_push_voice({"waveform": "noise", "start_freq": 360.0, "end_freq": 140.0, "amplitude": 0.055 * boss_power, "duration": 0.05, "release": 0.06, "delay": 0.008, "pan": _small_pan()})
 		_:
-			if not _can_play("enemy_hit_swarm", 0.03):
-				return
-			var swarm_power := weight * (1.02 if enemy_type == "swift" else 1.0)
-			_push_voice({"waveform": "triangle", "start_freq": 180.0 / weight + rng.randf_range(0.0, 14.0), "end_freq": 84.0 / weight, "amplitude": 0.13 * swarm_power, "duration": 0.07, "release": 0.1, "pan": _small_pan()})
-			_push_voice({"waveform": "noise", "start_freq": 340.0, "end_freq": 210.0, "amplitude": 0.042 * swarm_power, "duration": 0.035, "release": 0.045, "pan": _small_pan()})
-			if enemy_type == "swift":
-				_push_voice({"waveform": "sine", "start_freq": 420.0, "end_freq": 300.0, "amplitude": 0.04 * swarm_power, "duration": 0.05, "release": 0.06, "delay": 0.008, "pan": _small_pan()})
-
-
+			var basic_power := weight
+			_push_voice({"waveform": "triangle", "start_freq": 120.0 / weight + jitter, "end_freq": 54.0 / weight, "amplitude": 0.16 * basic_power, "duration": 0.08, "release": 0.12, "pan": _small_pan()})
+			_push_voice({"waveform": "noise", "start_freq": 220.0, "end_freq": 180.0, "amplitude": 0.05 * basic_power, "duration": 0.04, "release": 0.05, "pan": _small_pan()})
 func play_enemy_defeat(enemy_type: String) -> void:
-	match enemy_type:
-		"basic", "swift":
-			if not _can_play("enemy_fall_swarm", 0.05):
-				return
-			var swarm_power := 1.06 if enemy_type == "swift" else 1.0
-			_push_voice({"waveform": "triangle", "start_freq": 210.0, "end_freq": 108.0, "amplitude": 0.11 * swarm_power, "duration": 0.09, "release": 0.11, "pan": _small_pan()})
-			_push_voice({"waveform": "noise", "start_freq": 620.0, "end_freq": 240.0, "amplitude": 0.03 * swarm_power, "duration": 0.05, "release": 0.06, "delay": 0.01, "pan": _small_pan()})
-		"archer", "assassin", "ritualist":
-			if not _can_play("enemy_fall_skirmish", 0.075):
-				return
-			var skirmish_power := 1.08 if enemy_type == "assassin" else 1.0
-			_push_voice({"waveform": "saw", "start_freq": 320.0, "end_freq": 136.0, "amplitude": 0.11 * skirmish_power, "duration": 0.12, "release": 0.14, "pan": _small_pan()})
-			_push_voice({"waveform": "noise", "start_freq": 760.0, "end_freq": 300.0, "amplitude": 0.036 * skirmish_power, "duration": 0.06, "release": 0.08, "delay": 0.012, "pan": _small_pan()})
-			if enemy_type == "ritualist":
-				_push_voice({"waveform": "sine", "start_freq": 420.0, "end_freq": 620.0, "amplitude": 0.04 * skirmish_power, "duration": 0.1, "release": 0.12, "delay": 0.02, "pan": _small_pan()})
-		"tank", "cavalry":
-			if not _can_play("enemy_fall_brute", 0.09):
-				return
-			var brute_power := 1.12 if enemy_type == "cavalry" else 1.0
-			_push_voice({"waveform": "triangle", "start_freq": 180.0, "end_freq": 72.0, "amplitude": 0.16 * brute_power, "duration": 0.16, "release": 0.2, "pan": _small_pan()})
-			_push_voice({"waveform": "square", "start_freq": 110.0, "end_freq": 58.0, "amplitude": 0.09 * brute_power, "duration": 0.14, "release": 0.18})
-			_push_voice({"waveform": "noise", "start_freq": 260.0, "end_freq": 150.0, "amplitude": 0.034 * brute_power, "duration": 0.05, "release": 0.06, "delay": 0.014, "pan": _small_pan()})
+	var normalized_type := _normalize_enemy_audio_type(enemy_type)
+	if normalized_type == "boss":
+		play_cue("boss_defeat", 1.08)
+		return
+	if not _can_play("enemy_defeat_mix", 0.04):
+		return
+	var type_cooldown := 0.18 if normalized_type == "elite" else (0.09 if normalized_type in ["tank", "cavalry", "ritualist"] else 0.07)
+	if not _can_play("enemy_defeat_%s" % normalized_type, type_cooldown):
+		return
+	match normalized_type:
+		"swift":
+			_push_voice({"waveform": "saw", "start_freq": 264.0, "end_freq": 118.0, "amplitude": 0.084, "duration": 0.09, "release": 0.11, "pan": _small_pan()})
+			_push_voice({"waveform": "noise", "start_freq": 1280.0, "end_freq": 340.0, "amplitude": 0.02, "duration": 0.038, "release": 0.04, "pan": _small_pan()})
+		"tank":
+			_push_voice({"waveform": "square", "start_freq": 120.0, "end_freq": 52.0, "amplitude": 0.14, "duration": 0.18, "release": 0.22})
+			_push_voice({"waveform": "triangle", "start_freq": 220.0, "end_freq": 92.0, "amplitude": 0.072, "duration": 0.16, "release": 0.18, "delay": 0.02, "pan": _small_pan()})
+		"archer":
+			_push_voice({"waveform": "triangle", "start_freq": 282.0, "end_freq": 124.0, "amplitude": 0.09, "duration": 0.1, "release": 0.12, "pan": _small_pan()})
+			_push_voice({"waveform": "sine", "start_freq": 480.0, "end_freq": 220.0, "amplitude": 0.052, "duration": 0.12, "release": 0.15, "delay": 0.016, "pan": _small_pan()})
+		"assassin":
+			_push_voice({"waveform": "square", "start_freq": 320.0, "end_freq": 146.0, "amplitude": 0.074, "duration": 0.09, "release": 0.11, "pan": _small_pan()})
+			_push_voice({"waveform": "noise", "start_freq": 1500.0, "end_freq": 360.0, "amplitude": 0.018, "duration": 0.034, "release": 0.04, "pan": _small_pan()})
+		"cavalry":
+			_push_voice({"waveform": "saw", "start_freq": 172.0, "end_freq": 76.0, "amplitude": 0.13, "duration": 0.15, "release": 0.18})
+			_push_voice({"waveform": "triangle", "start_freq": 304.0, "end_freq": 122.0, "amplitude": 0.06, "duration": 0.12, "release": 0.16, "delay": 0.012, "pan": _small_pan()})
+		"ritualist":
+			_push_voice({"waveform": "triangle", "start_freq": 212.0, "end_freq": 108.0, "amplitude": 0.092, "duration": 0.14, "release": 0.18, "pan": _small_pan()})
+			_push_voice({"waveform": "sine", "start_freq": 360.0, "end_freq": 620.0, "amplitude": 0.052, "duration": 0.16, "release": 0.2, "delay": 0.014, "pan": _small_pan()})
 		"elite":
-			if not _can_play("elite_break", 0.18):
-				return
 			_push_voice({"waveform": "triangle", "start_freq": 250.0, "end_freq": 118.0, "amplitude": 0.16, "duration": 0.18, "release": 0.22})
 			_push_voice({"waveform": "sine", "start_freq": 480.0, "end_freq": 260.0, "amplitude": 0.07, "duration": 0.16, "release": 0.18, "delay": 0.02, "pan": _small_pan()})
 			_push_voice({"waveform": "noise", "start_freq": 520.0, "end_freq": 240.0, "amplitude": 0.04, "duration": 0.06, "release": 0.08, "delay": 0.014, "pan": _small_pan()})
-		"boss":
-			play_cue("boss_defeat", 1.08)
+		_:
+			_push_voice({"waveform": "triangle", "start_freq": 184.0, "end_freq": 82.0, "amplitude": 0.11, "duration": 0.12, "release": 0.15, "pan": _small_pan()})
+			_push_voice({"waveform": "noise", "start_freq": 260.0, "end_freq": 110.0, "amplitude": 0.024, "duration": 0.05, "release": 0.06, "pan": _small_pan()})
 
 
 func play_pickup(supply_id: String, amount: float = 0.0) -> void:
