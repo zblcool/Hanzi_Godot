@@ -562,7 +562,7 @@ func configure(hero_data: Dictionary) -> void:
 	var localized_hero := _localized_hero_data(hero_data)
 	hero_label.text = "%s" % String(localized_hero["name"])
 	hero_title_label.text = "%s  ·  %s" % [String(localized_hero["title"]), String(localized_hero["role_label"])]
-	hero_focus_label.text = String(localized_hero["focus"])
+	hero_focus_label.text = _build_hero_identity_line(localized_hero)
 	_refresh_hero_tags(localized_hero)
 	_refresh_controls_text()
 	_refresh_route_focus()
@@ -814,6 +814,43 @@ func _refresh_route_focus() -> void:
 				objective_route_tags.add_child(_make_route_tag_chip(tag_text, accent))
 
 
+func _build_hero_identity_line(hero_data: Dictionary) -> String:
+	var writer_mark := String(hero_data.get("trait_label", "")).strip_edges()
+	if writer_mark.is_empty():
+		writer_mark = String(hero_data.get("focus", hero_data.get("description", ""))).strip_edges()
+	var route_seal := _build_primary_route_seal(hero_data)
+	if route_seal.is_empty():
+		return (
+			"Mark: %s" if _is_english() else "印记：%s"
+		) % writer_mark if not writer_mark.is_empty() else ""
+	if writer_mark.is_empty():
+		return (
+			"Route Seal: %s" if _is_english() else "路印：%s"
+		) % route_seal
+	return (
+		"Mark: %s  ·  Route Seal: %s"
+		if _is_english()
+		else "印记：%s  ·  路印：%s"
+	) % [writer_mark, route_seal]
+
+
+func _build_primary_route_seal(hero_data: Dictionary) -> String:
+	var route_cards_variant: Variant = hero_data.get("build_route_cards", [])
+	if not (route_cards_variant is Array):
+		return ""
+	var route_cards := route_cards_variant as Array
+	if route_cards.is_empty() or not route_cards[0] is Dictionary:
+		return ""
+	var route_card := route_cards[0] as Dictionary
+	var glyph := String(route_card.get("glyph", "")).strip_edges()
+	var title := String(route_card.get("title", "")).strip_edges()
+	if glyph.is_empty():
+		return title
+	if title.is_empty():
+		return glyph
+	return "%s %s" % [glyph, title]
+
+
 func _build_route_focus_summary(hero_data: Dictionary) -> Dictionary:
 	var route_cards: Array[Dictionary] = []
 	var route_cards_variant: Variant = hero_data.get("build_route_cards", [])
@@ -864,12 +901,77 @@ func _build_route_focus_summary(hero_data: Dictionary) -> Dictionary:
 		compact_text = ("%s  ·  %s" % [title_text, stage_title]).strip_edges()
 
 	return {
+		"glyph": route_glyph,
+		"route_title": route_title,
+		"route_subtitle": route_subtitle,
 		"title": title_text,
 		"detail": route_detail,
 		"stage": stage_text,
 		"compact": compact_text,
 		"tags": _collect_string_array(chosen_route.get("tags", []))
 	}
+
+
+func build_intro_identity_reveal() -> Dictionary:
+	if configured_hero_data.is_empty():
+		return {}
+
+	var localized_hero := _localized_hero_data(configured_hero_data)
+	var summary := _build_route_focus_summary(localized_hero)
+	var excerpt := String(localized_hero.get("record_excerpt", localized_hero.get("focus", ""))).strip_edges()
+	var source := String(localized_hero.get("record_source", "")).strip_edges()
+	var detail_lines: Array[String] = []
+	if not excerpt.is_empty():
+		detail_lines.append("“%s”" % excerpt)
+
+	var route_label := _build_route_hint_text({
+		"glyph": String(summary.get("glyph", "")),
+		"title": String(summary.get("route_title", "")),
+		"subtitle": String(summary.get("route_subtitle", ""))
+	})
+	var opener := _build_intro_opening_label(String(localized_hero.get("id", "")))
+	var route_parts: Array[String] = []
+	if not route_label.is_empty():
+		route_parts.append(("Route Seal: %s" if _is_english() else "主路线印：%s") % route_label)
+	if not opener.is_empty():
+		route_parts.append(("Opener: %s" if _is_english() else "起笔：%s") % opener)
+	if not route_parts.is_empty():
+		detail_lines.append("  ·  ".join(route_parts))
+
+	if not source.is_empty():
+		detail_lines.append(("Source · %s" if _is_english() else "出处 · %s") % source)
+
+	var title := String(localized_hero.get("record_title", localized_hero.get("name", ""))).strip_edges()
+	if title.is_empty():
+		title = String(localized_hero.get("name", ""))
+
+	return {
+		"title": title,
+		"detail": "\n".join(detail_lines),
+		"glyph": String(summary.get("glyph", localized_hero.get("glyph", "")))
+	}
+
+
+func _build_intro_opening_label(hero_id: String) -> String:
+	var starting_radicals: Array[String] = Session.get_hero_starting_radicals(hero_id)
+	if starting_radicals.is_empty():
+		return "no fixed opener" if _is_english() else "无固定起手"
+	return " / ".join(starting_radicals)
+
+
+func _build_route_hint_text(card: Dictionary) -> String:
+	var glyph := String(card.get("glyph", "")).strip_edges()
+	var title := String(card.get("title", "")).strip_edges()
+	var subtitle := String(card.get("subtitle", "")).strip_edges()
+	var label := title
+	if not glyph.is_empty():
+		label = ("%s %s" % [glyph, title]).strip_edges()
+	if not subtitle.is_empty():
+		if label.is_empty():
+			label = subtitle
+		else:
+			label += " · %s" % subtitle
+	return label
 
 
 func _build_pause_state_body(elapsed: float, kills: int, threat: int, level: int) -> String:

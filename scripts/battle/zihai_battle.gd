@@ -3513,6 +3513,16 @@ func _start_opening_sequence() -> void:
 			intro_tip = _localized_intro_tip(start_wave, intro_tip)
 	var intro_suffix := "enters the scroll" if _is_english() else "入卷"
 	hud.show_banner("%s  ·  %s %s" % [intro_title, String(localized_hero["name"]), intro_suffix], accent, 2.6)
+	var intro_identity: Dictionary = hud.build_intro_identity_reveal()
+	if not intro_identity.is_empty():
+		hud.show_reveal(
+			intro_title,
+			String(intro_identity.get("title", String(localized_hero.get("name", "")))),
+			String(intro_identity.get("detail", intro_tip)),
+			accent,
+			String(intro_identity.get("glyph", String(hero_data["glyph"]))),
+			3.35
+		)
 	hud.set_tip(intro_tip)
 	var soundtrack_track := "mosslightCanopy"
 	var soundtrack_cue := "入卷铺陈"
