@@ -219,30 +219,44 @@ const CHAMBER_LAYOUTS := {
 			{"position": Vector3(-11.5, 0.0, 0.5), "supply_id": "magnet"},
 			{"position": Vector3(14.5, 0.0, 4.5), "supply_id": "fury"}
 		],
-		"exit_objective": {
-			"id": "seal_gatekeeper",
-			"name": "前庭启门印",
-			"english_name": "Courtyard Gate Seal",
-			"glyph": "封",
-			"tip": "卷主退散后，先触碰这枚封门印，逼出守关魁首。只有守魁倒下，卷间奖印才会真正显形。",
-			"english_tip": "Once the scroll lord falls, touch the sealed ward to force out its gatekeeper. Only after that warden falls will the chamber reward beacon rise.",
-			"pickup_positions": [
-				Vector3(0.0, 0.0, 1.0)
-			],
-			"seal_tint": Color(0.94, 0.44, 0.34, 1.0),
-			"seal_glow": Color(1.0, 0.82, 0.66, 1.0),
-			"gatekeeper": {
-				"id": "entry_court_gatekeeper",
-				"type": "elite",
-				"name": "砚门守魁",
-				"english_name": "Ink Gate Warden",
-				"glyph": "砚",
-				"taunt": "封门未开，先过我。",
-				"english_taunt": "The seal stays shut until I fall.",
-				"tint": Color(0.82, 0.54, 0.34, 1.0),
-				"health_scale": 1.18
+		"exit_objectives": [
+			{
+				"id": "seal_gatekeeper",
+				"name": "前庭启门印",
+				"english_name": "Courtyard Gate Seal",
+				"glyph": "封",
+				"tip": "卷主退散后，先触碰这枚封门印，逼出守关魁首。只有守魁倒下，卷间奖印才会真正显形。",
+				"english_tip": "Once the scroll lord falls, touch the sealed ward to force out its gatekeeper. Only after that warden falls will the chamber reward beacon rise.",
+				"pickup_positions": [
+					Vector3(0.0, 0.0, 1.0)
+				],
+				"seal_tint": Color(0.94, 0.44, 0.34, 1.0),
+				"seal_glow": Color(1.0, 0.82, 0.66, 1.0),
+				"gatekeeper": {
+					"id": "entry_court_gatekeeper",
+					"type": "elite",
+					"name": "砚门守魁",
+					"english_name": "Ink Gate Warden",
+					"glyph": "砚",
+					"taunt": "封门未开，先过我。",
+					"english_taunt": "The seal stays shut until I fall.",
+					"tint": Color(0.82, 0.54, 0.34, 1.0),
+					"health_scale": 1.18
+				}
+			},
+			{
+				"id": "seal_relay",
+				"name": "前庭连锁印",
+				"english_name": "Courtyard Relay Seals",
+				"glyph": "封",
+				"tip": "卷主退散后，前庭会再亮起两枚副印。逐一收束后，卷间奖印才会真正显形。",
+				"english_tip": "Once the scroll lord falls, two relay seals light up across the courtyard. Collapse both of them before the chamber reward beacon can rise.",
+				"pickup_positions": [
+					Vector3(-11.5, 0.0, 4.0),
+					Vector3(12.5, 0.0, -5.5)
+				]
 			}
-		}
+		]
 	},
 	"slip_archive": {
 		"name": "简库中庭",
@@ -418,6 +432,7 @@ var pending_chamber_transition: Dictionary = {}
 var chamber_modifier_id: String = ""
 var chamber_modifier_expires_after_bosses: int = 0
 var room_objective_id: String = ""
+var room_objective_data: Dictionary = {}
 var room_objective_total: int = 0
 var room_objective_remaining: int = 0
 var room_objective_gatekeeper_active := false
@@ -668,11 +683,35 @@ func _current_chamber_glyph() -> String:
 
 
 func _current_chamber_exit_objective() -> Dictionary:
+	if not room_objective_data.is_empty():
+		return room_objective_data
+	var available_objectives := _available_chamber_exit_objectives()
+	if not available_objectives.is_empty():
+		return available_objectives[0]
+	return {}
+
+
+func _available_chamber_exit_objectives() -> Array[Dictionary]:
 	var chamber_data := _current_chamber_data()
+	var objectives: Array[Dictionary] = []
+	var objectives_variant: Variant = chamber_data.get("exit_objectives", [])
+	if objectives_variant is Array:
+		for objective_variant in objectives_variant:
+			if objective_variant is Dictionary:
+				objectives.append((objective_variant as Dictionary).duplicate(true))
+	if not objectives.is_empty():
+		return objectives
 	var objective_variant: Variant = chamber_data.get("exit_objective", {})
 	if objective_variant is Dictionary:
-		return objective_variant as Dictionary
-	return {}
+		objectives.append((objective_variant as Dictionary).duplicate(true))
+	return objectives
+
+
+func _pick_chamber_exit_objective() -> Dictionary:
+	var candidates := _available_chamber_exit_objectives()
+	if candidates.is_empty():
+		return {}
+	return candidates[rng.randi_range(0, candidates.size() - 1)]
 
 
 func _localized_room_objective_name(objective: Dictionary) -> String:
@@ -707,6 +746,7 @@ func _room_objective_status_text(objective: Dictionary, remaining: int) -> Strin
 
 func _clear_room_objective_state() -> void:
 	room_objective_id = ""
+	room_objective_data = {}
 	room_objective_total = 0
 	room_objective_remaining = 0
 	room_objective_gatekeeper_active = false
@@ -863,6 +903,8 @@ func _spawn_chamber_break_beacon() -> void:
 func _try_start_chamber_exit_objective() -> bool:
 	if _room_objective_active() or chamber_break_beacon_active:
 		return true
+	if room_objective_data.is_empty():
+		room_objective_data = _pick_chamber_exit_objective()
 	var objective := _current_chamber_exit_objective()
 	var objective_id := String(objective.get("id", ""))
 	var pickup_positions: Array = objective.get("pickup_positions", [])
