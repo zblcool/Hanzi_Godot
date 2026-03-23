@@ -3015,6 +3015,7 @@ func _on_player_defeated() -> void:
 	paused = false
 	map_overlay_active = false
 	active_boss = null
+	_play_cue_sfx("player_defeat", 1.08)
 	Engine.time_scale = 0.0
 	hud.hide_map_overlay()
 	hud.hide_boss()
