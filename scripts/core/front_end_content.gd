@@ -480,6 +480,76 @@ const CANGJIE_PORTAL_SECTIONS := [
 		]
 	},
 	{
+		"id": "post_battle_flow",
+		"title": {"zh": "战后抉择", "en": "Post-Battle Flow"},
+		"eyebrow": "Reward Route",
+		"accent": Color(0.94, 0.74, 0.42, 1.0),
+		"summary": {
+			"zh": "source《仓颉之路》每场战斗后都会继续给 Gold、选牌和精英 / Boss 遗物，不是打一场就线性前进。",
+			"en": "The source Cangjie Road keeps chaining Gold, card rewards, and elite or boss relic follow-through after fights instead of moving forward in a straight line."
+		},
+		"points": [
+			{
+				"zh": "普通战斗胜利后会先拿 Gold，再从奖励牌里挑 1 张，或者跳过来保持牌组更薄。",
+				"en": "Regular fights pay Gold first, then offer a card reward that can also be skipped to keep the deck leaner."
+			},
+			{
+				"zh": "精英和 Boss 会在选牌之后继续给 2 到 3 件遗物，让战后路线被二次改写。",
+				"en": "Elites and bosses continue with 2 to 3 relic choices after the card reward, bending the route a second time."
+			},
+			{
+				"zh": "先把这段战后链路讲清楚，Godot 入口就不只是在展示静态牌样，而是在说明一局怎么越爬越偏向某条字路。",
+				"en": "Bringing this reward chain back into the launcher helps the Godot portal explain how a run keeps leaning harder into one character line instead of only showing static card samples."
+			}
+		],
+		"sample_groups": [
+			{
+				"title": {"zh": "奖励链路", "en": "Reward Loop"},
+				"cards": [
+					{
+						"glyph": "赏",
+						"title": {"zh": "战后选牌", "en": "Post-Battle Draft"},
+						"subtitle": {"zh": "Gold + 三选一", "en": "Gold + pick one of three"},
+						"body": {
+							"zh": "每场战斗先结算 Gold，再从三张候选里补 1 张，路线会在这里被慢慢写厚。",
+							"en": "Each fight settles Gold first, then adds one card from three choices, slowly thickening the route here."
+						},
+						"tags": [
+							{"zh": "战后收益", "en": "Post-fight gain"},
+							{"zh": "路线加厚", "en": "Route growth"}
+						]
+					},
+					{
+						"glyph": "简",
+						"title": {"zh": "跳过保薄", "en": "Skip To Stay Lean"},
+						"subtitle": {"zh": "少拿一张牌", "en": "Take nothing here"},
+						"body": {
+							"zh": "source 明确允许跳过奖励，让“更干净的抽牌质量”本身成为一个有效选择；算盘类遗物还会把这步转成额外 Gold。",
+							"en": "The source explicitly allows reward skips so cleaner draw quality stays a valid choice, and abacus-style relics can even turn that skip into extra Gold."
+						},
+						"tags": [
+							{"zh": "精简", "en": "Lean deck"},
+							{"zh": "取舍", "en": "Tradeoff"}
+						]
+					},
+					{
+						"glyph": "匣",
+						"title": {"zh": "战后遗物", "en": "Post-Battle Relic"},
+						"subtitle": {"zh": "精英 / Boss 跟进", "en": "Elite / boss follow-up"},
+						"body": {
+							"zh": "精英和 Boss 不只掉更多奖励，还会在选牌后补一轮遗物，让后续节点与牌张估值一起偏转。",
+							"en": "Elites and bosses do more than drop larger rewards; they add a relic follow-up after the card pick so future nodes and card values bend together."
+						},
+						"tags": [
+							{"zh": "遗物链路", "en": "Relic chain"},
+							{"zh": "二次偏转", "en": "Second bend"}
+						]
+					}
+				]
+			}
+		]
+	},
+	{
 		"id": "tower_guide",
 		"title": {"zh": "塔路导览", "en": "Tower Guide"},
 		"eyebrow": "Tower Guide",

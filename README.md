@@ -18,7 +18,7 @@
 ## 当前整体结构
 - 技术上当前是 `Godot 4.6.1` 项目，运行入口是 `project.godot -> res://scenes/app/launcher.tscn`
 - 当前仓库主线已经落地 `字海残卷` 的 Godot 迁移链路：`启动器 -> 字海二级菜单 -> 3D 战斗`
-- `仓颉之路` 目前已经有独立的启动器 portal overlay，会预览 `起笔登塔 / Start Climb`、`卡牌字库`、`合字图谱`、`遗物架`、`塔路导览`；但还没有在这个仓库里落成独立可玩的 Godot 场景
+- `仓颉之路` 目前已经有独立的启动器 portal overlay，会预览 `起笔登塔 / Start Climb`、`卡牌字库`、`合字图谱`、`遗物架`、`战后抉择 / Post-Battle Flow`、`塔路导览`；但还没有在这个仓库里落成独立可玩的 Godot 场景
 - Web 导出通过 `./scripts/export_web.sh` 生成到 `build/index.html`，`vercel.json` 负责部署入口
 - `README.md`、`CHANGELOG.md`、`CONTRIBUTING.md` 持续同步当前迁移状态
 
@@ -36,7 +36,7 @@
   - iOS 提示 `分享 -> 添加到主屏幕`
 - 点击 `字海残卷` 后，会先进入真正的二级菜单 `scenes/app/zihai_menu.tscn`
 - 角色选择确认后，才进入 `scenes/battle/zihai_battle.tscn`
-- `仓颉之路` 目前不再只是静态占位卡，而是有独立 portal overlay 预览 source 里的入口、卡牌、合字、遗物、节点与敌意样本；真正的 Godot 爬塔战斗仍待后续迁移接入
+- `仓颉之路` 目前不再只是静态占位卡，而是有独立 portal overlay 预览 source 里的入口、卡牌、合字、遗物、战后奖励链路、节点与敌意样本；真正的 Godot 爬塔战斗仍待后续迁移接入
 
 ## 字海残卷（目前已经是较完整可玩原型）
 ### 核心玩法
