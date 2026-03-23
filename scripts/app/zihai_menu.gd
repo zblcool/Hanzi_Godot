@@ -6,6 +6,7 @@ const HanziLocalization := preload("res://scripts/core/hanzi_localization.gd")
 const BASE_VIEWPORT := Vector2(2100.0, 1200.0)
 const MIN_UI_SCALE := 0.6
 const HERO_REACTION_DURATION := 3.2
+const HERO_SELECTION_PULSE_DURATION := 0.72
 const NIGHT_THEME := {
 	"background": Color(0.03, 0.05, 0.07, 1.0),
 	"glow_amber": Color(0.88, 0.58, 0.28, 0.08),
@@ -183,8 +184,12 @@ var detail_quote_label: Label
 var detail_role_label: Label
 var detail_reaction_panel: PanelContainer
 var detail_reaction_label: Label
+var detail_preview_panel: PanelContainer
 var detail_preview_core: PanelContainer
 var detail_preview_glyph: Label
+var detail_preview_ring_a: PanelContainer
+var detail_preview_ring_b: PanelContainer
+var detail_preview_shards: Array[ColorRect] = []
 var detail_tags_row: Container
 var detail_opening_label: Label
 var detail_opening_radicals_row: Container
@@ -192,6 +197,9 @@ var detail_source_skill_title_label: Label
 var detail_source_skill_body_label: Label
 var detail_progression_cards_root: VBoxContainer
 var detail_build_route_cards_root: VBoxContainer
+var detail_spotlight_panel: PanelContainer
+var detail_spotlight_context_panel: PanelContainer
+var detail_progression_panel: PanelContainer
 var detail_stat_widgets: Dictionary = {}
 var character_archive_overlay: Control
 var character_archive_cards_root: VBoxContainer
@@ -223,6 +231,7 @@ var transition_subtitle_label: Label
 var transition_busy: bool = false
 var reaction_time_remaining := 0.0
 var active_card_reaction_hero := ""
+var selection_pulse_time_remaining := 0.0
 
 
 func _ready() -> void:
@@ -268,6 +277,9 @@ func _process(delta: float) -> void:
 		reaction_time_remaining = max(reaction_time_remaining - delta, 0.0)
 		if reaction_time_remaining <= 0.0 and not active_card_reaction_hero.is_empty():
 			_clear_card_reactions()
+	if selection_pulse_time_remaining > 0.0:
+		selection_pulse_time_remaining = max(selection_pulse_time_remaining - delta, 0.0)
+	_update_selection_pulse()
 	if detail_reaction_panel != null:
 		var emphasis: float = clampf(reaction_time_remaining / HERO_REACTION_DURATION, 0.0, 1.0)
 		detail_reaction_panel.modulate = Color(1.0, 1.0, 1.0, 0.84 + emphasis * 0.16)
@@ -329,8 +341,12 @@ func _rebuild_ui() -> void:
 	detail_role_label = null
 	detail_reaction_panel = null
 	detail_reaction_label = null
+	detail_preview_panel = null
 	detail_preview_core = null
 	detail_preview_glyph = null
+	detail_preview_ring_a = null
+	detail_preview_ring_b = null
+	detail_preview_shards.clear()
 	detail_tags_row = null
 	detail_opening_label = null
 	detail_opening_radicals_row = null
@@ -338,6 +354,9 @@ func _rebuild_ui() -> void:
 	detail_source_skill_body_label = null
 	detail_progression_cards_root = null
 	detail_build_route_cards_root = null
+	detail_spotlight_panel = null
+	detail_spotlight_context_panel = null
+	detail_progression_panel = null
 	character_archive_overlay = null
 	character_archive_cards_root = null
 	recipe_atlas_overlay = null
@@ -363,6 +382,7 @@ func _rebuild_ui() -> void:
 	transition_glyph_label = null
 	transition_title_label = null
 	transition_subtitle_label = null
+	selection_pulse_time_remaining = 0.0
 	for child in get_children():
 		remove_child(child)
 		child.queue_free()
@@ -668,6 +688,134 @@ func _make_theme_toggle_button(size: Vector2) -> Button:
 	return button
 
 
+func _apply_active_preview_theme(preview_theme: Dictionary, accent: Color) -> void:
+	var body_color: Color = preview_theme["body"]
+	var glow_color: Color = preview_theme["glow"]
+	var ring_color: Color = preview_theme["ring"]
+	var aura_color: Color = preview_theme["aura"]
+	if detail_preview_panel != null:
+		detail_preview_panel.add_theme_stylebox_override(
+			"panel",
+			_make_panel_style(
+				Color(aura_color.r, aura_color.g, aura_color.b, 0.24),
+				Color(ring_color.r, ring_color.g, ring_color.b, 0.26)
+			)
+		)
+	if detail_preview_ring_a != null:
+		detail_preview_ring_a.add_theme_stylebox_override(
+			"panel",
+			_make_panel_style(
+				Color(aura_color.r, aura_color.g, aura_color.b, 0.18),
+				Color(ring_color.r, ring_color.g, ring_color.b, 0.24)
+			)
+		)
+	if detail_preview_ring_b != null:
+		detail_preview_ring_b.add_theme_stylebox_override(
+			"panel",
+			_make_panel_style(
+				Color(0.12, 0.14, 0.16, 0.0),
+				Color(glow_color.r, glow_color.g, glow_color.b, 0.24)
+			)
+		)
+	if detail_preview_core != null:
+		detail_preview_core.add_theme_stylebox_override(
+			"panel",
+			_make_panel_style(
+				Color(body_color.r, body_color.g, body_color.b, 0.26),
+				Color(ring_color.r, ring_color.g, ring_color.b, 0.26)
+			)
+		)
+	for shard in detail_preview_shards:
+		if shard != null:
+			shard.color = Color(ring_color.r, ring_color.g, ring_color.b, 0.86)
+	if detail_spotlight_panel != null:
+		detail_spotlight_panel.add_theme_stylebox_override(
+			"panel",
+			_make_panel_style(
+				Color(accent.r * 0.14, accent.g * 0.14, accent.b * 0.18, 0.74),
+				Color(accent.r, accent.g, accent.b, 0.3)
+			)
+		)
+	if detail_spotlight_context_panel != null:
+		detail_spotlight_context_panel.add_theme_stylebox_override(
+			"panel",
+			_make_panel_style(
+				Color(accent.r * 0.1, accent.g * 0.1, accent.b * 0.14, 0.72),
+				Color(glow_color.r, glow_color.g, glow_color.b, 0.22)
+			)
+		)
+	if detail_progression_panel != null:
+		detail_progression_panel.add_theme_stylebox_override(
+			"panel",
+			_make_panel_style(
+				Color(accent.r * 0.12, accent.g * 0.12, accent.b * 0.16, 0.72),
+				Color(ring_color.r, ring_color.g, ring_color.b, 0.32)
+			)
+		)
+
+
+func _update_selection_pulse() -> void:
+	for hero_panel_variant in hero_panels.values():
+		var hero_panel: PanelContainer = hero_panel_variant as PanelContainer
+		if hero_panel == null:
+			continue
+		hero_panel.pivot_offset = hero_panel.size * 0.5
+		hero_panel.scale = Vector2.ONE
+
+	if detail_preview_panel != null:
+		detail_preview_panel.pivot_offset = detail_preview_panel.size * 0.5
+		detail_preview_panel.scale = Vector2.ONE
+	if detail_preview_ring_a != null:
+		detail_preview_ring_a.pivot_offset = detail_preview_ring_a.size * 0.5
+		detail_preview_ring_a.scale = Vector2.ONE
+	if detail_preview_ring_b != null:
+		detail_preview_ring_b.pivot_offset = detail_preview_ring_b.size * 0.5
+		detail_preview_ring_b.scale = Vector2.ONE
+	if detail_preview_core != null:
+		detail_preview_core.pivot_offset = detail_preview_core.size * 0.5
+		detail_preview_core.scale = Vector2.ONE
+	if detail_spotlight_panel != null:
+		detail_spotlight_panel.pivot_offset = detail_spotlight_panel.size * 0.5
+		detail_spotlight_panel.scale = Vector2.ONE
+	for shard in detail_preview_shards:
+		if shard == null:
+			continue
+		shard.pivot_offset = shard.size * 0.5
+		shard.scale = Vector2.ONE
+		if shard.has_meta("base_rotation"):
+			shard.rotation = float(shard.get_meta("base_rotation"))
+
+	if selection_pulse_time_remaining <= 0.0:
+		return
+
+	var selected_panel: PanelContainer = hero_panels.get(selected_hero, null) as PanelContainer
+	if selected_panel == null:
+		return
+
+	var progress := 1.0 - (selection_pulse_time_remaining / HERO_SELECTION_PULSE_DURATION)
+	var envelope := sin(progress * PI)
+	var flutter := sin(progress * PI * 3.0)
+	selected_panel.scale = Vector2.ONE * (1.0 + envelope * 0.035)
+	if detail_preview_panel != null:
+		detail_preview_panel.scale = Vector2.ONE * (1.0 + envelope * 0.012)
+	if detail_preview_ring_a != null:
+		detail_preview_ring_a.scale = Vector2.ONE * (1.0 + envelope * 0.14)
+	if detail_preview_ring_b != null:
+		detail_preview_ring_b.scale = Vector2.ONE * (1.0 + envelope * 0.1)
+	if detail_preview_core != null:
+		detail_preview_core.scale = Vector2.ONE * (1.0 + envelope * 0.08)
+	if detail_spotlight_panel != null:
+		detail_spotlight_panel.scale = Vector2.ONE * (1.0 + envelope * 0.01)
+	for index in range(detail_preview_shards.size()):
+		var shard := detail_preview_shards[index]
+		if shard == null:
+			continue
+		shard.scale = Vector2.ONE * (1.0 + envelope * (0.12 + float(index) * 0.03))
+		var base_rotation := float(shard.get_meta("base_rotation"))
+		var direction := 1.0 if index % 2 == 0 else -1.0
+		shard.rotation = base_rotation + flutter * 0.08 * direction
+
+
 func _make_language_toggle_button(size: Vector2) -> Button:
 	var button := _make_pill_button(_get_language_toggle_label(), size, Callable(self, "_on_toggle_language_pressed"))
 	button.tooltip_text = _get_language_toggle_tooltip()
@@ -840,6 +988,7 @@ func _build_ui() -> void:
 	preview_panel.custom_minimum_size = _v(0.0 if portrait_layout else 286.0, 248.0 if portrait_layout else 252.0)
 	preview_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.08, 0.12, 0.16, 0.74), Color(0.44, 0.76, 0.84, 0.26)))
 	detail_main_row.add_child(preview_panel)
+	detail_preview_panel = preview_panel
 	_build_detail_preview(preview_panel)
 
 	var detail_side_column := VBoxContainer.new()
@@ -851,6 +1000,7 @@ func _build_ui() -> void:
 	spotlight_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	spotlight_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.08, 0.12, 0.16, 0.72), Color(0.92, 0.68, 0.42, 0.28)))
 	detail_side_column.add_child(spotlight_panel)
+	detail_spotlight_panel = spotlight_panel
 
 	var spotlight_margin := MarginContainer.new()
 	spotlight_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -907,6 +1057,7 @@ func _build_ui() -> void:
 	spotlight_context_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	spotlight_context_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.08, 0.12, 0.16, 0.72), Color(0.42, 0.68, 0.86, 0.26)))
 	spotlight_box.add_child(spotlight_context_panel)
+	detail_spotlight_context_panel = spotlight_context_panel
 
 	var spotlight_context_margin := MarginContainer.new()
 	spotlight_context_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -1036,6 +1187,7 @@ func _build_ui() -> void:
 	progression_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	progression_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.08, 0.12, 0.16, 0.72), Color(0.74, 0.56, 0.28, 0.34)))
 	detail_box.add_child(progression_panel)
+	detail_progression_panel = progression_panel
 
 	var progression_margin := MarginContainer.new()
 	progression_margin.add_theme_constant_override("margin_left", _i(16))
@@ -1240,12 +1392,14 @@ func _build_detail_preview(panel: PanelContainer) -> void:
 	ring_a.position = _v(50.0, 18.0)
 	ring_a.add_theme_stylebox_override("panel", _make_panel_style(Color(0.14, 0.16, 0.18, 0.12), Color(0.86, 0.64, 0.34, 0.22)))
 	stage.add_child(ring_a)
+	detail_preview_ring_a = ring_a
 
 	var ring_b := PanelContainer.new()
 	ring_b.size = _v(134.0, 134.0)
 	ring_b.position = _v(76.0, 44.0)
 	ring_b.add_theme_stylebox_override("panel", _make_panel_style(Color(0.12, 0.14, 0.16, 0.0), Color(0.34, 0.72, 0.82, 0.22)))
 	stage.add_child(ring_b)
+	detail_preview_ring_b = ring_b
 
 	detail_preview_core = PanelContainer.new()
 	detail_preview_core.size = _v(118.0, 118.0)
@@ -1262,8 +1416,10 @@ func _build_detail_preview(panel: PanelContainer) -> void:
 		shard.position = _v(22.0 + float(index) * 54.0, 86.0 + float(index % 2) * 58.0)
 		shard.rotation = -0.56 + float(index) * 0.34
 		shard.set_meta("base_y", shard.position.y)
+		shard.set_meta("base_rotation", shard.rotation)
 		stage.add_child(shard)
 		shards.append(shard)
+		detail_preview_shards.append(shard)
 
 	preview_motifs.append({
 		"ring_a": ring_a,
@@ -3210,9 +3366,7 @@ func _refresh_selection(trigger_reaction: bool = false) -> void:
 	_populate_progression_cards(detail_progression_cards_root, selected_data, accent, true)
 
 	var preview_theme := _preview_theme_for_hero(selected_data)
-	var body_color: Color = preview_theme["body"]
-	var ring_color: Color = preview_theme["ring"]
-	detail_preview_core.add_theme_stylebox_override("panel", _make_panel_style(Color(body_color.r, body_color.g, body_color.b, 0.26), Color(ring_color.r, ring_color.g, ring_color.b, 0.26)))
+	_apply_active_preview_theme(preview_theme, accent)
 	detail_preview_glyph = _populate_hero_avatar(detail_preview_core, selected_data, _i(56))
 
 	for child in detail_tags_row.get_children():
@@ -3249,6 +3403,7 @@ func _show_hero_reaction(hero_id: String, hero_data: Dictionary) -> void:
 	detail_reaction_label.text = "“%s”" % _localize_text(quote)
 	_show_card_reaction(hero_id, quote, accent)
 	reaction_time_remaining = HERO_REACTION_DURATION
+	selection_pulse_time_remaining = HERO_SELECTION_PULSE_DURATION
 
 
 func _show_card_reaction(hero_id: String, quote: String, accent: Color) -> void:
