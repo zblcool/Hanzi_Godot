@@ -152,6 +152,7 @@ const MENU_EN_TEXT := {
 	"无固定起手": "No fixed opener",
 	"当前还没有可对照的源稿字技条目。": "There is no matching source skill entry for this hero yet.",
 	"当前这名执笔者还没有额外记录到独立字技说明。": "This hero does not yet have an extra source-skill note.",
+	"轻触当前展示位，重播执笔回应。": "Tap the active showcase to replay the scribe response.",
 	"已选中": "Selected",
 	"正在展示": "On Stage",
 	"进入主舞台": "Take the stage",
@@ -190,6 +191,8 @@ var detail_preview_glyph: Label
 var detail_preview_ring_a: PanelContainer
 var detail_preview_ring_b: PanelContainer
 var detail_preview_shards: Array[ColorRect] = []
+var detail_preview_hint_panel: PanelContainer
+var detail_preview_button: Button
 var detail_tags_row: Container
 var detail_opening_label: Label
 var detail_opening_radicals_row: Container
@@ -347,6 +350,8 @@ func _rebuild_ui() -> void:
 	detail_preview_ring_a = null
 	detail_preview_ring_b = null
 	detail_preview_shards.clear()
+	detail_preview_hint_panel = null
+	detail_preview_button = null
 	detail_tags_row = null
 	detail_opening_label = null
 	detail_opening_radicals_row = null
@@ -728,6 +733,14 @@ func _apply_active_preview_theme(preview_theme: Dictionary, accent: Color) -> vo
 	for shard in detail_preview_shards:
 		if shard != null:
 			shard.color = Color(ring_color.r, ring_color.g, ring_color.b, 0.86)
+	if detail_preview_hint_panel != null:
+		detail_preview_hint_panel.add_theme_stylebox_override(
+			"panel",
+			_make_panel_style(
+				Color(accent.r * 0.12, accent.g * 0.12, accent.b * 0.16, 0.84),
+				Color(accent.r, accent.g, accent.b, 0.22)
+			)
+		)
 	if detail_spotlight_panel != null:
 		detail_spotlight_panel.add_theme_stylebox_override(
 			"panel",
@@ -1421,6 +1434,25 @@ func _build_detail_preview(panel: PanelContainer) -> void:
 		shards.append(shard)
 		detail_preview_shards.append(shard)
 
+	var hint_panel := PanelContainer.new()
+	hint_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hint_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.06, 0.08, 0.1, 0.82), Color(0.36, 0.7, 0.82, 0.22)))
+	_anchor_control(hint_panel, 0.08, 0.8, 0.92, 0.96)
+	stage.add_child(hint_panel)
+	detail_preview_hint_panel = hint_panel
+
+	var hint_margin := MarginContainer.new()
+	hint_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	hint_margin.add_theme_constant_override("margin_left", _i(12))
+	hint_margin.add_theme_constant_override("margin_top", _i(8))
+	hint_margin.add_theme_constant_override("margin_right", _i(12))
+	hint_margin.add_theme_constant_override("margin_bottom", _i(8))
+	hint_panel.add_child(hint_margin)
+
+	var hint_label := _make_label(String(FrontEndContent.menu_page_content().get("detail_preview_hint", "轻触当前展示位，重播执笔回应。")), 13, Color(0.98, 0.95, 0.9, 0.94))
+	hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hint_margin.add_child(hint_label)
+
 	preview_motifs.append({
 		"ring_a": ring_a,
 		"ring_b": ring_b,
@@ -1430,6 +1462,20 @@ func _build_detail_preview(panel: PanelContainer) -> void:
 		"speed": 0.72,
 		"base_y": detail_preview_core.position.y
 	})
+
+	var stage_button := Button.new()
+	stage_button.flat = true
+	stage_button.focus_mode = Control.FOCUS_NONE
+	stage_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	stage_button.tooltip_text = _localize_text(String(FrontEndContent.menu_page_content().get("detail_preview_hint", "轻触当前展示位，重播执笔回应。")))
+	stage_button.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
+	stage_button.add_theme_stylebox_override("hover", StyleBoxEmpty.new())
+	stage_button.add_theme_stylebox_override("pressed", StyleBoxEmpty.new())
+	stage_button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	stage_button.set_anchors_preset(Control.PRESET_FULL_RECT)
+	stage_button.pressed.connect(Callable(self, "_on_preview_stage_pressed"))
+	panel.add_child(stage_button)
+	detail_preview_button = stage_button
 
 
 func _make_stat_row(parent: VBoxContainer, title: String) -> Dictionary:
@@ -3474,6 +3520,10 @@ func _start_battle_transition() -> void:
 func _on_select_hero(hero_id: String) -> void:
 	selected_hero = hero_id
 	_refresh_selection(true)
+
+
+func _on_preview_stage_pressed() -> void:
+	_show_hero_reaction(selected_hero, _localized_hero_data(selected_hero))
 
 
 func _change_to_battle() -> void:
