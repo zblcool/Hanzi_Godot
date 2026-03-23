@@ -586,6 +586,10 @@ func is_pause_menu_open() -> bool:
 	return state_mode == "pause" and state_overlay != null and state_overlay.visible
 
 
+func is_chamber_transition_open() -> bool:
+	return state_mode == "chamber_transition" and state_overlay != null and state_overlay.visible
+
+
 func is_settings_menu_open() -> bool:
 	return state_mode == "settings" and state_overlay != null and state_overlay.visible
 
@@ -1328,15 +1332,15 @@ func show_pause_menu(elapsed: float, kills: int, threat: int, level: int) -> voi
 	state_overlay.visible = true
 
 
-func show_chamber_transition(title: String, body: String) -> void:
+func show_chamber_transition(title: String, body: String, preview_lines: Array[String] = []) -> void:
 	hide_choice_overlay()
 	hide_map_overlay()
 	overlay_label.visible = false
 	_hide_state_name_editor()
-	_hide_state_preview()
 	state_mode = "chamber_transition"
 	state_title_label.text = title
 	state_body_label.text = body
+	_show_state_preview(_localize_text("下一段预览"), preview_lines)
 	_configure_state_button(state_primary_button, "Continue Deeper" if _is_english() else "续卷入深层", Callable(self, "_emit_pause_resume"))
 	_configure_state_button(state_secondary_button, "Restart Run" if _is_english() else "重新开始", Callable(self, "_emit_restart"))
 	_configure_state_button(state_tertiary_button, "Return to Menu" if _is_english() else "返回菜单", Callable(self, "_emit_return_menu"))

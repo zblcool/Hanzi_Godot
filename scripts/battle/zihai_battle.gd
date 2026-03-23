@@ -403,6 +403,7 @@ var active_boss = null
 var current_chamber_id: String = "entry_court"
 var chamber_break_pending := false
 var chamber_interlude_offer: Dictionary = {}
+var pending_chamber_transition: Dictionary = {}
 var chamber_modifier_id: String = ""
 var chamber_modifier_expires_after_bosses: int = 0
 var room_objective_id: String = ""
@@ -1040,6 +1041,29 @@ func _next_chamber_id_after_interlude() -> String:
 	return String(CHAMBER_ORDER[mini(current_index + 1, CHAMBER_ORDER.size() - 1)])
 
 
+func _chamber_preview_lines(next_chamber_id: String, next_wave: int) -> Array[String]:
+	var localized_next_theme := _localized_field_phase_theme(_field_phase_theme_for_wave(next_wave))
+	var next_theme_name := String(localized_next_theme.get("name", "Inkfield" if _is_english() else "字境"))
+	var next_chamber_name := _localized_chamber_name(next_chamber_id)
+	var threat_joiner := ", " if _is_english() else " / "
+	var threat_mix := threat_joiner.join(PackedStringArray(_chamber_preview_threat_names(next_wave)))
+	if _is_english():
+		return [
+			"Chamber · %s" % next_chamber_name,
+			"Next Wave · %d%s" % [next_wave, " · Major Surge" if _is_big_wave(next_wave) else ""],
+			"Realm · %s" % next_theme_name,
+			"Pressure · %s" % _chamber_preview_pressure_copy(next_wave),
+			"Threat Mix · %s" % threat_mix
+		]
+	return [
+		"下一房间 · %s" % next_chamber_name,
+		"下一波 · 第 %d 波%s" % [next_wave, " · 大潮压境" if _is_big_wave(next_wave) else ""],
+		"字境 · %s" % next_theme_name,
+		"压境重点 · %s" % _chamber_preview_pressure_copy(next_wave),
+		"威胁混编 · %s" % threat_mix
+	]
+
+
 func _chamber_interlude_title() -> String:
 	return "%s · %s" % [_current_scroll_label(), "Between Chambers" if _is_english() else "卷间抉择"]
 
@@ -1080,27 +1104,49 @@ func _chamber_preview_threat_names(next_wave: int) -> Array[String]:
 
 
 func _chamber_interlude_preview_lines(next_wave: int) -> Array[String]:
-	var localized_next_theme := _localized_field_phase_theme(_field_phase_theme_for_wave(next_wave))
-	var next_theme_name := String(localized_next_theme.get("name", "Inkfield" if _is_english() else "字境"))
 	var next_chamber_id := String(chamber_interlude_offer.get("next_chamber_id", _next_chamber_id_after_interlude()))
+	return _chamber_preview_lines(next_chamber_id, next_wave)
+
+
+func _chamber_transition_title(next_chamber_id: String) -> String:
 	var next_chamber_name := _localized_chamber_name(next_chamber_id)
-	var threat_joiner := ", " if _is_english() else " / "
-	var threat_mix := threat_joiner.join(PackedStringArray(_chamber_preview_threat_names(next_wave)))
+	return ("Chamber Cleared · %s" if _is_english() else "房间已清 · %s") % next_chamber_name
+
+
+func _chamber_transition_body(next_chamber_id: String) -> String:
+	var next_chamber_name := _localized_chamber_name(next_chamber_id)
 	if _is_english():
-		return [
-			"Chamber · %s" % next_chamber_name,
-			"Next Wave · %d%s" % [next_wave, " · Major Surge" if _is_big_wave(next_wave) else ""],
-			"Realm · %s" % next_theme_name,
-			"Pressure · %s" % _chamber_preview_pressure_copy(next_wave),
-			"Threat Mix · %s" % threat_mix
-		]
-	return [
-		"下一房间 · %s" % next_chamber_name,
-		"下一波 · 第 %d 波%s" % [next_wave, " · 大潮压境" if _is_big_wave(next_wave) else ""],
-		"字境 · %s" % next_theme_name,
-		"压境重点 · %s" % _chamber_preview_pressure_copy(next_wave),
-		"威胁混编 · %s" % threat_mix
-	]
+		return "Your between-chambers choice is sealed. %s is next, and entering it will reset the fog, field props, and pressure layout around a fresh chamber state.\n\nCheck the final preview below, then continue deeper when ready." % next_chamber_name
+	return "这次卷间抉择已经定下，下一段会进入「%s」。真正续卷后，迷雾显形、场景布置和下一波压境都会按新房间重新铺开。\n\n先再看一眼下一段预览，准备好后再续卷入深层。" % next_chamber_name
+
+
+func _open_chamber_transition_overlay(next_chamber_id: String, next_wave: int) -> void:
+	pending_chamber_transition = {
+		"next_chamber_id": next_chamber_id,
+		"next_wave": next_wave
+	}
+	if map_overlay_active:
+		_set_map_overlay(false)
+	paused = true
+	Engine.time_scale = 0.0
+	if hud != null and hud.has_method("show_chamber_transition"):
+		hud.show_chamber_transition(
+			_chamber_transition_title(next_chamber_id),
+			_chamber_transition_body(next_chamber_id),
+			_chamber_preview_lines(next_chamber_id, next_wave)
+		)
+
+
+func _consume_pending_chamber_transition() -> bool:
+	if pending_chamber_transition.is_empty():
+		return false
+	var next_chamber_id := String(pending_chamber_transition.get("next_chamber_id", ""))
+	pending_chamber_transition.clear()
+	if next_chamber_id.is_empty():
+		return false
+	_transition_to_chamber(next_chamber_id)
+	_sync_hud()
+	return true
 
 
 func _chamber_interlude_body(next_wave: int) -> String:
@@ -1201,6 +1247,8 @@ func _process(delta: float) -> void:
 				hud.return_to_pause_menu()
 			elif hud != null and hud.has_method("is_pause_menu_open") and hud.is_pause_menu_open():
 				_set_paused(false)
+			elif hud != null and hud.has_method("is_chamber_transition_open") and hud.is_chamber_transition_open():
+				_on_hud_pause_resume_requested()
 		elif Input.is_action_just_pressed("restart_run"):
 			Engine.time_scale = 1.0
 			get_tree().reload_current_scene()
@@ -3796,6 +3844,7 @@ func _map_exploration_percent() -> int:
 
 
 func _on_hud_pause_resume_requested() -> void:
+	_consume_pending_chamber_transition()
 	_set_paused(false)
 
 
@@ -3854,9 +3903,7 @@ func _on_hud_chamber_interlude_selected(choice_id: String) -> void:
 			return
 
 	chamber_interlude_offer.clear()
-	_transition_to_chamber(next_chamber_id)
-	_sync_hud()
-	_set_paused(false)
+	_open_chamber_transition_overlay(next_chamber_id, maxi(threat_level + 1, 2))
 
 
 func _on_hud_pause_requested() -> void:
@@ -3891,6 +3938,8 @@ func _on_hud_interact_requested() -> void:
 			hud.return_to_pause_menu()
 		elif hud != null and hud.has_method("is_pause_menu_open") and hud.is_pause_menu_open():
 			_set_paused(false)
+		elif hud != null and hud.has_method("is_chamber_transition_open") and hud.is_chamber_transition_open():
+			_on_hud_pause_resume_requested()
 		return
 	if active_inkstone != null:
 		_handle_inkstone_interact()
