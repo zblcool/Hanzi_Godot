@@ -19,7 +19,7 @@ const HanziLocalization := preload("res://scripts/core/hanzi_localization.gd")
 const GROUND_SURFACE_SHADER := preload("res://assets/shaders/ink_ground.gdshader")
 const SHANSHUI_BACKDROP_SHADER := preload("res://assets/shaders/shanshui_backdrop.gdshader")
 const DEFAULT_BATTLE_TIP := "击倒字灵收集字力与补给，升级时三选一偏旁。靠近砚台按 E 磨词。"
-const BOSS_SPAWN_TIMES := [65.0, 130.0, 195.0]
+const BOSS_SPAWN_TIMES := [65.0, 130.0, 195.0, 260.0]
 const MAP_WORLD_RADIUS := 28.0
 const BIG_WAVE_INTERVAL := 5
 const FIELD_PHASE_WAVE_SPAN := 4
@@ -47,6 +47,10 @@ const CHAMBER_VAULT_REWARD_BRUSH_DURATION := 12.0
 const CHAMBER_VAULT_EVENT_FURY_DURATION := 12.0
 const CHAMBER_VAULT_REST_HEAL_RATIO := 0.28
 const CHAMBER_VAULT_REST_WARD_DURATION := 12.0
+const CHAMBER_ABYSS_EVENT_FURY_DURATION := 12.0
+const CHAMBER_ABYSS_EVENT_BRUSH_DURATION := 12.0
+const CHAMBER_ABYSS_REST_HEAL_RATIO := 0.45
+const CHAMBER_ABYSS_REST_WARD_DURATION := 12.0
 const CHAMBER_ARCHIVE_EVENT_DRAFT_LEAN := ["木", "氵", "田", "月"]
 const CHAMBER_ARCHIVE_REST_DRAFT_LEAN := ["亻", "心", "木", "月"]
 const INTERLUDE_DRAFT_LEAN_BASE_BONUS := 1.18
@@ -168,7 +172,7 @@ const FIELD_PHASE_THEMES := [
 		"tip": "残卷回暖，纸本山水会偏回赭金，巨字像旧墨一样烙在地上。"
 	}
 ]
-const CHAMBER_ORDER := ["entry_court", "slip_archive", "thunder_vault"]
+const CHAMBER_ORDER := ["entry_court", "slip_archive", "thunder_vault", "abyss_sanctum"]
 const CHAMBER_LAYOUTS := {
 	"entry_court": {
 		"name": "入卷前庭",
@@ -566,6 +570,69 @@ const CHAMBER_LAYOUTS := {
 				"discover_radius": 6.2
 			}
 		]
+	},
+	"abyss_sanctum": {
+		"name": "卷渊终室",
+		"english_name": "Abyss Sanctum",
+		"glyph": "渊",
+		"accent": Color(0.94, 0.76, 0.72, 1.0),
+		"tip": "更深一层会推入卷渊终室，深墨卷架、压阵石碑与终室补给会围成更稳的终局读法。",
+		"english_tip": "The next layer opens into Abyss Sanctum, where darker scroll racks, sealing stelae, and a final supply ring frame the last chamber.",
+		"trees": [
+			Vector3(-17.0, 0.0, -12.0),
+			Vector3(17.0, 0.0, -11.0),
+			Vector3(-15.0, 0.0, 14.0),
+			Vector3(15.0, 0.0, 13.0)
+		],
+		"bushes": [
+			Vector3(-8.5, 0.0, 4.5),
+			Vector3(8.0, 0.0, 5.0),
+			Vector3(-4.0, 0.0, -9.5),
+			Vector3(4.5, 0.0, -9.0),
+			Vector3(0.0, 0.0, 14.5)
+		],
+		"inkstones": [
+			Vector3(0.0, 0.0, 1.8),
+			Vector3(0.0, 0.0, -12.5)
+		],
+		"chests": [
+			{
+				"position": Vector3(0.0, 0.0, 13.8),
+				"drops": {"paper": 6.0, "seal": 2.0}
+			},
+			{
+				"position": Vector3(-13.5, 0.0, -9.5),
+				"drops": {"paper": 4.0, "ink": 16.0}
+			}
+		],
+		"stelae": [
+			{"position": Vector3(-17.0, 0.0, -2.5), "glyph": "渊", "tint": Color(0.94, 0.82, 0.8, 1.0)},
+			{"position": Vector3(17.0, 0.0, -2.0), "glyph": "终", "tint": Color(0.98, 0.76, 0.72, 1.0)},
+			{"position": Vector3(-12.5, 0.0, 15.5), "glyph": "魇", "tint": Color(0.82, 0.72, 0.88, 1.0)},
+			{"position": Vector3(12.5, 0.0, 15.0), "glyph": "定", "tint": Color(1.0, 0.88, 0.74, 1.0)},
+			{"position": Vector3(0.0, 0.0, -16.0), "glyph": "卷", "tint": Color(0.9, 0.7, 0.64, 1.0)}
+		],
+		"scroll_racks": [
+			{"position": Vector3(-10.5, 0.0, -14.0), "yaw": 16.0},
+			{"position": Vector3(10.5, 0.0, -14.0), "yaw": -16.0},
+			{"position": Vector3(-14.5, 0.0, 4.0), "yaw": 42.0},
+			{"position": Vector3(14.5, 0.0, 4.0), "yaw": -42.0},
+			{"position": Vector3(0.0, 0.0, 9.5), "yaw": 0.0}
+		],
+		"ink_pools": [
+			{"position": Vector3(-11.5, 0.0, 10.0), "radius": 1.25, "tint": Color(0.54, 0.44, 0.6, 1.0)},
+			{"position": Vector3(11.5, 0.0, 10.0), "radius": 1.25, "tint": Color(0.72, 0.52, 0.56, 1.0)},
+			{"position": Vector3(0.0, 0.0, -15.0), "radius": 1.5, "tint": Color(0.74, 0.58, 0.54, 1.0)}
+		],
+		"brush_pickups": [
+			Vector3(-9.0, 0.0, -2.5),
+			Vector3(9.0, 0.0, -2.5)
+		],
+		"break_beacon_position": Vector3(0.0, 0.0, 1.0),
+		"utility_pickups": [
+			{"position": Vector3(-14.0, 0.0, -13.0), "supply_id": "fury"},
+			{"position": Vector3(14.0, 0.0, -13.0), "supply_id": "magnet"}
+		]
 	}
 }
 
@@ -795,6 +862,18 @@ func _chamber_interlude_options() -> Array[Dictionary]:
 			{"id": "event", "label": "异事 · 伏雷换契"},
 			{"id": "recovery", "label": "修整 · 伏纹稳息"}
 		]
+	if _is_abyss_sanctum_interlude(next_chamber_id):
+		if _is_english():
+			return [
+				{"id": "reward", "label": "Reward · Final Draft %s" % reward_pair},
+				{"id": "event", "label": "Event · Abyss Pact"},
+				{"id": "recovery", "label": "Recovery · Stilling Breath"}
+			]
+		return [
+			{"id": "reward", "label": "奖励 · 终室备墨「%s」" % reward_pair},
+			{"id": "event", "label": "异事 · 渊页誓约"},
+			{"id": "recovery", "label": "修整 · 压关静息"}
+		]
 	if _is_english():
 		return [
 			{"id": "reward", "label": "Reward · Radical %s" % reward_radical},
@@ -843,6 +922,10 @@ func _is_slip_archive_interlude(next_chamber_id: String) -> bool:
 
 func _is_thunder_vault_interlude(next_chamber_id: String) -> bool:
 	return next_chamber_id == "thunder_vault"
+
+
+func _is_abyss_sanctum_interlude(next_chamber_id: String) -> bool:
+	return next_chamber_id == "abyss_sanctum"
 
 
 func _grant_interlude_radicals(radicals: Array[String]) -> void:
@@ -1768,6 +1851,24 @@ func _chamber_interlude_body(next_wave: int) -> String:
 			int(round(CHAMBER_VAULT_EVENT_FURY_DURATION)),
 			int(round(CHAMBER_VAULT_REST_HEAL_RATIO * 100.0)),
 			int(round(CHAMBER_VAULT_REST_WARD_DURATION))
+		]
+	if _is_abyss_sanctum_interlude(next_chamber_id):
+		if _is_english():
+			return "The current scroll lord is gone and the chamber has gone quiet. The run is about to shift into %s.\n\nAbyss Sanctum now swaps in a final chamber choice:\nReward · Final Draft: carry radicals %s before the last chamber.\nEvent · Abyss Pact: open the sanctum with %d s of Swift Edict and %d s of brush haste together.\nRecovery · Stilling Breath: restore %d%% vitality, clear stun, and carry %d s of paper ward into the final room." % [
+				next_chamber_name,
+				reward_bundle,
+				int(round(CHAMBER_ABYSS_EVENT_FURY_DURATION)),
+				int(round(CHAMBER_ABYSS_EVENT_BRUSH_DURATION)),
+				int(round(CHAMBER_ABYSS_REST_HEAL_RATIO * 100.0)),
+				int(round(CHAMBER_ABYSS_REST_WARD_DURATION))
+			]
+		return "当前卷主已散，房间也暂时清空，下一段会推入「%s」。\n\n卷渊终室会先换成一组终室专属卷间抉择：\n奖励 · 终室备墨：带走偏旁「%s」，把最后一轮字路先补齐。\n异事 · 渊页誓约：终室开场会同时带着 %d 秒疾书令与 %d 秒文笔提速。\n修整 · 压关静息：先回复 %d%% 气血、解除眩晕，并把 %d 秒纸域护势一并带进终室。" % [
+			next_chamber_name,
+			reward_bundle,
+			int(round(CHAMBER_ABYSS_EVENT_FURY_DURATION)),
+			int(round(CHAMBER_ABYSS_EVENT_BRUSH_DURATION)),
+			int(round(CHAMBER_ABYSS_REST_HEAL_RATIO * 100.0)),
+			int(round(CHAMBER_ABYSS_REST_WARD_DURATION))
 		]
 	if _is_english():
 		return "The first scroll lord is gone and the chamber has gone quiet. The run is about to shift into %s.\n\nCheck the next push below, then choose one:\nReward keeps radical %s and lifts paper / seal drops through the next chamber.\nEvent carries a Scroll Echo forward so pressure enemies echo extra paper and elites can drop %d s of Swift Edict until the next scroll lord.\nRecovery restores %d%% vitality, clears stun, and grants %d s of brush haste now, then repeats a smaller %d%% recovery echo on later wave pushes." % [
@@ -4502,6 +4603,7 @@ func _on_hud_chamber_interlude_selected(choice_id: String) -> void:
 	var next_chamber_id := String(chamber_interlude_offer.get("next_chamber_id", current_chamber_id))
 	var is_archive_interlude := _is_slip_archive_interlude(next_chamber_id)
 	var is_vault_interlude := _is_thunder_vault_interlude(next_chamber_id)
+	var is_abyss_interlude := _is_abyss_sanctum_interlude(next_chamber_id)
 	var reward_radical := String(chamber_interlude_offer.get("reward_radical", "日"))
 	var reserve_radical := String(chamber_interlude_offer.get("reserve_radical", reward_radical))
 
@@ -4541,6 +4643,25 @@ func _on_hud_chamber_interlude_selected(choice_id: String) -> void:
 				)
 				_log_battle_event(
 					("Between Chambers · Storm Etching %s" if _is_english() else "卷间抉择 · 雷纹拓笔 %s") % reward_radical,
+					reward_color
+				)
+			elif is_abyss_interlude:
+				var granted_radicals: Array[String] = [reward_radical]
+				if reserve_radical != reward_radical:
+					granted_radicals.append(reserve_radical)
+				_grant_interlude_radicals(granted_radicals)
+				var reward_bundle := reward_radical if reserve_radical == reward_radical else "%s%s" % [reward_radical, reserve_radical]
+				hud.show_banner(
+					("Final Draft  Radical %s" if _is_english() else "终室备墨  偏旁「%s」") % reward_bundle,
+					reward_color,
+					1.95
+				)
+				hud.set_tip(
+					("Final draft sealed. `%s` now enters Abyss Sanctum, so the last chamber opens with the full pair already in hand." if _is_english() else "终室备墨已经定下，偏旁「%s」会一并带进卷渊终室，最后一段开场就能先补齐这组字路。")
+					% reward_bundle
+				)
+				_log_battle_event(
+					("Between Chambers · Final Draft %s" if _is_english() else "卷间抉择 · 终室备墨 %s") % reward_bundle,
 					reward_color
 				)
 			else:
@@ -4589,6 +4710,23 @@ func _on_hud_chamber_interlude_selected(choice_id: String) -> void:
 				_log_battle_event(
 					"Between Chambers · Vault Bargain armed" if _is_english() else "卷间抉择 · 伏雷换契已经挂载",
 					Color(0.72, 0.82, 1.0, 1.0)
+				)
+			elif is_abyss_interlude:
+				if is_instance_valid(player):
+					player.apply_fury_haste(CHAMBER_ABYSS_EVENT_FURY_DURATION)
+					player.apply_brush_haste(CHAMBER_ABYSS_EVENT_BRUSH_DURATION)
+				hud.show_banner(
+					("Abyss Pact  Dual Momentum" if _is_english() else "渊页誓约  双势并起"),
+					Color(0.92, 0.68, 0.62, 1.0),
+					1.95
+				)
+				hud.set_tip(
+					("Abyss pact sealed. Abyss Sanctum opens with %d s of Swift Edict and %d s of brush haste together." if _is_english() else "渊页誓约已经定下：卷渊终室开场会同时带着 %d 秒疾书令与 %d 秒文笔提速。")
+					% [int(round(CHAMBER_ABYSS_EVENT_FURY_DURATION)), int(round(CHAMBER_ABYSS_EVENT_BRUSH_DURATION))]
+				)
+				_log_battle_event(
+					"Between Chambers · Abyss Pact armed" if _is_english() else "卷间抉择 · 渊页誓约已经挂载",
+					Color(0.92, 0.68, 0.62, 1.0)
 				)
 			else:
 				_arm_scroll_echo_modifier()
@@ -4641,6 +4779,26 @@ func _on_hud_chamber_interlude_selected(choice_id: String) -> void:
 				_log_battle_event(
 					("Between Chambers · Grounding Ward %d%%" if _is_english() else "卷间抉择 · 伏纹稳息 %d%%") % int(round(CHAMBER_VAULT_REST_HEAL_RATIO * 100.0)),
 					Color(0.72, 0.9, 1.0, 1.0)
+				)
+			elif is_abyss_interlude:
+				if is_instance_valid(player):
+					player.heal(player.max_health * CHAMBER_ABYSS_REST_HEAL_RATIO)
+					if player.has_method("clear_stun"):
+						player.clear_stun()
+					if player.has_method("apply_paper_ward"):
+						player.apply_paper_ward(CHAMBER_ABYSS_REST_WARD_DURATION)
+				hud.show_banner(
+					("Stilling Breath  Restore %d%% Vitality" if _is_english() else "压关静息  回复 %d%% 气血") % int(round(CHAMBER_ABYSS_REST_HEAL_RATIO * 100.0)),
+					Color(0.98, 0.86, 0.72, 1.0),
+					1.95
+				)
+				hud.set_tip(
+					("Stilling breath restores vitality, clears stun, and carries %d s of paper ward into Abyss Sanctum." if _is_english() else "压关静息会先回气、解眩晕，并把 %d 秒纸域护势带进卷渊终室。")
+					% int(round(CHAMBER_ABYSS_REST_WARD_DURATION))
+				)
+				_log_battle_event(
+					("Between Chambers · Stilling Breath %d%%" if _is_english() else "卷间抉择 · 压关静息 %d%%") % int(round(CHAMBER_ABYSS_REST_HEAL_RATIO * 100.0)),
+					Color(0.98, 0.86, 0.72, 1.0)
 				)
 			else:
 				_arm_chamber_modifier("short_rest")
