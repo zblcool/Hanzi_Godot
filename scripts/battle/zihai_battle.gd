@@ -47,6 +47,10 @@ const CHAMBER_VAULT_REWARD_BRUSH_DURATION := 12.0
 const CHAMBER_VAULT_EVENT_FURY_DURATION := 12.0
 const CHAMBER_VAULT_REST_HEAL_RATIO := 0.28
 const CHAMBER_VAULT_REST_WARD_DURATION := 12.0
+const CHAMBER_ARCHIVE_EVENT_DRAFT_LEAN := ["木", "氵", "田", "月"]
+const CHAMBER_ARCHIVE_REST_DRAFT_LEAN := ["亻", "心", "木", "月"]
+const INTERLUDE_DRAFT_LEAN_BASE_BONUS := 1.18
+const INTERLUDE_DRAFT_LEAN_FOCUSED_BONUS := 1.82
 const TREE_FADE_RADIUS := 2.65
 const TREE_FADE_ALPHA := 0.28
 const TREE_FADE_SPEED := 4.8
@@ -527,6 +531,7 @@ var chamber_interlude_offer: Dictionary = {}
 var pending_chamber_transition: Dictionary = {}
 var chamber_modifier_id: String = ""
 var chamber_modifier_expires_after_bosses: int = 0
+var interlude_draft_lean_data: Dictionary = {}
 var room_objective_id: String = ""
 var room_objective_data: Dictionary = {}
 var room_objective_total: int = 0
@@ -788,6 +793,72 @@ func _clear_chamber_modifier() -> void:
 func _arm_chamber_modifier(modifier_id: String) -> void:
 	chamber_modifier_id = modifier_id
 	chamber_modifier_expires_after_bosses = int(Session.chapter_progress.get("completed_bosses", 0)) + 1
+
+
+func _clear_interlude_draft_lean() -> void:
+	interlude_draft_lean_data = {}
+
+
+func _arm_interlude_draft_lean(lean_id: String, radicals: Array[String], label_zh: String, label_en: String) -> void:
+	var unique_radicals: Array[String] = []
+	for radical_variant in radicals:
+		var radical := String(radical_variant)
+		if radical.is_empty() or unique_radicals.has(radical):
+			continue
+		unique_radicals.append(radical)
+	if unique_radicals.is_empty():
+		_clear_interlude_draft_lean()
+		return
+	interlude_draft_lean_data = {
+		"id": lean_id,
+		"radicals": unique_radicals,
+		"label": label_zh,
+		"english_label": label_en,
+		"expires_after_bosses": int(Session.chapter_progress.get("completed_bosses", 0)) + 1
+	}
+
+
+func _interlude_draft_lean_radicals() -> Array[String]:
+	var radicals: Array[String] = []
+	var radicals_variant: Variant = interlude_draft_lean_data.get("radicals", [])
+	if radicals_variant is Array:
+		for radical_variant in radicals_variant:
+			var radical := String(radical_variant)
+			if radical.is_empty() or radicals.has(radical):
+				continue
+			radicals.append(radical)
+	return radicals
+
+
+func _interlude_draft_lean_text(radicals: Array[String] = []) -> String:
+	var lean_radicals := radicals if not radicals.is_empty() else _interlude_draft_lean_radicals()
+	if lean_radicals.is_empty():
+		return ""
+	return " / ".join(lean_radicals)
+
+
+func _interlude_draft_lean_bonus(radical: String) -> float:
+	var lean_radicals := _interlude_draft_lean_radicals()
+	if lean_radicals.is_empty() or not lean_radicals.has(radical):
+		return 0.0
+	return (
+		INTERLUDE_DRAFT_LEAN_FOCUSED_BONUS
+		if lean_radicals.size() <= 2
+		else INTERLUDE_DRAFT_LEAN_BASE_BONUS
+	)
+
+
+func _append_interlude_draft_lean_copy(headline: String, radical: String) -> String:
+	if _interlude_draft_lean_bonus(radical) <= 0.0:
+		return headline
+	var lean_text := _interlude_draft_lean_text()
+	if lean_text.is_empty():
+		return headline
+	return (
+		"%s Chamber lean: %s."
+		if _is_english()
+		else "%s 卷间余势：%s。"
+	) % [headline, lean_text]
 
 
 func _arm_scroll_echo_modifier() -> void:
@@ -1581,22 +1652,29 @@ func _chamber_interlude_body(next_wave: int) -> String:
 	var next_chamber_id := _chamber_interlude_next_chamber_id()
 	var next_chamber_name := _localized_chamber_name(next_chamber_id)
 	var reward_bundle := reward_radical if reserve_radical == reward_radical else "%s / %s" % [reward_radical, reserve_radical]
+	var archive_event_lean := _interlude_draft_lean_text(CHAMBER_ARCHIVE_EVENT_DRAFT_LEAN)
+	var archive_rest_lean := _interlude_draft_lean_text(CHAMBER_ARCHIVE_REST_DRAFT_LEAN)
 	if _is_slip_archive_interlude(next_chamber_id):
 		if _is_english():
-			return "The first scroll lord is gone and the chamber has gone quiet. The run is about to shift into %s.\n\nSlip Archive now swaps in a denser chamber choice:\nReward · Archive Rubbing: carry radicals %s, and the next chamber still lifts paper / seal drops.\nEvent · Latch Bargain: arm Scroll Echo for the next chamber and open it with %d s of Swift Edict.\nRecovery · Lamp Respite: restore %d%% vitality, clear stun, and take %d s of brush haste forward before later wave pushes echo a smaller %d%% recovery." % [
+			return "The first scroll lord is gone and the chamber has gone quiet. The run is about to shift into %s.\n\nSlip Archive now swaps in a denser chamber choice:\nReward · Archive Rubbing: carry radicals %s, the next chamber still lifts paper / seal drops, and later radical drafts lean toward %s.\nEvent · Latch Bargain: arm Scroll Echo for the next chamber, open it with %d s of Swift Edict, and tilt later radical drafts toward %s.\nRecovery · Lamp Respite: restore %d%% vitality, clear stun, take %d s of brush haste forward, and tilt later radical drafts toward %s before later wave pushes echo a smaller %d%% recovery." % [
 				next_chamber_name,
 				reward_bundle,
+				reward_bundle,
 				int(round(CHAMBER_ARCHIVE_EVENT_FURY_DURATION)),
+				archive_event_lean,
 				int(round(CHAMBER_ARCHIVE_REST_HEAL_RATIO * 100.0)),
 				int(round(CHAMBER_ARCHIVE_REST_BRUSH_DURATION)),
+				archive_rest_lean,
 				int(round(CHAMBER_INTERLUDE_REST_ECHO_HEAL_RATIO * 100.0))
 			]
-		return "首位卷主已散，当前房间也暂时清空，下一段会推入「%s」。\n\n简库中庭会先换成更贴近 source 的专属卷间抉择：\n奖励 · 简库拓片：带走偏旁「%s」，而且下一段敌人仍会更常掉残纸 / 战印。\n异事 · 封钥借契：保留残卷回响，同时开场先带着 %d 秒疾书令入深层。\n修整 · 守灯静读：先回复 %d%% 气血、解除眩晕，并把 %d 秒文笔提速一并带进下一段；后面每逢字潮推进还会再补一小口气。" % [
+		return "首位卷主已散，当前房间也暂时清空，下一段会推入「%s」。\n\n简库中庭会先换成更贴近 source 的专属卷间抉择：\n奖励 · 简库拓片：带走偏旁「%s」，下一段敌人仍会更常掉残纸 / 战印，后续偏旁三选一也会更偏向这两笔。\n异事 · 封钥借契：保留残卷回响，同时开场先带着 %d 秒疾书令入深层，后续偏旁三选一会更偏向 %s。\n修整 · 守灯静读：先回复 %d%% 气血、解除眩晕，并把 %d 秒文笔提速一并带进下一段；后续偏旁三选一会更偏向 %s，后面每逢字潮推进还会再补一小口气。" % [
 			next_chamber_name,
 			reward_bundle,
 			int(round(CHAMBER_ARCHIVE_EVENT_FURY_DURATION)),
+			archive_event_lean,
 			int(round(CHAMBER_ARCHIVE_REST_HEAL_RATIO * 100.0)),
-			int(round(CHAMBER_ARCHIVE_REST_BRUSH_DURATION))
+			int(round(CHAMBER_ARCHIVE_REST_BRUSH_DURATION)),
+			archive_rest_lean
 		]
 	if _is_thunder_vault_interlude(next_chamber_id):
 		if _is_english():
@@ -2942,6 +3020,7 @@ func _score_radical_choice(radical: String) -> float:
 	if radical == "刂":
 		score += 1.6 if Session.selected_hero == "xia" else 0.95
 		score += min(0.75, float(player.blade_level) * 0.08)
+	score += _interlude_draft_lean_bonus(radical)
 
 	var recipe_id: String = Session.get_recipe_id_for_radical(radical)
 	if recipe_id.is_empty():
@@ -3007,6 +3086,7 @@ func _build_choice_data(radical: String) -> Dictionary:
 					]
 	if radical == "刂":
 		headline += (" Also strengthen %s." if _is_english() else " 并强化%s。") % _weapon_core_label()
+	headline = _append_interlude_draft_lean_copy(headline, radical)
 
 	return {
 		"radical": radical,
@@ -3785,6 +3865,8 @@ func _on_boss_defeated(world_position: Vector3) -> void:
 	_play_cue_sfx("boss_defeat", 1.0)
 	if chamber_modifier_expires_after_bosses > 0 and completed_bosses >= chamber_modifier_expires_after_bosses:
 		_clear_chamber_modifier()
+	if int(interlude_draft_lean_data.get("expires_after_bosses", 0)) > 0 and completed_bosses >= int(interlude_draft_lean_data.get("expires_after_bosses", 0)):
+		_clear_interlude_draft_lean()
 	if completed_bosses >= BOSS_SPAWN_TIMES.size():
 		chamber_break_pending = false
 		Session.chapter_progress["chapter_complete"] = true
@@ -4357,15 +4439,16 @@ func _on_hud_chamber_interlude_selected(choice_id: String) -> void:
 				if reserve_radical != reward_radical:
 					granted_radicals.append(reserve_radical)
 				_grant_interlude_radicals(granted_radicals)
+				_arm_interlude_draft_lean("archive_rubbing", granted_radicals, "简库拓片", "Archive Rubbing")
 				var reward_bundle := reward_radical if reserve_radical == reward_radical else "%s%s" % [reward_radical, reserve_radical]
 				hud.show_banner(
 					("Archive Rubbing  Radical %s" if _is_english() else "简库拓片  偏旁「%s」") % reward_bundle,
 					reward_color,
 					1.9
 				)
-				hud.set_tip(("Archive rubbing secured. `%s` now enters the next chamber, and enemy drops there still lean toward paper and seals." if _is_english() else "简库拓片已经带上，偏旁「%s」会一并随你入深层，下一段掉落仍会继续偏向残纸与战印。") % reward_bundle)
+				hud.set_tip(("Archive rubbing secured. `%s` now enters the next chamber, enemy drops there still lean toward paper and seals, and later radical drafts also lean toward %s." if _is_english() else "简库拓片已经带上，偏旁「%s」会一并随你入深层，下一段掉落仍会继续偏向残纸与战印，后续偏旁三选一也会更偏向 %s。") % [reward_bundle, _interlude_draft_lean_text(granted_radicals)])
 				_log_battle_event(
-					("Between Chambers · Archive Rubbing %s" if _is_english() else "卷间抉择 · 简库拓片 %s") % reward_bundle,
+					("Between Chambers · Archive Rubbing %s · Draft lean %s" if _is_english() else "卷间抉择 · 简库拓片 %s · 偏旁偏向 %s") % [reward_bundle, _interlude_draft_lean_text(granted_radicals)],
 					reward_color
 				)
 			elif is_vault_interlude:
@@ -4387,17 +4470,20 @@ func _on_hud_chamber_interlude_selected(choice_id: String) -> void:
 				)
 			else:
 				_arm_chamber_modifier("reward_supply")
-				_grant_interlude_radicals([reward_radical])
+				var granted_radicals: Array[String] = [reward_radical]
+				_grant_interlude_radicals(granted_radicals)
+				_arm_interlude_draft_lean("radical_cache", granted_radicals, "偏旁补给", "Radical Cache")
 				hud.show_banner(
 					("Radical Cache  Next chamber drops rise" if _is_english() else "偏旁补给  下一段残纸更盛"),
 					reward_color,
 					1.8
 				)
-				hud.set_tip(("Radical supply secured. `%s` now enters the next chamber, and enemy drops there will carry more paper and seals." if _is_english() else "偏旁补给已经带上，「%s」会跟着你继续入深层，下一段敌人也会带来更多残纸和战印。") % reward_radical)
-				_log_battle_event(("Between Chambers · Radical supply %s" if _is_english() else "卷间抉择 · 偏旁补给 %s") % reward_radical, reward_color)
+				hud.set_tip(("Radical supply secured. `%s` now enters the next chamber, enemy drops there will carry more paper and seals, and later radical drafts will lean toward %s." if _is_english() else "偏旁补给已经带上，「%s」会跟着你继续入深层，下一段敌人也会带来更多残纸和战印，后续偏旁三选一也会更偏向 %s。") % [reward_radical, _interlude_draft_lean_text(granted_radicals)])
+				_log_battle_event(("Between Chambers · Radical supply %s · Draft lean %s" if _is_english() else "卷间抉择 · 偏旁补给 %s · 偏旁偏向 %s") % [reward_radical, _interlude_draft_lean_text(granted_radicals)], reward_color)
 		"event":
 			if is_archive_interlude:
 				_arm_scroll_echo_modifier()
+				_arm_interlude_draft_lean("latch_bargain", CHAMBER_ARCHIVE_EVENT_DRAFT_LEAN, "封钥借契", "Latch Bargain")
 				if is_instance_valid(player):
 					player.apply_fury_haste(CHAMBER_ARCHIVE_EVENT_FURY_DURATION)
 				hud.show_banner(
@@ -4406,11 +4492,11 @@ func _on_hud_chamber_interlude_selected(choice_id: String) -> void:
 					1.95
 				)
 				hud.set_tip(
-					("Latch bargain sealed. The next chamber opens with %d s of Swift Edict, and Scroll Echo still carries extra paper plus elite edicts until the next scroll lord." if _is_english() else "封钥借契已经定下：下一段会先带着 %d 秒疾书令入场，残卷回响也会继续保留额外残纸与精英疾书令，直到下一位卷主。")
-					% int(round(CHAMBER_ARCHIVE_EVENT_FURY_DURATION))
+					("Latch bargain sealed. The next chamber opens with %d s of Swift Edict, Scroll Echo still carries extra paper plus elite edicts until the next scroll lord, and later radical drafts tilt toward %s." if _is_english() else "封钥借契已经定下：下一段会先带着 %d 秒疾书令入场，残卷回响也会继续保留额外残纸与精英疾书令，直到下一位卷主；后续偏旁三选一会更偏向 %s。")
+					% [int(round(CHAMBER_ARCHIVE_EVENT_FURY_DURATION)), _interlude_draft_lean_text(CHAMBER_ARCHIVE_EVENT_DRAFT_LEAN)]
 				)
 				_log_battle_event(
-					"Between Chambers · Latch Bargain armed" if _is_english() else "卷间抉择 · 封钥借契已经挂载",
+					("Between Chambers · Latch Bargain armed · Draft lean %s" if _is_english() else "卷间抉择 · 封钥借契已经挂载 · 偏旁偏向 %s") % _interlude_draft_lean_text(CHAMBER_ARCHIVE_EVENT_DRAFT_LEAN),
 					Color(0.96, 0.62, 0.34, 1.0)
 				)
 			elif is_vault_interlude:
@@ -4448,6 +4534,7 @@ func _on_hud_chamber_interlude_selected(choice_id: String) -> void:
 		"recovery":
 			if is_archive_interlude:
 				_arm_chamber_modifier("short_rest")
+				_arm_interlude_draft_lean("lamp_respite", CHAMBER_ARCHIVE_REST_DRAFT_LEAN, "守灯静读", "Lamp Respite")
 				if is_instance_valid(player):
 					player.heal(player.max_health * CHAMBER_ARCHIVE_REST_HEAL_RATIO)
 					if player.has_method("clear_stun"):
@@ -4458,9 +4545,9 @@ func _on_hud_chamber_interlude_selected(choice_id: String) -> void:
 					Color(0.62, 0.9, 0.74, 1.0),
 					1.95
 				)
-				hud.set_tip(("Lamp respite restores vitality, clears stun, and carries %d s of brush haste into the archive before later wave pushes echo smaller recovery." if _is_english() else "守灯静读会先回气、解眩晕，并把 %d 秒文笔提速带进简库中庭；后续字潮推进仍会再补一小口气。") % int(round(CHAMBER_ARCHIVE_REST_BRUSH_DURATION)))
+				hud.set_tip(("Lamp respite restores vitality, clears stun, carries %d s of brush haste into the archive, and later radical drafts tilt toward %s before later wave pushes echo smaller recovery." if _is_english() else "守灯静读会先回气、解眩晕，并把 %d 秒文笔提速带进简库中庭；后续偏旁三选一会更偏向 %s，后面字潮推进仍会再补一小口气。") % [int(round(CHAMBER_ARCHIVE_REST_BRUSH_DURATION)), _interlude_draft_lean_text(CHAMBER_ARCHIVE_REST_DRAFT_LEAN)])
 				_log_battle_event(
-					("Between Chambers · Lamp Respite %d%%" if _is_english() else "卷间抉择 · 守灯静读 %d%%") % int(round(CHAMBER_ARCHIVE_REST_HEAL_RATIO * 100.0)),
+					("Between Chambers · Lamp Respite %d%% · Draft lean %s" if _is_english() else "卷间抉择 · 守灯静读 %d%% · 偏旁偏向 %s") % [int(round(CHAMBER_ARCHIVE_REST_HEAL_RATIO * 100.0)), _interlude_draft_lean_text(CHAMBER_ARCHIVE_REST_DRAFT_LEAN)],
 					Color(0.62, 0.9, 0.74, 1.0)
 				)
 			elif is_vault_interlude:
