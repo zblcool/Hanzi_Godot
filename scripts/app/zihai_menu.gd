@@ -2203,28 +2203,18 @@ func _build_recipe_atlas_text() -> String:
 
 func _build_hero_opening_summary(hero: Dictionary) -> String:
 	var archive_content := FrontEndContent.menu_archive_content()
-	var hero_id := String(hero.get("id", "scholar"))
-	var starting_radicals: Array[String] = Session.get_hero_starting_radicals(hero_id)
-	if starting_radicals.is_empty():
+	var radical_labels := _build_hero_starting_radical_labels(hero)
+	if radical_labels.is_empty():
 		return _localize_text(String(archive_content.get("opening_empty_summary", "当前 Godot 保持无固定起手偏旁，第一批掉落更适合顺势决定这一局往哪条合字线转。")))
-	var radical_labels: Array[String] = []
-	for radical in starting_radicals:
-		var radical_data: Dictionary = _localized_radical_data(radical)
-		radical_labels.append("%s %s" % [radical, String(radical_data.get("name", ""))])
-	return _localize_text(String(archive_content.get("opening_started_summary", "当前 Godot 会带着 %s 入卷，让这名执笔者更早摸到自己的开场路线。"))) % " / ".join(radical_labels)
+	return _localize_text(String(archive_content.get("opening_started_summary", "当前 Godot 会带着 %s 入卷，让这名执笔者更早摸到自己的开场路线。"))) % String(archive_content.get("starting_summary_joiner", " / ")).join(radical_labels)
 
 
 func _build_hero_stage_summary(hero: Dictionary) -> String:
 	var archive_content := FrontEndContent.menu_archive_content()
-	var hero_id := String(hero.get("id", "scholar"))
-	var starting_radicals: Array[String] = Session.get_hero_starting_radicals(hero_id)
-	if starting_radicals.is_empty():
+	var radical_labels := _build_hero_starting_radical_labels(hero)
+	if radical_labels.is_empty():
 		return _localize_text(String(archive_content.get("stage_empty_summary", "无固定起手，顺第一批掉落决定路线。")))
-	var radical_labels: Array[String] = []
-	for radical in starting_radicals:
-		var radical_data: Dictionary = _localized_radical_data(radical)
-		radical_labels.append("%s %s" % [radical, String(radical_data.get("name", ""))])
-	return _localize_text(String(archive_content.get("stage_started_summary", "起手自带 %s。"))) % " / ".join(radical_labels)
+	return _localize_text(String(archive_content.get("stage_started_summary", "起手自带 %s。"))) % String(archive_content.get("starting_summary_joiner", " / ")).join(radical_labels)
 
 
 func _refresh_transition_overlay(hero: Dictionary, start_wave: int = 1) -> void:
@@ -2288,17 +2278,24 @@ func _refresh_transition_overlay(hero: Dictionary, start_wave: int = 1) -> void:
 
 func _build_hero_starting_tags(hero: Dictionary) -> Array[String]:
 	var archive_content := FrontEndContent.menu_archive_content()
-	var hero_id := String(hero.get("id", "scholar"))
-	var starting_radicals: Array[String] = Session.get_hero_starting_radicals(hero_id)
-	if starting_radicals.is_empty():
+	var tags := _build_hero_starting_radical_labels(hero)
+	if tags.is_empty():
 		var fallback_tags: Array[String] = []
 		fallback_tags.append(_localize_text(String(archive_content.get("stage_tag_fallback", "无固定起手"))))
 		return fallback_tags
-	var tags: Array[String] = []
+	return tags
+
+
+func _build_hero_starting_radical_labels(hero: Dictionary) -> Array[String]:
+	var archive_content := FrontEndContent.menu_archive_content()
+	var hero_id := String(hero.get("id", "scholar"))
+	var starting_radicals: Array[String] = Session.get_hero_starting_radicals(hero_id)
+	var label_format := String(archive_content.get("starting_label_format", "%s %s"))
+	var labels: Array[String] = []
 	for radical in starting_radicals:
 		var radical_data: Dictionary = _localized_radical_data(radical)
-		tags.append("%s %s" % [radical, String(radical_data.get("name", ""))])
-	return tags
+		labels.append((label_format % [radical, String(radical_data.get("name", ""))]).strip_edges())
+	return labels
 
 
 func _get_hero_attack_rate(hero: Dictionary) -> float:
@@ -2322,7 +2319,7 @@ func _build_hero_active_skill_headline(hero: Dictionary) -> String:
 		parts.append(_localize_text(String(archive_content.get("active_skill_cooldown_format", "%.1f 秒冷却"))) % cooldown)
 	if parts.is_empty():
 		return _localize_text(String(archive_content.get("active_skill_missing_headline", "当前还没有可对照的源稿字技条目。")))
-	return " · ".join(parts)
+	return String(archive_content.get("active_skill_headline_joiner", " · ")).join(parts)
 
 
 func _build_hero_active_skill_body(hero: Dictionary) -> String:
@@ -2494,17 +2491,18 @@ func _populate_build_route_cards(root: VBoxContainer, hero: Dictionary, accent: 
 
 
 func _build_route_hint_text(card: Dictionary) -> String:
+	var archive_content := FrontEndContent.menu_archive_content()
 	var glyph := String(card.get("glyph", "")).strip_edges()
 	var title := String(card.get("title", "")).strip_edges()
 	var subtitle := String(card.get("subtitle", "")).strip_edges()
 	var label := title
 	if not glyph.is_empty():
-		label = ("%s %s" % [glyph, title]).strip_edges()
+		label = (String(archive_content.get("build_route_hint_prefix_format", "%s %s")) % [glyph, title]).strip_edges()
 	if not subtitle.is_empty():
 		if label.is_empty():
 			label = subtitle
 		else:
-			label += " · %s" % subtitle
+			label += "%s%s" % [String(archive_content.get("build_route_hint_joiner", " · ")), subtitle]
 	return label
 
 
