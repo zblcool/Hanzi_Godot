@@ -152,6 +152,8 @@ const MENU_EN_TEXT := {
 	"无固定起手": "No fixed opener",
 	"当前还没有可对照的源稿字技条目。": "There is no matching source skill entry for this hero yet.",
 	"当前这名执笔者还没有额外记录到独立字技说明。": "This hero does not yet have an extra source-skill note.",
+	"执笔映像": "Scribe Presence",
+	"出处 · %s": "Source · %s",
 	"轻触当前展示位，重播执笔回应。": "Tap the active showcase to replay the scribe response.",
 	"已选中": "Selected",
 	"正在展示": "On Stage",
@@ -191,8 +193,13 @@ var detail_preview_glyph: Label
 var detail_preview_ring_a: PanelContainer
 var detail_preview_ring_b: PanelContainer
 var detail_preview_shards: Array[ColorRect] = []
+var detail_preview_header_panel: PanelContainer
+var detail_preview_status_panel: PanelContainer
+var detail_preview_quote_panel: PanelContainer
 var detail_preview_hint_panel: PanelContainer
 var detail_preview_button: Button
+var detail_preview_quote_label: Label
+var detail_preview_source_label: Label
 var detail_tags_row: Container
 var detail_opening_label: Label
 var detail_opening_radicals_row: Container
@@ -350,8 +357,13 @@ func _rebuild_ui() -> void:
 	detail_preview_ring_a = null
 	detail_preview_ring_b = null
 	detail_preview_shards.clear()
+	detail_preview_header_panel = null
+	detail_preview_status_panel = null
+	detail_preview_quote_panel = null
 	detail_preview_hint_panel = null
 	detail_preview_button = null
+	detail_preview_quote_label = null
+	detail_preview_source_label = null
 	detail_tags_row = null
 	detail_opening_label = null
 	detail_opening_radicals_row = null
@@ -733,6 +745,30 @@ func _apply_active_preview_theme(preview_theme: Dictionary, accent: Color) -> vo
 	for shard in detail_preview_shards:
 		if shard != null:
 			shard.color = Color(ring_color.r, ring_color.g, ring_color.b, 0.86)
+	if detail_preview_header_panel != null:
+		detail_preview_header_panel.add_theme_stylebox_override(
+			"panel",
+			_make_panel_style(
+				Color(accent.r * 0.12, accent.g * 0.12, accent.b * 0.16, 0.86),
+				Color(ring_color.r, ring_color.g, ring_color.b, 0.24)
+			)
+		)
+	if detail_preview_status_panel != null:
+		detail_preview_status_panel.add_theme_stylebox_override(
+			"panel",
+			_make_panel_style(
+				Color(accent.r * 0.18, accent.g * 0.18, accent.b * 0.22, 0.96),
+				Color(accent.r, accent.g, accent.b, 0.3)
+			)
+		)
+	if detail_preview_quote_panel != null:
+		detail_preview_quote_panel.add_theme_stylebox_override(
+			"panel",
+			_make_panel_style(
+				Color(accent.r * 0.12, accent.g * 0.12, accent.b * 0.18, 0.88),
+				Color(glow_color.r, glow_color.g, glow_color.b, 0.24)
+			)
+		)
 	if detail_preview_hint_panel != null:
 		detail_preview_hint_panel.add_theme_stylebox_override(
 			"panel",
@@ -1433,6 +1469,70 @@ func _build_detail_preview(panel: PanelContainer) -> void:
 		stage.add_child(shard)
 		shards.append(shard)
 		detail_preview_shards.append(shard)
+
+	var header_panel := PanelContainer.new()
+	header_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	header_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.06, 0.08, 0.1, 0.84), Color(0.36, 0.7, 0.82, 0.22)))
+	_anchor_control(header_panel, 0.08, 0.06, 0.92, 0.22)
+	stage.add_child(header_panel)
+	detail_preview_header_panel = header_panel
+
+	var header_margin := MarginContainer.new()
+	header_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	header_margin.add_theme_constant_override("margin_left", _i(12))
+	header_margin.add_theme_constant_override("margin_top", _i(8))
+	header_margin.add_theme_constant_override("margin_right", _i(12))
+	header_margin.add_theme_constant_override("margin_bottom", _i(8))
+	header_panel.add_child(header_margin)
+
+	var header_row := HBoxContainer.new()
+	header_row.add_theme_constant_override("separation", _i(10))
+	header_margin.add_child(header_row)
+
+	var eyebrow_label := _make_label(String(FrontEndContent.menu_page_content().get("detail_preview_eyebrow", "执笔映像")), 13, Color(0.98, 0.95, 0.9, 0.94))
+	eyebrow_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header_row.add_child(eyebrow_label)
+
+	var status_panel := PanelContainer.new()
+	status_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	status_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.16, 0.18, 0.22, 0.96), Color(0.92, 0.68, 0.42, 0.24)))
+	header_row.add_child(status_panel)
+	detail_preview_status_panel = status_panel
+
+	var status_margin := MarginContainer.new()
+	status_margin.add_theme_constant_override("margin_left", _i(10))
+	status_margin.add_theme_constant_override("margin_top", _i(6))
+	status_margin.add_theme_constant_override("margin_right", _i(10))
+	status_margin.add_theme_constant_override("margin_bottom", _i(6))
+	status_panel.add_child(status_margin)
+	status_margin.add_child(_make_label(String(FrontEndContent.menu_page_content().get("selected_button", "正在展示")), 12, Color(0.98, 0.95, 0.9, 0.96)))
+
+	var quote_panel := PanelContainer.new()
+	quote_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	quote_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.06, 0.08, 0.1, 0.86), Color(0.36, 0.7, 0.82, 0.22)))
+	_anchor_control(quote_panel, 0.08, 0.58, 0.92, 0.78)
+	stage.add_child(quote_panel)
+	detail_preview_quote_panel = quote_panel
+
+	var quote_margin := MarginContainer.new()
+	quote_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	quote_margin.add_theme_constant_override("margin_left", _i(14))
+	quote_margin.add_theme_constant_override("margin_top", _i(10))
+	quote_margin.add_theme_constant_override("margin_right", _i(14))
+	quote_margin.add_theme_constant_override("margin_bottom", _i(10))
+	quote_panel.add_child(quote_margin)
+
+	var quote_box := VBoxContainer.new()
+	quote_box.add_theme_constant_override("separation", _i(4))
+	quote_margin.add_child(quote_box)
+
+	detail_preview_quote_label = _make_label("", 15, Color(0.98, 0.95, 0.9, 0.98))
+	detail_preview_quote_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	quote_box.add_child(detail_preview_quote_label)
+
+	detail_preview_source_label = _make_label("", 12, Color(0.82, 0.9, 1.0, 0.88))
+	detail_preview_source_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	quote_box.add_child(detail_preview_source_label)
 
 	var hint_panel := PanelContainer.new()
 	hint_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -3410,6 +3510,16 @@ func _refresh_selection(trigger_reaction: bool = false) -> void:
 		detail_source_skill_body_label.text = _build_hero_active_skill_body(selected_data)
 	_populate_detail_build_route_preview(detail_build_route_cards_root, selected_data, accent)
 	_populate_progression_cards(detail_progression_cards_root, selected_data, accent, true)
+	if detail_preview_quote_label != null:
+		var excerpt := String(selected_data.get("record_excerpt", "")).strip_edges()
+		if excerpt.is_empty():
+			excerpt = String(selected_data.get("focus", selected_data.get("description", ""))).strip_edges()
+		detail_preview_quote_label.text = String(page_content.get("reaction_quote_format", "“%s”")) % excerpt
+	if detail_preview_source_label != null:
+		var source := String(selected_data.get("record_source", "")).strip_edges()
+		if source.is_empty():
+			source = String(selected_data.get("role_label", ""))
+		detail_preview_source_label.text = _localize_text(String(page_content.get("detail_preview_source_format", "出处 · %s"))) % source
 
 	var preview_theme := _preview_theme_for_hero(selected_data)
 	_apply_active_preview_theme(preview_theme, accent)

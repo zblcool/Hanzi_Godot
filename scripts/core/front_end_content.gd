@@ -693,6 +693,8 @@ const MENU_PAGE_CONTENT := {
 	"detail_heading": "当前执笔",
 	"detail_title": "执笔者档案",
 	"detail_archive_hint": "长说明和 build 路线请看人物志与图谱。",
+	"detail_preview_eyebrow": "执笔映像",
+	"detail_preview_source_format": "出处 · %s",
 	"detail_role_format": "%s  ·  %s",
 	"detail_weapon_format": "当前执笔节奏：%s",
 	"reaction_title": "执笔回应",
