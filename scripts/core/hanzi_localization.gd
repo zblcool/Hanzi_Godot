@@ -175,6 +175,7 @@ const FIELD_PHASE_EN := {
 const CUE_EN := {
 	"试阵预热": "Test Warmup",
 	"待入曲": "Awaiting Cue",
+	"巡游换曲": "Track Rotation",
 	"卷主压阵": "Boss Pressure",
 	"入卷铺陈": "Scroll Opening",
 	"试阵开卷": "Test Entry",

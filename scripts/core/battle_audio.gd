@@ -1,5 +1,7 @@
 extends Node
 
+signal soundtrack_rotated(track_id: String)
+
 const AUDIO_MIX_RATE := 32000.0
 const AUDIO_BUFFER_LENGTH := 0.18
 const AUDIO_MAX_FRAME_CHUNK := 768
@@ -7,6 +9,7 @@ const AUDIO_MASTER_GAIN := 0.38
 const AUDIO_MAX_VOICES := 96
 const MUSIC_SCHEDULE_AHEAD := 0.24
 const MUSIC_START_DELAY := 0.08
+const MUSIC_TRACK_ORDER := ["mosslightCanopy", "fireflyFootpath"]
 const NOTE_OFFSETS := {
 	"C": 0,
 	"D": 2,
@@ -19,6 +22,7 @@ const NOTE_OFFSETS := {
 const MUSIC_TRACK_SPECS := {
 	"mosslightCanopy": {
 		"bpm": 82.0,
+		"loop_range": [2, 3],
 		"channels": [
 			{
 				"waveform": "square",
@@ -88,6 +92,7 @@ const MUSIC_TRACK_SPECS := {
 	},
 	"fireflyFootpath": {
 		"bpm": 108.0,
+		"loop_range": [2, 2],
 		"channels": [
 			{
 				"waveform": "square",
@@ -241,6 +246,7 @@ var current_music_track_id: String = ""
 var music_step_index := 0
 var music_next_step_at := 0.0
 var music_loops_completed := 0
+var music_loop_target := 1
 
 
 func _ready() -> void:
@@ -266,6 +272,11 @@ func set_music_track(track_id: String, restart: bool = false) -> void:
 	music_step_index = 0
 	music_next_step_at = 0.0
 	music_loops_completed = 0
+	var track_variant: Variant = music_library.get(normalized_track_id, {})
+	if track_variant is Dictionary:
+		music_loop_target = _pick_music_loop_target(track_variant as Dictionary)
+	else:
+		music_loop_target = 1
 
 
 func debug_music_state() -> Dictionary:
@@ -273,6 +284,7 @@ func debug_music_state() -> Dictionary:
 		"track_id": current_music_track_id,
 		"step_index": music_step_index,
 		"loops_completed": music_loops_completed,
+		"loop_target": music_loop_target,
 		"active_voices": active_voices.size(),
 		"next_step_at": music_next_step_at
 	}
@@ -452,6 +464,7 @@ func _build_music_library() -> Dictionary:
 		var parsed_drums: Array = []
 		var parsed_track := {
 			"bpm": float(track_spec.get("bpm", 90.0)),
+			"loop_range": track_spec.get("loop_range", [1, 1]),
 			"channels": parsed_channels,
 			"drums": parsed_drums,
 			"total_steps": 1
@@ -479,6 +492,35 @@ func _build_music_library() -> Dictionary:
 		parsed_track["total_steps"] = total_steps
 		parsed_library[track_id] = parsed_track
 	return parsed_library
+
+
+func _pick_music_loop_target(track: Dictionary) -> int:
+	var loop_range_variant: Variant = track.get("loop_range", [1, 1])
+	if not (loop_range_variant is Array):
+		return 1
+	var loop_range := loop_range_variant as Array
+	if loop_range.size() < 2:
+		return 1
+	var min_loops := maxi(1, int(loop_range[0]))
+	var max_loops := maxi(min_loops, int(loop_range[1]))
+	return rng.randi_range(min_loops, max_loops)
+
+
+func _choose_next_music_track(previous_id: String) -> String:
+	var candidates: Array[String] = []
+	if MUSIC_TRACK_ORDER.size() > 1 and not previous_id.is_empty() and rng.randf() < 0.72:
+		for track_id_variant in MUSIC_TRACK_ORDER:
+			var track_id := String(track_id_variant)
+			if track_id != previous_id and music_library.has(track_id):
+				candidates.append(track_id)
+	if candidates.is_empty():
+		for track_id_variant in MUSIC_TRACK_ORDER:
+			var track_id := String(track_id_variant)
+			if music_library.has(track_id):
+				candidates.append(track_id)
+	if candidates.is_empty():
+		return ""
+	return candidates[rng.randi_range(0, candidates.size() - 1)]
 
 
 func _parse_pattern(rows_variant: Variant) -> Array:
@@ -516,6 +558,12 @@ func _schedule_music() -> void:
 		if music_step_index >= total_steps:
 			music_step_index = 0
 			music_loops_completed += 1
+			if music_loops_completed >= music_loop_target:
+				var next_track_id := _choose_next_music_track(current_music_track_id)
+				if not next_track_id.is_empty():
+					set_music_track(next_track_id, true)
+					soundtrack_rotated.emit(next_track_id)
+				return
 		music_next_step_at += step_duration
 
 

@@ -1267,6 +1267,8 @@ func _spawn_battle_audio() -> void:
 	battle_audio = BattleAudio.new()
 	battle_audio.name = "BattleAudio"
 	add_child(battle_audio)
+	if battle_audio.has_signal("soundtrack_rotated"):
+		battle_audio.soundtrack_rotated.connect(_on_battle_audio_soundtrack_rotated)
 
 
 func _play_attack_sfx(kind: String, intensity: float = 1.0) -> void:
@@ -1437,6 +1439,10 @@ func _set_soundtrack(track_id: String, cue: String, announce: bool = true, force
 	)
 	if sync_music and battle_audio != null and battle_audio.has_method("set_music_track"):
 		battle_audio.set_music_track(track_id)
+
+
+func _on_battle_audio_soundtrack_rotated(track_id: String) -> void:
+	_set_soundtrack(track_id, "巡游换曲", true, true, false)
 
 
 func _spawn_touch_controls() -> void:
