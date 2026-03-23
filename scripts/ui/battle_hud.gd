@@ -6,66 +6,6 @@ const HanziLocalization := preload("res://scripts/core/hanzi_localization.gd")
 const EVENT_LOG_LIMIT := 12
 const EVENT_LOG_DESKTOP_VISIBLE := 6
 const EVENT_LOG_COMPACT_VISIBLE := 3
-const UI_EN := {
-	"待入曲": "Awaiting Cue",
-	"战场乐题": "Battle Track",
-	"战局开始后会同步当前曲名与气氛提示。": "The active track name and mood cue will appear once the battle begins.",
-	"偏旁存量": "Radical Stock",
-	"当前尚未留存偏旁": "No radicals stored yet",
-	"全部化字": "Fully fused",
-	"战场速记": "Battle Notes",
-	"战报": "Battle Log",
-	"地图": "Map",
-	"暂停": "Pause",
-	"下一波": "Next Wave",
-	"卷主降阵": "Boss Descends",
-	"战局摘要": "Run Summary",
-	"偏旁 0 枚  ·  当前全部化字": "Radicals 0  ·  fully fused",
-	"击倒字灵收集字力与补给。": "Defeat glyph spirits to collect ink power and supplies.",
-	"战场呼应": "Battle Callout",
-	"字潮翻动时，呼应会在这里出现。": "Callouts will appear here when the glyph tide shifts.",
-	"当前目标": "Current Objective",
-	"当前指引": "Active Guide",
-	"尚未收集，或已经全部化字。": "Nothing left to collect, or everything has already fused.",
-	"源稿路线参考": "Source Route Guide",
-	"已成技能字": "Formed Skill Glyphs",
-	"已成技艺": "Ready Skills",
-	"配乐提示": "Music Cue",
-	"残卷地图": "Scroll Map",
-	"图例": "Legend",
-	"执笔者": "Scribe",
-	"当前角色朝向与位置。": "Your current position and facing.",
-	"敌群": "Enemy Pack",
-	"常规敌人正在逼近的位置。": "Where regular enemies are currently converging.",
-	"卷主 / 砚台 / 宝箱": "Boss / Inkstone / Chest",
-	"方块标出卷主、磨词砚台与可开启宝箱。": "Squares mark bosses, phrase-grinding inkstones, and unopened chests.",
-	"树丛 / 墨池": "Bush / Ink Pool",
-	"圆形轮廓对应草丛与墨池。": "Circular markers represent bushes and ink pools.",
-	"碑刻 / 卷架": "Stele / Scroll Rack",
-	"静态地标，便于定方位。": "Static landmarks that help orientation.",
-	"迷雾": "Fog",
-	"未探索区域会被雾面遮住，走到附近才会展开。": "Unexplored areas stay covered until you move close enough.",
-	"拖拽视野，滚轮或按钮缩放。按 Esc、Tab、M 或再次点地图收起。": "Drag to pan. Use the wheel or buttons to zoom. Press Esc, Tab, M, or the map button again to close.",
-	"缩小": "Zoom Out",
-	"放大": "Zoom In",
-	"重置": "Reset",
-	"收起地图": "Close Map",
-	"字力突破": "Ink Breakthrough",
-	"留空则保留玩家名帖署名": "Leave blank to keep the Player Sigil alias",
-	"保存署名": "Save Alias",
-	"等待成字": "Waiting to Form",
-	"尚未成型": "Not Formed Yet",
-	"先通过偏旁三选一推进合字，再把满级合字带去砚台磨成词技。": "Advance fused glyphs through radical drafts first, then take maxed glyphs to the inkstone for phrase arts.",
-	"预备": "Readying",
-	"更多技能字": "More Skill Glyphs",
-	"WASD / 方向键移动": "Move with WASD / arrow keys",
-	"自动朝最近敌人出手": "Auto-attack the nearest enemy",
-	"升级时三选一偏旁": "Pick one of three radicals on level-up",
-	"靠近砚台按 E 磨词": "Press E near an inkstone to refine phrases",
-	"M / Tab 地图，R 重开，Esc 返回菜单": "M / Tab map, R restart, Esc return to menu",
-	"试阵模式：右上可直接跳到下一波，并实时显示 FPS": "Test mode: jump to the next wave from the top-right and watch FPS live",
-	"下一段预览": "Next Chamber Preview"
-}
 class BattleMapCanvas:
 	extends Control
 
@@ -492,9 +432,7 @@ func _localize_text(text: String) -> String:
 		return text
 	if text.begins_with("• "):
 		return "• %s" % _localize_text(text.substr(2))
-	if UI_EN.has(text):
-		return String(UI_EN.get(text, text))
-	return FrontEndContent.localize_menu_text(text, true)
+	return FrontEndContent.localize_battle_text(text, true)
 
 
 func _battle_state_text(state_content: Dictionary, key: String, fallback_zh: String, fallback_en: String = "") -> String:
@@ -901,13 +839,13 @@ func _build_route_focus_summary(hero_data: Dictionary) -> Dictionary:
 	if route_detail.is_empty():
 		route_detail = String(hero_data.get("route_hint", "")).strip_edges()
 	if route_detail.is_empty():
-		route_detail = "Keep one route ahead of the rest so later phrase refinement has a clear lane." if _is_english() else "让一条路线始终比其余分支领先，后续磨词才有清晰主线。"
+		route_detail = _localize_text("让一条路线始终比其余分支领先，后续磨词才有清晰主线。")
 
 	var stage_title := String(stage_card.get("title", "")).strip_edges()
 	var stage_tags_text := " / ".join(_collect_string_array(stage_card.get("tags", [])))
 	var stage_text := ""
 	if not stage_title.is_empty():
-		stage_text = ("Stage: %s" if _is_english() else "当前阶段：%s") % stage_title
+		stage_text = _localize_text("当前阶段：%s") % stage_title
 		if not stage_tags_text.is_empty():
 			stage_text += "  ·  %s" % stage_tags_text
 
@@ -947,14 +885,14 @@ func build_intro_identity_reveal() -> Dictionary:
 	var opener := _build_intro_opening_label(String(localized_hero.get("id", "")))
 	var route_parts: Array[String] = []
 	if not route_label.is_empty():
-		route_parts.append(("Route Seal: %s" if _is_english() else "主路线印：%s") % route_label)
+		route_parts.append(_localize_text("主路线印：%s") % route_label)
 	if not opener.is_empty():
-		route_parts.append(("Opener: %s" if _is_english() else "起笔：%s") % opener)
+		route_parts.append(_localize_text("起笔：%s") % opener)
 	if not route_parts.is_empty():
 		detail_lines.append("  ·  ".join(route_parts))
 
 	if not source.is_empty():
-		detail_lines.append(("Source · %s" if _is_english() else "出处 · %s") % source)
+		detail_lines.append(_localize_text("出处 · %s") % source)
 
 	var title := String(localized_hero.get("record_title", localized_hero.get("name", ""))).strip_edges()
 	if title.is_empty():
@@ -978,23 +916,23 @@ func build_intro_callout_detail() -> String:
 	if writer_mark.is_empty():
 		writer_mark = String(localized_hero.get("focus", localized_hero.get("description", ""))).strip_edges()
 	if not writer_mark.is_empty():
-		identity_parts.append(("Mark · %s" if _is_english() else "印记 · %s") % writer_mark)
+		identity_parts.append(_localize_text("印记 · %s") % writer_mark)
 	var route_seal := _build_primary_route_seal(localized_hero)
 	if not route_seal.is_empty():
-		identity_parts.append(("Route Seal · %s" if _is_english() else "路印 · %s") % route_seal)
+		identity_parts.append(_localize_text("路印 · %s") % route_seal)
 	if not identity_parts.is_empty():
 		detail_lines.append("  ·  ".join(identity_parts))
 
 	var source := String(localized_hero.get("record_source", "")).strip_edges()
 	if not source.is_empty():
-		detail_lines.append(("Source · %s" if _is_english() else "出处 · %s") % source)
+		detail_lines.append(_localize_text("出处 · %s") % source)
 	return "\n".join(detail_lines)
 
 
 func _build_intro_opening_label(hero_id: String) -> String:
 	var starting_radicals: Array[String] = Session.get_hero_starting_radicals(hero_id)
 	if starting_radicals.is_empty():
-		return "no fixed opener" if _is_english() else "无固定起手"
+		return _localize_text("无固定起手")
 	return " / ".join(starting_radicals)
 
 
@@ -1106,7 +1044,7 @@ func _build_route_focus_state_lines(compact_copy: bool = false) -> Array[String]
 	var localized_hero := _localized_hero_data(configured_hero_data)
 	var summary := _build_route_focus_summary(localized_hero)
 	var lines: Array[String] = []
-	lines.append("Route Focus" if _is_english() else "路线参考")
+	lines.append(_localize_text("路线参考"))
 	var title_key := "compact" if compact_copy else "title"
 	var title := String(summary.get(title_key, "")).strip_edges()
 	if not title.is_empty():
