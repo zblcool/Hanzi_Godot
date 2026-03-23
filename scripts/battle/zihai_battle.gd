@@ -1334,7 +1334,7 @@ func _spawn_hud() -> void:
 func _prime_soundtrack_ui() -> void:
 	var track_id := "fireflyFootpath" if threat_level >= 4 or elapsed_time >= 60.0 else "mosslightCanopy"
 	var cue := "试阵预热" if elapsed_time > 0.0 or threat_level > 1 else "待入曲"
-	_set_soundtrack(track_id, cue, false, true)
+	_set_soundtrack(track_id, cue, false, true, false)
 
 
 func _log_battle_event(text: String, color: Color = Color(0.88, 0.92, 0.97, 1.0)) -> void:
@@ -1419,7 +1419,7 @@ func _test_tools_enabled() -> bool:
 	return OS.is_debug_build() or not bool(battle_intro.get("recordable", true))
 
 
-func _set_soundtrack(track_id: String, cue: String, announce: bool = true, force: bool = false) -> void:
+func _set_soundtrack(track_id: String, cue: String, announce: bool = true, force: bool = false, sync_music: bool = true) -> void:
 	if hud == null or not SOUNDTRACK_LIBRARY.has(track_id):
 		return
 
@@ -1435,6 +1435,8 @@ func _set_soundtrack(track_id: String, cue: String, announce: bool = true, force
 		accent,
 		should_announce
 	)
+	if sync_music and battle_audio != null and battle_audio.has_method("set_music_track"):
+		battle_audio.set_music_track(track_id)
 
 
 func _spawn_touch_controls() -> void:

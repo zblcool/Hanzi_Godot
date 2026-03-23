@@ -4,7 +4,158 @@ const AUDIO_MIX_RATE := 32000.0
 const AUDIO_BUFFER_LENGTH := 0.18
 const AUDIO_MAX_FRAME_CHUNK := 768
 const AUDIO_MASTER_GAIN := 0.38
-const AUDIO_MAX_VOICES := 32
+const AUDIO_MAX_VOICES := 96
+const MUSIC_SCHEDULE_AHEAD := 0.24
+const MUSIC_START_DELAY := 0.08
+const NOTE_OFFSETS := {
+	"C": 0,
+	"D": 2,
+	"E": 4,
+	"F": 5,
+	"G": 7,
+	"A": 9,
+	"B": 11
+}
+const MUSIC_TRACK_SPECS := {
+	"mosslightCanopy": {
+		"bpm": 82.0,
+		"channels": [
+			{
+				"waveform": "square",
+				"volume": 0.024,
+				"gate_steps": 1.1,
+				"attack": 0.008,
+				"release_mul": 1.12,
+				"shimmer_semitones": 12.0,
+				"shimmer_volume": 0.24,
+				"pan": -0.16,
+				"rows": [
+					"E5 . B4 . C5 . B4 . A4 . B4 . C5 . B4 .",
+					"G4 . A4 . B4 . C5 . B4 . A4 . G4 . E4 ."
+				]
+			},
+			{
+				"waveform": "triangle",
+				"volume": 0.018,
+				"gate_steps": 2.4,
+				"attack": 0.012,
+				"release_mul": 1.26,
+				"pan": 0.18,
+				"rows": [
+					"E4 . G4 . . B4 . G4 . D5 . B4 . G4 . .",
+					"C5 . G4 . . A4 . E4 . G4 . B4 . G4 . ."
+				]
+			},
+			{
+				"waveform": "triangle",
+				"volume": 0.042,
+				"gate_steps": 3.7,
+				"attack": 0.006,
+				"release_mul": 1.08,
+				"pan": 0.0,
+				"rows": [
+					"E2 . . . C3 . . . A2 . . . B2 . . .",
+					"G2 . . . D3 . . . E2 . . . B2 . . ."
+				]
+			}
+		],
+		"drums": [
+			{
+				"hit": "kick",
+				"volume": 0.48,
+				"rows": [
+					"k . . . . . . . k . . . . . . .",
+					"k . . . . . . . k . . . . . . ."
+				]
+			},
+			{
+				"hit": "hat",
+				"volume": 0.4,
+				"rows": [
+					". . h . . . h . . . h . . . h .",
+					". . h . . . h . . . h . . . h ."
+				]
+			},
+			{
+				"hit": "spark",
+				"volume": 0.26,
+				"rows": [
+					". . . . . s . . . . . . . s . .",
+					". . . . . s . . . . . . . s . ."
+				]
+			}
+		]
+	},
+	"fireflyFootpath": {
+		"bpm": 108.0,
+		"channels": [
+			{
+				"waveform": "square",
+				"volume": 0.026,
+				"gate_steps": 1.08,
+				"attack": 0.007,
+				"release_mul": 1.08,
+				"shimmer_semitones": 12.0,
+				"shimmer_volume": 0.22,
+				"pan": -0.12,
+				"rows": [
+					"G5 . B5 . D6 . B5 . A5 . G5 . E5 . D5 . E5 .",
+					"G5 . A5 . B5 . D6 . B5 . G5 . A5 . B5 ."
+				]
+			},
+			{
+				"waveform": "triangle",
+				"volume": 0.02,
+				"gate_steps": 1.9,
+				"attack": 0.01,
+				"release_mul": 1.18,
+				"pan": 0.2,
+				"rows": [
+					". D5 . G5 . D5 . B4 . C5 . E5 . C5 . A4",
+					". D5 . F#5 . D5 . B4 . C5 . E5 . D5 . G4"
+				]
+			},
+			{
+				"waveform": "triangle",
+				"volume": 0.046,
+				"gate_steps": 3.4,
+				"attack": 0.006,
+				"release_mul": 1.06,
+				"pan": 0.0,
+				"rows": [
+					"G2 . . . E2 . . . A2 . . . D2 . . .",
+					"G2 . . . E2 . . . C3 . . . D3 . . ."
+				]
+			}
+		],
+		"drums": [
+			{
+				"hit": "kick",
+				"volume": 0.56,
+				"rows": [
+					"k . . . k . . . k . . . k . . .",
+					"k . . . k . . . k . . . k . . ."
+				]
+			},
+			{
+				"hit": "snare",
+				"volume": 0.46,
+				"rows": [
+					". . . . s . . . . . . . s . . .",
+					". . . . s . . . . . . . s . . ."
+				]
+			},
+			{
+				"hit": "hat",
+				"volume": 0.42,
+				"rows": [
+					". h . h . h . h . h . h . h . h",
+					". h . h . h . h . h . h . h . h"
+				]
+			}
+		]
+	}
+}
 
 
 class SynthVoice:
@@ -85,16 +236,46 @@ var audio_player: AudioStreamPlayer
 var playback: AudioStreamGeneratorPlayback
 var active_voices: Array = []
 var sound_timestamps: Dictionary = {}
+var music_library: Dictionary = {}
+var current_music_track_id: String = ""
+var music_step_index := 0
+var music_next_step_at := 0.0
+var music_loops_completed := 0
 
 
 func _ready() -> void:
 	rng.randomize()
+	process_mode = Node.PROCESS_MODE_ALWAYS
+	music_library = _build_music_library()
 	_setup_audio_player()
 	set_process(true)
 
 
 func _process(_delta: float) -> void:
+	_schedule_music()
 	_fill_audio_buffer()
+
+
+func set_music_track(track_id: String, restart: bool = false) -> void:
+	var normalized_track_id := String(track_id).strip_edges()
+	if normalized_track_id.is_empty() or not music_library.has(normalized_track_id):
+		return
+	if not restart and current_music_track_id == normalized_track_id:
+		return
+	current_music_track_id = normalized_track_id
+	music_step_index = 0
+	music_next_step_at = 0.0
+	music_loops_completed = 0
+
+
+func debug_music_state() -> Dictionary:
+	return {
+		"track_id": current_music_track_id,
+		"step_index": music_step_index,
+		"loops_completed": music_loops_completed,
+		"active_voices": active_voices.size(),
+		"next_step_at": music_next_step_at
+	}
 
 
 func play_attack(kind: String, intensity: float = 1.0) -> void:
@@ -257,6 +438,188 @@ func play_cue(kind: String, intensity: float = 1.0) -> void:
 				return
 			_push_voice({"waveform": "triangle", "start_freq": 240.0, "end_freq": 460.0, "amplitude": 0.13 * power, "duration": 0.28, "release": 0.34})
 			_push_voice({"waveform": "sine", "start_freq": 520.0, "end_freq": 860.0, "amplitude": 0.08 * power, "duration": 0.22, "release": 0.26, "delay": 0.04})
+
+
+func _build_music_library() -> Dictionary:
+	var parsed_library: Dictionary = {}
+	for track_id_variant in MUSIC_TRACK_SPECS.keys():
+		var track_id := String(track_id_variant)
+		var track_spec_variant: Variant = MUSIC_TRACK_SPECS.get(track_id, {})
+		if not (track_spec_variant is Dictionary):
+			continue
+		var track_spec := (track_spec_variant as Dictionary).duplicate(true)
+		var parsed_channels: Array = []
+		var parsed_drums: Array = []
+		var parsed_track := {
+			"bpm": float(track_spec.get("bpm", 90.0)),
+			"channels": parsed_channels,
+			"drums": parsed_drums,
+			"total_steps": 1
+		}
+		var total_steps := 1
+		for channel_variant in track_spec.get("channels", []):
+			if not (channel_variant is Dictionary):
+				continue
+			var channel := (channel_variant as Dictionary).duplicate(true)
+			var notes := _parse_pattern(channel.get("rows", []))
+			channel.erase("rows")
+			channel["notes"] = notes
+			total_steps = maxi(total_steps, notes.size())
+			parsed_channels.append(channel)
+		for drum_variant in track_spec.get("drums", []):
+			if not (drum_variant is Dictionary):
+				continue
+			var drum := (drum_variant as Dictionary).duplicate(true)
+			var pattern := _parse_pattern(drum.get("rows", []))
+			drum.erase("rows")
+			drum["pattern"] = pattern
+			total_steps = maxi(total_steps, pattern.size())
+			parsed_drums.append(drum)
+		parsed_track["step_duration"] = 60.0 / maxf(float(parsed_track.get("bpm", 90.0)), 1.0) / 4.0
+		parsed_track["total_steps"] = total_steps
+		parsed_library[track_id] = parsed_track
+	return parsed_library
+
+
+func _parse_pattern(rows_variant: Variant) -> Array:
+	var tokens: Array = []
+	if not (rows_variant is Array):
+		return tokens
+	for row_variant in rows_variant:
+		var row := String(row_variant).strip_edges()
+		if row.is_empty():
+			continue
+		for token in row.split(" ", false):
+			var cleaned := String(token).strip_edges()
+			if cleaned.is_empty():
+				continue
+			tokens.append("" if cleaned == "." else cleaned)
+	return tokens
+
+
+func _schedule_music() -> void:
+	if current_music_track_id.is_empty():
+		return
+	var track_variant: Variant = music_library.get(current_music_track_id, {})
+	if not (track_variant is Dictionary):
+		return
+	var track := track_variant as Dictionary
+	var total_steps := maxi(int(track.get("total_steps", 1)), 1)
+	var step_duration := maxf(float(track.get("step_duration", 0.15)), 0.02)
+	var now := Time.get_ticks_usec() * 0.000001
+	if music_next_step_at <= 0.0:
+		music_next_step_at = now + MUSIC_START_DELAY
+	while music_next_step_at < now + MUSIC_SCHEDULE_AHEAD:
+		var delay := maxf(music_next_step_at - now, 0.0)
+		_schedule_music_step(track, music_step_index, delay, step_duration)
+		music_step_index += 1
+		if music_step_index >= total_steps:
+			music_step_index = 0
+			music_loops_completed += 1
+		music_next_step_at += step_duration
+
+
+func _schedule_music_step(track: Dictionary, step_index: int, delay: float, step_duration: float) -> void:
+	for channel_variant in track.get("channels", []):
+		if not (channel_variant is Dictionary):
+			continue
+		var channel := channel_variant as Dictionary
+		var notes_variant: Variant = channel.get("notes", [])
+		if not (notes_variant is Array):
+			continue
+		var notes := notes_variant as Array
+		if notes.is_empty():
+			continue
+		var note := String(notes[step_index % notes.size()])
+		if note.is_empty():
+			continue
+		_schedule_music_tone(channel, note, delay, step_duration)
+	for drum_variant in track.get("drums", []):
+		if not (drum_variant is Dictionary):
+			continue
+		var drum := drum_variant as Dictionary
+		var pattern_variant: Variant = drum.get("pattern", [])
+		if not (pattern_variant is Array):
+			continue
+		var pattern := pattern_variant as Array
+		if pattern.is_empty():
+			continue
+		var hit := String(pattern[step_index % pattern.size()])
+		if hit.is_empty():
+			continue
+		_schedule_music_drum(String(drum.get("hit", hit)), delay, float(drum.get("volume", 1.0)))
+
+
+func _schedule_music_tone(channel: Dictionary, note: String, delay: float, step_duration: float) -> void:
+	var frequency := _note_to_frequency(note)
+	if frequency <= 0.0:
+		return
+	var duration := maxf(step_duration * float(channel.get("gate_steps", 1.0)), step_duration * 0.8)
+	var amplitude := float(channel.get("volume", 0.02))
+	var pan := clampf(float(channel.get("pan", 0.0)), -1.0, 1.0)
+	_push_voice({
+		"waveform": String(channel.get("waveform", "square")),
+		"start_freq": frequency,
+		"end_freq": frequency * 0.998,
+		"amplitude": amplitude,
+		"duration": duration,
+		"attack": float(channel.get("attack", 0.008)),
+		"release": maxf(duration * float(channel.get("release_mul", 1.08)), duration * 0.7),
+		"delay": delay,
+		"pan": pan
+	})
+	var shimmer_semitones := float(channel.get("shimmer_semitones", 0.0))
+	if absf(shimmer_semitones) < 0.001:
+		return
+	var shimmer_frequency := _transpose_frequency(frequency, shimmer_semitones)
+	_push_voice({
+		"waveform": "triangle",
+		"start_freq": shimmer_frequency,
+		"end_freq": shimmer_frequency * 0.999,
+		"amplitude": amplitude * float(channel.get("shimmer_volume", 0.22)),
+		"duration": duration * 0.9,
+		"attack": 0.01,
+		"release": duration,
+		"delay": delay,
+		"pan": clampf(pan * 0.6, -1.0, 1.0)
+	})
+
+
+func _schedule_music_drum(hit: String, delay: float, volume: float = 1.0) -> void:
+	match hit:
+		"kick":
+			_push_voice({"waveform": "triangle", "start_freq": 112.0, "end_freq": 52.0, "amplitude": 0.024 * volume, "duration": 0.12, "attack": 0.004, "release": 0.14, "delay": delay})
+			_push_voice({"waveform": "noise", "start_freq": 180.0, "end_freq": 120.0, "amplitude": 0.0042 * volume, "duration": 0.03, "attack": 0.003, "release": 0.03, "delay": delay})
+		"snare":
+			_push_voice({"waveform": "noise", "start_freq": 900.0, "end_freq": 520.0, "amplitude": 0.0085 * volume, "duration": 0.06, "attack": 0.003, "release": 0.06, "delay": delay, "pan": _small_pan()})
+			_push_voice({"waveform": "triangle", "start_freq": 220.0, "end_freq": 166.0, "amplitude": 0.008 * volume, "duration": 0.06, "attack": 0.004, "release": 0.08, "delay": delay})
+		"spark":
+			_push_voice({"waveform": "noise", "start_freq": 1800.0, "end_freq": 1200.0, "amplitude": 0.0048 * volume, "duration": 0.04, "attack": 0.003, "release": 0.04, "delay": delay, "pan": _small_pan()})
+		_:
+			_push_voice({"waveform": "noise", "start_freq": 2200.0, "end_freq": 1600.0, "amplitude": 0.006 * volume, "duration": 0.035, "attack": 0.002, "release": 0.035, "delay": delay, "pan": _small_pan()})
+
+
+func _note_to_frequency(note_token: String) -> float:
+	var note := String(note_token).strip_edges()
+	if note.is_empty():
+		return -1.0
+	var letter := note.substr(0, 1)
+	var octave_text := note.substr(1, note.length() - 1)
+	var accidental := ""
+	if octave_text.begins_with("#") or octave_text.begins_with("b"):
+		accidental = octave_text.substr(0, 1)
+		octave_text = octave_text.substr(1, octave_text.length() - 1)
+	if octave_text.is_empty() or not NOTE_OFFSETS.has(letter):
+		return -1.0
+	var octave := int(octave_text)
+	var accidental_offset := 1 if accidental == "#" else (-1 if accidental == "b" else 0)
+	var semitone := int(NOTE_OFFSETS.get(letter, 0)) + accidental_offset
+	var midi := (octave + 1) * 12 + semitone
+	return 440.0 * pow(2.0, float(midi - 69) / 12.0)
+
+
+func _transpose_frequency(frequency: float, semitones: float) -> float:
+	return frequency * pow(2.0, semitones / 12.0)
 
 
 func _setup_audio_player() -> void:
