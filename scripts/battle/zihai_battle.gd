@@ -490,6 +490,63 @@ const CHAMBER_LAYOUTS := {
 		"utility_pickups": [
 			{"position": Vector3(-13.5, 0.0, -13.0), "supply_id": "fury"},
 			{"position": Vector3(13.5, 0.0, -13.0), "supply_id": "magnet"}
+		],
+		"phrase_events": [
+			{
+				"id": "wind_chases_lightning",
+				"text": "风驰电掣",
+				"english_text": "Swift as Wind and Lightning",
+				"glyph": "电",
+				"position": Vector3(-12.0, 0.0, 4.8),
+				"guardian_position": Vector3(-15.0, 0.0, 1.4),
+				"guardian_type": "swift",
+				"guardian_health_scale": 1.26,
+				"guardian_glyph": "电",
+				"guardian_name": "逐电守句",
+				"english_guardian_name": "Lightning Chaser",
+				"tint": Color(0.86, 0.94, 1.0, 1.0),
+				"guardian_tint": Color(0.5, 0.74, 0.98, 1.0),
+				"reward_type": "xp",
+				"reward_amount": 18.0,
+				"discover_radius": 6.4
+			},
+			{
+				"id": "lightning_flint_flash",
+				"text": "电光石火",
+				"english_text": "Lightning-Flint Flash",
+				"glyph": "火",
+				"position": Vector3(11.6, 0.0, 6.2),
+				"guardian_position": Vector3(14.8, 0.0, 3.4),
+				"guardian_type": "assassin",
+				"guardian_health_scale": 1.22,
+				"guardian_glyph": "火",
+				"guardian_name": "石火裂句",
+				"english_guardian_name": "Flashfire Reaver",
+				"tint": Color(1.0, 0.94, 0.84, 1.0),
+				"guardian_tint": Color(0.96, 0.72, 0.46, 1.0),
+				"reward_type": "reveal",
+				"reward_amount": 1.0,
+				"discover_radius": 6.2
+			},
+			{
+				"id": "thunder_force",
+				"text": "雷霆万钧",
+				"english_text": "Thunderbolt Force",
+				"glyph": "霆",
+				"position": Vector3(0.0, 0.0, -4.4),
+				"guardian_position": Vector3(3.2, 0.0, -1.0),
+				"guardian_type": "tank",
+				"guardian_health_scale": 1.52,
+				"guardian_glyph": "霆",
+				"guardian_name": "万钧镇句",
+				"english_guardian_name": "Thunderweight Sentinel",
+				"tint": Color(0.9, 0.96, 1.0, 1.0),
+				"guardian_tint": Color(0.62, 0.78, 1.0, 1.0),
+				"reward_type": "radical",
+				"reward_radical": "田",
+				"reward_amount": 1.0,
+				"discover_radius": 6.3
+			}
 		]
 	}
 }
