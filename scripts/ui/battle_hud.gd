@@ -562,7 +562,7 @@ func configure(hero_data: Dictionary) -> void:
 	var localized_hero := _localized_hero_data(hero_data)
 	hero_label.text = "%s" % String(localized_hero["name"])
 	hero_title_label.text = "%s  ·  %s" % [String(localized_hero["title"]), String(localized_hero["role_label"])]
-	hero_focus_label.text = String(localized_hero["focus"])
+	hero_focus_label.text = _build_hero_identity_line(localized_hero)
 	_refresh_hero_tags(localized_hero)
 	_refresh_controls_text()
 	_refresh_route_focus()
@@ -812,6 +812,43 @@ func _refresh_route_focus() -> void:
 				if tag_text.is_empty():
 					continue
 				objective_route_tags.add_child(_make_route_tag_chip(tag_text, accent))
+
+
+func _build_hero_identity_line(hero_data: Dictionary) -> String:
+	var writer_mark := String(hero_data.get("trait_label", "")).strip_edges()
+	if writer_mark.is_empty():
+		writer_mark = String(hero_data.get("focus", hero_data.get("description", ""))).strip_edges()
+	var route_seal := _build_primary_route_seal(hero_data)
+	if route_seal.is_empty():
+		return (
+			"Mark: %s" if _is_english() else "印记：%s"
+		) % writer_mark if not writer_mark.is_empty() else ""
+	if writer_mark.is_empty():
+		return (
+			"Route Seal: %s" if _is_english() else "路印：%s"
+		) % route_seal
+	return (
+		"Mark: %s  ·  Route Seal: %s"
+		if _is_english()
+		else "印记：%s  ·  路印：%s"
+	) % [writer_mark, route_seal]
+
+
+func _build_primary_route_seal(hero_data: Dictionary) -> String:
+	var route_cards_variant: Variant = hero_data.get("build_route_cards", [])
+	if not (route_cards_variant is Array):
+		return ""
+	var route_cards := route_cards_variant as Array
+	if route_cards.is_empty() or not route_cards[0] is Dictionary:
+		return ""
+	var route_card := route_cards[0] as Dictionary
+	var glyph := String(route_card.get("glyph", "")).strip_edges()
+	var title := String(route_card.get("title", "")).strip_edges()
+	if glyph.is_empty():
+		return title
+	if title.is_empty():
+		return glyph
+	return "%s %s" % [glyph, title]
 
 
 func _build_route_focus_summary(hero_data: Dictionary) -> Dictionary:
