@@ -1045,6 +1045,9 @@ func _refresh_cangjie_portal() -> void:
 	var duel_preview_variant: Variant = active_section.get("duel_preview", {})
 	if duel_preview_variant is Dictionary and not (duel_preview_variant as Dictionary).is_empty():
 		cangjie_section_content_box.add_child(_make_cangjie_duel_preview(duel_preview_variant as Dictionary, accent))
+	var route_preview_variant: Variant = active_section.get("route_preview", {})
+	if route_preview_variant is Dictionary and not (route_preview_variant as Dictionary).is_empty():
+		cangjie_section_content_box.add_child(_make_cangjie_route_preview(route_preview_variant as Dictionary, accent))
 	var groups_variant: Variant = active_section.get("sample_groups", [])
 	if groups_variant is Array:
 		for group_variant in groups_variant:
@@ -1126,6 +1129,136 @@ func _make_cangjie_duel_preview(preview: Dictionary, accent: Color) -> PanelCont
 	var hint_text := _localize_cangjie_text(preview.get("hint", ""))
 	if not hint_text.is_empty():
 		box.add_child(_make_label(hint_text, 15, Color(0.82, 0.9, 0.96, 0.82)))
+
+	return panel
+
+
+func _make_cangjie_route_preview(preview: Dictionary, accent: Color) -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.08, accent.g * 0.08, accent.b * 0.1, 0.78), Color(accent.r, accent.g, accent.b, 0.28)))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", _i(18))
+	margin.add_theme_constant_override("margin_top", _i(16))
+	margin.add_theme_constant_override("margin_right", _i(18))
+	margin.add_theme_constant_override("margin_bottom", _i(16))
+	panel.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", _i(10))
+	margin.add_child(box)
+	box.add_child(_make_label(_localize_cangjie_text(preview.get("title", "")), 20, Color(1.0, 0.95, 0.86, 1.0)))
+
+	var summary_text := _localize_cangjie_text(preview.get("summary", ""))
+	if not summary_text.is_empty():
+		box.add_child(_make_label(summary_text, 16, Color(0.88, 0.92, 0.96, 0.92)))
+
+	var rows_variant: Variant = preview.get("rows", [])
+	if rows_variant is Array:
+		var rows_box := VBoxContainer.new()
+		rows_box.add_theme_constant_override("separation", _i(10))
+		box.add_child(rows_box)
+		for row_variant in rows_variant:
+			if row_variant is Dictionary:
+				rows_box.add_child(_make_cangjie_route_row(row_variant as Dictionary, accent))
+
+	var footnote_text := _localize_cangjie_text(preview.get("footnote", ""))
+	if not footnote_text.is_empty():
+		box.add_child(_make_label(footnote_text, 14, Color(0.82, 0.9, 0.96, 0.82)))
+
+	return panel
+
+
+func _make_cangjie_route_row(row: Dictionary, accent: Color) -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.06, accent.g * 0.08, accent.b * 0.1, 0.7), Color(accent.r, accent.g, accent.b, 0.22)))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", _i(14))
+	margin.add_theme_constant_override("margin_top", _i(12))
+	margin.add_theme_constant_override("margin_right", _i(14))
+	margin.add_theme_constant_override("margin_bottom", _i(12))
+	panel.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", _i(8))
+	margin.add_child(box)
+	box.add_child(_make_label(_localize_cangjie_text(row.get("floor", "")), 15, Color(0.84, 0.9, 0.98, 0.92)))
+
+	var node_row := HBoxContainer.new()
+	node_row.add_theme_constant_override("separation", _i(10))
+	box.add_child(node_row)
+
+	var nodes_variant: Variant = row.get("nodes", [])
+	if nodes_variant is Array:
+		var nodes := nodes_variant as Array
+		if nodes.size() == 1 and not _is_portrait_layout():
+			var left_spacer := Control.new()
+			left_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			node_row.add_child(left_spacer)
+		for node_variant in nodes:
+			if node_variant is Dictionary:
+				node_row.add_child(_make_cangjie_route_node_card(node_variant as Dictionary, accent))
+		if nodes.size() == 1 and not _is_portrait_layout():
+			var right_spacer := Control.new()
+			right_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			node_row.add_child(right_spacer)
+
+	return panel
+
+
+func _make_cangjie_route_node_card(node: Dictionary, accent: Color) -> PanelContainer:
+	var tone: Color = node.get("tone", accent)
+	var state := String(node.get("state", "option"))
+	var fill_alpha := 0.14
+	var border_alpha := 0.22
+	if state == "path":
+		fill_alpha = 0.22
+		border_alpha = 0.38
+	elif state == "boss":
+		fill_alpha = 0.28
+		border_alpha = 0.48
+
+	var panel := PanelContainer.new()
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.custom_minimum_size = _v(0.0, 96.0)
+	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(tone.r * 0.16, tone.g * 0.16, tone.b * 0.18, 0.8 + fill_alpha * 0.2), Color(tone.r, tone.g, tone.b, border_alpha)))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", _i(12))
+	margin.add_theme_constant_override("margin_top", _i(10))
+	margin.add_theme_constant_override("margin_right", _i(12))
+	margin.add_theme_constant_override("margin_bottom", _i(10))
+	panel.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", _i(6))
+	margin.add_child(box)
+
+	var header := HBoxContainer.new()
+	header.add_theme_constant_override("separation", _i(10))
+	box.add_child(header)
+
+	var glyph_panel := PanelContainer.new()
+	glyph_panel.custom_minimum_size = _v(42.0, 42.0)
+	glyph_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(tone.r * 0.2, tone.g * 0.18, tone.b * 0.16, 0.92), Color(tone.r, tone.g, tone.b, 0.28)))
+	header.add_child(glyph_panel)
+
+	var glyph_label := _make_label(String(node.get("glyph", "")), 20, Color(1.0, 0.95, 0.86, 1.0))
+	glyph_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	glyph_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	glyph_label.set_anchors_preset(Control.PRESET_FULL_RECT)
+	glyph_panel.add_child(glyph_label)
+
+	var text_box := VBoxContainer.new()
+	text_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	text_box.add_theme_constant_override("separation", _i(2))
+	header.add_child(text_box)
+	text_box.add_child(_make_label(_localize_cangjie_text(node.get("label", "")), 15, Color(1.0, 0.95, 0.86, 1.0)))
+
+	var state_text := _localize_cangjie_text(node.get("note", ""))
+	if not state_text.is_empty():
+		box.add_child(_make_label(state_text, 13, Color(0.84, 0.9, 0.98, 0.84)))
 
 	return panel
 

@@ -752,6 +752,109 @@ const CANGJIE_PORTAL_SECTIONS := [
 				"en": "The Godot launcher now stages routes, nodes, and enemy intent clearly so the second project stops reading like a single static card."
 			}
 		],
+		"route_preview": {
+			"title": {"zh": "三路线塔图预览", "en": "Three-Lane Route Preview"},
+			"summary": {
+				"zh": "source《仓颉之路》会先把真正的三路线塔图摆出来，而不是只列节点名称。Godot 现在先把这层 route shell 迁回入口，方便在真正开打前就读懂这次 climb 的转向点。",
+				"en": "The source Cangjie Road opens with an actual three-lane tower board instead of only listing node names. Godot now brings that route shell back into the portal so the climb's pivot points can be read before a real run starts."
+			},
+			"rows": [
+				{
+					"floor": {"zh": "第 1 层", "en": "Floor 1"},
+					"nodes": [
+						{
+							"glyph": "战",
+							"label": {"zh": "战斗", "en": "Battle"},
+							"note": {"zh": "先读主线", "en": "Read the line"},
+							"tone": Color(0.94, 0.74, 0.42, 1.0),
+							"state": "path"
+						},
+						{
+							"glyph": "异",
+							"label": {"zh": "事件", "en": "Event"},
+							"note": {"zh": "短期换长期", "en": "Short vs long"},
+							"tone": Color(0.72, 0.62, 0.94, 1.0),
+							"state": "option"
+						},
+						{
+							"glyph": "歇",
+							"label": {"zh": "歇息", "en": "Rest"},
+							"note": {"zh": "稳住气血", "en": "Stabilize HP"},
+							"tone": Color(0.54, 0.82, 0.88, 1.0),
+							"state": "option"
+						}
+					]
+				},
+				{
+					"floor": {"zh": "第 2 层", "en": "Floor 2"},
+					"nodes": [
+						{
+							"glyph": "战",
+							"label": {"zh": "战斗", "en": "Battle"},
+							"note": {"zh": "继续拿牌", "en": "Keep drafting"},
+							"tone": Color(0.94, 0.74, 0.42, 1.0),
+							"state": "option"
+						},
+						{
+							"glyph": "肆",
+							"label": {"zh": "商店", "en": "Shop"},
+							"note": {"zh": "重配 Gold", "en": "Reassign Gold"},
+							"tone": Color(0.96, 0.82, 0.46, 1.0),
+							"state": "path"
+						},
+						{
+							"glyph": "魁",
+							"label": {"zh": "精英", "en": "Elite"},
+							"note": {"zh": "高压换方向", "en": "Risk for direction"},
+							"tone": Color(0.94, 0.58, 0.48, 1.0),
+							"state": "option"
+						}
+					]
+				},
+				{
+					"floor": {"zh": "第 3 层", "en": "Floor 3"},
+					"nodes": [
+						{
+							"glyph": "删",
+							"label": {"zh": "删改", "en": "Archive"},
+							"note": {"zh": "把牌组修薄", "en": "Thin the deck"},
+							"tone": Color(0.86, 0.8, 0.56, 1.0),
+							"state": "option"
+						},
+						{
+							"glyph": "宝",
+							"label": {"zh": "遗物", "en": "Treasure"},
+							"note": {"zh": "遗物偏转", "en": "Relic bend"},
+							"tone": Color(0.52, 0.84, 0.8, 1.0),
+							"state": "path"
+						},
+						{
+							"glyph": "战",
+							"label": {"zh": "战斗", "en": "Battle"},
+							"note": {"zh": "继续进塔", "en": "Keep climbing"},
+							"tone": Color(0.94, 0.74, 0.42, 1.0),
+							"state": "option"
+						}
+					]
+				},
+				{
+					"floor": {"zh": "塔顶", "en": "Summit"},
+					"nodes": [
+						{
+							"glyph": "塔",
+							"label": {"zh": "Boss", "en": "Boss"},
+							"note": {"zh": "整副牌的总检验", "en": "Full-build exam"},
+							"tone": Color(0.86, 0.68, 0.96, 1.0),
+							"state": "boss"
+						}
+					]
+				}
+			],
+			"footnote": {
+				"zh": "这只是 source 三路线塔图的前台壳预览，不假装已经接通真正的 Godot 节点逻辑。",
+				"en": "This is only a front-shell preview of the source three-lane tower board, not a claim that Godot already has the real node logic wired up."
+			}
+		},
 		"sample_groups": [
 			{
 				"title": {"zh": "节点类型", "en": "Node Types"},
