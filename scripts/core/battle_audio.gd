@@ -226,6 +226,26 @@ func play_cue(kind: String, intensity: float = 1.0) -> void:
 				return
 			_push_voice({"waveform": "sine", "start_freq": 360.0, "end_freq": 520.0, "amplitude": 0.09 * power, "duration": 0.28, "release": 0.34})
 			_push_voice({"waveform": "triangle", "start_freq": 720.0, "end_freq": 980.0, "amplitude": 0.05 * power, "duration": 0.2, "release": 0.24, "delay": 0.04, "pan": _small_pan()})
+		"ground_warning":
+			if not _can_play(kind, 0.12):
+				return
+			_push_voice({"waveform": "triangle", "start_freq": 420.0, "end_freq": 560.0, "amplitude": 0.085 * power, "duration": 0.14, "release": 0.18})
+			_push_voice({"waveform": "sine", "start_freq": 760.0, "end_freq": 980.0, "amplitude": 0.045 * power, "duration": 0.12, "release": 0.14, "delay": 0.024, "pan": _small_pan()})
+		"ground_bloom":
+			if not _can_play(kind, 0.12):
+				return
+			_push_voice({"waveform": "square", "start_freq": 210.0, "end_freq": 128.0, "amplitude": 0.13 * power, "duration": 0.16, "release": 0.18})
+			_push_voice({"waveform": "noise", "start_freq": 620.0, "end_freq": 280.0, "amplitude": 0.045 * power, "duration": 0.08, "release": 0.1, "delay": 0.01, "pan": _small_pan()})
+		"line_warning":
+			if not _can_play(kind, 0.1):
+				return
+			_push_voice({"waveform": "saw", "start_freq": 250.0, "end_freq": 410.0, "amplitude": 0.1 * power, "duration": 0.12, "release": 0.14, "pan": _small_pan()})
+			_push_voice({"waveform": "triangle", "start_freq": 600.0, "end_freq": 840.0, "amplitude": 0.05 * power, "duration": 0.1, "release": 0.12, "delay": 0.018, "pan": _small_pan()})
+		"line_release":
+			if not _can_play(kind, 0.1):
+				return
+			_push_voice({"waveform": "square", "start_freq": 165.0, "end_freq": 104.0, "amplitude": 0.12 * power, "duration": 0.15, "release": 0.18})
+			_push_voice({"waveform": "noise", "start_freq": 560.0, "end_freq": 220.0, "amplitude": 0.05 * power, "duration": 0.06, "release": 0.08, "delay": 0.012, "pan": _small_pan()})
 		"boss_appear":
 			if not _can_play(kind, 0.8):
 				return

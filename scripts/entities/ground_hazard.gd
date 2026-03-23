@@ -2,6 +2,8 @@ extends Node3D
 
 const CJKFont := preload("res://scripts/core/cjk_font.gd")
 
+signal activated(radius: float, label: String)
+
 var player = null
 var radius: float = 2.8
 var warning_time: float = 1.0
@@ -19,6 +21,7 @@ var label_node: Label3D
 var ring_mesh: MeshInstance3D
 var glow_mesh: MeshInstance3D
 var shard_root: Node3D
+var activation_announced: bool = false
 
 
 func configure(player_ref, origin: Vector3, hazard_radius: float, warning: float, active_duration: float, damage_value: float, tint_value: Color, label_value: String) -> void:
@@ -51,6 +54,10 @@ func _physics_process(delta: float) -> void:
 		var pulse: float = 0.94 + sin(elapsed * 8.0) * 0.08
 		scale = Vector3.ONE * pulse
 		return
+
+	if not activation_announced:
+		activation_announced = true
+		activated.emit(radius, label)
 
 	scale = Vector3.ONE
 	if active_mesh != null:

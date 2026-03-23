@@ -2627,14 +2627,18 @@ func _build_radical_requirement_counts(radicals: Array) -> Dictionary:
 
 
 func _on_enemy_request_hazard(target_position: Vector3, radius: float, warning_time: float, active_time: float, damage: float, tint: Color, label: String) -> void:
+	_play_cue_sfx("ground_warning", 0.86 + radius / 6.0)
 	var hazard = GROUND_HAZARD_SCENE.instantiate()
 	hazard.configure(player, target_position, radius, warning_time, active_time, damage, tint, label)
+	hazard.activated.connect(_on_enemy_ground_hazard_activated)
 	effects_root.add_child(hazard)
 
 
 func _on_enemy_request_line_hazard(origin: Vector3, direction: Vector3, length: float, width: float, warning_time: float, active_time: float, damage: float, tint: Color, label: String, stun_time: float) -> void:
+	_play_cue_sfx("line_warning", 0.84 + width / 3.0 + length / 48.0)
 	var hazard = LINE_HAZARD_SCENE.instantiate()
 	hazard.configure(player, origin, direction, length, width, warning_time, active_time, damage, tint, label, stun_time)
+	hazard.activated.connect(_on_enemy_line_hazard_activated)
 	effects_root.add_child(hazard)
 
 
@@ -2643,6 +2647,14 @@ func _on_enemy_request_projectile(origin: Vector3, direction: Vector3, speed: fl
 	bolt.configure(player, origin, direction, speed, damage, glyph, tint, life_time, hit_radius, stun_time)
 	bolt.impact.connect(_on_projectile_impact)
 	projectiles_root.add_child(bolt)
+
+
+func _on_enemy_ground_hazard_activated(radius: float, _label: String) -> void:
+	_play_cue_sfx("ground_bloom", 0.9 + radius / 7.0)
+
+
+func _on_enemy_line_hazard_activated(length: float, width: float, _label: String) -> void:
+	_play_cue_sfx("line_release", 0.9 + width / 3.2 + length / 52.0)
 
 
 func _on_player_projectile_impact(world_position: Vector3, tint: Color, label: String) -> void:
