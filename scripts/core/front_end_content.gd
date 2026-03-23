@@ -336,6 +336,120 @@ const CANGJIE_PORTAL_SECTIONS := [
 		]
 	},
 	{
+		"id": "run_controls",
+		"title": {"zh": "运行控台", "en": "Run Controls"},
+		"eyebrow": "Run Shell",
+		"accent": Color(0.58, 0.76, 0.94, 1.0),
+		"summary": {
+			"zh": "source《仓颉之路》进入页面后，不会把关键操作和状态藏起来；`重新开局 / 查看牌组 / 返回启动器` 与 `Floor / HP / Deck / Relics / Gold` 会一直留在前台壳里。",
+			"en": "Once the source Cangjie Road page opens, it does not hide the key controls or run state. `Restart Run / Open Deck / Back To Launcher` and the `Floor / HP / Deck / Relics / Gold` frame stay in the front shell."
+		},
+		"points": [
+			{
+				"zh": "常驻操作条让测试时可以立刻重开、翻牌组，或退回启动器，不必靠刷新页面找入口。",
+				"en": "The always-on action strip lets testing restart immediately, inspect the deck, or step back to the launcher without hunting for a reset path."
+			},
+			{
+				"zh": "顶部状态条会一直保留层数、气血、牌组厚度、遗物数量和 Gold，先把当前爬塔读法钉在前台。",
+				"en": "The top status row keeps floor, HP, deck thickness, relic count, and Gold visible so the current climb read stays pinned to the front."
+			},
+			{
+				"zh": "Godot 先把这层 run shell 作为 portal 预览讲清楚，后续真接入可玩场景时更容易复用同样的导航结构。",
+				"en": "Godot explains this run shell in the portal first so the same navigation frame is easier to reuse once a playable scene lands."
+			}
+		],
+		"sample_groups": [
+			{
+				"title": {"zh": "常驻操作", "en": "Always-On Controls"},
+				"cards": [
+					{
+						"glyph": "启",
+						"title": {"zh": "重新开局", "en": "Restart Run"},
+						"subtitle": {"zh": "快速回到第一层", "en": "Fast reset to floor one"},
+						"body": {
+							"zh": "source 把 `Restart Run` 固定在顶栏，方便反复测试路线、敌意与奖励链路，不用刷新页面。",
+							"en": "The source pins `Restart Run` in the top action row so route, intent, and reward-chain tests can restart without a page refresh."
+						},
+						"tags": [
+							{"zh": "重开", "en": "Reset"},
+							{"zh": "快速迭代", "en": "Fast iteration"}
+						]
+					},
+					{
+						"glyph": "牌",
+						"title": {"zh": "查看牌组", "en": "Open Deck"},
+						"subtitle": {"zh": "随时翻看当前构筑", "en": "Inspect the current build"},
+						"body": {
+							"zh": "`Open Deck` 让地图、战斗和奖励前都能直接核对牌组形状，避免只靠记忆判断构筑。",
+							"en": "`Open Deck` keeps the current deck one click away from map, battle, or reward states so build shape is not left to memory."
+						},
+						"tags": [
+							{"zh": "牌组总览", "en": "Deck view"},
+							{"zh": "构筑核对", "en": "Build check"}
+						]
+					},
+					{
+						"glyph": "返",
+						"title": {"zh": "返回启动器", "en": "Back To Launcher"},
+						"subtitle": {"zh": "保留双项目入口", "en": "Keep both game fronts close"},
+						"body": {
+							"zh": "source 在同一页顶栏保留 `Back To Launcher`，方便 deckbuilder 与字海入口之间随时来回对照。",
+							"en": "The source keeps `Back To Launcher` in the same top strip so the deckbuilder and Ink-Sea fronts stay close together."
+						},
+						"tags": [
+							{"zh": "入口切换", "en": "Entry swap"},
+							{"zh": "启动器联动", "en": "Launcher link"}
+						]
+					}
+				]
+			},
+			{
+				"title": {"zh": "顶部状态", "en": "Top Status"},
+				"cards": [
+					{
+						"glyph": "层",
+						"title": {"zh": "层数 / 气血", "en": "Floor / HP"},
+						"subtitle": {"zh": "这一爬到哪了", "en": "Where the climb stands"},
+						"body": {
+							"zh": "`Floor` 与 `HP` 常驻在状态条里，先把这一局的推进深度和存活压力钉住。",
+							"en": "`Floor` and `HP` stay pinned in the top status row so depth and survival pressure remain readable."
+						},
+						"tags": [
+							{"zh": "推进深度", "en": "Run depth"},
+							{"zh": "存活压力", "en": "Survival pressure"}
+						]
+					},
+					{
+						"glyph": "构",
+						"title": {"zh": "牌组 / 遗物", "en": "Deck / Relics"},
+						"subtitle": {"zh": "构筑形状不离视线", "en": "Build shape stays visible"},
+						"body": {
+							"zh": "牌组张数与遗物数量直接挂在顶栏，读 deck 厚薄和 relic 节奏不必先开二层面板。",
+							"en": "Deck count and relic total stay in the top bar, so deck thickness and relic pace can be read without opening a second layer."
+						},
+						"tags": [
+							{"zh": "牌组厚度", "en": "Deck size"},
+							{"zh": "遗物节奏", "en": "Relic pace"}
+						]
+					},
+					{
+						"glyph": "金",
+						"title": {"zh": "Gold", "en": "Gold"},
+						"subtitle": {"zh": "商店与奖励预算", "en": "Budget for shops and rewards"},
+						"body": {
+							"zh": "Gold 也在顶栏长期可见，让节点价值、删牌节奏和奖励跳过判断更像一条完整的 run shell。",
+							"en": "Gold also stays visible at the top, tying node value, deck trims, and reward skips into one readable run shell."
+						},
+						"tags": [
+							{"zh": "商店预算", "en": "Shop budget"},
+							{"zh": "路线取舍", "en": "Route tradeoff"}
+						]
+					}
+				]
+			}
+		]
+	},
+	{
 		"id": "card_codex",
 		"title": {"zh": "卡牌字库", "en": "Card Codex"},
 		"eyebrow": "Card Codex",
