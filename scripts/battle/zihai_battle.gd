@@ -546,6 +546,24 @@ const CHAMBER_LAYOUTS := {
 				"reward_radical": "田",
 				"reward_amount": 1.0,
 				"discover_radius": 6.3
+			},
+			{
+				"id": "clouds_clear_after_rain",
+				"text": "云收雨霁",
+				"english_text": "Clouds Draw In, Rain Clears",
+				"glyph": "霁",
+				"position": Vector3(-6.6, 0.0, 11.8),
+				"guardian_position": Vector3(-2.8, 0.0, 8.6),
+				"guardian_type": "ritualist",
+				"guardian_health_scale": 1.3,
+				"guardian_glyph": "霁",
+				"guardian_name": "霁云守简",
+				"english_guardian_name": "Clearsky Keeper",
+				"tint": Color(0.94, 0.98, 1.0, 1.0),
+				"guardian_tint": Color(0.64, 0.8, 0.98, 1.0),
+				"reward_type": "heal",
+				"reward_amount": 20.0,
+				"discover_radius": 6.2
 			}
 		]
 	}
