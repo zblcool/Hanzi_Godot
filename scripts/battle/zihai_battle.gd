@@ -15,6 +15,7 @@ const BATTLE_HUD_SCENE := preload("res://scenes/ui/battle_hud.tscn")
 const TOUCH_CONTROLS_OVERLAY := preload("res://scripts/ui/touch_controls_overlay.gd")
 const BattleAudio := preload("res://scripts/core/battle_audio.gd")
 const CJKFont := preload("res://scripts/core/cjk_font.gd")
+const FrontEndContent := preload("res://scripts/core/front_end_content.gd")
 const HanziLocalization := preload("res://scripts/core/hanzi_localization.gd")
 const GROUND_SURFACE_SHADER := preload("res://assets/shaders/ink_ground.gdshader")
 const SHANSHUI_BACKDROP_SHADER := preload("res://assets/shaders/shanshui_backdrop.gdshader")
@@ -731,6 +732,16 @@ var pending_level_choices: int = 0
 
 func _is_english() -> bool:
 	return Session.get_launcher_language() == "en"
+
+
+func _front_end_text(content: Dictionary, key: String, fallback_zh: String, fallback_en: String = "") -> String:
+	var fallback := fallback_zh
+	if _is_english():
+		fallback = fallback_en if not fallback_en.is_empty() else fallback_zh
+	var value: Variant = content.get(key, fallback)
+	if value is Dictionary:
+		return String((value as Dictionary).get("en" if _is_english() else "zh", fallback))
+	return String(value)
 
 
 func _localized_hero_data(hero_data: Dictionary) -> Dictionary:
@@ -4619,6 +4630,7 @@ func _on_hud_chamber_interlude_selected(choice_id: String) -> void:
 	var is_archive_interlude := _is_slip_archive_interlude(next_chamber_id)
 	var is_vault_interlude := _is_thunder_vault_interlude(next_chamber_id)
 	var is_abyss_interlude := _is_abyss_sanctum_interlude(next_chamber_id)
+	var interlude_content := FrontEndContent.battle_interlude_content()
 	var reward_radical := String(chamber_interlude_offer.get("reward_radical", "日"))
 	var reserve_radical := String(chamber_interlude_offer.get("reserve_radical", reward_radical))
 
@@ -4634,13 +4646,13 @@ func _on_hud_chamber_interlude_selected(choice_id: String) -> void:
 				_arm_interlude_draft_lean("archive_rubbing", granted_radicals, "简库拓片", "Archive Rubbing")
 				var reward_bundle := reward_radical if reserve_radical == reward_radical else "%s%s" % [reward_radical, reserve_radical]
 				hud.show_banner(
-					("Archive Rubbing  Radical %s" if _is_english() else "简库拓片  偏旁「%s」") % reward_bundle,
+					_front_end_text(interlude_content, "reward_archive_banner_format", "简库拓片  偏旁「%s」", "Archive Rubbing  Radical %s") % reward_bundle,
 					reward_color,
 					1.9
 				)
-				hud.set_tip(("Archive rubbing secured. `%s` now enters the next chamber, enemy drops there still lean toward paper and seals, and later radical drafts also lean toward %s." if _is_english() else "简库拓片已经带上，偏旁「%s」会一并随你入深层，下一段掉落仍会继续偏向残纸与战印，后续偏旁三选一也会更偏向 %s。") % [reward_bundle, _interlude_draft_lean_text(granted_radicals)])
+				hud.set_tip(_front_end_text(interlude_content, "reward_archive_tip_format", "简库拓片已经带上，偏旁「%s」会一并随你入深层，下一段掉落仍会继续偏向残纸与战印，后续偏旁三选一也会更偏向 %s。", "Archive rubbing secured. `%s` now enters the next chamber, enemy drops there still lean toward paper and seals, and later radical drafts also lean toward %s.") % [reward_bundle, _interlude_draft_lean_text(granted_radicals)])
 				_log_battle_event(
-					("Between Chambers · Archive Rubbing %s · Draft lean %s" if _is_english() else "卷间抉择 · 简库拓片 %s · 偏旁偏向 %s") % [reward_bundle, _interlude_draft_lean_text(granted_radicals)],
+					_front_end_text(interlude_content, "reward_archive_log_format", "卷间抉择 · 简库拓片 %s · 偏旁偏向 %s", "Between Chambers · Archive Rubbing %s · Draft lean %s") % [reward_bundle, _interlude_draft_lean_text(granted_radicals)],
 					reward_color
 				)
 			elif is_vault_interlude:
@@ -4648,16 +4660,16 @@ func _on_hud_chamber_interlude_selected(choice_id: String) -> void:
 				if is_instance_valid(player):
 					player.apply_brush_haste(CHAMBER_VAULT_REWARD_BRUSH_DURATION)
 				hud.show_banner(
-					("Storm Etching  Radical %s" if _is_english() else "雷纹拓笔  偏旁「%s」") % reward_radical,
+					_front_end_text(interlude_content, "reward_vault_banner_format", "雷纹拓笔  偏旁「%s」", "Storm Etching  Radical %s") % reward_radical,
 					reward_color,
 					1.9
 				)
 				hud.set_tip(
-					("Storm etching secured. `%s` now enters Thunder Vault, and the room opens with %d s of brush haste." if _is_english() else "雷纹拓笔已经定下，偏旁「%s」会一并带进雷纹内库，而且开场先带着 %d 秒文笔提速。")
+					_front_end_text(interlude_content, "reward_vault_tip_format", "雷纹拓笔已经定下，偏旁「%s」会一并带进雷纹内库，而且开场先带着 %d 秒文笔提速。", "Storm etching secured. `%s` now enters Thunder Vault, and the room opens with %d s of brush haste.")
 					% [reward_radical, int(round(CHAMBER_VAULT_REWARD_BRUSH_DURATION))]
 				)
 				_log_battle_event(
-					("Between Chambers · Storm Etching %s" if _is_english() else "卷间抉择 · 雷纹拓笔 %s") % reward_radical,
+					_front_end_text(interlude_content, "reward_vault_log_format", "卷间抉择 · 雷纹拓笔 %s", "Between Chambers · Storm Etching %s") % reward_radical,
 					reward_color
 				)
 			elif is_abyss_interlude:
@@ -4667,16 +4679,16 @@ func _on_hud_chamber_interlude_selected(choice_id: String) -> void:
 				_grant_interlude_radicals(granted_radicals)
 				var reward_bundle := reward_radical if reserve_radical == reward_radical else "%s%s" % [reward_radical, reserve_radical]
 				hud.show_banner(
-					("Final Draft  Radical %s" if _is_english() else "终室备墨  偏旁「%s」") % reward_bundle,
+					_front_end_text(interlude_content, "reward_abyss_banner_format", "终室备墨  偏旁「%s」", "Final Draft  Radical %s") % reward_bundle,
 					reward_color,
 					1.95
 				)
 				hud.set_tip(
-					("Final draft sealed. `%s` now enters Abyss Sanctum, so the last chamber opens with the full pair already in hand." if _is_english() else "终室备墨已经定下，偏旁「%s」会一并带进卷渊终室，最后一段开场就能先补齐这组字路。")
+					_front_end_text(interlude_content, "reward_abyss_tip_format", "终室备墨已经定下，偏旁「%s」会一并带进卷渊终室，最后一段开场就能先补齐这组字路。", "Final draft sealed. `%s` now enters Abyss Sanctum, so the last chamber opens with the full pair already in hand.")
 					% reward_bundle
 				)
 				_log_battle_event(
-					("Between Chambers · Final Draft %s" if _is_english() else "卷间抉择 · 终室备墨 %s") % reward_bundle,
+					_front_end_text(interlude_content, "reward_abyss_log_format", "卷间抉择 · 终室备墨 %s", "Between Chambers · Final Draft %s") % reward_bundle,
 					reward_color
 				)
 			else:
@@ -4685,12 +4697,12 @@ func _on_hud_chamber_interlude_selected(choice_id: String) -> void:
 				_grant_interlude_radicals(granted_radicals)
 				_arm_interlude_draft_lean("radical_cache", granted_radicals, "偏旁补给", "Radical Cache")
 				hud.show_banner(
-					("Radical Cache  Next chamber drops rise" if _is_english() else "偏旁补给  下一段残纸更盛"),
+					_front_end_text(interlude_content, "reward_default_banner", "偏旁补给  下一段残纸更盛", "Radical Cache  Next chamber drops rise"),
 					reward_color,
 					1.8
 				)
-				hud.set_tip(("Radical supply secured. `%s` now enters the next chamber, enemy drops there will carry more paper and seals, and later radical drafts will lean toward %s." if _is_english() else "偏旁补给已经带上，「%s」会跟着你继续入深层，下一段敌人也会带来更多残纸和战印，后续偏旁三选一也会更偏向 %s。") % [reward_radical, _interlude_draft_lean_text(granted_radicals)])
-				_log_battle_event(("Between Chambers · Radical supply %s · Draft lean %s" if _is_english() else "卷间抉择 · 偏旁补给 %s · 偏旁偏向 %s") % [reward_radical, _interlude_draft_lean_text(granted_radicals)], reward_color)
+				hud.set_tip(_front_end_text(interlude_content, "reward_default_tip_format", "偏旁补给已经带上，「%s」会跟着你继续入深层，下一段敌人也会带来更多残纸和战印，后续偏旁三选一也会更偏向 %s。", "Radical supply secured. `%s` now enters the next chamber, enemy drops there will carry more paper and seals, and later radical drafts will lean toward %s.") % [reward_radical, _interlude_draft_lean_text(granted_radicals)])
+				_log_battle_event(_front_end_text(interlude_content, "reward_default_log_format", "卷间抉择 · 偏旁补给 %s · 偏旁偏向 %s", "Between Chambers · Radical supply %s · Draft lean %s") % [reward_radical, _interlude_draft_lean_text(granted_radicals)], reward_color)
 		"event":
 			if is_archive_interlude:
 				_arm_scroll_echo_modifier()
@@ -4698,32 +4710,32 @@ func _on_hud_chamber_interlude_selected(choice_id: String) -> void:
 				if is_instance_valid(player):
 					player.apply_fury_haste(CHAMBER_ARCHIVE_EVENT_FURY_DURATION)
 				hud.show_banner(
-					("Latch Bargain  Swift Edict %d s" if _is_english() else "封钥借契  疾书令 %d 秒") % int(round(CHAMBER_ARCHIVE_EVENT_FURY_DURATION)),
+					_front_end_text(interlude_content, "event_archive_banner_format", "封钥借契  疾书令 %d 秒", "Latch Bargain  Swift Edict %d s") % int(round(CHAMBER_ARCHIVE_EVENT_FURY_DURATION)),
 					Color(0.96, 0.62, 0.34, 1.0),
 					1.95
 				)
 				hud.set_tip(
-					("Latch bargain sealed. The next chamber opens with %d s of Swift Edict, Scroll Echo still carries extra paper plus elite edicts until the next scroll lord, and later radical drafts tilt toward %s." if _is_english() else "封钥借契已经定下：下一段会先带着 %d 秒疾书令入场，残卷回响也会继续保留额外残纸与精英疾书令，直到下一位卷主；后续偏旁三选一会更偏向 %s。")
+					_front_end_text(interlude_content, "event_archive_tip_format", "封钥借契已经定下：下一段会先带着 %d 秒疾书令入场，残卷回响也会继续保留额外残纸与精英疾书令，直到下一位卷主；后续偏旁三选一会更偏向 %s。", "Latch bargain sealed. The next chamber opens with %d s of Swift Edict, Scroll Echo still carries extra paper plus elite edicts until the next scroll lord, and later radical drafts tilt toward %s.")
 					% [int(round(CHAMBER_ARCHIVE_EVENT_FURY_DURATION)), _interlude_draft_lean_text(CHAMBER_ARCHIVE_EVENT_DRAFT_LEAN)]
 				)
 				_log_battle_event(
-					("Between Chambers · Latch Bargain armed · Draft lean %s" if _is_english() else "卷间抉择 · 封钥借契已经挂载 · 偏旁偏向 %s") % _interlude_draft_lean_text(CHAMBER_ARCHIVE_EVENT_DRAFT_LEAN),
+					_front_end_text(interlude_content, "event_archive_log_format", "卷间抉择 · 封钥借契已经挂载 · 偏旁偏向 %s", "Between Chambers · Latch Bargain armed · Draft lean %s") % _interlude_draft_lean_text(CHAMBER_ARCHIVE_EVENT_DRAFT_LEAN),
 					Color(0.96, 0.62, 0.34, 1.0)
 				)
 			elif is_vault_interlude:
 				if is_instance_valid(player):
 					player.apply_fury_haste(CHAMBER_VAULT_EVENT_FURY_DURATION)
 				hud.show_banner(
-					("Vault Bargain  Swift Edict %d s" if _is_english() else "伏雷换契  疾书令 %d 秒") % int(round(CHAMBER_VAULT_EVENT_FURY_DURATION)),
+					_front_end_text(interlude_content, "event_vault_banner_format", "伏雷换契  疾书令 %d 秒", "Vault Bargain  Swift Edict %d s") % int(round(CHAMBER_VAULT_EVENT_FURY_DURATION)),
 					Color(0.72, 0.82, 1.0, 1.0),
 					1.95
 				)
 				hud.set_tip(
-					("Vault bargain sealed. Thunder Vault opens with %d s of Swift Edict already active." if _is_english() else "伏雷换契已经定下：雷纹内库开场就会先带着 %d 秒疾书令。")
+					_front_end_text(interlude_content, "event_vault_tip_format", "伏雷换契已经定下：雷纹内库开场就会先带着 %d 秒疾书令。", "Vault bargain sealed. Thunder Vault opens with %d s of Swift Edict already active.")
 					% int(round(CHAMBER_VAULT_EVENT_FURY_DURATION))
 				)
 				_log_battle_event(
-					"Between Chambers · Vault Bargain armed" if _is_english() else "卷间抉择 · 伏雷换契已经挂载",
+					_front_end_text(interlude_content, "event_vault_log", "卷间抉择 · 伏雷换契已经挂载", "Between Chambers · Vault Bargain armed"),
 					Color(0.72, 0.82, 1.0, 1.0)
 				)
 			elif is_abyss_interlude:
@@ -4731,32 +4743,28 @@ func _on_hud_chamber_interlude_selected(choice_id: String) -> void:
 					player.apply_fury_haste(CHAMBER_ABYSS_EVENT_FURY_DURATION)
 					player.apply_brush_haste(CHAMBER_ABYSS_EVENT_BRUSH_DURATION)
 				hud.show_banner(
-					("Abyss Pact  Dual Momentum" if _is_english() else "渊页誓约  双势并起"),
+					_front_end_text(interlude_content, "event_abyss_banner", "渊页誓约  双势并起", "Abyss Pact  Dual Momentum"),
 					Color(0.92, 0.68, 0.62, 1.0),
 					1.95
 				)
 				hud.set_tip(
-					("Abyss pact sealed. Abyss Sanctum opens with %d s of Swift Edict and %d s of brush haste together." if _is_english() else "渊页誓约已经定下：卷渊终室开场会同时带着 %d 秒疾书令与 %d 秒文笔提速。")
+					_front_end_text(interlude_content, "event_abyss_tip_format", "渊页誓约已经定下：卷渊终室开场会同时带着 %d 秒疾书令与 %d 秒文笔提速。", "Abyss pact sealed. Abyss Sanctum opens with %d s of Swift Edict and %d s of brush haste together.")
 					% [int(round(CHAMBER_ABYSS_EVENT_FURY_DURATION)), int(round(CHAMBER_ABYSS_EVENT_BRUSH_DURATION))]
 				)
 				_log_battle_event(
-					"Between Chambers · Abyss Pact armed" if _is_english() else "卷间抉择 · 渊页誓约已经挂载",
+					_front_end_text(interlude_content, "event_abyss_log", "卷间抉择 · 渊页誓约已经挂载", "Between Chambers · Abyss Pact armed"),
 					Color(0.92, 0.68, 0.62, 1.0)
 				)
 			else:
 				_arm_scroll_echo_modifier()
 				hud.show_banner(
-					"Scroll Echo Armed" if _is_english() else "残卷回响已挂载",
+					_front_end_text(interlude_content, "event_default_banner", "残卷回响已挂载", "Scroll Echo Armed"),
 					Color(0.96, 0.62, 0.34, 1.0),
 					1.9
 				)
-				hud.set_tip(
-					"This chamber choice now carries into the next chamber: pressure enemies echo extra paper, and elites can drop Swift Edict until the next scroll lord."
-					if _is_english()
-					else "这次卷间异事会一路带进下一段：压境敌群会额外回响残纸，精英也能多吐一枚疾书令，持续到下一位卷主。"
-				)
+				hud.set_tip(_front_end_text(interlude_content, "event_default_tip", "这次卷间异事会一路带进下一段：压境敌群会额外回响残纸，精英也能多吐一枚疾书令，持续到下一位卷主。", "This chamber choice now carries into the next chamber: pressure enemies echo extra paper, and elites can drop Swift Edict until the next scroll lord."))
 				_log_battle_event(
-					"Between Chambers · Scroll Echo armed for the next chamber" if _is_english() else "卷间抉择 · 残卷回响会一路带进下一段",
+					_front_end_text(interlude_content, "event_default_log", "卷间抉择 · 残卷回响会一路带进下一段", "Between Chambers · Scroll Echo armed for the next chamber"),
 					Color(0.96, 0.62, 0.34, 1.0)
 				)
 		"recovery":
@@ -4769,13 +4777,13 @@ func _on_hud_chamber_interlude_selected(choice_id: String) -> void:
 						player.clear_stun()
 					player.apply_brush_haste(CHAMBER_ARCHIVE_REST_BRUSH_DURATION)
 				hud.show_banner(
-					("Lamp Respite  Restore %d%% Vitality" if _is_english() else "守灯静读  回复 %d%% 气血") % int(round(CHAMBER_ARCHIVE_REST_HEAL_RATIO * 100.0)),
+					_front_end_text(interlude_content, "recovery_archive_banner_format", "守灯静读  回复 %d%% 气血", "Lamp Respite  Restore %d%% Vitality") % int(round(CHAMBER_ARCHIVE_REST_HEAL_RATIO * 100.0)),
 					Color(0.62, 0.9, 0.74, 1.0),
 					1.95
 				)
-				hud.set_tip(("Lamp respite restores vitality, clears stun, carries %d s of brush haste into the archive, and later radical drafts tilt toward %s before later wave pushes echo smaller recovery." if _is_english() else "守灯静读会先回气、解眩晕，并把 %d 秒文笔提速带进简库中庭；后续偏旁三选一会更偏向 %s，后面字潮推进仍会再补一小口气。") % [int(round(CHAMBER_ARCHIVE_REST_BRUSH_DURATION)), _interlude_draft_lean_text(CHAMBER_ARCHIVE_REST_DRAFT_LEAN)])
+				hud.set_tip(_front_end_text(interlude_content, "recovery_archive_tip_format", "守灯静读会先回气、解眩晕，并把 %d 秒文笔提速带进简库中庭；后续偏旁三选一会更偏向 %s，后面字潮推进仍会再补一小口气。", "Lamp respite restores vitality, clears stun, carries %d s of brush haste into the archive, and later radical drafts tilt toward %s before later wave pushes echo smaller recovery.") % [int(round(CHAMBER_ARCHIVE_REST_BRUSH_DURATION)), _interlude_draft_lean_text(CHAMBER_ARCHIVE_REST_DRAFT_LEAN)])
 				_log_battle_event(
-					("Between Chambers · Lamp Respite %d%% · Draft lean %s" if _is_english() else "卷间抉择 · 守灯静读 %d%% · 偏旁偏向 %s") % [int(round(CHAMBER_ARCHIVE_REST_HEAL_RATIO * 100.0)), _interlude_draft_lean_text(CHAMBER_ARCHIVE_REST_DRAFT_LEAN)],
+					_front_end_text(interlude_content, "recovery_archive_log_format", "卷间抉择 · 守灯静读 %d%% · 偏旁偏向 %s", "Between Chambers · Lamp Respite %d%% · Draft lean %s") % [int(round(CHAMBER_ARCHIVE_REST_HEAL_RATIO * 100.0)), _interlude_draft_lean_text(CHAMBER_ARCHIVE_REST_DRAFT_LEAN)],
 					Color(0.62, 0.9, 0.74, 1.0)
 				)
 			elif is_vault_interlude:
@@ -4786,13 +4794,13 @@ func _on_hud_chamber_interlude_selected(choice_id: String) -> void:
 					if player.has_method("apply_paper_ward"):
 						player.apply_paper_ward(CHAMBER_VAULT_REST_WARD_DURATION)
 				hud.show_banner(
-					("Grounding Ward  Restore %d%% Vitality" if _is_english() else "伏纹稳息  回复 %d%% 气血") % int(round(CHAMBER_VAULT_REST_HEAL_RATIO * 100.0)),
+					_front_end_text(interlude_content, "recovery_vault_banner_format", "伏纹稳息  回复 %d%% 气血", "Grounding Ward  Restore %d%% Vitality") % int(round(CHAMBER_VAULT_REST_HEAL_RATIO * 100.0)),
 					Color(0.72, 0.9, 1.0, 1.0),
 					1.95
 				)
-				hud.set_tip(("Grounding ward restores vitality, clears stun, and carries %d s of paper ward into Thunder Vault." if _is_english() else "伏纹稳息会先回气、解眩晕，并把 %d 秒纸域护势带进雷纹内库。") % int(round(CHAMBER_VAULT_REST_WARD_DURATION)))
+				hud.set_tip(_front_end_text(interlude_content, "recovery_vault_tip_format", "伏纹稳息会先回气、解眩晕，并把 %d 秒纸域护势带进雷纹内库。", "Grounding ward restores vitality, clears stun, and carries %d s of paper ward into Thunder Vault.") % int(round(CHAMBER_VAULT_REST_WARD_DURATION)))
 				_log_battle_event(
-					("Between Chambers · Grounding Ward %d%%" if _is_english() else "卷间抉择 · 伏纹稳息 %d%%") % int(round(CHAMBER_VAULT_REST_HEAL_RATIO * 100.0)),
+					_front_end_text(interlude_content, "recovery_vault_log_format", "卷间抉择 · 伏纹稳息 %d%%", "Between Chambers · Grounding Ward %d%%") % int(round(CHAMBER_VAULT_REST_HEAL_RATIO * 100.0)),
 					Color(0.72, 0.9, 1.0, 1.0)
 				)
 			elif is_abyss_interlude:
@@ -4803,16 +4811,16 @@ func _on_hud_chamber_interlude_selected(choice_id: String) -> void:
 					if player.has_method("apply_paper_ward"):
 						player.apply_paper_ward(CHAMBER_ABYSS_REST_WARD_DURATION)
 				hud.show_banner(
-					("Stilling Breath  Restore %d%% Vitality" if _is_english() else "压关静息  回复 %d%% 气血") % int(round(CHAMBER_ABYSS_REST_HEAL_RATIO * 100.0)),
+					_front_end_text(interlude_content, "recovery_abyss_banner_format", "压关静息  回复 %d%% 气血", "Stilling Breath  Restore %d%% Vitality") % int(round(CHAMBER_ABYSS_REST_HEAL_RATIO * 100.0)),
 					Color(0.98, 0.86, 0.72, 1.0),
 					1.95
 				)
 				hud.set_tip(
-					("Stilling breath restores vitality, clears stun, and carries %d s of paper ward into Abyss Sanctum." if _is_english() else "压关静息会先回气、解眩晕，并把 %d 秒纸域护势带进卷渊终室。")
+					_front_end_text(interlude_content, "recovery_abyss_tip_format", "压关静息会先回气、解眩晕，并把 %d 秒纸域护势带进卷渊终室。", "Stilling breath restores vitality, clears stun, and carries %d s of paper ward into Abyss Sanctum.")
 					% int(round(CHAMBER_ABYSS_REST_WARD_DURATION))
 				)
 				_log_battle_event(
-					("Between Chambers · Stilling Breath %d%%" if _is_english() else "卷间抉择 · 压关静息 %d%%") % int(round(CHAMBER_ABYSS_REST_HEAL_RATIO * 100.0)),
+					_front_end_text(interlude_content, "recovery_abyss_log_format", "卷间抉择 · 压关静息 %d%%", "Between Chambers · Stilling Breath %d%%") % int(round(CHAMBER_ABYSS_REST_HEAL_RATIO * 100.0)),
 					Color(0.98, 0.86, 0.72, 1.0)
 				)
 			else:
@@ -4823,13 +4831,13 @@ func _on_hud_chamber_interlude_selected(choice_id: String) -> void:
 						player.clear_stun()
 					player.apply_brush_haste(CHAMBER_INTERLUDE_REST_BRUSH_DURATION)
 				hud.show_banner(
-					("Short Rest  Restore %d%% Vitality" if _is_english() else "歇笔回气  回复 %d%% 气血") % int(round(CHAMBER_INTERLUDE_REST_HEAL_RATIO * 100.0)),
+					_front_end_text(interlude_content, "recovery_default_banner_format", "歇笔回气  回复 %d%% 气血", "Short Rest  Restore %d%% Vitality") % int(round(CHAMBER_INTERLUDE_REST_HEAL_RATIO * 100.0)),
 					Color(0.62, 0.9, 0.74, 1.0),
 					1.9
 				)
-				hud.set_tip(("Short rest restores vitality, clears stun, and gives %d s of brush haste now; later wave pushes in the next chamber also echo smaller recovery." if _is_english() else "歇笔修整会先回气、解眩晕，并补上 %d 秒文笔提速；下一段后续字潮推进还会再补一小口气。") % int(round(CHAMBER_INTERLUDE_REST_BRUSH_DURATION)))
+				hud.set_tip(_front_end_text(interlude_content, "recovery_default_tip_format", "歇笔修整会先回气、解眩晕，并补上 %d 秒文笔提速；下一段后续字潮推进还会再补一小口气。", "Short rest restores vitality, clears stun, and gives %d s of brush haste now; later wave pushes in the next chamber also echo smaller recovery.") % int(round(CHAMBER_INTERLUDE_REST_BRUSH_DURATION)))
 				_log_battle_event(
-					("Between Chambers · Short Rest %d%%" if _is_english() else "卷间抉择 · 歇笔回气 %d%%") % int(round(CHAMBER_INTERLUDE_REST_HEAL_RATIO * 100.0)),
+					_front_end_text(interlude_content, "recovery_default_log_format", "卷间抉择 · 歇笔回气 %d%%", "Between Chambers · Short Rest %d%%") % int(round(CHAMBER_INTERLUDE_REST_HEAL_RATIO * 100.0)),
 					Color(0.62, 0.9, 0.74, 1.0)
 				)
 		_:

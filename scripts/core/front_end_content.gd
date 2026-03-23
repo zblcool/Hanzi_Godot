@@ -1320,6 +1320,81 @@ const BATTLE_HUD_EN_TEXT := {
 	"敌群 0  ·  砚台 0  ·  草丛 0": "Enemy pack 0  ·  Inkstone 0  ·  Bush 0"
 }
 
+const BATTLE_INTERLUDE_CONTENT := {
+	"reward_archive_banner_format": {"zh": "简库拓片  偏旁「%s」", "en": "Archive Rubbing  Radical %s"},
+	"reward_archive_tip_format": {
+		"zh": "简库拓片已经带上，偏旁「%s」会一并随你入深层，下一段掉落仍会继续偏向残纸与战印，后续偏旁三选一也会更偏向 %s。",
+		"en": "Archive rubbing secured. `%s` now enters the next chamber, enemy drops there still lean toward paper and seals, and later radical drafts also lean toward %s."
+	},
+	"reward_archive_log_format": {"zh": "卷间抉择 · 简库拓片 %s · 偏旁偏向 %s", "en": "Between Chambers · Archive Rubbing %s · Draft lean %s"},
+	"reward_vault_banner_format": {"zh": "雷纹拓笔  偏旁「%s」", "en": "Storm Etching  Radical %s"},
+	"reward_vault_tip_format": {
+		"zh": "雷纹拓笔已经定下，偏旁「%s」会一并带进雷纹内库，而且开场先带着 %d 秒文笔提速。",
+		"en": "Storm etching secured. `%s` now enters Thunder Vault, and the room opens with %d s of brush haste."
+	},
+	"reward_vault_log_format": {"zh": "卷间抉择 · 雷纹拓笔 %s", "en": "Between Chambers · Storm Etching %s"},
+	"reward_abyss_banner_format": {"zh": "终室备墨  偏旁「%s」", "en": "Final Draft  Radical %s"},
+	"reward_abyss_tip_format": {
+		"zh": "终室备墨已经定下，偏旁「%s」会一并带进卷渊终室，最后一段开场就能先补齐这组字路。",
+		"en": "Final draft sealed. `%s` now enters Abyss Sanctum, so the last chamber opens with the full pair already in hand."
+	},
+	"reward_abyss_log_format": {"zh": "卷间抉择 · 终室备墨 %s", "en": "Between Chambers · Final Draft %s"},
+	"reward_default_banner": {"zh": "偏旁补给  下一段残纸更盛", "en": "Radical Cache  Next chamber drops rise"},
+	"reward_default_tip_format": {
+		"zh": "偏旁补给已经带上，「%s」会跟着你继续入深层，下一段敌人也会带来更多残纸和战印，后续偏旁三选一也会更偏向 %s。",
+		"en": "Radical supply secured. `%s` now enters the next chamber, enemy drops there will carry more paper and seals, and later radical drafts will lean toward %s."
+	},
+	"reward_default_log_format": {"zh": "卷间抉择 · 偏旁补给 %s · 偏旁偏向 %s", "en": "Between Chambers · Radical supply %s · Draft lean %s"},
+	"event_archive_banner_format": {"zh": "封钥借契  疾书令 %d 秒", "en": "Latch Bargain  Swift Edict %d s"},
+	"event_archive_tip_format": {
+		"zh": "封钥借契已经定下：下一段会先带着 %d 秒疾书令入场，残卷回响也会继续保留额外残纸与精英疾书令，直到下一位卷主；后续偏旁三选一会更偏向 %s。",
+		"en": "Latch bargain sealed. The next chamber opens with %d s of Swift Edict, Scroll Echo still carries extra paper plus elite edicts until the next scroll lord, and later radical drafts tilt toward %s."
+	},
+	"event_archive_log_format": {"zh": "卷间抉择 · 封钥借契已经挂载 · 偏旁偏向 %s", "en": "Between Chambers · Latch Bargain armed · Draft lean %s"},
+	"event_vault_banner_format": {"zh": "伏雷换契  疾书令 %d 秒", "en": "Vault Bargain  Swift Edict %d s"},
+	"event_vault_tip_format": {
+		"zh": "伏雷换契已经定下：雷纹内库开场就会先带着 %d 秒疾书令。",
+		"en": "Vault bargain sealed. Thunder Vault opens with %d s of Swift Edict already active."
+	},
+	"event_vault_log": {"zh": "卷间抉择 · 伏雷换契已经挂载", "en": "Between Chambers · Vault Bargain armed"},
+	"event_abyss_banner": {"zh": "渊页誓约  双势并起", "en": "Abyss Pact  Dual Momentum"},
+	"event_abyss_tip_format": {
+		"zh": "渊页誓约已经定下：卷渊终室开场会同时带着 %d 秒疾书令与 %d 秒文笔提速。",
+		"en": "Abyss pact sealed. Abyss Sanctum opens with %d s of Swift Edict and %d s of brush haste together."
+	},
+	"event_abyss_log": {"zh": "卷间抉择 · 渊页誓约已经挂载", "en": "Between Chambers · Abyss Pact armed"},
+	"event_default_banner": {"zh": "残卷回响已挂载", "en": "Scroll Echo Armed"},
+	"event_default_tip": {
+		"zh": "这次卷间异事会一路带进下一段：压境敌群会额外回响残纸，精英也能多吐一枚疾书令，持续到下一位卷主。",
+		"en": "This chamber choice now carries into the next chamber: pressure enemies echo extra paper, and elites can drop Swift Edict until the next scroll lord."
+	},
+	"event_default_log": {"zh": "卷间抉择 · 残卷回响会一路带进下一段", "en": "Between Chambers · Scroll Echo armed for the next chamber"},
+	"recovery_archive_banner_format": {"zh": "守灯静读  回复 %d%% 气血", "en": "Lamp Respite  Restore %d%% Vitality"},
+	"recovery_archive_tip_format": {
+		"zh": "守灯静读会先回气、解眩晕，并把 %d 秒文笔提速带进简库中庭；后续偏旁三选一会更偏向 %s，后面字潮推进仍会再补一小口气。",
+		"en": "Lamp respite restores vitality, clears stun, carries %d s of brush haste into the archive, and later radical drafts tilt toward %s before later wave pushes echo smaller recovery."
+	},
+	"recovery_archive_log_format": {"zh": "卷间抉择 · 守灯静读 %d%% · 偏旁偏向 %s", "en": "Between Chambers · Lamp Respite %d%% · Draft lean %s"},
+	"recovery_vault_banner_format": {"zh": "伏纹稳息  回复 %d%% 气血", "en": "Grounding Ward  Restore %d%% Vitality"},
+	"recovery_vault_tip_format": {
+		"zh": "伏纹稳息会先回气、解眩晕，并把 %d 秒纸域护势带进雷纹内库。",
+		"en": "Grounding ward restores vitality, clears stun, and carries %d s of paper ward into Thunder Vault."
+	},
+	"recovery_vault_log_format": {"zh": "卷间抉择 · 伏纹稳息 %d%%", "en": "Between Chambers · Grounding Ward %d%%"},
+	"recovery_abyss_banner_format": {"zh": "压关静息  回复 %d%% 气血", "en": "Stilling Breath  Restore %d%% Vitality"},
+	"recovery_abyss_tip_format": {
+		"zh": "压关静息会先回气、解眩晕，并把 %d 秒纸域护势带进卷渊终室。",
+		"en": "Stilling breath restores vitality, clears stun, and carries %d s of paper ward into Abyss Sanctum."
+	},
+	"recovery_abyss_log_format": {"zh": "卷间抉择 · 压关静息 %d%%", "en": "Between Chambers · Stilling Breath %d%%"},
+	"recovery_default_banner_format": {"zh": "歇笔回气  回复 %d%% 气血", "en": "Short Rest  Restore %d%% Vitality"},
+	"recovery_default_tip_format": {
+		"zh": "歇笔修整会先回气、解眩晕，并补上 %d 秒文笔提速；下一段后续字潮推进还会再补一小口气。",
+		"en": "Short rest restores vitality, clears stun, and gives %d s of brush haste now; later wave pushes in the next chamber also echo smaller recovery."
+	},
+	"recovery_default_log_format": {"zh": "卷间抉择 · 歇笔回气 %d%%", "en": "Between Chambers · Short Rest %d%%"}
+}
+
 const MENU_ENEMY_CONTENT := {
 	"intro": "以下条目对应当前残卷里已经接入的敌人谱系、预警方式与最实用的临场处理思路。",
 	"entry_format": "%s  %s  ·  %s",
@@ -1586,6 +1661,10 @@ static func localize_battle_text(text: String, english: bool) -> String:
 	if BATTLE_HUD_EN_TEXT.has(text):
 		return String(BATTLE_HUD_EN_TEXT.get(text, text))
 	return localize_menu_text(text, true)
+
+
+static func battle_interlude_content() -> Dictionary:
+	return BATTLE_INTERLUDE_CONTENT.duplicate(true)
 
 
 static func menu_leaderboard_content() -> Dictionary:
