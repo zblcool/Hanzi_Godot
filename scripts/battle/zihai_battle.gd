@@ -19,7 +19,7 @@ const HanziLocalization := preload("res://scripts/core/hanzi_localization.gd")
 const GROUND_SURFACE_SHADER := preload("res://assets/shaders/ink_ground.gdshader")
 const SHANSHUI_BACKDROP_SHADER := preload("res://assets/shaders/shanshui_backdrop.gdshader")
 const DEFAULT_BATTLE_TIP := "击倒字灵收集字力与补给，升级时三选一偏旁。靠近砚台按 E 磨词。"
-const BOSS_SPAWN_TIMES := [65.0, 130.0]
+const BOSS_SPAWN_TIMES := [65.0, 130.0, 195.0]
 const MAP_WORLD_RADIUS := 28.0
 const BIG_WAVE_INTERVAL := 5
 const FIELD_PHASE_WAVE_SPAN := 4
@@ -43,6 +43,10 @@ const CHAMBER_INTERLUDE_REST_ECHO_BRUSH_DURATION := 4.0
 const CHAMBER_ARCHIVE_EVENT_FURY_DURATION := 10.0
 const CHAMBER_ARCHIVE_REST_HEAL_RATIO := 0.3
 const CHAMBER_ARCHIVE_REST_BRUSH_DURATION := 10.0
+const CHAMBER_VAULT_REWARD_BRUSH_DURATION := 12.0
+const CHAMBER_VAULT_EVENT_FURY_DURATION := 12.0
+const CHAMBER_VAULT_REST_HEAL_RATIO := 0.28
+const CHAMBER_VAULT_REST_WARD_DURATION := 12.0
 const TREE_FADE_RADIUS := 2.65
 const TREE_FADE_ALPHA := 0.28
 const TREE_FADE_SPEED := 4.8
@@ -160,7 +164,7 @@ const FIELD_PHASE_THEMES := [
 		"tip": "残卷回暖，纸本山水会偏回赭金，巨字像旧墨一样烙在地上。"
 	}
 ]
-const CHAMBER_ORDER := ["entry_court", "slip_archive"]
+const CHAMBER_ORDER := ["entry_court", "slip_archive", "thunder_vault"]
 const CHAMBER_LAYOUTS := {
 	"entry_court": {
 		"name": "入卷前庭",
@@ -322,6 +326,32 @@ const CHAMBER_LAYOUTS := {
 			{"position": Vector3(-8.5, 0.0, 2.5), "supply_id": "magnet"},
 			{"position": Vector3(13.5, 0.0, -5.5), "supply_id": "fury"}
 		],
+		"exit_objectives": [
+			{
+				"id": "storm_latch_seal",
+				"name": "雷纹转钥封",
+				"english_name": "Storm Latch Seal",
+				"glyph": "封",
+				"tip": "简库卷主退散后，先触碰这枚转钥封，逼出简雷守将。只有守将倒下，通往雷纹内库的卷间奖印才会显形。",
+				"english_tip": "Once the archive lord falls, touch this latch seal to force out the Slip Storm Marshal. Only after it falls will the reward beacon toward Thunder Vault rise.",
+				"pickup_positions": [
+					Vector3(0.0, 0.0, 1.5)
+				],
+				"seal_tint": Color(0.62, 0.74, 0.96, 1.0),
+				"seal_glow": Color(0.9, 0.96, 1.0, 1.0),
+				"gatekeeper": {
+					"id": "slip_archive_gatekeeper",
+					"type": "ritualist",
+					"name": "简雷守将",
+					"english_name": "Slip Storm Marshal",
+					"glyph": "简",
+					"taunt": "转钥未开，先破我阵。",
+					"english_taunt": "Break my lattice before the vault unseals.",
+					"tint": Color(0.62, 0.72, 0.92, 1.0),
+					"health_scale": 1.22
+				}
+			}
+		],
 		"phrase_events": [
 			{
 				"id": "wind_rain_same_boat",
@@ -393,6 +423,69 @@ const CHAMBER_LAYOUTS := {
 				"reward_amount": 1.0,
 				"discover_radius": 6.1
 			}
+		]
+	},
+	"thunder_vault": {
+		"name": "雷纹内库",
+		"english_name": "Thunder Vault",
+		"glyph": "雷",
+		"accent": Color(0.78, 0.88, 1.0, 1.0),
+		"tip": "更深一层会推入雷纹内库，冷色石架、雷碑与补给改成更紧的中轴布置，房间读法也会跟着收束。",
+		"english_tip": "The next layer opens into Thunder Vault, where colder stone racks, storm stelae, and mirrored supplies tighten the room around a central lane.",
+		"trees": [
+			Vector3(-18.0, 0.0, -16.0),
+			Vector3(17.0, 0.0, -14.0),
+			Vector3(-16.0, 0.0, 14.0),
+			Vector3(18.0, 0.0, 15.0)
+		],
+		"bushes": [
+			Vector3(-6.0, 0.0, -7.5),
+			Vector3(6.0, 0.0, -7.0),
+			Vector3(-10.0, 0.0, 7.5),
+			Vector3(10.0, 0.0, 8.0),
+			Vector3(0.0, 0.0, 14.5)
+		],
+		"inkstones": [
+			Vector3(0.0, 0.0, 6.0),
+			Vector3(0.0, 0.0, -11.5)
+		],
+		"chests": [
+			{
+				"position": Vector3(0.0, 0.0, 15.0),
+				"drops": {"paper": 5.0, "seal": 2.0}
+			},
+			{
+				"position": Vector3(-14.0, 0.0, -10.0),
+				"drops": {"paper": 4.0, "ink": 14.0}
+			}
+		],
+		"stelae": [
+			{"position": Vector3(-17.5, 0.0, -4.0), "glyph": "雷", "tint": Color(0.78, 0.9, 1.0, 1.0)},
+			{"position": Vector3(17.5, 0.0, -4.5), "glyph": "霆", "tint": Color(0.74, 0.86, 1.0, 1.0)},
+			{"position": Vector3(-12.5, 0.0, 15.5), "glyph": "纹", "tint": Color(0.9, 0.96, 1.0, 1.0)},
+			{"position": Vector3(13.0, 0.0, 15.0), "glyph": "震", "tint": Color(0.84, 0.92, 1.0, 1.0)},
+			{"position": Vector3(0.0, 0.0, -16.5), "glyph": "库", "tint": Color(0.68, 0.8, 0.98, 1.0)}
+		],
+		"scroll_racks": [
+			{"position": Vector3(-10.5, 0.0, -14.5), "yaw": 18.0},
+			{"position": Vector3(10.5, 0.0, -14.5), "yaw": -18.0},
+			{"position": Vector3(-15.5, 0.0, 3.5), "yaw": 46.0},
+			{"position": Vector3(15.5, 0.0, 3.5), "yaw": -46.0},
+			{"position": Vector3(0.0, 0.0, 10.5), "yaw": 0.0}
+		],
+		"ink_pools": [
+			{"position": Vector3(-12.5, 0.0, 10.0), "radius": 1.2, "tint": Color(0.42, 0.72, 0.96, 1.0)},
+			{"position": Vector3(12.5, 0.0, 10.0), "radius": 1.2, "tint": Color(0.58, 0.74, 1.0, 1.0)},
+			{"position": Vector3(0.0, 0.0, -15.0), "radius": 1.45, "tint": Color(0.74, 0.84, 1.0, 1.0)}
+		],
+		"brush_pickups": [
+			Vector3(-8.5, 0.0, -2.5),
+			Vector3(8.5, 0.0, -2.5)
+		],
+		"break_beacon_position": Vector3(0.0, 0.0, 1.0),
+		"utility_pickups": [
+			{"position": Vector3(-13.5, 0.0, -13.0), "supply_id": "fury"},
+			{"position": Vector3(13.5, 0.0, -13.0), "supply_id": "magnet"}
 		]
 	}
 }
@@ -573,7 +666,7 @@ func _boss_spawn_reveal_detail(stage_index: int) -> String:
 
 func _boss_defeat_reveal_title(completed_bosses: int) -> String:
 	if completed_bosses >= BOSS_SPAWN_TIMES.size():
-		return "Both scroll lords have fallen" if _is_english() else "两位卷主皆已崩散"
+		return "All scroll lords have fallen" if _is_english() else "本卷卷主皆已崩散"
 	return "The deeper layer unfolds" if _is_english() else "更深一层正在翻开"
 
 
@@ -609,6 +702,18 @@ func _chamber_interlude_options() -> Array[Dictionary]:
 			{"id": "reward", "label": "奖励 · 简库拓片「%s」" % reward_pair},
 			{"id": "event", "label": "异事 · 封钥借契"},
 			{"id": "recovery", "label": "修整 · 守灯静读"}
+		]
+	if _is_thunder_vault_interlude(next_chamber_id):
+		if _is_english():
+			return [
+				{"id": "reward", "label": "Reward · Storm Etching %s" % reward_radical},
+				{"id": "event", "label": "Event · Vault Bargain"},
+				{"id": "recovery", "label": "Recovery · Grounding Ward"}
+			]
+		return [
+			{"id": "reward", "label": "奖励 · 雷纹拓笔「%s」" % reward_radical},
+			{"id": "event", "label": "异事 · 伏雷换契"},
+			{"id": "recovery", "label": "修整 · 伏纹稳息"}
 		]
 	if _is_english():
 		return [
@@ -654,6 +759,10 @@ func _chamber_interlude_next_chamber_id() -> String:
 
 func _is_slip_archive_interlude(next_chamber_id: String) -> bool:
 	return next_chamber_id == "slip_archive"
+
+
+func _is_thunder_vault_interlude(next_chamber_id: String) -> bool:
+	return next_chamber_id == "thunder_vault"
 
 
 func _grant_interlude_radicals(radicals: Array[String]) -> void:
@@ -1488,6 +1597,24 @@ func _chamber_interlude_body(next_wave: int) -> String:
 			int(round(CHAMBER_ARCHIVE_EVENT_FURY_DURATION)),
 			int(round(CHAMBER_ARCHIVE_REST_HEAL_RATIO * 100.0)),
 			int(round(CHAMBER_ARCHIVE_REST_BRUSH_DURATION))
+		]
+	if _is_thunder_vault_interlude(next_chamber_id):
+		if _is_english():
+			return "The current scroll lord is gone and the chamber has gone quiet. The run is about to shift into %s.\n\nThunder Vault now swaps in a colder chamber choice:\nReward · Storm Etching: carry radical %s and enter with %d s of brush haste.\nEvent · Vault Bargain: enter with %d s of Swift Edict already running.\nRecovery · Grounding Ward: restore %d%% vitality, clear stun, and carry %d s of paper ward into the next chamber." % [
+				next_chamber_name,
+				reward_radical,
+				int(round(CHAMBER_VAULT_REWARD_BRUSH_DURATION)),
+				int(round(CHAMBER_VAULT_EVENT_FURY_DURATION)),
+				int(round(CHAMBER_VAULT_REST_HEAL_RATIO * 100.0)),
+				int(round(CHAMBER_VAULT_REST_WARD_DURATION))
+			]
+		return "当前卷主已散，房间也暂时清空，下一段会推入「%s」。\n\n雷纹内库会先换成更贴近 source 的专属卷间抉择：\n奖励 · 雷纹拓笔：带走偏旁「%s」，并带着 %d 秒文笔提速入场。\n异事 · 伏雷换契：下一段会先带着 %d 秒疾书令闯入雷纹内库。\n修整 · 伏纹稳息：先回复 %d%% 气血、解除眩晕，并把 %d 秒纸域护势带进下一段。" % [
+			next_chamber_name,
+			reward_radical,
+			int(round(CHAMBER_VAULT_REWARD_BRUSH_DURATION)),
+			int(round(CHAMBER_VAULT_EVENT_FURY_DURATION)),
+			int(round(CHAMBER_VAULT_REST_HEAL_RATIO * 100.0)),
+			int(round(CHAMBER_VAULT_REST_WARD_DURATION))
 		]
 	if _is_english():
 		return "The first scroll lord is gone and the chamber has gone quiet. The run is about to shift into %s.\n\nCheck the next push below, then choose one:\nReward keeps radical %s and lifts paper / seal drops through the next chamber.\nEvent carries a Scroll Echo forward so pressure enemies echo extra paper and elites can drop %d s of Swift Edict until the next scroll lord.\nRecovery restores %d%% vitality, clears stun, and grants %d s of brush haste now, then repeats a smaller %d%% recovery echo on later wave pushes." % [
@@ -3670,7 +3797,7 @@ func _on_boss_defeated(world_position: Vector3) -> void:
 			"定",
 			3.35
 		)
-		hud.set_tip("Both scroll lords have collapsed. The chapter goal is complete, and you can keep fighting to test the build ceiling." if _is_english() else "本卷两位卷主都已崩散，章节目标完成。继续战斗可测试成长上限。")
+		hud.set_tip("All scroll lords have collapsed. The chapter goal is complete, and you can keep fighting to test the build ceiling." if _is_english() else "本卷卷主都已崩散，章节目标完成。继续战斗可测试成长上限。")
 		_log_battle_event("Scroll I Secured · Bosses gone" if _is_english() else "残卷一暂定 · 卷主尽散", Color(1.0, 0.88, 0.58, 1.0))
 		_set_soundtrack("mosslightCanopy", "残卷暂定", true, true)
 		_show_hero_callout("chapter_complete", 3.2)
@@ -4217,18 +4344,19 @@ func _on_hud_chamber_interlude_selected(choice_id: String) -> void:
 		return
 	var next_chamber_id := String(chamber_interlude_offer.get("next_chamber_id", current_chamber_id))
 	var is_archive_interlude := _is_slip_archive_interlude(next_chamber_id)
+	var is_vault_interlude := _is_thunder_vault_interlude(next_chamber_id)
 	var reward_radical := String(chamber_interlude_offer.get("reward_radical", "日"))
 	var reserve_radical := String(chamber_interlude_offer.get("reserve_radical", reward_radical))
 
 	match choice_id:
 		"reward":
 			var reward_color := Color(Session.RADICAL_COLORS.get(reward_radical, Color(0.94, 0.72, 0.4, 1.0)))
-			_arm_chamber_modifier("reward_supply")
-			var granted_radicals: Array[String] = [reward_radical]
-			if is_archive_interlude and reserve_radical != reward_radical:
-				granted_radicals.append(reserve_radical)
-			_grant_interlude_radicals(granted_radicals)
 			if is_archive_interlude:
+				_arm_chamber_modifier("reward_supply")
+				var granted_radicals: Array[String] = [reward_radical]
+				if reserve_radical != reward_radical:
+					granted_radicals.append(reserve_radical)
+				_grant_interlude_radicals(granted_radicals)
 				var reward_bundle := reward_radical if reserve_radical == reward_radical else "%s%s" % [reward_radical, reserve_radical]
 				hud.show_banner(
 					("Archive Rubbing  Radical %s" if _is_english() else "简库拓片  偏旁「%s」") % reward_bundle,
@@ -4240,7 +4368,26 @@ func _on_hud_chamber_interlude_selected(choice_id: String) -> void:
 					("Between Chambers · Archive Rubbing %s" if _is_english() else "卷间抉择 · 简库拓片 %s") % reward_bundle,
 					reward_color
 				)
+			elif is_vault_interlude:
+				_grant_interlude_radicals([reward_radical])
+				if is_instance_valid(player):
+					player.apply_brush_haste(CHAMBER_VAULT_REWARD_BRUSH_DURATION)
+				hud.show_banner(
+					("Storm Etching  Radical %s" if _is_english() else "雷纹拓笔  偏旁「%s」") % reward_radical,
+					reward_color,
+					1.9
+				)
+				hud.set_tip(
+					("Storm etching secured. `%s` now enters Thunder Vault, and the room opens with %d s of brush haste." if _is_english() else "雷纹拓笔已经定下，偏旁「%s」会一并带进雷纹内库，而且开场先带着 %d 秒文笔提速。")
+					% [reward_radical, int(round(CHAMBER_VAULT_REWARD_BRUSH_DURATION))]
+				)
+				_log_battle_event(
+					("Between Chambers · Storm Etching %s" if _is_english() else "卷间抉择 · 雷纹拓笔 %s") % reward_radical,
+					reward_color
+				)
 			else:
+				_arm_chamber_modifier("reward_supply")
+				_grant_interlude_radicals([reward_radical])
 				hud.show_banner(
 					("Radical Cache  Next chamber drops rise" if _is_english() else "偏旁补给  下一段残纸更盛"),
 					reward_color,
@@ -4249,8 +4396,8 @@ func _on_hud_chamber_interlude_selected(choice_id: String) -> void:
 				hud.set_tip(("Radical supply secured. `%s` now enters the next chamber, and enemy drops there will carry more paper and seals." if _is_english() else "偏旁补给已经带上，「%s」会跟着你继续入深层，下一段敌人也会带来更多残纸和战印。") % reward_radical)
 				_log_battle_event(("Between Chambers · Radical supply %s" if _is_english() else "卷间抉择 · 偏旁补给 %s") % reward_radical, reward_color)
 		"event":
-			_arm_scroll_echo_modifier()
 			if is_archive_interlude:
+				_arm_scroll_echo_modifier()
 				if is_instance_valid(player):
 					player.apply_fury_haste(CHAMBER_ARCHIVE_EVENT_FURY_DURATION)
 				hud.show_banner(
@@ -4266,7 +4413,24 @@ func _on_hud_chamber_interlude_selected(choice_id: String) -> void:
 					"Between Chambers · Latch Bargain armed" if _is_english() else "卷间抉择 · 封钥借契已经挂载",
 					Color(0.96, 0.62, 0.34, 1.0)
 				)
+			elif is_vault_interlude:
+				if is_instance_valid(player):
+					player.apply_fury_haste(CHAMBER_VAULT_EVENT_FURY_DURATION)
+				hud.show_banner(
+					("Vault Bargain  Swift Edict %d s" if _is_english() else "伏雷换契  疾书令 %d 秒") % int(round(CHAMBER_VAULT_EVENT_FURY_DURATION)),
+					Color(0.72, 0.82, 1.0, 1.0),
+					1.95
+				)
+				hud.set_tip(
+					("Vault bargain sealed. Thunder Vault opens with %d s of Swift Edict already active." if _is_english() else "伏雷换契已经定下：雷纹内库开场就会先带着 %d 秒疾书令。")
+					% int(round(CHAMBER_VAULT_EVENT_FURY_DURATION))
+				)
+				_log_battle_event(
+					"Between Chambers · Vault Bargain armed" if _is_english() else "卷间抉择 · 伏雷换契已经挂载",
+					Color(0.72, 0.82, 1.0, 1.0)
+				)
 			else:
+				_arm_scroll_echo_modifier()
 				hud.show_banner(
 					"Scroll Echo Armed" if _is_english() else "残卷回响已挂载",
 					Color(0.96, 0.62, 0.34, 1.0),
@@ -4282,36 +4446,55 @@ func _on_hud_chamber_interlude_selected(choice_id: String) -> void:
 					Color(0.96, 0.62, 0.34, 1.0)
 				)
 		"recovery":
-			_arm_chamber_modifier("short_rest")
-			if is_instance_valid(player):
-				var heal_ratio := CHAMBER_ARCHIVE_REST_HEAL_RATIO if is_archive_interlude else CHAMBER_INTERLUDE_REST_HEAL_RATIO
-				var brush_duration := CHAMBER_ARCHIVE_REST_BRUSH_DURATION if is_archive_interlude else CHAMBER_INTERLUDE_REST_BRUSH_DURATION
-				player.heal(player.max_health * heal_ratio)
-				if player.has_method("clear_stun"):
-					player.clear_stun()
-				player.apply_brush_haste(brush_duration)
-			var rest_heal_ratio := CHAMBER_ARCHIVE_REST_HEAL_RATIO if is_archive_interlude else CHAMBER_INTERLUDE_REST_HEAL_RATIO
-			var rest_brush_duration := CHAMBER_ARCHIVE_REST_BRUSH_DURATION if is_archive_interlude else CHAMBER_INTERLUDE_REST_BRUSH_DURATION
 			if is_archive_interlude:
+				_arm_chamber_modifier("short_rest")
+				if is_instance_valid(player):
+					player.heal(player.max_health * CHAMBER_ARCHIVE_REST_HEAL_RATIO)
+					if player.has_method("clear_stun"):
+						player.clear_stun()
+					player.apply_brush_haste(CHAMBER_ARCHIVE_REST_BRUSH_DURATION)
 				hud.show_banner(
-					("Lamp Respite  Restore %d%% Vitality" if _is_english() else "守灯静读  回复 %d%% 气血") % int(round(rest_heal_ratio * 100.0)),
+					("Lamp Respite  Restore %d%% Vitality" if _is_english() else "守灯静读  回复 %d%% 气血") % int(round(CHAMBER_ARCHIVE_REST_HEAL_RATIO * 100.0)),
 					Color(0.62, 0.9, 0.74, 1.0),
 					1.95
 				)
-				hud.set_tip(("Lamp respite restores vitality, clears stun, and carries %d s of brush haste into the archive before later wave pushes echo smaller recovery." if _is_english() else "守灯静读会先回气、解眩晕，并把 %d 秒文笔提速带进简库中庭；后续字潮推进仍会再补一小口气。") % int(round(rest_brush_duration)))
+				hud.set_tip(("Lamp respite restores vitality, clears stun, and carries %d s of brush haste into the archive before later wave pushes echo smaller recovery." if _is_english() else "守灯静读会先回气、解眩晕，并把 %d 秒文笔提速带进简库中庭；后续字潮推进仍会再补一小口气。") % int(round(CHAMBER_ARCHIVE_REST_BRUSH_DURATION)))
 				_log_battle_event(
-					("Between Chambers · Lamp Respite %d%%" if _is_english() else "卷间抉择 · 守灯静读 %d%%") % int(round(rest_heal_ratio * 100.0)),
+					("Between Chambers · Lamp Respite %d%%" if _is_english() else "卷间抉择 · 守灯静读 %d%%") % int(round(CHAMBER_ARCHIVE_REST_HEAL_RATIO * 100.0)),
 					Color(0.62, 0.9, 0.74, 1.0)
 				)
-			else:
+			elif is_vault_interlude:
+				if is_instance_valid(player):
+					player.heal(player.max_health * CHAMBER_VAULT_REST_HEAL_RATIO)
+					if player.has_method("clear_stun"):
+						player.clear_stun()
+					if player.has_method("apply_paper_ward"):
+						player.apply_paper_ward(CHAMBER_VAULT_REST_WARD_DURATION)
 				hud.show_banner(
-					("Short Rest  Restore %d%% Vitality" if _is_english() else "歇笔回气  回复 %d%% 气血") % int(round(rest_heal_ratio * 100.0)),
+					("Grounding Ward  Restore %d%% Vitality" if _is_english() else "伏纹稳息  回复 %d%% 气血") % int(round(CHAMBER_VAULT_REST_HEAL_RATIO * 100.0)),
+					Color(0.72, 0.9, 1.0, 1.0),
+					1.95
+				)
+				hud.set_tip(("Grounding ward restores vitality, clears stun, and carries %d s of paper ward into Thunder Vault." if _is_english() else "伏纹稳息会先回气、解眩晕，并把 %d 秒纸域护势带进雷纹内库。") % int(round(CHAMBER_VAULT_REST_WARD_DURATION)))
+				_log_battle_event(
+					("Between Chambers · Grounding Ward %d%%" if _is_english() else "卷间抉择 · 伏纹稳息 %d%%") % int(round(CHAMBER_VAULT_REST_HEAL_RATIO * 100.0)),
+					Color(0.72, 0.9, 1.0, 1.0)
+				)
+			else:
+				_arm_chamber_modifier("short_rest")
+				if is_instance_valid(player):
+					player.heal(player.max_health * CHAMBER_INTERLUDE_REST_HEAL_RATIO)
+					if player.has_method("clear_stun"):
+						player.clear_stun()
+					player.apply_brush_haste(CHAMBER_INTERLUDE_REST_BRUSH_DURATION)
+				hud.show_banner(
+					("Short Rest  Restore %d%% Vitality" if _is_english() else "歇笔回气  回复 %d%% 气血") % int(round(CHAMBER_INTERLUDE_REST_HEAL_RATIO * 100.0)),
 					Color(0.62, 0.9, 0.74, 1.0),
 					1.9
 				)
-				hud.set_tip(("Short rest restores vitality, clears stun, and gives %d s of brush haste now; later wave pushes in the next chamber also echo smaller recovery." if _is_english() else "歇笔修整会先回气、解眩晕，并补上 %d 秒文笔提速；下一段后续字潮推进还会再补一小口气。") % int(round(rest_brush_duration)))
+				hud.set_tip(("Short rest restores vitality, clears stun, and gives %d s of brush haste now; later wave pushes in the next chamber also echo smaller recovery." if _is_english() else "歇笔修整会先回气、解眩晕，并补上 %d 秒文笔提速；下一段后续字潮推进还会再补一小口气。") % int(round(CHAMBER_INTERLUDE_REST_BRUSH_DURATION)))
 				_log_battle_event(
-					("Between Chambers · Short Rest %d%%" if _is_english() else "卷间抉择 · 歇笔回气 %d%%") % int(round(rest_heal_ratio * 100.0)),
+					("Between Chambers · Short Rest %d%%" if _is_english() else "卷间抉择 · 歇笔回气 %d%%") % int(round(CHAMBER_INTERLUDE_REST_HEAL_RATIO * 100.0)),
 					Color(0.62, 0.9, 0.74, 1.0)
 				)
 		_:

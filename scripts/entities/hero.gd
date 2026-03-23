@@ -4,6 +4,7 @@ const CJKFont := preload("res://scripts/core/cjk_font.gd")
 const BRUSH_HASTE_SPEED_BONUS := 1.85
 const FURY_HASTE_SPEED_MULTIPLIER := 1.18
 const FURY_ATTACK_RATE_MULTIPLIER := 1.28
+const PAPER_WARD_DAMAGE_REDUCTION := 0.24
 
 signal health_changed(current: float, maximum: float)
 signal defeated
@@ -66,6 +67,7 @@ var stealth_time: float = 0.0
 var bush_lock_time: float = 0.0
 var brush_haste_time: float = 0.0
 var fury_time: float = 0.0
+var paper_ward_time: float = 0.0
 var slash_anim_time: float = 0.0
 var stun_time: float = 0.0
 var resolve_active: bool = false
@@ -167,6 +169,7 @@ func _physics_process(delta: float) -> void:
 	bush_lock_time = max(bush_lock_time - delta, 0.0)
 	brush_haste_time = max(brush_haste_time - delta, 0.0)
 	fury_time = max(fury_time - delta, 0.0)
+	paper_ward_time = max(paper_ward_time - delta, 0.0)
 	slash_anim_time = max(slash_anim_time - delta, 0.0)
 	stun_time = max(stun_time - delta, 0.0)
 
@@ -217,6 +220,13 @@ func apply_fury_haste(duration: float) -> void:
 	_update_visual_state()
 
 
+func apply_paper_ward(duration: float) -> void:
+	if is_dead:
+		return
+	paper_ward_time = max(paper_ward_time, duration)
+	_update_visual_state()
+
+
 func can_hide_in_bush() -> bool:
 	return bush_lock_time <= 0.0 and stealth_time <= 0.0 and not is_dead
 
@@ -234,7 +244,8 @@ func is_hidden_in_bush() -> bool:
 func receive_damage(amount: float) -> void:
 	if is_dead or invulnerability_time > 0.0:
 		return
-	var adjusted_damage: float = amount * max(0.12, 1.0 - damage_reduction_ratio)
+	var total_damage_reduction := damage_reduction_ratio + (PAPER_WARD_DAMAGE_REDUCTION if paper_ward_time > 0.0 else 0.0)
+	var adjusted_damage: float = amount * max(0.12, 1.0 - min(total_damage_reduction, 0.82))
 	health = max(0.0, health - adjusted_damage)
 	invulnerability_time = 0.42
 	health_changed.emit(health, max_health)
@@ -651,6 +662,10 @@ func _update_visual_state() -> void:
 	elif brush_haste_time > 0.0:
 		current_accent = current_accent.lightened(0.16)
 		current_trim = current_trim.lightened(0.08)
+	elif paper_ward_time > 0.0:
+		current_body = current_body.lerp(Color(0.88, 0.94, 1.0, 1.0), 0.18)
+		current_accent = current_accent.lerp(Color(0.74, 0.88, 1.0, 1.0), 0.42)
+		current_trim = current_trim.lerp(Color(0.92, 0.96, 1.0, 1.0), 0.32)
 
 	body_material.albedo_color = current_body
 	accent_material.albedo_color = current_accent
