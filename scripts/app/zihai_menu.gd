@@ -1032,6 +1032,29 @@ func _build_ui() -> void:
 			_resolve_menu_action(action_id)
 		))
 
+	var progression_panel := PanelContainer.new()
+	progression_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	progression_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.08, 0.12, 0.16, 0.72), Color(0.74, 0.56, 0.28, 0.34)))
+	detail_box.add_child(progression_panel)
+
+	var progression_margin := MarginContainer.new()
+	progression_margin.add_theme_constant_override("margin_left", _i(16))
+	progression_margin.add_theme_constant_override("margin_top", _i(16))
+	progression_margin.add_theme_constant_override("margin_right", _i(16))
+	progression_margin.add_theme_constant_override("margin_bottom", _i(16))
+	progression_panel.add_child(progression_margin)
+
+	var progression_box := VBoxContainer.new()
+	progression_box.add_theme_constant_override("separation", _i(10))
+	progression_margin.add_child(progression_box)
+	progression_box.add_child(_make_label(String(page_content.get("progression_title", "残卷路线")), 18, Color(1.0, 0.92, 0.8, 1.0)))
+	progression_box.add_child(_make_label(String(page_content.get("progression_summary", "把开卷补笔、中盘续写与砚台磨词顺序先记住，进入战斗后更容易判断本轮 build 该补哪一笔。")), 15, Color(0.88, 0.92, 0.96, 0.94)))
+
+	detail_progression_cards_root = VBoxContainer.new()
+	detail_progression_cards_root.add_theme_constant_override("separation", _i(8))
+	progression_box.add_child(detail_progression_cards_root)
+	progression_box.add_child(_make_label(String(page_content.get("progression_note", "当前只先保留 web 原型的 build 顺序与路线提示，Godot 战斗内还没有真正的路线权重修正。")), 14, Color(0.82, 0.9, 1.0, 0.88)))
+
 	_build_character_archive_overlay()
 	_build_recipe_atlas_overlay()
 	_build_enemy_archive_overlay()
@@ -3184,6 +3207,7 @@ func _refresh_selection(trigger_reaction: bool = false) -> void:
 	if detail_source_skill_body_label != null:
 		detail_source_skill_body_label.text = _build_hero_active_skill_body(selected_data)
 	_populate_detail_build_route_preview(detail_build_route_cards_root, selected_data, accent)
+	_populate_progression_cards(detail_progression_cards_root, selected_data, accent, true)
 
 	var preview_theme := _preview_theme_for_hero(selected_data)
 	var body_color: Color = preview_theme["body"]
