@@ -1,6 +1,7 @@
 extends CanvasLayer
 
 const CJKFont := preload("res://scripts/core/cjk_font.gd")
+const FrontEndContent := preload("res://scripts/core/front_end_content.gd")
 const HanziLocalization := preload("res://scripts/core/hanzi_localization.gd")
 const EVENT_LOG_LIMIT := 12
 const EVENT_LOG_DESKTOP_VISIBLE := 6
@@ -491,7 +492,9 @@ func _localize_text(text: String) -> String:
 		return text
 	if text.begins_with("• "):
 		return "• %s" % _localize_text(text.substr(2))
-	return String(UI_EN.get(text, text))
+	if UI_EN.has(text):
+		return String(UI_EN.get(text, text))
+	return FrontEndContent.localize_menu_text(text, true)
 
 
 func _localized_hero_data(hero_data: Dictionary) -> Dictionary:
@@ -1029,11 +1032,12 @@ func _build_pause_state_body(elapsed: float, kills: int, threat: int, level: int
 func _build_game_over_state_body(summary: String, elapsed: float, kills: int, threat: int, level: int, leaderboard_view: String) -> String:
 	var lines: Array[String] = []
 	var compact_copy := _should_use_micro_layout() or _should_use_web_tight_layout()
+	var leaderboard_content := FrontEndContent.local_leaderboard_content()
 	var trimmed_summary := summary.strip_edges()
 	if not trimmed_summary.is_empty():
 		lines.append(trimmed_summary)
 		lines.append("")
-	lines.append(("Test Run" if leaderboard_view == "test" else "Main Scroll") if _is_english() else ("本轮试阵" if leaderboard_view == "test" else "本轮残卷"))
+	lines.append(_localize_text(String(leaderboard_content.get("result_label_test" if leaderboard_view == "test" else "result_label_manual", "本轮试阵" if leaderboard_view == "test" else "本轮残卷"))))
 	lines.append(
 		("Time %s  ·  W%d  ·  K%d  ·  Lv.%d" if _is_english() and compact_copy else ("存活 %s  ·  波次 %d  ·  击破 %d  ·  Lv.%d" if compact_copy else ("Time %s" if _is_english() else "存活 %s")))
 		% ([_format_time(elapsed), threat, kills, level] if compact_copy else [_format_time(elapsed)])
@@ -1598,20 +1602,21 @@ func set_game_over(
 		"level": level,
 		"leaderboard_view": normalized_view
 	}
+	var leaderboard_content := FrontEndContent.local_leaderboard_content()
 	state_title_label.text = "The Ink Sea Sinks" if _is_english() else "字海沉没"
 	state_body_label.text = _build_game_over_state_body(summary, elapsed, kills, threat, level, normalized_view)
-	var leaderboard_detail := "This run was written into the main-scroll board. You can rename it here, or leave the field blank to keep the default Player Sigil alias." if _is_english() else "本轮记录已经写入主卷榜。你可以直接改成想显示的名字；留空则保留玩家名帖里的默认署名。"
+	var leaderboard_detail := _localize_text(String(leaderboard_content.get("game_over_alias_detail_manual", "本轮记录已经写入主卷榜。你可以直接改成想显示的名字；留空则保留玩家名帖里的默认署名。")))
 	if normalized_view == "test":
-		leaderboard_detail = "This test run was written into the test board and will not affect the main-scroll ranking. You can rename it here, or leave the field blank to keep the default Player Sigil alias." if _is_english() else "本轮试阵记录已经写入试阵榜，不会影响主卷榜排序。你可以直接改成想显示的名字；留空则保留玩家名帖里的默认署名。"
+		leaderboard_detail = _localize_text(String(leaderboard_content.get("game_over_alias_detail_test", "本轮试阵记录已经写入试阵榜，不会影响主卷榜排序。你可以直接改成想显示的名字；留空则保留玩家名帖里的默认署名。")))
 	_show_state_name_editor(
-		"Run Alias" if _is_english() else "战绩署名",
+		_localize_text(String(leaderboard_content.get("run_alias_title", "战绩署名"))),
 		leaderboard_detail
 	)
 	_configure_state_button(state_primary_button, "Restart Run" if _is_english() else "重新开始", Callable(self, "_emit_restart"))
 	_configure_state_button(state_secondary_button, "Return to Menu" if _is_english() else "返回菜单", Callable(self, "_emit_return_menu"))
 	_configure_state_button(
 		state_tertiary_button,
-		("View %s" % ("Test Board" if normalized_view == "test" else "Main Board")) if _is_english() else ("查看%s" % ("试阵榜" if normalized_view == "test" else "主卷榜")),
+		_localize_text(String(leaderboard_content.get("view_board_format", "查看%s"))) % _localize_text(String(leaderboard_content.get("test_board" if normalized_view == "test" else "main_board", "试阵榜" if normalized_view == "test" else "主卷榜"))),
 		Callable(self, "_show_local_leaderboard")
 	)
 	_hide_state_button(state_quaternary_button)
@@ -1658,22 +1663,23 @@ func _refresh_local_leaderboard_overlay() -> void:
 	state_mode = "leaderboard"
 	_hide_state_preview()
 	local_leaderboard_view = _normalize_local_leaderboard_view(local_leaderboard_view)
+	var leaderboard_content := FrontEndContent.local_leaderboard_content()
 	var manual_count := Session.get_local_leaderboard_count("manual")
 	var test_count := Session.get_local_leaderboard_count("test")
-	state_title_label.text = ("Local Main Board" if local_leaderboard_view == "manual" else "Local Test Board") if _is_english() else ("本地主卷榜" if local_leaderboard_view == "manual" else "本地试阵榜")
+	state_title_label.text = _localize_text(String(leaderboard_content.get("local_title_manual" if local_leaderboard_view == "manual" else "local_title_test", "本地主卷榜" if local_leaderboard_view == "manual" else "本地试阵榜")))
 	state_body_label.text = _build_local_leaderboard_text(local_leaderboard_view)
-	var leaderboard_detail := "This view shows the latest entry written into the main-scroll board. If you just finished a shortcut test run, switch to the test board first before renaming it." if _is_english() else "这里显示最近写入主卷榜的那条战绩；如果刚结束的是试阵捷径，可以先切到试阵榜再改名。"
+	var leaderboard_detail := _localize_text(String(leaderboard_content.get("latest_alias_detail_manual", "这里显示最近写入主卷榜的那条战绩；如果刚结束的是试阵捷径，可以先切到试阵榜再改名。")))
 	if local_leaderboard_view == "test":
-		leaderboard_detail = "This view shows the latest entry written into the test board. Test records stay separate from the main-scroll board." if _is_english() else "这里显示最近写入试阵榜的那条战绩；试阵记录会和主卷榜分开保留。"
+		leaderboard_detail = _localize_text(String(leaderboard_content.get("latest_alias_detail_test", "这里显示最近写入试阵榜的那条战绩；试阵记录会和主卷榜分开保留。")))
 	_show_state_name_editor(
-		"Latest Entry Alias" if _is_english() else "最近一条战绩署名",
+		_localize_text(String(leaderboard_content.get("latest_alias_title", "最近一条战绩署名"))),
 		leaderboard_detail
 	)
 	if local_leaderboard_view == "manual":
-		_configure_state_button(state_primary_button, ("Switch to Test Board · %d" if _is_english() else "切到试阵榜 · %d") % test_count, Callable(self, "_show_test_leaderboard"))
+		_configure_state_button(state_primary_button, _localize_text(String(leaderboard_content.get("switch_to_test_format", "切到试阵榜 · %d"))) % test_count, Callable(self, "_show_test_leaderboard"))
 	else:
-		_configure_state_button(state_primary_button, ("Switch to Main Board · %d" if _is_english() else "切到主卷榜 · %d") % manual_count, Callable(self, "_show_manual_leaderboard"))
-	_configure_state_button(state_secondary_button, "Back to Summary" if _is_english() else "返回结算", Callable(self, "_show_game_over_summary"))
+		_configure_state_button(state_primary_button, _localize_text(String(leaderboard_content.get("switch_to_main_format", "切到主卷榜 · %d"))) % manual_count, Callable(self, "_show_manual_leaderboard"))
+	_configure_state_button(state_secondary_button, _localize_text(String(leaderboard_content.get("back_to_summary", "返回结算"))), Callable(self, "_show_game_over_summary"))
 	_configure_state_button(state_tertiary_button, "Restart Run" if _is_english() else "重新开始", Callable(self, "_emit_restart"))
 	_configure_state_button(state_quaternary_button, "Return to Menu" if _is_english() else "返回菜单", Callable(self, "_emit_return_menu"))
 	_hide_state_button(state_quinary_button)
@@ -1791,28 +1797,29 @@ func _toggle_enemy_detail() -> void:
 func _build_local_leaderboard_text(view: String = "manual") -> String:
 	var normalized_view := _normalize_local_leaderboard_view(view)
 	var entries: Array[Dictionary] = Session.get_local_leaderboard(5, normalized_view)
+	var leaderboard_content := FrontEndContent.local_leaderboard_content()
 	if entries.is_empty():
 		if normalized_view == "test":
-			return "There are no test-run records yet. Use the wave 10 or wave 20 shortcut once and this board will fill in separately." if _is_english() else "当前还没有试阵记录。用第 10 / 20 波捷径打一轮后，这里会单独留下试阵榜。"
-		return "There are no main-scroll results to show yet. Finish a true run from wave 1 and your record will appear here." if _is_english() else "当前还没有可展示的主卷战绩。下一次从第 1 波开卷后，这里会留下你的残卷记录。"
+			return _localize_text(String(leaderboard_content.get("empty_test", "当前还没有试阵记录。用第 10 / 20 波捷径打一轮后，这里会单独留下试阵榜。")))
+		return _localize_text(String(leaderboard_content.get("empty_manual", "当前还没有可展示的主卷战绩。下一次从第 1 波真正开卷后，这里会留下你的记录。")))
 
 	var lines: Array[String] = []
 	if normalized_view == "test":
-		lines.append("Test runs keep wave 10 and wave 20 shortcuts on a separate board." if _is_english() else "试阵榜会单独记录第 10 / 20 波捷径，不与主卷榜混排。")
+		lines.append(_localize_text(String(leaderboard_content.get("intro_test", "试阵榜会单独记录第 10 / 20 波捷径，不与主卷榜混排。"))))
 	else:
-		lines.append("The main-scroll board only tracks full runs that begin at wave 1." if _is_english() else "主卷榜只统计从第 1 波真正开卷的正式战绩。")
+		lines.append(_localize_text(String(leaderboard_content.get("intro_manual", "主卷榜只统计从第 1 波真正开卷的正式战绩。"))))
 	lines.append("")
 	for index in range(entries.size()):
 		var entry: Dictionary = entries[index]
-		var run_label := ("Test W%d" if _is_english() else "试阵 W%d") % int(entry.get("start_wave", 1))
+		var run_label := _localize_text(String(leaderboard_content.get("test_run_format", "试阵 W%d"))) % int(entry.get("start_wave", 1))
 		if normalized_view == "manual":
-			run_label = ("Completed" if bool(entry.get("chapter_complete", false)) else "Scroll") if _is_english() else ("定卷" if bool(entry.get("chapter_complete", false)) else "残卷")
-		var bosses_label := "Bosses" if _is_english() else "卷主"
-		var threat_label := "Wave" if _is_english() else "波次"
-		var kills_label := "Kills" if _is_english() else "击破"
-		var elapsed_label := "Time" if _is_english() else "存活"
+			run_label = _localize_text(String(leaderboard_content.get("manual_completed" if bool(entry.get("chapter_complete", false)) else "manual_scroll", "定卷" if bool(entry.get("chapter_complete", false)) else "残卷")))
+		var bosses_label := _localize_text(String(leaderboard_content.get("bosses_label", "卷主")))
+		var threat_label := _localize_text(String(leaderboard_content.get("wave_label", "波次")))
+		var kills_label := _localize_text(String(leaderboard_content.get("kills_label", "击破")))
+		var elapsed_label := _localize_text(String(leaderboard_content.get("time_label", "存活")))
 		lines.append(
-			"%d. %s  %s  %s %d  %s %d  %s %d  %s %s" % [
+			String(leaderboard_content.get("entry_format", "%d. %s  %s  %s %d  %s %d  %s %d  %s %s")) % [
 				index + 1,
 				_format_leaderboard_identity(entry),
 				run_label,
@@ -1828,67 +1835,73 @@ func _build_local_leaderboard_text(view: String = "manual") -> String:
 		)
 		var detail_line := _build_local_leaderboard_detail_line(entry)
 		if not detail_line.is_empty():
-			lines.append("   %s" % detail_line)
+			lines.append(String(leaderboard_content.get("detail_prefix_format", "   %s")) % detail_line)
 		var recorded_line := _build_local_leaderboard_recorded_line(entry)
 		if not recorded_line.is_empty():
-			lines.append("   %s" % recorded_line)
+			lines.append(String(leaderboard_content.get("detail_prefix_format", "   %s")) % recorded_line)
 		var time_zone_line := _build_local_leaderboard_time_zone_line(entry)
 		if not time_zone_line.is_empty():
-			lines.append("   %s" % time_zone_line)
+			lines.append(String(leaderboard_content.get("detail_prefix_format", "   %s")) % time_zone_line)
+		lines.append("")
+	while not lines.is_empty() and String(lines[lines.size() - 1]).is_empty():
+		lines.remove_at(lines.size() - 1)
 	return "\n".join(lines)
 
 
 func _build_local_leaderboard_detail_line(entry: Dictionary) -> String:
+	var leaderboard_content := FrontEndContent.local_leaderboard_content()
 	var segments: Array[String] = []
 
 	var radicals_text := _summarize_run_counts(entry.get("radicals", {}), Session.RADICAL_ORDER, "radical")
 	if not radicals_text.is_empty():
-		segments.append("Radicals %s" % radicals_text if _is_english() else "偏旁 %s" % radicals_text)
+		segments.append(_localize_text(String(leaderboard_content.get("detail_radicals", "偏旁 %s"))) % radicals_text)
 
 	var recipes_text := _summarize_run_counts(entry.get("recipes", {}), Session.RECIPE_ORDER, "recipe")
 	if not recipes_text.is_empty():
-		segments.append("Glyphs %s" % recipes_text if _is_english() else "成字 %s" % recipes_text)
+		segments.append(_localize_text(String(leaderboard_content.get("detail_glyphs", "成字 %s"))) % recipes_text)
 
 	var words_text := _summarize_run_counts(entry.get("words", {}), Session.WORD_ORDER, "word")
 	if not words_text.is_empty():
-		segments.append("Phrases %s" % words_text if _is_english() else "词技 %s" % words_text)
+		segments.append(_localize_text(String(leaderboard_content.get("detail_phrases", "词技 %s"))) % words_text)
 
 	var blade_level: int = int(entry.get("blade_level", 0))
 	if blade_level > 0:
-		var blade_label := "Blade Arc" if String(entry.get("hero_id", "scholar")) == "xia" else "Brush Edge"
-		if not _is_english():
-			blade_label = "剑势" if String(entry.get("hero_id", "scholar")) == "xia" else "笔锋"
-		segments.append("%s Lv.%d" % [blade_label, blade_level])
+		var blade_key := "detail_blade_xia" if String(entry.get("hero_id", "scholar")) == "xia" else "detail_blade_scholar"
+		var blade_label := _localize_text(String(leaderboard_content.get(blade_key, "")))
+		segments.append(String(leaderboard_content.get("detail_blade_level_format", "%s Lv.%d")) % [blade_label, blade_level])
 
 	var enemy_text := _summarize_enemy_kills(entry.get("enemy_kills", {}))
 	if not enemy_text.is_empty():
-		segments.append("Takedowns %s" % enemy_text if _is_english() else "击倒 %s" % enemy_text)
+		segments.append(_localize_text(String(leaderboard_content.get("detail_takedowns", "击倒 %s"))) % enemy_text)
 
-	return " | ".join(segments)
+	return String(leaderboard_content.get("detail_joiner", " | ")).join(segments)
 
 
 func _build_local_leaderboard_time_zone_line(entry: Dictionary) -> String:
+	var leaderboard_content := FrontEndContent.local_leaderboard_content()
 	var time_zone_text := Session.format_leaderboard_time_zone(entry)
 	if time_zone_text.is_empty():
 		return ""
-	return "Time Zone %s" % time_zone_text if _is_english() else "时区 %s" % time_zone_text
+	return _localize_text(String(leaderboard_content.get("time_zone_format", "时区 %s"))) % time_zone_text
 
 
 func _build_local_leaderboard_recorded_line(entry: Dictionary) -> String:
+	var leaderboard_content := FrontEndContent.local_leaderboard_content()
 	var recorded_date_text := Session.format_leaderboard_recorded_date(entry)
 	if recorded_date_text.is_empty():
 		return ""
-	return "Logged %s" % recorded_date_text if _is_english() else "记录于 %s" % recorded_date_text
+	return _localize_text(String(leaderboard_content.get("recorded_on_format", "记录于 %s"))) % recorded_date_text
 
 
 func _format_leaderboard_identity(entry: Dictionary) -> String:
+	var leaderboard_content := FrontEndContent.local_leaderboard_content()
 	var player_name := String(entry.get("player_name", "")).strip_edges()
-	var hero_name := _localize_text(String(entry.get("hero_name", "书生")).strip_edges())
+	var hero_name := _localize_text(String(entry.get("hero_name", String(leaderboard_content.get("identity_hero_fallback", "书生")))).strip_edges())
 	if player_name.is_empty():
 		return hero_name
 	if hero_name.is_empty():
 		return player_name
-	return "%s · %s" % [player_name, hero_name]
+	return _localize_text(String(leaderboard_content.get("identity_format", "%s · %s"))) % [player_name, hero_name]
 
 
 func _normalize_local_leaderboard_view(view: String) -> String:
@@ -1899,6 +1912,7 @@ func _summarize_run_counts(raw_counts: Variant, order: Array, category: String) 
 	if not (raw_counts is Dictionary):
 		return ""
 
+	var leaderboard_content := FrontEndContent.local_leaderboard_content()
 	var counts := raw_counts as Dictionary
 	var parts: Array[String] = []
 	for key_variant in order:
@@ -1906,10 +1920,10 @@ func _summarize_run_counts(raw_counts: Variant, order: Array, category: String) 
 		var amount: int = int(counts.get(key, 0))
 		if amount <= 0:
 			continue
-		parts.append("%s%d" % [_run_count_label(key, category), amount])
+		parts.append(_localize_text(String(leaderboard_content.get("detail_count_entry_format", "%s%d"))) % [_run_count_label(key, category), amount])
 		if parts.size() >= 3:
 			break
-	return " ".join(parts)
+	return String(leaderboard_content.get("detail_count_joiner", " ")).join(parts)
 
 
 func _run_count_label(key: String, category: String) -> String:
@@ -1926,6 +1940,7 @@ func _summarize_enemy_kills(raw_counts: Variant) -> String:
 	if not (raw_counts is Dictionary):
 		return ""
 
+	var leaderboard_content := FrontEndContent.local_leaderboard_content()
 	var counts := raw_counts as Dictionary
 	var ranked_enemies: Array[Dictionary] = []
 	for enemy_id_variant in Session.ENEMY_ORDER:
@@ -1954,8 +1969,8 @@ func _summarize_enemy_kills(raw_counts: Variant) -> String:
 	for index in range(limit):
 		var item: Dictionary = ranked_enemies[index]
 		var enemy_id := String(item.get("id", "basic"))
-		parts.append("%s%d" % [String(Session.get_enemy_data(enemy_id).get("glyph", enemy_id)), int(item.get("amount", 0))])
-	return " ".join(parts)
+		parts.append(_localize_text(String(leaderboard_content.get("enemy_kill_entry_format", "%s%d"))) % [String(Session.get_enemy_data(enemy_id).get("glyph", enemy_id)), int(item.get("amount", 0))])
+	return String(leaderboard_content.get("enemy_kill_joiner", " ")).join(parts)
 
 
 func _build_ui() -> void:
@@ -3383,7 +3398,8 @@ func _show_state_name_editor(title_text: String, detail_text: String) -> void:
 	state_name_button.visible = true
 	state_name_button.disabled = false
 	state_name_status_label.visible = true
-	state_name_status_label.text = ("Current alias: %s" if _is_english() else "当前署名：%s") % String(last_entry.get("player_name", ""))
+	var leaderboard_content := FrontEndContent.local_leaderboard_content()
+	state_name_status_label.text = _localize_text(String(leaderboard_content.get("alias_status_format", "当前署名：%s"))) % String(last_entry.get("player_name", ""))
 
 
 func _hide_state_name_editor() -> void:
@@ -3420,7 +3436,8 @@ func _save_state_name() -> void:
 		return
 
 	state_name_input.text = resolved_name
-	state_name_status_label.text = ("Current alias: %s" if _is_english() else "当前署名：%s") % resolved_name
+	var leaderboard_content := FrontEndContent.local_leaderboard_content()
+	state_name_status_label.text = _localize_text(String(leaderboard_content.get("alias_status_format", "当前署名：%s"))) % resolved_name
 	if state_mode == "leaderboard":
 		state_body_label.text = _build_local_leaderboard_text(local_leaderboard_view)
 

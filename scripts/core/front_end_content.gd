@@ -940,14 +940,28 @@ const MENU_LEADERBOARD_CONTENT := {
 	"empty_manual": "当前还没有可展示的主卷战绩。下一次从第 1 波真正开卷后，这里会留下你的记录。",
 	"intro_test": "试阵榜会单独记录第 10 / 20 波捷径，不与主卷榜混排。",
 	"intro_manual": "主卷榜只统计从第 1 波真正开卷的正式战绩。",
+	"local_title_manual": "本地主卷榜",
+	"local_title_test": "本地试阵榜",
+	"result_label_manual": "本轮残卷",
+	"result_label_test": "本轮试阵",
 	"sorted_format": "当前排序：%s。",
+	"run_alias_title": "战绩署名",
+	"latest_alias_title": "最近一条战绩署名",
+	"game_over_alias_detail_manual": "本轮记录已经写入主卷榜。你可以直接改成想显示的名字；留空则保留玩家名帖里的默认署名。",
+	"game_over_alias_detail_test": "本轮试阵记录已经写入试阵榜，不会影响主卷榜排序。你可以直接改成想显示的名字；留空则保留玩家名帖里的默认署名。",
+	"latest_alias_detail_manual": "这里显示最近写入主卷榜的那条战绩；如果刚结束的是试阵捷径，可以先切到试阵榜再改名。",
+	"latest_alias_detail_test": "这里显示最近写入试阵榜的那条战绩；试阵记录会和主卷榜分开保留。",
 	"identity_hero_fallback": "书生",
 	"identity_format": "%s · %s",
 	"summary_test": "试阵榜单独收录第 10 / 20 波捷径，方便检查敌潮、build 与 HUD；现在也能在波次 / 击破 / 存活三种排序之间切换，更接近 source 榜单的回看方式。",
 	"summary_manual": "主卷榜只收从第 1 波真正开卷的战绩；现在也能在波次 / 击破 / 存活三种排序之间切换，开局前可以从不同角度回看 route 成果。",
 	"main_board": "主卷榜",
 	"test_board": "试阵榜",
+	"view_board_format": "查看%s",
 	"view_button_count_format": "%s · %d",
+	"switch_to_test_format": "切到试阵榜 · %d",
+	"switch_to_main_format": "切到主卷榜 · %d",
+	"back_to_summary": "返回结算",
 	"sort_wave": "按波次",
 	"sort_kills": "按击破",
 	"sort_time": "按存活",
@@ -976,6 +990,7 @@ const MENU_LEADERBOARD_CONTENT := {
 	"detail_joiner": " | ",
 	"recorded_on_format": "记录于 %s",
 	"time_zone_format": "时区 %s",
+	"alias_status_format": "当前署名：%s",
 	"enemy_kill_entry_format": "%s%d",
 	"enemy_kill_joiner": " "
 }
@@ -1086,10 +1101,24 @@ const MENU_EN_TEXT := {
 	"试阵榜会单独记录第 10 / 20 波捷径，不与主卷榜混排。": "Test runs keep wave 10 and wave 20 shortcuts on a separate board.",
 	"主卷榜只统计从第 1 波真正开卷的正式战绩。": "The main-scroll board only tracks full runs that begin at wave 1.",
 	"当前排序：%s。": "Sorted by %s.",
+	"本地主卷榜": "Local Main Board",
+	"本地试阵榜": "Local Test Board",
+	"本轮残卷": "Main Scroll",
+	"本轮试阵": "Test Run",
+	"战绩署名": "Run Alias",
+	"最近一条战绩署名": "Latest Entry Alias",
+	"本轮记录已经写入主卷榜。你可以直接改成想显示的名字；留空则保留玩家名帖里的默认署名。": "This run was written into the main-scroll board. You can rename it here, or leave the field blank to keep the default Player Sigil alias.",
+	"本轮试阵记录已经写入试阵榜，不会影响主卷榜排序。你可以直接改成想显示的名字；留空则保留玩家名帖里的默认署名。": "This test run was written into the test board and will not affect the main-scroll ranking. You can rename it here, or leave the field blank to keep the default Player Sigil alias.",
+	"这里显示最近写入主卷榜的那条战绩；如果刚结束的是试阵捷径，可以先切到试阵榜再改名。": "This view shows the latest entry written into the main-scroll board. If you just finished a shortcut test run, switch to the test board first before renaming it.",
+	"这里显示最近写入试阵榜的那条战绩；试阵记录会和主卷榜分开保留。": "This view shows the latest entry written into the test board. Test records stay separate from the main-scroll board.",
 	"试阵榜单独收录第 10 / 20 波捷径，方便检查敌潮、build 与 HUD；现在也能在波次 / 击破 / 存活三种排序之间切换，更接近 source 榜单的回看方式。": "The test board keeps wave 10 and wave 20 shortcuts separate so you can inspect enemy mixes, builds, and HUD behavior. It now also pivots between wave, kills, and survival-time ordering so route checks read closer to the source leaderboard.",
 	"主卷榜只收从第 1 波真正开卷的战绩；现在也能在波次 / 击破 / 存活三种排序之间切换，开局前可以从不同角度回看 route 成果。": "The main-scroll board only keeps real runs that start from wave 1. It now also pivots between wave, kills, and survival-time ordering so you can review route outcomes from different angles before the next run.",
 	"主卷榜": "Main Board",
 	"试阵榜": "Test Board",
+	"查看%s": "View %s",
+	"切到试阵榜 · %d": "Switch to Test Board · %d",
+	"切到主卷榜 · %d": "Switch to Main Board · %d",
+	"返回结算": "Back to Summary",
 	"试阵 W%d": "Test Run W%d",
 	"按波次": "Wave",
 	"按击破": "Kills",
@@ -1112,6 +1141,7 @@ const MENU_EN_TEXT := {
 	"笔锋": "Brush Edge",
 	"击倒 %s": "Takedowns %s",
 	"时区 %s": "Time Zone %s",
+	"当前署名：%s": "Current alias: %s",
 	"以下条目对应当前残卷里已经接入的敌人谱系、预警方式与最实用的临场处理思路。": "The entries below describe enemy families, warnings, and counters that are already implemented in the current remnant scroll.",
 	"  预警：%s": "  Warning: %s",
 	"  应对：%s": "  Counter: %s",
@@ -1139,6 +1169,14 @@ const MENU_EN_TEXT := {
 	"%.1f 秒冷却": "%.1fs cooldown",
 	"%s 执笔，落字入卷。": "%s enters the scroll and sets the first glyph."
 }
+
+
+static func localize_menu_text(text: String, english: bool) -> String:
+	if not english:
+		return text
+	if text.begins_with("• "):
+		return "• %s" % localize_menu_text(text.substr(2), true)
+	return String(MENU_EN_TEXT.get(text, text))
 
 
 static func launcher_top_actions() -> Array:
@@ -1207,6 +1245,10 @@ static func menu_archive_content() -> Dictionary:
 
 static func menu_recipe_content() -> Dictionary:
 	return MENU_RECIPE_CONTENT.duplicate(true)
+
+
+static func local_leaderboard_content() -> Dictionary:
+	return MENU_LEADERBOARD_CONTENT.duplicate(true)
 
 
 static func menu_leaderboard_content() -> Dictionary:
