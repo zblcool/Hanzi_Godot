@@ -24,6 +24,7 @@ const UI_EN := {
 	"战场呼应": "Battle Callout",
 	"字潮翻动时，呼应会在这里出现。": "Callouts will appear here when the glyph tide shifts.",
 	"当前目标": "Current Objective",
+	"当前指引": "Active Guide",
 	"尚未收集，或已经全部化字。": "Nothing left to collect, or everything has already fused.",
 	"源稿路线参考": "Source Route Guide",
 	"已成技能字": "Formed Skill Glyphs",
@@ -383,6 +384,10 @@ var objective_route_title_label: Label
 var objective_route_detail_label: Label
 var objective_stage_label: Label
 var objective_route_tags: HFlowContainer
+var guidance_root: Control
+var guidance_panel: PanelContainer
+var guidance_arrow_label: Label
+var guidance_text_label: Label
 var callout_panel: PanelContainer
 var callout_title_label: Label
 var callout_text_label: Label
@@ -746,6 +751,41 @@ func set_tip(text: String) -> void:
 	tip_label.text = _localize_text(text)
 	if compact_tip_label != null:
 		compact_tip_label.text = _localize_text(text)
+
+
+func show_guidance_indicator(screen_position: Vector2, text: String, accent: Color, arrow_rotation: float, on_screen: bool = false) -> void:
+	if guidance_root == null or guidance_panel == null:
+		return
+
+	var panel_size := Vector2(168.0, 48.0) if on_screen else Vector2(180.0, 48.0)
+	var root_size := panel_size if on_screen else Vector2(panel_size.x, panel_size.y + 28.0)
+	guidance_root.visible = true
+	guidance_root.position = screen_position - root_size * 0.5
+	guidance_root.size = root_size
+	guidance_panel.custom_minimum_size = panel_size
+	guidance_panel.size = panel_size
+	guidance_panel.position = Vector2.ZERO if on_screen else Vector2(0.0, 24.0)
+	guidance_panel.add_theme_stylebox_override(
+		"panel",
+		_make_panel_style(
+			Color(accent.r * 0.1, accent.g * 0.12, accent.b * 0.16, 0.92),
+			Color(accent.r, accent.g, accent.b, 0.72),
+			20
+		)
+	)
+	if guidance_text_label != null:
+		guidance_text_label.text = text
+		guidance_text_label.add_theme_color_override("font_color", Color(1.0, 0.96, 0.9, 0.98))
+	if guidance_arrow_label != null:
+		guidance_arrow_label.visible = not on_screen
+		guidance_arrow_label.rotation = arrow_rotation
+		guidance_arrow_label.position = Vector2(root_size.x * 0.5 - 22.0, 0.0)
+		guidance_arrow_label.add_theme_color_override("font_color", Color(accent.r * 0.28 + 0.7, accent.g * 0.24 + 0.72, accent.b * 0.2 + 0.72, 0.98))
+
+
+func hide_guidance_indicator() -> void:
+	if guidance_root != null:
+		guidance_root.visible = false
 
 
 func _refresh_route_focus() -> void:
@@ -1960,6 +2000,27 @@ func _build_ui() -> void:
 	objective_route_tags.add_theme_constant_override("h_separation", 8)
 	objective_route_tags.add_theme_constant_override("v_separation", 8)
 	objective_box.add_child(objective_route_tags)
+
+	guidance_root = Control.new()
+	guidance_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	guidance_root.visible = false
+	root_control.add_child(guidance_root)
+
+	guidance_arrow_label = _make_label("▲", 26, Color(0.96, 0.84, 0.6, 0.98))
+	guidance_arrow_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	guidance_arrow_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	guidance_arrow_label.position = Vector2(68.0, 0.0)
+	guidance_arrow_label.size = Vector2(44.0, 28.0)
+	guidance_root.add_child(guidance_arrow_label)
+
+	guidance_panel = _make_panel(Color(0.05, 0.07, 0.09, 0.9), Color(0.94, 0.7, 0.4, 0.72), Vector2(180.0, 48.0))
+	guidance_panel.position = Vector2(0.0, 24.0)
+	guidance_root.add_child(guidance_panel)
+	var guidance_box := _panel_box(guidance_panel)
+	guidance_box.add_theme_constant_override("separation", 2)
+	guidance_box.add_child(_make_label(_localize_text("当前指引"), 13, Color(0.96, 0.84, 0.6, 0.78), 2.0))
+	guidance_text_label = _make_label("Reward Beacon" if _is_english() else "卷间奖印", 16, Color(0.98, 0.95, 0.88, 0.98))
+	guidance_box.add_child(guidance_text_label)
 
 	skills_panel = _make_panel(Color(0.05, 0.07, 0.09, 0.74), Color(0.38, 0.74, 0.82, 0.62), Vector2(340.0, 860.0))
 	skills_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL

@@ -696,6 +696,96 @@ func _current_chamber_break_beacon_position() -> Vector3:
 	return Vector3.ZERO
 
 
+func _active_pickups_for_meta(meta_key: String, meta_value: Variant) -> Array:
+	var matches: Array = []
+	for pickup in pickups_root.get_children():
+		if not is_instance_valid(pickup) or pickup.is_queued_for_deletion():
+			continue
+		if pickup.get_meta(meta_key, null) != meta_value:
+			continue
+		matches.append(pickup)
+	return matches
+
+
+func _nearest_pickup_target(candidates: Array) -> Node3D:
+	var nearest: Node3D = null
+	var nearest_distance := INF
+	for candidate in candidates:
+		if not (candidate is Node3D):
+			continue
+		var node := candidate as Node3D
+		var distance: float = player.global_position.distance_squared_to(node.global_position)
+		if distance < nearest_distance:
+			nearest_distance = distance
+			nearest = node
+	return nearest
+
+
+func _current_guidance_target() -> Dictionary:
+	if player == null:
+		return {}
+	var accent := _current_chamber_accent()
+	if _room_objective_active():
+		var objective_pickup := _nearest_pickup_target(_active_pickups_for_meta("room_objective_id", room_objective_id))
+		if objective_pickup != null:
+			return {
+				"world_position": objective_pickup.global_position + Vector3(0.0, 1.5, 0.0),
+				"text": ("Seals %d/%d" if _is_english() else "封印 %d/%d") % [room_objective_remaining, room_objective_total],
+				"accent": accent
+			}
+	if chamber_break_beacon_active:
+		var beacon_pickup := _nearest_pickup_target(_active_pickups_for_meta("chamber_break_beacon", true))
+		if beacon_pickup != null:
+			return {
+				"world_position": beacon_pickup.global_position + Vector3(0.0, 1.65, 0.0),
+				"text": "Reward Beacon" if _is_english() else "卷间奖印",
+				"accent": accent
+			}
+	return {}
+
+
+func _hide_guidance_indicator() -> void:
+	if hud != null and hud.has_method("hide_guidance_indicator"):
+		hud.hide_guidance_indicator()
+
+
+func _update_guidance_indicator() -> void:
+	if hud == null or not hud.has_method("show_guidance_indicator"):
+		return
+	var target: Dictionary = _current_guidance_target()
+	if target.is_empty():
+		_hide_guidance_indicator()
+		return
+
+	var world_position: Vector3 = target.get("world_position", Vector3.ZERO)
+	var screen_position: Vector2 = camera.unproject_position(world_position)
+	var viewport_rect := get_viewport().get_visible_rect()
+	var viewport_size: Vector2 = viewport_rect.size
+	var center := viewport_size * 0.5
+	var margin := Vector2(92.0, 124.0)
+	var camera_local_target: Vector3 = camera.global_transform.affine_inverse() * world_position
+	var is_behind_camera: bool = camera_local_target.z > 0.0
+	var accent: Color = target.get("accent", Color(0.94, 0.7, 0.4, 1.0))
+	var label: String = String(target.get("text", ""))
+
+	if not is_behind_camera and Rect2(margin, viewport_size - margin * 2.0).has_point(screen_position):
+		hud.show_guidance_indicator(screen_position + Vector2(0.0, -58.0), label, accent, 0.0, true)
+		return
+
+	var direction := screen_position - center
+	if is_behind_camera:
+		direction = center - screen_position
+	if direction.length_squared() <= 0.001:
+		direction = Vector2.UP
+	direction = direction.normalized()
+	var half_extents := viewport_size * 0.5 - margin
+	var scale_x := INF if absf(direction.x) <= 0.001 else half_extents.x / absf(direction.x)
+	var scale_y := INF if absf(direction.y) <= 0.001 else half_extents.y / absf(direction.y)
+	var edge_distance: float = minf(scale_x, scale_y)
+	var edge_position: Vector2 = center + direction * edge_distance
+	hud.show_guidance_indicator(edge_position, label, accent, direction.angle() + PI * 0.5)
+
+
 func _spawn_chamber_break_beacon() -> void:
 	if chamber_break_beacon_active or not chamber_break_pending:
 		return
@@ -1228,6 +1318,7 @@ func _process(delta: float) -> void:
 	_update_field_phase_stamps()
 
 	if game_over:
+		_hide_guidance_indicator()
 		if Input.is_action_just_pressed("restart_run"):
 			Engine.time_scale = 1.0
 			get_tree().reload_current_scene()
@@ -1237,11 +1328,13 @@ func _process(delta: float) -> void:
 		return
 
 	if map_overlay_active:
+		_hide_guidance_indicator()
 		if Input.is_action_just_pressed("return_menu") or Input.is_action_just_pressed("toggle_map"):
 			_set_map_overlay(false)
 		return
 
 	if paused:
+		_hide_guidance_indicator()
 		if Input.is_action_just_pressed("return_menu") or Input.is_action_just_pressed("interact"):
 			if hud != null and hud.has_method("is_settings_menu_open") and hud.is_settings_menu_open():
 				hud.return_to_pause_menu()
@@ -1255,6 +1348,7 @@ func _process(delta: float) -> void:
 		return
 
 	if levelup_active or word_choice_active:
+		_hide_guidance_indicator()
 		return
 
 	if Input.is_action_just_pressed("toggle_map"):
@@ -1266,12 +1360,14 @@ func _process(delta: float) -> void:
 		return
 
 	if opening_time > 0.0:
+		_hide_guidance_indicator()
 		opening_time = max(opening_time - delta, 0.0)
 		return
 
 	_update_inkstone_interaction()
 	_update_phrase_events()
 	_reveal_map_around_position(player.global_position)
+	_update_guidance_indicator()
 	if _room_objective_active():
 		hud.set_status(elapsed_time, kills, threat_level)
 		return
