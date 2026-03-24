@@ -697,6 +697,15 @@ func _battle_state_format(key: String, fallback_zh: String, fallback_en: String,
 	return text % values if not values.is_empty() else text
 
 
+func _battle_hud_text(key: String, fallback_zh: String, fallback_en: String = "") -> String:
+	return _front_end_text(FrontEndContent.battle_hud_content(), key, fallback_zh, fallback_en)
+
+
+func _battle_hud_format(key: String, fallback_zh: String, fallback_en: String, values: Array = []) -> String:
+	var text := _battle_hud_text(key, fallback_zh, fallback_en)
+	return text % values if not values.is_empty() else text
+
+
 func _battle_guidance_format(key: String, fallback_zh: String, fallback_en: String, values: Array = []) -> String:
 	var text := _battle_guidance_text(key, fallback_zh, fallback_en)
 	return text % values if not values.is_empty() else text
@@ -4974,11 +4983,12 @@ func _build_map_snapshot() -> Dictionary:
 		"player_heading": _map_direction(player.look_direction if is_instance_valid(player) else Vector3(0.0, 0.0, -1.0)),
 		"markers": markers,
 		"enemies": enemies,
-		"summary": (
-			"%s  ·  Enemies %d  ·  Inkstones %d  ·  Bushes %d  ·  Landmarks %d  ·  Explored %d%%"
-			if _is_english()
-			else "%s  ·  敌群 %d  ·  砚台 %d  ·  草丛 %d  ·  地标 %d  ·  探索 %d%%"
-		) % [chamber_name, enemies.size(), inkstone_count, bush_count, landmark_count, _map_exploration_percent()]
+		"summary": _battle_hud_format(
+			"map_summary_format",
+			"%s  ·  敌群 %d  ·  砚台 %d  ·  草丛 %d  ·  地标 %d  ·  探索 %d%%",
+			"%s  ·  Enemies %d  ·  Inkstones %d  ·  Bushes %d  ·  Landmarks %d  ·  Explored %d%%",
+			[chamber_name, enemies.size(), inkstone_count, bush_count, landmark_count, _map_exploration_percent()]
+		)
 	}
 
 

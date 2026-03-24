@@ -1399,6 +1399,10 @@ const BATTLE_HUD_CONTENT := {
 		"en": "Use extra maxed-glyph stock to refine a higher phrase art. Each refinement spends one related radical."
 	},
 	"map_title": {"zh": "残卷地图", "en": "Scroll Map"},
+	"map_summary_format": {
+		"zh": "%s  ·  敌群 %d  ·  砚台 %d  ·  草丛 %d  ·  地标 %d  ·  探索 %d%%",
+		"en": "%s  ·  Enemies %d  ·  Inkstones %d  ·  Bushes %d  ·  Landmarks %d  ·  Explored %d%%"
+	},
 	"map_legend_title": {"zh": "图例", "en": "Legend"},
 	"map_help_micro": {"zh": "拖拽查看，按钮缩放。Esc / M 收起。", "en": "Drag to pan. Buttons zoom. Esc / M closes."},
 	"map_help_tight": {"zh": "拖拽查看，滚轮或按钮缩放。Esc / Tab / M 收起。", "en": "Drag to pan. Wheel or buttons zoom. Esc / Tab / M closes."},
