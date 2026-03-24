@@ -2132,9 +2132,18 @@ func _build_ui() -> void:
 	compact_box.add_child(compact_status_label)
 	compact_radicals_label = _make_label("偏旁 0 枚  ·  当前全部化字", 15, Color(0.88, 0.9, 0.92, 0.94))
 	compact_box.add_child(compact_radicals_label)
-	compact_tip_label = _make_label("击倒字灵收集字力与补给。", 15, Color(0.92, 0.94, 0.96, 0.94))
+	var hud_content := FrontEndContent.battle_hud_content()
+	compact_tip_label = _make_label(
+		_battle_state_text(hud_content, "compact_tip_placeholder", "击倒字灵收集字力与补给。", "Defeat glyph spirits to collect ink power and supplies."),
+		15,
+		Color(0.92, 0.94, 0.96, 0.94)
+	)
 	compact_box.add_child(compact_tip_label)
-	compact_route_label = _make_label("墨守流  ·  开卷补笔", 13, Color(0.96, 0.82, 0.56, 0.9))
+	compact_route_label = _make_label(
+		_battle_state_text(hud_content, "compact_route_placeholder", "墨守流  ·  开卷补笔", "Inkguard Route  ·  Opening Strokes"),
+		13,
+		Color(0.96, 0.82, 0.56, 0.9)
+	)
 	compact_box.add_child(compact_route_label)
 
 	callout_panel = _make_panel(Color(0.05, 0.07, 0.09, 0.84), Color(0.92, 0.69, 0.38, 0.42), Vector2(340.0, 120.0))
@@ -2143,26 +2152,79 @@ func _build_ui() -> void:
 	top_right_stack.add_child(callout_panel)
 	var callout_box := _panel_box(callout_panel)
 	callout_box.add_theme_constant_override("separation", 4)
-	callout_title_label = _make_label("战场呼应", 14, Color(0.96, 0.84, 0.6, 0.94), 3.0)
+	callout_title_label = _make_label(
+		_battle_state_text(hud_content, "callout_title", "战场呼应", "Battle Callout"),
+		14,
+		Color(0.96, 0.84, 0.6, 0.94),
+		3.0
+	)
 	callout_box.add_child(callout_title_label)
-	callout_text_label = _make_label("字潮翻动时，呼应会在这里出现。", 16, Color(0.98, 0.96, 0.91, 0.98))
+	callout_text_label = _make_label(
+		_battle_state_text(hud_content, "callout_placeholder", "字潮翻动时，呼应会在这里出现。", "Callouts will appear here when the glyph tide shifts."),
+		16,
+		Color(0.98, 0.96, 0.91, 0.98)
+	)
 	callout_box.add_child(callout_text_label)
-	callout_detail_label = _make_label("印记 · 白纸起卷", 13, Color(0.9, 0.9, 0.96, 0.9), 2.0)
+	callout_detail_label = _make_label(
+		_battle_state_text(hud_content, "callout_detail_placeholder", "印记 · 白纸起卷", "Mark · Blank Scroll Begins"),
+		13,
+		Color(0.9, 0.9, 0.96, 0.9),
+		2.0
+	)
 	callout_detail_label.visible = false
 	callout_box.add_child(callout_detail_label)
 
 	objective_panel = _make_panel(Color(0.05, 0.07, 0.09, 0.76), Color(0.94, 0.7, 0.4, 0.6), Vector2(340.0, 150.0))
 	top_right_stack.add_child(objective_panel)
 	var objective_box := _panel_box(objective_panel)
-	objective_box.add_child(_make_label("当前目标", 20, Color(0.96, 0.82, 0.56, 0.98)))
-	tip_label = _make_label("尚未收集，或已经全部化字。", 18, Color(0.88, 0.9, 0.93, 0.95))
+	objective_box.add_child(
+		_make_label(
+			_battle_state_text(hud_content, "objective_title", "当前目标", "Current Objective"),
+			20,
+			Color(0.96, 0.82, 0.56, 0.98)
+		)
+	)
+	tip_label = _make_label(
+		_battle_state_text(hud_content, "objective_placeholder_tip", "尚未收集，或已经全部化字。", "Nothing left to collect, or everything has already fused."),
+		18,
+		Color(0.88, 0.9, 0.93, 0.95)
+	)
 	objective_box.add_child(tip_label)
-	objective_box.add_child(_make_label("源稿路线参考", 13, Color(0.96, 0.84, 0.6, 0.84), 2.0))
-	objective_route_title_label = _make_label("守  墨守流  ·  续航 / 站场", 18, Color(0.98, 0.95, 0.88, 0.98))
+	objective_box.add_child(
+		_make_label(
+			_battle_state_text(hud_content, "route_focus_title", "源稿路线参考", "Source Route Guide"),
+			13,
+			Color(0.96, 0.84, 0.6, 0.84),
+			2.0
+		)
+	)
+	objective_route_title_label = _make_label(
+		_battle_state_text(hud_content, "route_focus_placeholder_title", "守  墨守流  ·  续航 / 站场", "Guard  Inkguard Route  ·  Sustain / Hold"),
+		18,
+		Color(0.98, 0.95, 0.88, 0.98)
+	)
 	objective_box.add_child(objective_route_title_label)
-	objective_route_detail_label = _make_label("先把最稳的 build 主线写深，再让砚台磨词接手中盘。", 15, Color(0.88, 0.9, 0.93, 0.92))
+	objective_route_detail_label = _make_label(
+		_battle_state_text(
+			hud_content,
+			"route_focus_placeholder_detail",
+			"先把最稳的 build 主线写深，再让砚台磨词接手中盘。",
+			"Push the steadiest build lane first, then let inkstone refinement take over the midgame."
+		),
+		15,
+		Color(0.88, 0.9, 0.93, 0.92)
+	)
 	objective_box.add_child(objective_route_detail_label)
-	objective_stage_label = _make_label("当前阶段：开卷补笔  ·  明 / 海 / 休", 14, Color(0.84, 0.9, 1.0, 0.92))
+	objective_stage_label = _make_label(
+		_battle_state_text(
+			hud_content,
+			"route_focus_placeholder_stage",
+			"当前阶段：开卷补笔  ·  明 / 海 / 休",
+			"Stage: Opening Strokes  ·  Ming / Hai / Xiu"
+		),
+		14,
+		Color(0.84, 0.9, 1.0, 0.92)
+	)
 	objective_box.add_child(objective_stage_label)
 	objective_route_tags = HFlowContainer.new()
 	objective_route_tags.add_theme_constant_override("h_separation", 8)

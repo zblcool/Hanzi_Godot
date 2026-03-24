@@ -1251,6 +1251,23 @@ const BATTLE_STATE_CONTENT := {
 	"action_continue_deeper": {"zh": "续卷入深层", "en": "Continue Deeper"}
 }
 
+const BATTLE_HUD_CONTENT := {
+	"compact_tip_placeholder": {"zh": "击倒字灵收集字力与补给。", "en": "Defeat glyph spirits to collect ink power and supplies."},
+	"compact_route_placeholder": {"zh": "墨守流  ·  开卷补笔", "en": "Inkguard Route  ·  Opening Strokes"},
+	"callout_title": {"zh": "战场呼应", "en": "Battle Callout"},
+	"callout_placeholder": {"zh": "字潮翻动时，呼应会在这里出现。", "en": "Callouts will appear here when the glyph tide shifts."},
+	"callout_detail_placeholder": {"zh": "印记 · 白纸起卷", "en": "Mark · Blank Scroll Begins"},
+	"objective_title": {"zh": "当前目标", "en": "Current Objective"},
+	"objective_placeholder_tip": {"zh": "尚未收集，或已经全部化字。", "en": "Nothing left to collect, or everything has already fused."},
+	"route_focus_title": {"zh": "源稿路线参考", "en": "Source Route Guide"},
+	"route_focus_placeholder_title": {"zh": "守  墨守流  ·  续航 / 站场", "en": "Guard  Inkguard Route  ·  Sustain / Hold"},
+	"route_focus_placeholder_detail": {
+		"zh": "先把最稳的 build 主线写深，再让砚台磨词接手中盘。",
+		"en": "Push the steadiest build lane first, then let inkstone refinement take over the midgame."
+	},
+	"route_focus_placeholder_stage": {"zh": "当前阶段：开卷补笔  ·  明 / 海 / 休", "en": "Stage: Opening Strokes  ·  Ming / Hai / Xiu"}
+}
+
 const BATTLE_PICKUP_CONTENT := {
 	"paper_banner_format": {"zh": "拾得残纸  +%d 字墨", "en": "Paper Scrap  +%d Ink"},
 	"paper_log_format": {"zh": "拾得残纸 · +%d 字墨", "en": "Paper Scrap · +%d Ink"},
@@ -1853,6 +1870,10 @@ static func local_leaderboard_content() -> Dictionary:
 
 static func battle_state_content() -> Dictionary:
 	return BATTLE_STATE_CONTENT.duplicate(true)
+
+
+static func battle_hud_content() -> Dictionary:
+	return BATTLE_HUD_CONTENT.duplicate(true)
 
 
 static func battle_pickup_content() -> Dictionary:
