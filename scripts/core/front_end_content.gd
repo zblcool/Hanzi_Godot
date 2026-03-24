@@ -1981,6 +1981,46 @@ const BATTLE_GUIDANCE_CONTENT := {
 	}
 }
 
+const BATTLE_FIELD_PHASE_CONTENT := {
+	"shift_banner_format": {"zh": "字境相变 · %s", "en": "Realm Shift · %s"},
+	"shift_reveal_title": {"zh": "字境相变", "en": "Realm Shift"},
+	"shift_tip_format": {"zh": "第 %d 波切入%s。%s", "en": "Wave %d enters %s. %s"},
+	"themes": {
+		"stelaeGrove": {
+			"name": {"zh": "碑林", "en": "Stele Grove"},
+			"cue": {"zh": "字境·碑林", "en": "Realm Shift · Stele Grove"},
+			"tip": {
+				"zh": "碑林压阵，石色字痕会留在你当时落脚的位置。",
+				"en": "Stone-lit script settles over the arena, leaving carved glyph marks where you were standing."
+			}
+		},
+		"inkTide": {
+			"name": {"zh": "墨潮", "en": "Ink Tide"},
+			"cue": {"zh": "字境·墨潮", "en": "Realm Shift · Ink Tide"},
+			"tip": {
+				"zh": "墨潮翻卷，地表会偏向水墨青蓝，古纹像潮线一样缓慢游动。",
+				"en": "The field turns toward blue-black ink and the old patterns drift like tide lines."
+			}
+		},
+		"thunderScript": {
+			"name": {"zh": "雷纹", "en": "Thunder Script"},
+			"cue": {"zh": "字境·雷纹", "en": "Realm Shift · Thunder Script"},
+			"tip": {
+				"zh": "雷纹显形，雾色会更冷更亮，环境字阵也会抬高可见度。",
+				"en": "Fog turns colder and brighter, and the ambient glyph array becomes easier to read."
+			}
+		},
+		"ancientScroll": {
+			"name": {"zh": "残卷", "en": "Ancient Scroll"},
+			"cue": {"zh": "字境·残卷", "en": "Realm Shift · Ancient Scroll"},
+			"tip": {
+				"zh": "残卷回暖，纸本山水会偏回赭金，巨字像旧墨一样烙在地上。",
+				"en": "Warm parchment tones return and giant glyphs press into the ground like old ink seals."
+			}
+		}
+	}
+}
+
 const MENU_EN_TEXT := {
 	"返回启动器": "Back to Launcher",
 	"人物志": "Character Archive",
@@ -2259,6 +2299,10 @@ static func battle_chamber_content() -> Dictionary:
 
 static func battle_guidance_content() -> Dictionary:
 	return BATTLE_GUIDANCE_CONTENT.duplicate(true)
+
+
+static func battle_field_phase_content() -> Dictionary:
+	return BATTLE_FIELD_PHASE_CONTENT.duplicate(true)
 
 
 static func menu_leaderboard_content() -> Dictionary:

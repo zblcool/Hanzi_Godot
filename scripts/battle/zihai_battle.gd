@@ -98,7 +98,6 @@ const ENEMY_ENTRANCE_TAUNTS := {
 const FIELD_PHASE_THEMES := [
 	{
 		"id": "stelaeGrove",
-		"name": "碑林",
 		"accent": Color(0.72, 0.88, 0.78, 1.0),
 		"ground_glow": Color(0.7, 0.86, 0.78, 1.0),
 		"ground_shadow": Color(0.16, 0.22, 0.2, 1.0),
@@ -111,13 +110,10 @@ const FIELD_PHASE_THEMES := [
 		"backdrop_mountain": Color(0.42, 0.42, 0.36, 0.78),
 		"backdrop_mist": Color(0.88, 0.9, 0.84, 0.4),
 		"backdrop_paper": Color(0.92, 0.9, 0.82, 0.22),
-		"backdrop_alpha": 0.98,
-		"cue": "字境·碑林",
-		"tip": "碑林压阵，石色字痕会留在你当时落脚的位置。"
+		"backdrop_alpha": 0.98
 	},
 	{
 		"id": "inkTide",
-		"name": "墨潮",
 		"accent": Color(0.64, 0.82, 1.0, 1.0),
 		"ground_glow": Color(0.56, 0.8, 0.98, 1.0),
 		"ground_shadow": Color(0.1, 0.16, 0.24, 1.0),
@@ -130,13 +126,10 @@ const FIELD_PHASE_THEMES := [
 		"backdrop_mountain": Color(0.34, 0.42, 0.5, 0.76),
 		"backdrop_mist": Color(0.82, 0.9, 0.98, 0.44),
 		"backdrop_paper": Color(0.84, 0.9, 0.98, 0.24),
-		"backdrop_alpha": 1.04,
-		"cue": "字境·墨潮",
-		"tip": "墨潮翻卷，地表会偏向水墨青蓝，古纹像潮线一样缓慢游动。"
+		"backdrop_alpha": 1.04
 	},
 	{
 		"id": "thunderScript",
-		"name": "雷纹",
 		"accent": Color(0.9, 0.95, 1.0, 1.0),
 		"ground_glow": Color(0.86, 0.92, 1.0, 1.0),
 		"ground_shadow": Color(0.18, 0.2, 0.3, 1.0),
@@ -149,13 +142,10 @@ const FIELD_PHASE_THEMES := [
 		"backdrop_mountain": Color(0.4, 0.42, 0.54, 0.8),
 		"backdrop_mist": Color(0.88, 0.92, 0.98, 0.48),
 		"backdrop_paper": Color(0.92, 0.94, 1.0, 0.24),
-		"backdrop_alpha": 1.06,
-		"cue": "字境·雷纹",
-		"tip": "雷纹显形，雾色会更冷更亮，环境字阵也会抬高可见度。"
+		"backdrop_alpha": 1.06
 	},
 	{
 		"id": "ancientScroll",
-		"name": "残卷",
 		"accent": Color(1.0, 0.84, 0.56, 1.0),
 		"ground_glow": Color(0.96, 0.78, 0.5, 1.0),
 		"ground_shadow": Color(0.28, 0.18, 0.1, 1.0),
@@ -168,9 +158,7 @@ const FIELD_PHASE_THEMES := [
 		"backdrop_mountain": Color(0.58, 0.48, 0.38, 0.8),
 		"backdrop_mist": Color(0.96, 0.88, 0.78, 0.42),
 		"backdrop_paper": Color(0.98, 0.92, 0.84, 0.22),
-		"backdrop_alpha": 0.96,
-		"cue": "字境·残卷",
-		"tip": "残卷回暖，纸本山水会偏回赭金，巨字像旧墨一样烙在地上。"
+		"backdrop_alpha": 0.96
 	}
 ]
 const CHAMBER_ORDER := ["entry_court", "slip_archive", "thunder_vault", "abyss_sanctum"]
@@ -717,6 +705,32 @@ func _battle_guidance_format(key: String, fallback_zh: String, fallback_en: Stri
 	return text % values if not values.is_empty() else text
 
 
+func _battle_field_phase_content() -> Dictionary:
+	return FrontEndContent.battle_field_phase_content()
+
+
+func _battle_field_phase_text(key: String, fallback_zh: String, fallback_en: String = "") -> String:
+	return _front_end_text(_battle_field_phase_content(), key, fallback_zh, fallback_en)
+
+
+func _battle_field_phase_format(key: String, fallback_zh: String, fallback_en: String, values: Array = []) -> String:
+	var text := _battle_field_phase_text(key, fallback_zh, fallback_en)
+	return text % values if not values.is_empty() else text
+
+
+func _battle_field_phase_theme_entry(theme_id: String) -> Dictionary:
+	var themes_variant: Variant = _battle_field_phase_content().get("themes", {})
+	if themes_variant is Dictionary:
+		var theme_entry_variant: Variant = (themes_variant as Dictionary).get(theme_id, {})
+		if theme_entry_variant is Dictionary:
+			return (theme_entry_variant as Dictionary)
+	return {}
+
+
+func _battle_field_phase_theme_text(theme_id: String, key: String, fallback_zh: String, fallback_en: String = "") -> String:
+	return _front_end_text(_battle_field_phase_theme_entry(theme_id), key, fallback_zh, fallback_en)
+
+
 func _battle_interlude_text(key: String, fallback_zh: String, fallback_en: String = "") -> String:
 	return _front_end_text(FrontEndContent.battle_interlude_content(), key, fallback_zh, fallback_en)
 
@@ -749,7 +763,12 @@ func _localized_enemy_data(enemy_id: String) -> Dictionary:
 
 
 func _localized_field_phase_theme(theme: Dictionary) -> Dictionary:
-	return HanziLocalization.localized_field_phase_theme(theme, Session.get_launcher_language())
+	var localized := theme.duplicate(true)
+	var theme_id := String(theme.get("id", ""))
+	localized["name"] = _battle_field_phase_theme_text(theme_id, "name", "字境", "Realm")
+	localized["cue"] = _battle_field_phase_theme_text(theme_id, "cue", "字境相变", "Realm Shift")
+	localized["tip"] = _battle_field_phase_theme_text(theme_id, "tip", "", "")
+	return localized
 
 
 func _localized_soundtrack_entry(track_id: String) -> Dictionary:
@@ -4442,21 +4461,23 @@ func _set_field_phase_for_wave(wave: int, announce: bool = true) -> void:
 	_spawn_field_phase_stamp(stamp_position, next_glyph, next_theme)
 	_spawn_wave_effect(stamp_position, 5.1, Color(next_theme.get("accent", Color(1.0, 1.0, 1.0, 1.0))), next_glyph)
 	_play_cue_sfx("realm_shift", 1.0)
+	var localized_theme := _localized_field_phase_theme(next_theme)
 	if hud != null:
-		var localized_theme := _localized_field_phase_theme(next_theme)
-		hud.show_banner(("Realm Shift · %s" if _is_english() else "字境相变 · %s") % String(localized_theme.get("name", "Realm" if _is_english() else "字境")), Color(next_theme.get("accent", Color(1.0, 1.0, 1.0, 1.0))), 2.6)
+		var theme_name := String(localized_theme.get("name", "Realm" if _is_english() else "字境"))
+		var theme_tip := String(localized_theme.get("tip", ""))
+		hud.show_banner(_battle_field_phase_format("shift_banner_format", "字境相变 · %s", "Realm Shift · %s", [theme_name]), Color(next_theme.get("accent", Color(1.0, 1.0, 1.0, 1.0))), 2.6)
 		hud.show_reveal(
-			"Realm Shift" if _is_english() else "字境相变",
-			String(localized_theme.get("name", "Realm" if _is_english() else "字境")),
-			String(localized_theme.get("tip", "")),
+			_battle_field_phase_text("shift_reveal_title", "字境相变", "Realm Shift"),
+			theme_name,
+			theme_tip,
 			Color(next_theme.get("accent", Color(1.0, 1.0, 1.0, 1.0))),
 			next_glyph,
 			3.0
 		)
-		hud.set_tip(("Wave %d enters %s. %s" if _is_english() else "第 %d 波切入%s。%s") % [wave, String(localized_theme.get("name", "Realm" if _is_english() else "字境")), String(localized_theme.get("tip", ""))])
-		_log_battle_event(("Realm Shift · %s" if _is_english() else "字境相变 · %s") % String(localized_theme.get("name", "Realm" if _is_english() else "字境")), Color(next_theme.get("accent", Color(1.0, 1.0, 1.0, 1.0))))
+		hud.set_tip(_battle_field_phase_format("shift_tip_format", "第 %d 波切入%s。%s", "Wave %d enters %s. %s", [wave, theme_name, theme_tip]))
+		_log_battle_event(_battle_field_phase_format("shift_banner_format", "字境相变 · %s", "Realm Shift · %s", [theme_name]), Color(next_theme.get("accent", Color(1.0, 1.0, 1.0, 1.0))))
 	var soundtrack_track: String = current_soundtrack_id if not current_soundtrack_id.is_empty() else "mosslightCanopy"
-	_set_soundtrack(soundtrack_track, String(next_theme.get("cue", "字境相变")), true, true)
+	_set_soundtrack(soundtrack_track, String(localized_theme.get("cue", _battle_field_phase_text("shift_reveal_title", "字境相变", "Realm Shift"))), true, true)
 
 
 func _update_field_phase(delta: float) -> void:

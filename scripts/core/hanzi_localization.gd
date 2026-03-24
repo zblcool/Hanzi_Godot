@@ -169,12 +169,6 @@ const SOUNDTRACK_EN := {
 	"mosslightCanopy": {"title": "Mosslight Canopy", "mood": "16-bit Quiet Forest"},
 	"fireflyFootpath": {"title": "Firefly Footpath", "mood": "16-bit Light Patrol"}
 }
-const FIELD_PHASE_EN := {
-	"stelaeGrove": {"name": "Stele Grove", "cue": "Realm Shift · Stele Grove", "tip": "Stone-lit script settles over the arena, leaving carved glyph marks where you were standing."},
-	"inkTide": {"name": "Ink Tide", "cue": "Realm Shift · Ink Tide", "tip": "The field turns toward blue-black ink and the old patterns drift like tide lines."},
-	"thunderScript": {"name": "Thunder Script", "cue": "Realm Shift · Thunder Script", "tip": "Fog turns colder and brighter, and the ambient glyph array becomes easier to read."},
-	"ancientScroll": {"name": "Ancient Scroll", "cue": "Realm Shift · Ancient Scroll", "tip": "Warm parchment tones return and giant glyphs press into the ground like old ink seals."}
-}
 const CUE_EN := {
 	"试阵预热": "Test Warmup",
 	"待入曲": "Awaiting Cue",
@@ -252,12 +246,6 @@ static func localized_soundtrack_cue(cue: String, language: String) -> String:
 	if not is_english(language):
 		return cue
 	return String(CUE_EN.get(cue, cue))
-
-
-static func localized_field_phase_theme(theme: Dictionary, language: String) -> Dictionary:
-	if not is_english(language):
-		return theme.duplicate(true)
-	return _apply_patch(theme, FIELD_PHASE_EN.get(String(theme.get("id", "")), {}))
 
 
 static func localized_intro_title(start_wave: int, fallback: String, language: String) -> String:
