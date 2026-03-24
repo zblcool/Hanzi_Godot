@@ -138,6 +138,7 @@ var cangjie_stage_fx_enabled := true
 var cangjie_run_shell_open := false
 var cangjie_reward_chain_choice := "draft"
 var cangjie_route_ledger_choice := "deepen"
+var cangjie_route_preview_node_id := ""
 var cangjie_duelist_line_indices := {}
 var changelog_overlay: Control
 var profile_overlay: Control
@@ -1318,6 +1319,18 @@ func _make_cangjie_route_preview(preview: Dictionary, accent: Color) -> PanelCon
 	if not summary_text.is_empty():
 		box.add_child(_make_label(summary_text, 16, Color(0.88, 0.92, 0.96, 0.92)))
 
+	var hint_text := _localize_cangjie_text(preview.get("hint", ""))
+	if not hint_text.is_empty():
+		box.add_child(_make_label(hint_text, 14, Color(0.82, 0.9, 0.96, 0.86)))
+
+	var selected_node := _find_cangjie_route_preview_node(preview, cangjie_route_preview_node_id)
+	if selected_node.is_empty():
+		selected_node = _find_cangjie_route_preview_node(preview, String(preview.get("default_node_id", "")))
+	if selected_node.is_empty():
+		selected_node = _first_cangjie_route_preview_node(preview)
+	if not selected_node.is_empty():
+		cangjie_route_preview_node_id = String(selected_node.get("id", ""))
+
 	var rows_variant: Variant = preview.get("rows", [])
 	if rows_variant is Array:
 		var rows_box := VBoxContainer.new()
@@ -1326,6 +1339,21 @@ func _make_cangjie_route_preview(preview: Dictionary, accent: Color) -> PanelCon
 		for row_variant in rows_variant:
 			if row_variant is Dictionary:
 				rows_box.add_child(_make_cangjie_route_row(row_variant as Dictionary, accent))
+
+	var node_details_variant: Variant = preview.get("node_details", {})
+	if not selected_node.is_empty() and node_details_variant is Dictionary:
+		var detail_key := String(selected_node.get("kind", selected_node.get("id", "")))
+		var node_detail_variant: Variant = (node_details_variant as Dictionary).get(detail_key, {})
+		if node_detail_variant is Dictionary and not (node_detail_variant as Dictionary).is_empty():
+			var node_detail := node_detail_variant as Dictionary
+			var selected_tone: Color = selected_node.get("tone", accent)
+			var detail_summary := _localize_cangjie_text(node_detail.get("summary", ""))
+			if not detail_summary.is_empty():
+				box.add_child(_make_label(detail_summary, 15, Color(0.94, 0.92, 0.88, 0.94)))
+
+			var group_variant: Variant = node_detail.get("group", {})
+			if group_variant is Dictionary and not (group_variant as Dictionary).is_empty():
+				box.add_child(_make_cangjie_group_panel(group_variant as Dictionary, selected_tone))
 
 	var footnote_text := _localize_cangjie_text(preview.get("footnote", ""))
 	if not footnote_text.is_empty():
@@ -1640,8 +1668,10 @@ func _make_cangjie_route_row(row: Dictionary, accent: Color) -> PanelContainer:
 	return panel
 
 
-func _make_cangjie_route_node_card(node: Dictionary, accent: Color) -> PanelContainer:
+func _make_cangjie_route_node_card(node: Dictionary, accent: Color) -> Button:
 	var tone: Color = node.get("tone", accent)
+	var node_id := String(node.get("id", ""))
+	var active := not node_id.is_empty() and node_id == cangjie_route_preview_node_id
 	var state := String(node.get("state", "option"))
 	var fill_alpha := 0.14
 	var border_alpha := 0.22
@@ -1651,18 +1681,28 @@ func _make_cangjie_route_node_card(node: Dictionary, accent: Color) -> PanelCont
 	elif state == "boss":
 		fill_alpha = 0.28
 		border_alpha = 0.48
+	if active:
+		fill_alpha += 0.08
+		border_alpha += 0.2
 
-	var panel := PanelContainer.new()
-	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	panel.custom_minimum_size = _v(0.0, 96.0)
-	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(tone.r * 0.16, tone.g * 0.16, tone.b * 0.18, 0.8 + fill_alpha * 0.2), Color(tone.r, tone.g, tone.b, border_alpha)))
+	var button := Button.new()
+	button.text = ""
+	button.flat = true
+	button.clip_contents = false
+	button.focus_mode = Control.FOCUS_ALL
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.custom_minimum_size = _v(0.0, 112.0)
+	button.add_theme_stylebox_override("normal", _make_panel_style(Color(tone.r * 0.16, tone.g * 0.16, tone.b * 0.18, 0.8 + fill_alpha * 0.2), Color(tone.r, tone.g, tone.b, border_alpha)))
+	button.add_theme_stylebox_override("hover", _make_panel_style(Color(tone.r * 0.18, tone.g * 0.18, tone.b * 0.2, 0.88 + fill_alpha * 0.2), Color(tone.r, tone.g, tone.b, border_alpha + 0.08)))
+	button.add_theme_stylebox_override("pressed", _make_panel_style(Color(tone.r * 0.2, tone.g * 0.2, tone.b * 0.22, 0.94 + fill_alpha * 0.16), Color(tone.r, tone.g, tone.b, border_alpha + 0.14)))
 
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", _i(12))
 	margin.add_theme_constant_override("margin_top", _i(10))
 	margin.add_theme_constant_override("margin_right", _i(12))
 	margin.add_theme_constant_override("margin_bottom", _i(10))
-	panel.add_child(margin)
+	button.add_child(margin)
 
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", _i(6))
@@ -1693,7 +1733,42 @@ func _make_cangjie_route_node_card(node: Dictionary, accent: Color) -> PanelCont
 	if not state_text.is_empty():
 		box.add_child(_make_label(state_text, 13, Color(0.84, 0.9, 0.98, 0.84)))
 
-	return panel
+	if active:
+		box.add_child(_make_tag("当前聚焦" if not _is_english() else "Focused", Color(tone.r * 0.18, tone.g * 0.18, tone.b * 0.2, 0.9), Color(0.98, 0.94, 0.88, 0.96)))
+
+	if not node_id.is_empty():
+		button.pressed.connect(Callable(self, "_on_select_cangjie_route_preview_node").bind(node_id))
+	return button
+
+
+func _first_cangjie_route_preview_node(preview: Dictionary) -> Dictionary:
+	var rows_variant: Variant = preview.get("rows", [])
+	if not (rows_variant is Array):
+		return {}
+	for row_variant in rows_variant:
+		if row_variant is Dictionary:
+			var nodes_variant: Variant = (row_variant as Dictionary).get("nodes", [])
+			if nodes_variant is Array:
+				for node_variant in nodes_variant:
+					if node_variant is Dictionary:
+						return node_variant as Dictionary
+	return {}
+
+
+func _find_cangjie_route_preview_node(preview: Dictionary, node_id: String) -> Dictionary:
+	if node_id.is_empty():
+		return {}
+	var rows_variant: Variant = preview.get("rows", [])
+	if not (rows_variant is Array):
+		return {}
+	for row_variant in rows_variant:
+		if row_variant is Dictionary:
+			var nodes_variant: Variant = (row_variant as Dictionary).get("nodes", [])
+			if nodes_variant is Array:
+				for node_variant in nodes_variant:
+					if node_variant is Dictionary and String((node_variant as Dictionary).get("id", "")) == node_id:
+						return node_variant as Dictionary
+	return {}
 
 
 func _make_cangjie_duelist_card(duelist: Dictionary, accent: Color) -> Button:
@@ -2395,6 +2470,11 @@ func _on_select_cangjie_reward_chain_option(option_id: String) -> void:
 	_refresh_cangjie_portal()
 
 
+func _on_select_cangjie_route_preview_node(node_id: String) -> void:
+	cangjie_route_preview_node_id = node_id
+	_refresh_cangjie_portal()
+
+
 func _on_select_cangjie_route_ledger_option(option_id: String) -> void:
 	cangjie_route_ledger_choice = option_id
 	_refresh_cangjie_portal()
@@ -2483,6 +2563,7 @@ func _show_cangjie_portal() -> void:
 		cangjie_run_shell_open = false
 		cangjie_reward_chain_choice = "draft"
 		cangjie_route_ledger_choice = "deepen"
+		cangjie_route_preview_node_id = ""
 		cangjie_overlay.visible = true
 		_refresh_cangjie_portal()
 

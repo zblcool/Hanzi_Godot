@@ -1131,11 +1131,252 @@ const CANGJIE_PORTAL_SECTIONS := [
 				"zh": "source《仓颉之路》会先把真正的三路线塔图摆出来，而不是只列节点名称。Godot 现在先把这层 route shell 迁回入口，方便在真正开打前就读懂这次 climb 的转向点。",
 				"en": "The source Cangjie Road opens with an actual three-lane tower board instead of only listing node names. Godot now brings that route shell back into the portal so the climb's pivot points can be read before a real run starts."
 			},
+			"default_node_id": "entry_battle",
+			"hint": {
+				"zh": "点按任一节点，查看 source 里这类房间会怎样改写牌组、资源和后续路线。",
+				"en": "Tap any node to inspect how that room type reshapes the deck, resources, and later route in the source run."
+			},
+			"node_details": {
+				"battle": {
+					"summary": {
+						"zh": "普通战斗会先结算 Gold，再给三选一奖励牌或跳过保薄，是最稳定的路线读法。",
+						"en": "Regular battles settle Gold first, then offer a three-card reward or a lean skip, making them the steadiest route read."
+					},
+					"group": {
+						"title": {"zh": "节点聚焦 · 战斗", "en": "Node Focus · Battle"},
+						"summary": {
+							"zh": "source 的普通战斗不是纯清杂，而是用最稳定的奖后节拍反复验证这副牌到底想往哪条字路走。",
+							"en": "Source normal battles are not filler fights. Their stable post-fight cadence repeatedly checks which glyph route the deck truly wants to follow."
+						},
+						"cards": [
+							{
+								"glyph": "战",
+								"title": {"zh": "Gold + 选牌 / 跳过", "en": "Gold + Draft / Skip"},
+								"subtitle": {"zh": "最直接的主线读法", "en": "The cleanest line read"},
+								"body": {
+									"zh": "普通战斗会先把 Gold 落袋，再逼你判断这一层是继续补主线、补控制，还是干脆保薄不再加厚牌组。",
+									"en": "A normal fight banks Gold first, then forces a judgment call: deepen the main line, patch control, or stay lean and skip thickening the deck."
+								},
+								"tags": [
+									{"zh": "Gold", "en": "Gold"},
+									{"zh": "三选一", "en": "Pick one of three"},
+									{"zh": "保薄", "en": "Stay lean"}
+								]
+							}
+						]
+					}
+				},
+				"event": {
+					"summary": {
+						"zh": "事件节点会像 `路书对照`、讲师提问或破页掮客那样，让短期收益和长期结构直接撞在一起。",
+						"en": "Event nodes act more like `Route Ledger`, the tutor prompt, or the page broker, colliding short-term gain with long-term structure."
+					},
+					"group": {
+						"title": {"zh": "节点聚焦 · 事件", "en": "Node Focus · Event"},
+						"summary": {
+							"zh": "source 事件房的价值在于先读当前 deck 倾向，再决定是压深主线、补齐短板，还是换一笔资源留给后面。",
+							"en": "Source event rooms matter because they read the current deck lean first, then choose whether to deepen the line, patch a weak point, or bank resources for later."
+						},
+						"cards": [
+							{
+								"glyph": "异",
+								"title": {"zh": "路书 / 教案 / 掮客", "en": "Ledger / Tutor / Broker"},
+								"subtitle": {"zh": "短期换长期", "en": "Short term vs long term"},
+								"body": {
+									"zh": "这里最能看出《仓颉之路》的 deckbuilder 身份，因为事件会主动改写路线，而不是只给一张通用奖励牌。",
+									"en": "This is where Cangjie Road reads most like a deckbuilder, because events actively rewrite the route instead of handing out one generic reward."
+								},
+								"tags": [
+									{"zh": "路书对照", "en": "Route Ledger"},
+									{"zh": "取舍", "en": "Tradeoff"},
+									{"zh": "路线偏转", "en": "Route bend"}
+								]
+							}
+						]
+					}
+				},
+				"rest": {
+					"summary": {
+						"zh": "歇息点不是单纯回血，而是在 `回气 18` 与 `回气 8 + 下场 +1 Energy / +1 Ink` 之间做低风险准备。",
+						"en": "Rest stops are not pure healing. They split between `heal 18` and `heal 8 + next battle +1 Energy / +1 Ink`."
+					},
+					"group": {
+						"title": {"zh": "节点聚焦 · 歇息", "en": "Node Focus · Rest"},
+						"summary": {
+							"zh": "source 的歇息房把保命和下一场起手准备放在同一张 prompt 上，提醒路线判断不只发生在拿牌时。",
+							"en": "Source rest rooms put survival and next-battle setup on the same prompt, reminding you that route judgment does not happen only while drafting."
+						},
+						"cards": [
+							{
+								"glyph": "歇",
+								"title": {"zh": "回气 / 备战二选一", "en": "Heal / Prepare Split"},
+								"subtitle": {"zh": "稳住血线或抢起手", "en": "Stabilize HP or frontload tempo"},
+								"body": {
+									"zh": "当血线还算安全时，歇息房也可以转成下场的节奏垫片，而不是永远只做回血站。",
+									"en": "When HP is still safe enough, a rest room can convert into a tempo pad for the next fight instead of always acting as a heal station."
+								},
+								"tags": [
+									{"zh": "回血", "en": "Healing"},
+									{"zh": "下场起手", "en": "Next-battle opener"},
+									{"zh": "低风险调整", "en": "Low-risk reset"}
+								]
+							}
+						]
+					}
+				},
+				"shop": {
+					"summary": {
+						"zh": "商店会同时卖牌和遗物，还支持 restock 与花 Gold 删牌，是整条 climb 里最显性的资源重配节点。",
+						"en": "Shops sell both cards and relics while also supporting restocks and paid deck trims, making them the clearest resource-reallocation node in the climb."
+					},
+					"group": {
+						"title": {"zh": "节点聚焦 · 商店", "en": "Node Focus · Shop"},
+						"summary": {
+							"zh": "source 商店不是单次消费，而是在买牌、买遗物、删牌和重洗货架之间重新分配 Gold。",
+							"en": "The source shop is not a one-off purchase. It reallocates Gold across cards, relics, purges, and shelf restocks."
+						},
+						"cards": [
+							{
+								"glyph": "肆",
+								"title": {"zh": "买牌 / 买遗物 / 删牌", "en": "Buy / Relic / Purge"},
+								"subtitle": {"zh": "Gold 真正开始写路线", "en": "Gold starts steering the route"},
+								"body": {
+									"zh": "当 run 已有明显倾向时，商店会把 Gold 从数值资源变成路线投资，甚至能靠 restock 继续追更贴线的货架。",
+									"en": "Once a run has a visible lean, the shop turns Gold from a flat resource into route investment, and restock can keep chasing a more aligned shelf."
+								},
+								"tags": [
+									{"zh": "Gold 重配", "en": "Gold reallocation"},
+									{"zh": "restock", "en": "Restock"},
+									{"zh": "删牌", "en": "Purge"}
+								]
+							}
+						]
+					}
+				},
+				"elite": {
+					"summary": {
+						"zh": "精英不只更痛，它还会把战后流程往后推一层：先打高压意图，再接遗物跟进，让路线被二次偏转。",
+						"en": "Elites are not only harder. They push the post-battle flow one layer deeper: survive heavier intents, then take a relic follow-up that bends the route again."
+					},
+					"group": {
+						"title": {"zh": "节点聚焦 · 精英", "en": "Node Focus · Elite"},
+						"summary": {
+							"zh": "source 精英是“高压换方向”的代表房型，因为它把更危险的敌意图和遗物后续绑在同一个节点里。",
+							"en": "Source elites are the clearest `risk for direction` room because they bind heavier intents and relic follow-through inside the same node."
+						},
+						"cards": [
+							{
+								"glyph": "魁",
+								"title": {"zh": "高压战后遗物", "en": "High-Pressure Relic Follow-Up"},
+								"subtitle": {"zh": "更痛，但也更会改路", "en": "Harder, but more route-defining"},
+								"body": {
+									"zh": "精英战后不是只多拿一点数值，而是会在选牌后继续给 2 到 3 件遗物，让后面的节点估值一起改写。",
+									"en": "Elite fights do not just pay larger numbers. After the reward card they continue into 2 to 3 relic choices, rewriting the value of later nodes as well."
+								},
+								"tags": [
+									{"zh": "高压", "en": "High pressure"},
+									{"zh": "遗物后续", "en": "Relic follow-up"},
+									{"zh": "换方向", "en": "Route bend"}
+								]
+							}
+						]
+					}
+				},
+				"archive": {
+					"summary": {
+						"zh": "删改房不是单一删牌口。source 会在 `删 1 张` 与 `复制 1 张非 Smudge 牌` 之间切换，让牌组形状同时可收可放。",
+						"en": "Archive rooms are not trim-only. The source switches between `remove 1 card` and `copy 1 non-Smudge card`, so deck shape can tighten or widen on purpose."
+					},
+					"group": {
+						"title": {"zh": "节点聚焦 · 删改", "en": "Node Focus · Archive"},
+						"summary": {
+							"zh": "source 的 archive 房把“修薄”和“复制关键件”放在一起，说明 deck 质量不只靠少，也可能靠更准确的重复。",
+							"en": "Source archive rooms keep trimming and duplicating key pieces together, showing that deck quality is not only about having fewer cards but also about cleaner repetition."
+						},
+						"cards": [
+							{
+								"glyph": "删",
+								"title": {"zh": "修薄或复制", "en": "Trim Or Duplicate"},
+								"subtitle": {"zh": "控制牌组形状", "en": "Control deck shape"},
+								"body": {
+									"zh": "当主线已经够清楚时，archive 会帮你去掉拖节奏的页；若关键件还不够稳，也可以复制一张真正贴线的牌。",
+									"en": "Once the main line is clear, archive can cut the pages that drag the pace; if the key piece is still too rare, it can also duplicate the card that truly fits the route."
+								},
+								"tags": [
+									{"zh": "删牌", "en": "Trim"},
+									{"zh": "复制", "en": "Duplicate"},
+									{"zh": "抽牌质量", "en": "Draw quality"}
+								]
+							}
+						]
+					}
+				},
+				"treasure": {
+					"summary": {
+						"zh": "遗物房会把几件可见 relic 摊在面前，让你直接挑那件最能偏转当前路线的东西，而不是只吃随机宝箱。",
+						"en": "Treasure rooms lay several visible relics in front of you so you can choose the one that best bends the current route instead of taking a blind chest roll."
+					},
+					"group": {
+						"title": {"zh": "节点聚焦 · 遗物", "en": "Node Focus · Treasure"},
+						"summary": {
+							"zh": "source 的 treasure 房会把遗物选择直接放到塔图节奏里，让路线判断不只发生在精英或 Boss 奖励之后。",
+							"en": "Source treasure rooms place relic choice directly inside the tower rhythm, so route judgment does not happen only after elite or boss rewards."
+						},
+						"cards": [
+							{
+								"glyph": "宝",
+								"title": {"zh": "可见遗物三选一", "en": "Visible Relic Choice"},
+								"subtitle": {"zh": "直接弯一次路线", "en": "Bend the line directly"},
+								"body": {
+									"zh": "遗物房会把路线判断从抽牌层抬到整套 run shell：之后的 Gold、商店和战后选牌都会跟着这件 relic 重新估值。",
+									"en": "Treasure rooms raise route judgment above drafting alone: later Gold, shop choices, and reward cards are all re-evaluated through the chosen relic."
+								},
+								"tags": [
+									{"zh": "遗物", "en": "Relic"},
+									{"zh": "节点偏转", "en": "Node bend"},
+									{"zh": "路线再估值", "en": "Revalue route"}
+								]
+							}
+						]
+					}
+				},
+				"boss": {
+					"summary": {
+						"zh": "Boss 是整副牌的总检验。此时路线、遗物、Gold 重配与事件取舍都会一起压到最后一场问答里。",
+						"en": "The boss is the full-build exam. By then the route, relics, Gold reallocation, and event tradeoffs all collapse into one final question."
+					},
+					"group": {
+						"title": {"zh": "节点聚焦 · Boss", "en": "Node Focus · Boss"},
+						"summary": {
+							"zh": "source 的 summit 并不只是血量更厚，而是会用更完整的敌意图与节奏问题要求整套 deck 给出清晰答案。",
+							"en": "The source summit is not just a larger HP bar. It uses fuller intent patterns and pacing questions to demand a clear answer from the entire deck."
+						},
+						"cards": [
+							{
+								"glyph": "塔",
+								"title": {"zh": "整副牌的总检验", "en": "Full-Build Exam"},
+								"subtitle": {"zh": "路线是否真的成型", "en": "Did the route truly form"},
+								"body": {
+									"zh": "到了塔顶，之前所有战后拿牌、事件补件、删改与遗物偏转都会一起接受检验，告诉你这条字路到底有没有站稳。",
+									"en": "At the summit, every earlier draft, event patch, archive pass, and relic bend is tested together to reveal whether the chosen glyph route truly holds."
+								},
+								"tags": [
+									{"zh": "Boss", "en": "Boss"},
+									{"zh": "总检验", "en": "Final exam"},
+									{"zh": "路线定稿", "en": "Route verdict"}
+								]
+							}
+						]
+					}
+				}
+			},
 			"rows": [
 				{
 					"floor": {"zh": "第 1 层", "en": "Floor 1"},
 					"nodes": [
 						{
+							"id": "entry_battle",
+							"kind": "battle",
 							"glyph": "战",
 							"label": {"zh": "战斗", "en": "Battle"},
 							"note": {"zh": "先读主线", "en": "Read the line"},
@@ -1143,6 +1384,8 @@ const CANGJIE_PORTAL_SECTIONS := [
 							"state": "path"
 						},
 						{
+							"id": "route_event",
+							"kind": "event",
 							"glyph": "异",
 							"label": {"zh": "事件", "en": "Event"},
 							"note": {"zh": "短期换长期", "en": "Short vs long"},
@@ -1150,6 +1393,8 @@ const CANGJIE_PORTAL_SECTIONS := [
 							"state": "option"
 						},
 						{
+							"id": "rest_stop",
+							"kind": "rest",
 							"glyph": "歇",
 							"label": {"zh": "歇息", "en": "Rest"},
 							"note": {"zh": "稳住气血", "en": "Stabilize HP"},
@@ -1162,6 +1407,8 @@ const CANGJIE_PORTAL_SECTIONS := [
 					"floor": {"zh": "第 2 层", "en": "Floor 2"},
 					"nodes": [
 						{
+							"id": "mid_battle",
+							"kind": "battle",
 							"glyph": "战",
 							"label": {"zh": "战斗", "en": "Battle"},
 							"note": {"zh": "继续拿牌", "en": "Keep drafting"},
@@ -1169,6 +1416,8 @@ const CANGJIE_PORTAL_SECTIONS := [
 							"state": "option"
 						},
 						{
+							"id": "shop_node",
+							"kind": "shop",
 							"glyph": "肆",
 							"label": {"zh": "商店", "en": "Shop"},
 							"note": {"zh": "重配 Gold", "en": "Reassign Gold"},
@@ -1176,6 +1425,8 @@ const CANGJIE_PORTAL_SECTIONS := [
 							"state": "path"
 						},
 						{
+							"id": "elite_node",
+							"kind": "elite",
 							"glyph": "魁",
 							"label": {"zh": "精英", "en": "Elite"},
 							"note": {"zh": "高压换方向", "en": "Risk for direction"},
@@ -1188,6 +1439,8 @@ const CANGJIE_PORTAL_SECTIONS := [
 					"floor": {"zh": "第 3 层", "en": "Floor 3"},
 					"nodes": [
 						{
+							"id": "archive_node",
+							"kind": "archive",
 							"glyph": "删",
 							"label": {"zh": "删改", "en": "Archive"},
 							"note": {"zh": "把牌组修薄", "en": "Thin the deck"},
@@ -1195,6 +1448,8 @@ const CANGJIE_PORTAL_SECTIONS := [
 							"state": "option"
 						},
 						{
+							"id": "treasure_node",
+							"kind": "treasure",
 							"glyph": "宝",
 							"label": {"zh": "遗物", "en": "Treasure"},
 							"note": {"zh": "遗物偏转", "en": "Relic bend"},
@@ -1202,6 +1457,8 @@ const CANGJIE_PORTAL_SECTIONS := [
 							"state": "path"
 						},
 						{
+							"id": "late_battle",
+							"kind": "battle",
 							"glyph": "战",
 							"label": {"zh": "战斗", "en": "Battle"},
 							"note": {"zh": "继续进塔", "en": "Keep climbing"},
@@ -1214,6 +1471,8 @@ const CANGJIE_PORTAL_SECTIONS := [
 					"floor": {"zh": "塔顶", "en": "Summit"},
 					"nodes": [
 						{
+							"id": "summit_boss",
+							"kind": "boss",
 							"glyph": "塔",
 							"label": {"zh": "Boss", "en": "Boss"},
 							"note": {"zh": "整副牌的总检验", "en": "Full-build exam"},
