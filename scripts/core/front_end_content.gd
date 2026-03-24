@@ -1182,6 +1182,22 @@ const CANGJIE_PORTAL_SECTIONS := [
 					"en": "Current sample basis: %s. Tapping another node rewrites the completed and available states around that stop."
 				}
 			},
+			"next_row_handoff": {
+				"title": {"zh": "下一排接续", "en": "Unlocked Next Row"},
+				"summary": {
+					"zh": "source 真正点下一个节点后，亮起的下一排不会只剩状态颜色，而会立刻变成新的路线问题。Godot 这里先把当前聚焦节点直连会点亮的房间抽成一组说明卡，让“已开”不再只是一个状态标签。",
+					"en": "After the live source map locks a room in, the newly lit row is not just a state color. It immediately becomes the next route question. Godot now pulls the directly connected rooms into a compact explainer so `available` reads as more than a badge."
+				},
+				"empty_summary": {
+					"zh": "当前聚焦已经来到样张收束处，下一排不会再展开新房间；source 真正塔顶也会在这里把这次 climb 收回最终 verdict。",
+					"en": "The current focus is already at the sample closure, so no new row opens from here; at the live source summit the climb also folds back into its final verdict at this point."
+				},
+				"badge": {"zh": "已开房间", "en": "Available Now"},
+				"footnote_format": {
+					"zh": "当前聚焦：%s。source 真正开跑时，下一排只会点亮这些直连房间。",
+					"en": "Current focus: %s. In the live source climb, only these directly connected rooms would light up on the next row."
+				}
+			},
 			"state_legend": {
 				"title": {"zh": "塔图读法图例", "en": "Route Read Legend"},
 				"summary": {
