@@ -1752,7 +1752,10 @@ func show_chamber_transition(title: String, body: String, preview_lines: Array[S
 	state_mode = "chamber_transition"
 	state_title_label.text = title
 	state_body_label.text = body
-	_show_state_preview(_localize_text("下一段预览"), preview_lines)
+	_show_state_preview(
+		_battle_state_text(battle_hud_content, "state_preview_title", "下一段预览", "Next Preview"),
+		preview_lines
+	)
 	_configure_state_button(state_primary_button, _battle_state_text(state_content, "action_continue_deeper", "续卷入深层", "Continue Deeper"), Callable(self, "_emit_pause_resume"))
 	_configure_state_button(state_secondary_button, _battle_state_text(state_content, "action_restart_run", "重新开始", "Restart Run"), Callable(self, "_emit_restart"))
 	_configure_state_button(state_tertiary_button, _battle_state_text(state_content, "action_return_menu", "返回菜单", "Return to Menu"), Callable(self, "_emit_return_menu"))
@@ -1771,7 +1774,10 @@ func show_chamber_interlude(title: String, body: String, options: Array[Dictiona
 	state_mode = "chamber_interlude"
 	state_title_label.text = title
 	state_body_label.text = body
-	_show_state_preview(_localize_text("下一段预览"), preview_lines)
+	_show_state_preview(
+		_battle_state_text(battle_hud_content, "state_preview_title", "下一段预览", "Next Preview"),
+		preview_lines
+	)
 
 	var option_buttons := [state_primary_button, state_secondary_button, state_tertiary_button]
 	for index in range(option_buttons.size()):
@@ -2495,7 +2501,14 @@ func _build_ui() -> void:
 	guidance_root.add_child(guidance_panel)
 	var guidance_box := _panel_box(guidance_panel)
 	guidance_box.add_theme_constant_override("separation", 2)
-	guidance_box.add_child(_make_label(_localize_text("当前指引"), 13, Color(0.96, 0.84, 0.6, 0.78), 2.0))
+	guidance_box.add_child(
+		_make_label(
+			_battle_state_text(battle_hud_content, "current_guide_title", "当前指引", "Active Guide"),
+			13,
+			Color(0.96, 0.84, 0.6, 0.78),
+			2.0
+		)
+	)
 	guidance_text_label = _make_label("Reward Beacon" if _is_english() else "卷间奖印", 16, Color(0.98, 0.95, 0.88, 0.98))
 	guidance_box.add_child(guidance_text_label)
 
@@ -2626,10 +2639,30 @@ func _build_ui() -> void:
 	safe_content_root.add_child(soundtrack_toast)
 	var soundtrack_toast_box := _panel_box(soundtrack_toast)
 	soundtrack_toast_box.add_theme_constant_override("separation", 4)
-	soundtrack_toast_box.add_child(_make_label("配乐提示", 14, Color(0.96, 0.9, 0.82, 0.76), 3.0))
-	soundtrack_toast_title_label = _make_label("苔月幽林", 24, Color(1.0, 0.95, 0.86, 1.0))
+	soundtrack_toast_box.add_child(
+		_make_label(
+			_battle_state_text(battle_hud_content, "soundtrack_cue_title", "配乐提示", "Music Cue"),
+			14,
+			Color(0.96, 0.9, 0.82, 0.76),
+			3.0
+		)
+	)
+	soundtrack_toast_title_label = _make_label(
+		_battle_state_text(battle_hud_content, "soundtrack_placeholder_title", "苔月幽林", "Mosslight Canopy"),
+		24,
+		Color(1.0, 0.95, 0.86, 1.0)
+	)
 	soundtrack_toast_box.add_child(soundtrack_toast_title_label)
-	soundtrack_toast_detail_label = _make_label("16-bit 静夜丛林 · 入卷铺陈", 15, Color(0.88, 0.92, 0.96, 0.92))
+	soundtrack_toast_detail_label = _make_label(
+		_battle_state_text(
+			battle_hud_content,
+			"soundtrack_placeholder_detail",
+			"16-bit 静夜丛林 · 入卷铺陈",
+			"16-bit Quiet Forest · Scroll Opening"
+		),
+		15,
+		Color(0.88, 0.92, 0.96, 0.92)
+	)
 	soundtrack_toast_box.add_child(soundtrack_toast_detail_label)
 	_apply_soundtrack_style(soundtrack_toast, Color(0.92, 0.69, 0.38, 1.0), 0.96, 0.64)
 
@@ -3390,7 +3423,11 @@ func _build_map_overlay(root: Control) -> void:
 
 	map_help_label = _make_label(_build_map_help_text(), 17, Color(0.88, 0.9, 0.93, 0.92))
 	map_side_box.add_child(map_help_label)
-	map_zoom_label = _make_label("缩放  1.00x", 17, Color(0.96, 0.82, 0.56, 0.98))
+	map_zoom_label = _make_label(
+		_battle_state_text(hud_content, "map_zoom_format", "缩放  %.2fx", "Zoom  %.2fx") % 1.0,
+		17,
+		Color(0.96, 0.82, 0.56, 0.98)
+	)
 	map_side_box.add_child(map_zoom_label)
 
 	map_zoom_row = HBoxContainer.new()
@@ -3451,7 +3488,11 @@ func _build_choice_overlay(root: Control) -> void:
 	box.add_theme_constant_override("separation", 14)
 	margin.add_child(box)
 
-	choice_title_label = _make_label("字力突破", 38, Color(1.0, 0.94, 0.86, 1.0))
+	choice_title_label = _make_label(
+		_battle_state_text(battle_hud_content, "choice_radical_title_placeholder", "字力突破", "Ink Breakthrough"),
+		38,
+		Color(1.0, 0.94, 0.86, 1.0)
+	)
 	choice_hint_label = _make_label("", 18, Color(0.88, 0.92, 0.96, 0.96))
 	box.add_child(choice_title_label)
 	box.add_child(choice_hint_label)
@@ -3533,7 +3574,11 @@ func _build_state_overlay(root: Control) -> void:
 	preview_box.add_theme_constant_override("separation", 6)
 	preview_margin.add_child(preview_box)
 
-	state_preview_title_label = _make_label("下一段预览", 16, Color(0.9, 0.96, 1.0, 0.98))
+	state_preview_title_label = _make_label(
+		_battle_state_text(battle_hud_content, "state_preview_title", "下一段预览", "Next Preview"),
+		16,
+		Color(0.9, 0.96, 1.0, 0.98)
+	)
 	preview_box.add_child(state_preview_title_label)
 
 	for _index in range(4):
@@ -3553,7 +3598,12 @@ func _build_state_overlay(root: Control) -> void:
 	state_name_input = LineEdit.new()
 	state_name_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	state_name_input.custom_minimum_size = Vector2(0.0, 48.0)
-	state_name_input.placeholder_text = _localize_text("留空则保留玩家名帖署名")
+	state_name_input.placeholder_text = _battle_state_text(
+		battle_hud_content,
+		"alias_placeholder_keep_sigil",
+		"留空则保留玩家名帖署名",
+		"Leave blank to keep the Player Sigil alias"
+	)
 	state_name_input.clear_button_enabled = true
 	state_name_input.add_theme_font_override("font", ui_font)
 	state_name_input.add_theme_font_size_override("font_size", 20)
@@ -3562,8 +3612,16 @@ func _build_state_overlay(root: Control) -> void:
 
 	state_name_button = _make_state_button()
 	state_name_button.custom_minimum_size = Vector2(160.0, 48.0)
-	state_name_button.set_meta("state_full_text", _localize_text("保存署名"))
-	state_name_button.tooltip_text = _localize_text("保存署名")
+	state_name_button.set_meta(
+		"state_full_text",
+		_battle_state_text(battle_hud_content, "alias_save_text", "保存署名", "Save Alias")
+	)
+	state_name_button.tooltip_text = _battle_state_text(
+		battle_hud_content,
+		"alias_save_text",
+		"保存署名",
+		"Save Alias"
+	)
 	state_name_button.text = _format_state_button_text(String(state_name_button.get_meta("state_full_text", "")))
 	state_name_button.add_theme_stylebox_override("normal", _make_button_style(Color(0.92, 0.62, 0.28, 1.0), 18))
 	state_name_button.add_theme_stylebox_override("hover", _make_button_style(Color(0.98, 0.7, 0.34, 1.0), 18))
@@ -3727,7 +3785,12 @@ func _on_map_canvas_zoom_changed(_zoom_value: float) -> void:
 func _update_map_zoom_label() -> void:
 	if map_zoom_label == null or map_canvas == null:
 		return
-	map_zoom_label.text = ("Zoom  %.2fx" if _is_english() else "缩放  %.2fx") % map_canvas.zoom
+	map_zoom_label.text = _battle_state_text(
+		battle_hud_content,
+		"map_zoom_format",
+		"缩放  %.2fx",
+		"Zoom  %.2fx"
+	) % map_canvas.zoom
 
 
 func _show_state_name_editor(title_text: String, detail_text: String) -> void:
@@ -3834,16 +3897,36 @@ func _refresh_controls_text() -> void:
 		return
 
 	var lines := [
-		"WASD / 方向键移动",
-		"自动朝最近敌人出手",
-		"升级时三选一偏旁",
-		"靠近砚台按 E 磨词",
-		"M / Tab 地图，R 重开，Esc 返回菜单"
+		_battle_state_text(battle_hud_content, "controls_move", "WASD / 方向键移动", "WASD / Arrow Keys move"),
+		_battle_state_text(battle_hud_content, "controls_attack", "自动朝最近敌人出手", "Auto-attack the nearest enemy"),
+		_battle_state_text(
+			battle_hud_content,
+			"controls_radical_choice",
+			"升级时三选一偏旁",
+			"Pick 1 of 3 radicals on level-up"
+		),
+		_battle_state_text(
+			battle_hud_content,
+			"controls_inkstone",
+			"靠近砚台按 E 磨词",
+			"Press E near the inkstone to refine phrases"
+		),
+		_battle_state_text(
+			battle_hud_content,
+			"controls_map_restart",
+			"M / Tab 地图，R 重开，Esc 返回菜单",
+			"M / Tab map, R restart, Esc return to menu"
+		)
 	]
 	if test_tools_enabled:
-		lines.append("试阵模式：右上可直接跳到下一波，并实时显示 FPS")
-	for index in range(lines.size()):
-		lines[index] = _localize_text(lines[index])
+		lines.append(
+			_battle_state_text(
+				battle_hud_content,
+				"controls_test_tools",
+				"试阵模式：右上可直接跳到下一波，并实时显示 FPS",
+				"Test mode: jump to the next wave from the top-right and keep FPS visible"
+			)
+		)
 	controls_label.text = "\n".join(lines)
 
 
