@@ -1008,6 +1008,161 @@ const CANGJIE_PORTAL_SECTIONS := [
 				"en": "This is only a front-shell preview of the source three-lane tower board, not a claim that Godot already has the real node logic wired up."
 			}
 		},
+		"route_ledger_preview": {
+			"title": {"zh": "路书对照预览", "en": "Route Ledger Preview"},
+			"summary": {
+				"zh": "source 的事件节点不只是随机奖励。`路书对照 / Route Ledger` 会先读当前牌组倾向，再给出压深主线、补齐短板或先存节奏三种回应。",
+				"en": "Source event nodes are not flat random rewards. `Route Ledger` reads the deck's current lean first, then offers three responses: deepen the main line, patch the weak point, or bank tempo."
+			},
+			"hint": {
+				"zh": "点按下面任一路书条目，预览 source 事件如何顺着当前 deck 走向回写奖励。",
+				"en": "Tap one of the ledger entries below to preview how the source event writes rewards back into the current deck direction."
+			},
+			"options": [
+				{
+					"id": "deepen",
+					"glyph": "主",
+					"title": {"zh": "压深主线", "en": "Press The Main Line"},
+					"subtitle": {"zh": "顺着当前牌组倾向继续写深", "en": "Lean harder into the current deck read"},
+					"summary": {
+						"zh": "这份样张假设牌组已经偏向 `明 / 学` 的节奏抽墨线，于是事件会补两张能继续压深主线的牌，而不是给一张通用大数值。",
+						"en": "This sample assumes the deck is already leaning toward a `明 / 学` tempo-and-Ink line, so the event adds two cards that deepen that spine instead of one generic high-number reward."
+					},
+					"tone": Color(0.94, 0.74, 0.42, 1.0),
+					"result_group": {
+						"title": {"zh": "当前倾向 · 压深主线", "en": "Current Lean · Press The Main Line"},
+						"summary": {
+							"zh": "把 source 的 deck-read 事件先迁回 portal 前台，说明它会根据当前构筑倾向投递更贴线的双牌组合。",
+							"en": "This brings the source deck-read event back into the portal front-end, showing how it can deliver a more route-aligned two-card package."
+						},
+						"cards": [
+							{
+								"glyph": "明",
+								"title": {"zh": "明 · 节奏成字", "en": "明 · Tempo Fusion"},
+								"subtitle": {"zh": "顺着日 / 月主线继续压深", "en": "Deepen the sun / moon spine"},
+								"body": {
+									"zh": "补伤害、抽牌与墨流，让已经成型的主线继续稳稳地接管中盘。",
+									"en": "Adds damage, draw, and Ink flow so the formed line can keep taking over the midgame cleanly."
+								},
+								"tags": [
+									{"zh": "成字", "en": "Fusion"},
+									{"zh": "主线加深", "en": "Main-line deepen"}
+								]
+							},
+							{
+								"glyph": "学",
+								"title": {"zh": "学 · 抽墨引擎", "en": "学 · Study Thread"},
+								"subtitle": {"zh": "让节奏线真正转起来", "en": "Keep the tempo line turning"},
+								"body": {
+									"zh": "补上 draw / Ink 引擎，让这条路不只靠合字爆点，而能真的把厚牌组运转起来。",
+									"en": "Adds the draw-and-Ink engine so the line does not rely only on fusion spikes and can truly keep a thicker deck moving."
+								},
+								"tags": [
+									{"zh": "引擎", "en": "Engine"},
+									{"zh": "抽墨", "en": "Draw + Ink"}
+								]
+							}
+						]
+					}
+				},
+				{
+					"id": "patch",
+					"glyph": "补",
+					"title": {"zh": "补齐短板", "en": "Patch The Weak Point"},
+					"subtitle": {"zh": "稳住最容易先裂开的地方", "en": "Stabilize the first likely crack"},
+					"summary": {
+						"zh": "source 的另一种路书回应不是继续贪主线，而是补一张更稳的牌，再顺手回一口气，把 deck 的底板抬起来。",
+						"en": "Another source-ledger response does not press greedier into the main line. It adds a steadier card and tops up HP so the deck's floor rises first."
+					},
+					"tone": Color(0.56, 0.84, 0.8, 1.0),
+					"result_group": {
+						"title": {"zh": "弱点修补 · 稳住底板", "en": "Weak-Point Patch · Raise The Floor"},
+						"summary": {
+							"zh": "这类事件回应会优先补防守或续航，提醒爬塔线不是每次都要继续加码进攻。",
+							"en": "This style of response prioritizes defense or sustain first, reinforcing that a tower climb should not always keep doubling down on offense."
+						},
+						"cards": [
+							{
+								"glyph": "休",
+								"title": {"zh": "休 · 稳健补漏", "en": "休 · Quiet Breath"},
+								"subtitle": {"zh": "补续航与格挡", "en": "Restore sustain and Block"},
+								"body": {
+									"zh": "补一张更稳的回复 / 防守牌，让半成型 deck 先站住，再决定要不要继续追更高的回报。",
+									"en": "Adds a steadier heal-and-defense card so a half-built deck can stand first before chasing larger payoffs again."
+								},
+								"tags": [
+									{"zh": "续航", "en": "Sustain"},
+									{"zh": "补漏洞", "en": "Patch gap"}
+								]
+							},
+							{
+								"glyph": "气",
+								"title": {"zh": "回气 8", "en": "Restore 8 HP"},
+								"subtitle": {"zh": "抬高当前容错", "en": "Raise the current margin"},
+								"body": {
+									"zh": "和补牌一起给一口回气，把这次修补变成真实的下一层容错，而不是纸面上的牌库变动。",
+									"en": "Comes with an HP top-up so the patch becomes real next-floor breathing room instead of a purely theoretical deck tweak."
+								},
+								"tags": [
+									{"zh": "回血", "en": "HP"},
+									{"zh": "稳线", "en": "Stabilize"}
+								]
+							}
+						]
+					}
+				},
+				{
+					"id": "tempo",
+					"glyph": "势",
+					"title": {"zh": "先存节奏", "en": "Bank The Tempo"},
+					"subtitle": {"zh": "不加牌，先换下场爆发点", "en": "Skip cards and bank the next spike"},
+					"summary": {
+						"zh": "source 还会给第三种更轻的回应：不把 deck 再压厚，直接存一笔 Gold，并把下一场战斗的 Energy / Ink 起手往前推。",
+						"en": "The source also keeps a lighter third response: do not thicken the deck again, just bank some Gold and push the next battle's opening Energy and Ink forward."
+					},
+					"tone": Color(0.72, 0.62, 0.94, 1.0),
+					"result_group": {
+						"title": {"zh": "节奏存势 · 下场爆点", "en": "Tempo Bank · Next Battle Spike"},
+						"summary": {
+							"zh": "这类选择强调《仓颉之路》并不总靠拿牌推进，资源和下场起手权本身也会成为路线抉择。",
+							"en": "This option shows that Cangjie Road does not advance only through drafting. Resources and next-battle opening leverage also become route decisions."
+						},
+						"cards": [
+							{
+								"glyph": "金",
+								"title": {"zh": "Gold +28", "en": "Gold +28"},
+								"subtitle": {"zh": "先把商店预算攒起来", "en": "Bank the next shop budget"},
+								"body": {
+									"zh": "不急着再拿一张牌，先把这层事件换成更自由的下一段消费与删改空间。",
+									"en": "Instead of taking another card immediately, this event can be converted into more flexible spending and trim space on the next stretch."
+								},
+								"tags": [
+									{"zh": "预算", "en": "Budget"},
+									{"zh": "商店线", "en": "Shop line"}
+								]
+							},
+							{
+								"glyph": "启",
+								"title": {"zh": "下场开局 +1 Energy / +1 Ink", "en": "Next battle +1 Energy / +1 Ink"},
+								"subtitle": {"zh": "把起手爆点提前一拍", "en": "Bring the spike one beat earlier"},
+								"body": {
+									"zh": "把下场的第一拍拉前，适合 deck 已经够厚、但这回合更想先存起手爆点的路线。",
+									"en": "Pulls the next battle's first spike forward, fitting runs that are already thick enough and would rather bank an opening burst now."
+								},
+								"tags": [
+									{"zh": "起手势能", "en": "Opening tempo"},
+									{"zh": "不增牌", "en": "No extra card"}
+								]
+							}
+						]
+					}
+				}
+			],
+			"footnote": {
+				"zh": "Godot 这里先展示一份代表性的 route-ledger 样张，不假装已经在本仓库里接通真实 deck 分析与事件分支。",
+				"en": "Godot shows a representative route-ledger sample here first, without pretending this repository already has real deck analysis or live event branching wired in."
+			}
+		},
 		"sample_groups": [
 			{
 				"title": {"zh": "节点类型", "en": "Node Types"},
