@@ -875,11 +875,17 @@ func _boss_defeat_reveal_detail(completed_bosses: int) -> String:
 func _boss_defeat_kicker(completed_bosses: int) -> String:
 	if completed_bosses >= BOSS_SPAWN_TIMES.size():
 		return _current_scroll_label()
-	return "%s · %s" % [_current_scroll_label(), "Layer Break" if _is_english() else "破卷入深层"]
+	return "%s · %s" % [
+		_current_scroll_label(),
+		_battle_interlude_text("layer_break_suffix", "破卷入深层", "Layer Break")
+	]
 
 
 func _chamber_break_title() -> String:
-	return "%s · %s" % [_current_scroll_label(), "Chamber Break" if _is_english() else "卷间缓冲"]
+	return "%s · %s" % [
+		_current_scroll_label(),
+		_battle_interlude_text("chamber_break_suffix", "卷间缓冲", "Chamber Break")
+	]
 
 
 func _chamber_interlude_options() -> Array[Dictionary]:
@@ -1172,6 +1178,18 @@ func _localized_room_objective_name(objective: Dictionary) -> String:
 	return String(objective.get("english_name" if _is_english() else "name", ""))
 
 
+func _room_objective_gatekeeper_name(objective: Dictionary) -> String:
+	var fallback_name := _battle_guidance_text(
+		"room_objective_gatekeeper_default_name",
+		"守关魁首",
+		"Gatekeeper"
+	)
+	var gatekeeper_variant: Variant = objective.get("gatekeeper", {})
+	if gatekeeper_variant is Dictionary:
+		return String(gatekeeper_variant.get("english_name" if _is_english() else "name", fallback_name))
+	return fallback_name
+
+
 func _room_objective_active() -> bool:
 	return not room_objective_id.is_empty() and (room_objective_remaining > 0 or room_objective_gatekeeper_active)
 
@@ -1180,22 +1198,26 @@ func _room_objective_status_text(objective: Dictionary, remaining: int) -> Strin
 	var objective_name := _localized_room_objective_name(objective)
 	var base_tip := String(objective.get("english_tip" if _is_english() else "tip", _current_chamber_tip()))
 	if String(objective.get("id", "")) == "seal_gatekeeper":
-		var gatekeeper_variant: Variant = objective.get("gatekeeper", {})
-		var gatekeeper_name := (
-			String(gatekeeper_variant.get("english_name" if _is_english() else "name", "Gatekeeper" if _is_english() else "守关魁首"))
-			if gatekeeper_variant is Dictionary
-			else ("Gatekeeper" if _is_english() else "守关魁首")
-		)
+		var gatekeeper_name := _room_objective_gatekeeper_name(objective)
 		if room_objective_gatekeeper_active:
-			if _is_english():
-				return "%s · %s Defeat %s to unseal the reward beacon." % [objective_name, base_tip, gatekeeper_name]
-			return "%s · %s 击败%s后，卷间奖印才会解封。" % [objective_name, base_tip, gatekeeper_name]
-		if _is_english():
-			return "%s · %s Reach the sealed ward to draw the gatekeeper out." % [objective_name, base_tip]
-		return "%s · %s 先靠近封门印，逼出守关魁首。" % [objective_name, base_tip]
-	if _is_english():
-		return "%s · %s Remaining seals %d/%d." % [objective_name, base_tip, remaining, room_objective_total]
-	return "%s · %s 当前还差 %d / %d 枚封印。" % [objective_name, base_tip, remaining, room_objective_total]
+			return _battle_guidance_format(
+				"room_objective_status_gatekeeper_active_format",
+				"%s · %s 击败%s后，卷间奖印才会解封。",
+				"%s · %s Defeat %s to unseal the reward beacon.",
+				[objective_name, base_tip, gatekeeper_name]
+			)
+		return _battle_guidance_format(
+			"room_objective_status_gatekeeper_reach_format",
+			"%s · %s 先靠近封门印，逼出守关魁首。",
+			"%s · %s Reach the sealed ward to draw the gatekeeper out.",
+			[objective_name, base_tip]
+		)
+	return _battle_guidance_format(
+		"room_objective_status_seal_remaining_format",
+		"%s · %s 当前还差 %d / %d 枚封印。",
+		"%s · %s Remaining seals %d/%d.",
+		[objective_name, base_tip, remaining, room_objective_total]
+	)
 
 
 func _clear_room_objective_state() -> void:
@@ -1250,7 +1272,16 @@ func _current_guidance_target() -> Dictionary:
 	var accent := _current_chamber_accent()
 	if _room_objective_active():
 		var objective := _current_chamber_exit_objective()
-		var objective_text := ("Sealed Ward" if _is_english() else "封门印") if String(objective.get("id", "")) == "seal_gatekeeper" else (("Seals %d/%d" if _is_english() else "封印 %d/%d") % [room_objective_remaining, room_objective_total])
+		var objective_text := _battle_guidance_text(
+			"guidance_sealed_ward",
+			"封门印",
+			"Sealed Ward"
+		) if String(objective.get("id", "")) == "seal_gatekeeper" else _battle_guidance_format(
+			"guidance_seals_remaining_format",
+			"封印 %d/%d",
+			"Seals %d/%d",
+			[room_objective_remaining, room_objective_total]
+		)
 		var objective_pickup := _nearest_pickup_target(_active_pickups_for_meta("room_objective_id", room_objective_id))
 		if objective_pickup != null:
 			return {
@@ -1263,7 +1294,7 @@ func _current_guidance_target() -> Dictionary:
 		if beacon_pickup != null:
 			return {
 				"world_position": beacon_pickup.global_position + Vector3(0.0, 1.65, 0.0),
-				"text": "Reward Beacon" if _is_english() else "卷间奖印",
+				"text": _battle_guidance_text("guidance_reward_beacon", "卷间奖印", "Reward Beacon"),
 				"accent": accent
 			}
 	return {}
@@ -1327,29 +1358,35 @@ func _spawn_chamber_break_beacon() -> void:
 	)
 	if hud != null:
 		hud.show_banner(
-			"Reward Beacon Raised" if _is_english() else "卷间奖印显形",
+			_battle_guidance_text("reward_beacon_banner", "卷间奖印显形", "Reward Beacon Raised"),
 			accent,
 			1.8
 		)
 		hud.show_reveal(
-			"Reward Beacon" if _is_english() else "卷间奖印",
+			_battle_guidance_text("reward_beacon_reveal_title", "卷间奖印", "Reward Beacon"),
 			_current_chamber_name(),
-			(
+			_battle_guidance_text(
+				"reward_beacon_reveal_body",
+				"卷间抉择已经显在附近。先走到这枚奖印前，才能真正定下下一条路。",
 				"The chamber break is nearby now. Reach the reward beacon to resolve one between-chambers choice."
-				if _is_english()
-				else "卷间抉择已经显在附近。先走到这枚奖印前，才能真正定下下一条路。"
 			),
 			accent,
 			"奖",
 			2.5
 		)
 		hud.set_tip(
-			"The chamber reward beacon is now active. Walk to it before the next chamber choice can resolve."
-			if _is_english()
-			else "卷间奖印已经亮起。先亲自走到奖印前，卷间抉择才会真正打开。"
+			_battle_guidance_text(
+				"reward_beacon_tip",
+				"卷间奖印已经亮起。先亲自走到奖印前，卷间抉择才会真正打开。",
+				"The chamber reward beacon is now active. Walk to it before the next chamber choice can resolve."
+			)
 		)
 	_log_battle_event(
-		"Reward Beacon · Reach the chamber prize" if _is_english() else "卷间奖印 · 靠近后再定下一路",
+		_battle_guidance_text(
+			"reward_beacon_log",
+			"卷间奖印 · 靠近后再定下一路",
+			"Reward Beacon · Reach the chamber prize"
+		),
 		accent
 	)
 
@@ -1389,12 +1426,17 @@ func _try_start_chamber_exit_objective() -> bool:
 			)
 	if hud != null:
 		hud.show_banner(
-			("Room Objective  %s" if _is_english() else "房间目标  %s") % _localized_room_objective_name(objective),
+			_battle_guidance_format(
+				"room_objective_banner_format",
+				"房间目标  %s",
+				"Room Objective  %s",
+				[_localized_room_objective_name(objective)]
+			),
 			accent,
 			1.9
 		)
 		hud.show_reveal(
-			"Room Objective" if _is_english() else "房间目标",
+			_battle_guidance_text("room_objective_reveal_title", "房间目标", "Room Objective"),
 			_localized_room_objective_name(objective),
 			_room_objective_status_text(objective, room_objective_remaining),
 			accent,
@@ -1403,7 +1445,12 @@ func _try_start_chamber_exit_objective() -> bool:
 		)
 		hud.set_tip(_room_objective_status_text(objective, room_objective_remaining))
 	_log_battle_event(
-		("Room Objective · %s" if _is_english() else "房间目标 · %s") % _localized_room_objective_name(objective),
+		_battle_guidance_format(
+			"room_objective_log_format",
+			"房间目标 · %s",
+			"Room Objective · %s",
+			[_localized_room_objective_name(objective)]
+		),
 		accent
 	)
 	return true
@@ -1427,21 +1474,40 @@ func _advance_room_objective(pickup_ref, tint: Color) -> bool:
 		room_objective_gatekeeper_active = true
 		if hud != null:
 			hud.show_banner(
-				("%s  Gatekeeper waiting" if _is_english() else "%s  守关现身") % objective_name,
+				_battle_guidance_format(
+					"room_objective_gatekeeper_banner_format",
+					"%s  守关现身",
+					"%s  Gatekeeper waiting",
+					[objective_name]
+				),
 				accent,
 				1.9
 			)
 			hud.show_reveal(
-				"Seal Warden" if _is_english() else "封门守魁",
+				_battle_guidance_text(
+					"room_objective_gatekeeper_reveal_title",
+					"封门守魁",
+					"Seal Warden"
+				),
 				gatekeeper_name,
-				("Defeat %s to unseal the reward beacon." if _is_english() else "击败%s后，卷间奖印才会真正解封。") % gatekeeper_name,
+				_battle_guidance_format(
+					"room_objective_gatekeeper_reveal_body_format",
+					"击败%s后，卷间奖印才会真正解封。",
+					"Defeat %s to unseal the reward beacon.",
+					[gatekeeper_name]
+				),
 				accent,
 				String(pickup_ref.get_meta("room_objective_glyph", objective.get("glyph", "封"))),
 				2.8
 			)
 			hud.set_tip(_room_objective_status_text(objective, room_objective_remaining))
 		_log_battle_event(
-			("%s · %s emerges" if _is_english() else "%s · %s拦路") % [objective_name, gatekeeper_name],
+			_battle_guidance_format(
+				"room_objective_gatekeeper_log_format",
+				"%s · %s拦路",
+				"%s · %s emerges",
+				[objective_name, gatekeeper_name]
+			),
 			accent
 		)
 		return true
@@ -1449,13 +1515,23 @@ func _advance_room_objective(pickup_ref, tint: Color) -> bool:
 	if room_objective_remaining > 0:
 		if hud != null:
 			hud.show_banner(
-				("%s  %d seals remain" if _is_english() else "%s  还差 %d 枚") % [objective_name, room_objective_remaining],
+				_battle_guidance_format(
+					"room_objective_seals_remaining_banner_format",
+					"%s  还差 %d 枚",
+					"%s  %d seals remain",
+					[objective_name, room_objective_remaining]
+				),
 				accent,
 				1.45
 			)
 			hud.set_tip(_room_objective_status_text(objective, room_objective_remaining))
 		_log_battle_event(
-			("%s · %d seals remain" if _is_english() else "%s · 尚余 %d 枚封印") % [objective_name, room_objective_remaining],
+			_battle_guidance_format(
+				"room_objective_seals_remaining_log_format",
+				"%s · 尚余 %d 枚封印",
+				"%s · %d seals remain",
+				[objective_name, room_objective_remaining]
+			),
 			accent
 		)
 		return true
@@ -1484,7 +1560,10 @@ func _spawn_room_objective_gatekeeper(objective: Dictionary, beacon_position: Ve
 	enemy.position.y = 0.0
 	enemy.configure(gatekeeper_type, 1.1 + elapsed_time / 76.0, player)
 	enemy.enemy_name = String(
-		gatekeeper.get("english_name" if _is_english() else "name", "Gatekeeper" if _is_english() else "守关魁首")
+		gatekeeper.get(
+			"english_name" if _is_english() else "name",
+			_battle_guidance_text("room_objective_gatekeeper_default_name", "守关魁首", "Gatekeeper")
+		)
 	)
 	enemy.glyph = String(gatekeeper.get("glyph", "魁"))
 	enemy.tint = Color(gatekeeper.get("tint", Color(0.82, 0.54, 0.34, 1.0)))
@@ -1507,10 +1586,20 @@ func _spawn_room_objective_gatekeeper(objective: Dictionary, beacon_position: Ve
 	var taunt := String(gatekeeper.get("english_taunt" if _is_english() else "taunt", ""))
 	if not taunt.is_empty():
 		_show_battle_callout(
-			("%s Challenges You" % enemy.enemy_name) if _is_english() else "%s拦路" % enemy.enemy_name,
+			_battle_guidance_format(
+				"room_objective_gatekeeper_callout_title_format",
+				"%s拦路",
+				"%s Challenges You",
+				[enemy.enemy_name]
+			),
 			taunt,
 			Color(enemy.tint),
-			("%s: " % enemy.enemy_name) if _is_english() else "%s：" % enemy.enemy_name,
+			_battle_guidance_format(
+				"room_objective_gatekeeper_callout_source_format",
+				"%s：",
+				"%s: ",
+				[enemy.enemy_name]
+			),
 			3.0
 		)
 	_spawn_wave_effect(enemy.global_position, 3.9, Color(enemy.tint), String(enemy.glyph))
@@ -1531,17 +1620,29 @@ func _complete_room_objective(objective: Dictionary, accent: Color) -> void:
 	_clear_room_objective_state()
 	if hud != null:
 		hud.show_banner(
-			("%s  Reward beacon raised" if _is_english() else "%s  奖印显形") % objective_name,
+			_battle_guidance_format(
+				"room_objective_complete_banner_format",
+				"%s  奖印显形",
+				"%s  Reward beacon raised",
+				[objective_name]
+			),
 			accent,
 			1.7
 		)
 		hud.set_tip(
-			"The reward beacon is now active. Reach it before the next chamber choice can resolve."
-			if _is_english()
-			else "卷间奖印已经显形。先亲自走到奖印前，卷间抉择才会真正打开。"
+			_battle_guidance_text(
+				"reward_beacon_tip",
+				"卷间奖印已经亮起。先亲自走到奖印前，卷间抉择才会真正打开。",
+				"The chamber reward beacon is now active. Walk to it before the next chamber choice can resolve."
+			)
 		)
 	_log_battle_event(
-		("%s complete · Reward beacon raised" if _is_english() else "%s完成 · 奖印显形") % objective_name,
+		_battle_guidance_format(
+			"room_objective_complete_log_format",
+			"%s完成 · 奖印显形",
+			"%s complete · Reward beacon raised",
+			[objective_name]
+		),
 		accent
 	)
 	_spawn_chamber_break_beacon()
@@ -1831,25 +1932,23 @@ func _chamber_preview_lines(next_chamber_id: String, next_wave: int) -> Array[St
 	var next_chamber_name := _localized_chamber_name(next_chamber_id)
 	var threat_joiner := ", " if _is_english() else " / "
 	var threat_mix := threat_joiner.join(PackedStringArray(_chamber_preview_threat_names(next_wave)))
-	if _is_english():
-		return [
-			"Chamber · %s" % next_chamber_name,
-			"Next Wave · %d%s" % [next_wave, " · Major Surge" if _is_big_wave(next_wave) else ""],
-			"Realm · %s" % next_theme_name,
-			"Pressure · %s" % _chamber_preview_pressure_copy(next_wave),
-			"Threat Mix · %s" % threat_mix
-		]
+	var wave_suffix := ""
+	if _is_big_wave(next_wave):
+		wave_suffix = _battle_interlude_text("preview_wave_major_suffix", " · 大潮压境", " · Major Surge")
 	return [
-		"下一房间 · %s" % next_chamber_name,
-		"下一波 · 第 %d 波%s" % [next_wave, " · 大潮压境" if _is_big_wave(next_wave) else ""],
-		"字境 · %s" % next_theme_name,
-		"压境重点 · %s" % _chamber_preview_pressure_copy(next_wave),
-		"威胁混编 · %s" % threat_mix
+		_battle_interlude_format("preview_line_chamber_format", "下一房间 · %s", "Chamber · %s", [next_chamber_name]),
+		_battle_interlude_format("preview_line_wave_format", "下一波 · 第 %d 波%s", "Next Wave · %d%s", [next_wave, wave_suffix]),
+		_battle_interlude_format("preview_line_realm_format", "字境 · %s", "Realm · %s", [next_theme_name]),
+		_battle_interlude_format("preview_line_pressure_format", "压境重点 · %s", "Pressure · %s", [_chamber_preview_pressure_copy(next_wave)]),
+		_battle_interlude_format("preview_line_threat_mix_format", "威胁混编 · %s", "Threat Mix · %s", [threat_mix])
 	]
 
 
 func _chamber_interlude_title() -> String:
-	return "%s · %s" % [_current_scroll_label(), "Between Chambers" if _is_english() else "卷间抉择"]
+	return "%s · %s" % [
+		_current_scroll_label(),
+		_battle_interlude_text("chamber_interlude_suffix", "卷间抉择", "Between Chambers")
+	]
 
 
 func _chamber_preview_pressure_copy(next_wave: int) -> String:
@@ -1914,7 +2013,7 @@ func _chamber_interlude_preview_lines(next_wave: int) -> Array[String]:
 
 func _chamber_transition_title(next_chamber_id: String) -> String:
 	var next_chamber_name := _localized_chamber_name(next_chamber_id)
-	return ("Chamber Cleared · %s" if _is_english() else "房间已清 · %s") % next_chamber_name
+	return _battle_interlude_format("transition_title_format", "房间已清 · %s", "Chamber Cleared · %s", [next_chamber_name])
 
 
 func _chamber_transition_body(next_chamber_id: String) -> String:
@@ -2032,12 +2131,22 @@ func _apply_chamber_modifier_wave_echo(new_threat_level: int) -> void:
 		player.clear_stun()
 	player.apply_brush_haste(CHAMBER_INTERLUDE_REST_ECHO_BRUSH_DURATION)
 	hud.show_banner(
-		("Short Rest  Echo heal %d%%" if _is_english() else "歇笔回气  再补 %d%% 气血") % int(round(CHAMBER_INTERLUDE_REST_ECHO_HEAL_RATIO * 100.0)),
+		_battle_interlude_format(
+			"short_rest_echo_banner_format",
+			"歇笔回气  再补 %d%% 气血",
+			"Short Rest  Echo heal %d%%",
+			[int(round(CHAMBER_INTERLUDE_REST_ECHO_HEAL_RATIO * 100.0))]
+		),
 		Color(0.62, 0.9, 0.74, 1.0),
 		1.6
 	)
 	_log_battle_event(
-		("Wave %d · Short Rest echoes again" if _is_english() else "第 %d 波 · 歇笔回气再次回响") % new_threat_level,
+		_battle_interlude_format(
+			"short_rest_echo_log_format",
+			"第 %d 波 · 歇笔回气再次回响",
+			"Wave %d · Short Rest echoes again",
+			[new_threat_level]
+		),
 		Color(0.62, 0.9, 0.74, 1.0)
 	)
 
@@ -2459,12 +2568,12 @@ func _transition_to_chamber(next_chamber_id: String) -> void:
 	var chamber_accent := _current_chamber_accent()
 	if hud != null:
 		hud.show_banner(
-			("Next Chamber · %s" if _is_english() else "下一房间 · %s") % chamber_name,
+			_battle_interlude_format("transition_banner_format", "下一房间 · %s", "Next Chamber · %s", [chamber_name]),
 			chamber_accent,
 			2.0
 		)
 		hud.show_reveal(
-			"Between Chambers" if _is_english() else "卷间换房",
+			_battle_interlude_text("transition_reveal_title", "卷间换房", "Between Chambers"),
 			chamber_name,
 			_current_chamber_tip(),
 			chamber_accent,
@@ -2472,7 +2581,10 @@ func _transition_to_chamber(next_chamber_id: String) -> void:
 			2.9
 		)
 		hud.set_tip(_current_chamber_tip())
-	_log_battle_event(("Chamber Shift · %s" if _is_english() else "房间更替 · %s") % chamber_name, chamber_accent)
+	_log_battle_event(
+		_battle_interlude_format("transition_log_format", "房间更替 · %s", "Chamber Shift · %s", [chamber_name]),
+		chamber_accent
+	)
 
 
 func _spawn_enemy() -> void:

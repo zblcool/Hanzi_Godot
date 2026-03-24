@@ -1599,6 +1599,21 @@ const BATTLE_INTERLUDE_CONTENT := {
 		"zh": "这次卷间抉择已经定下，下一段会进入「%s」。真正续卷后，迷雾显形、场景布置和下一波压境都会按新房间重新铺开。\n\n先再看一眼下一段预览，准备好后再续卷入深层。",
 		"en": "Your between-chambers choice is sealed. %s is next, and entering it will reset the fog, field props, and pressure layout around a fresh chamber state.\n\nCheck the final preview below, then continue deeper when ready."
 	},
+	"transition_title_format": {"zh": "房间已清 · %s", "en": "Chamber Cleared · %s"},
+	"transition_banner_format": {"zh": "下一房间 · %s", "en": "Next Chamber · %s"},
+	"transition_reveal_title": {"zh": "卷间换房", "en": "Between Chambers"},
+	"transition_log_format": {"zh": "房间更替 · %s", "en": "Chamber Shift · %s"},
+	"chamber_break_suffix": {"zh": "卷间缓冲", "en": "Chamber Break"},
+	"chamber_interlude_suffix": {"zh": "卷间抉择", "en": "Between Chambers"},
+	"layer_break_suffix": {"zh": "破卷入深层", "en": "Layer Break"},
+	"preview_line_chamber_format": {"zh": "下一房间 · %s", "en": "Chamber · %s"},
+	"preview_line_wave_format": {"zh": "下一波 · 第 %d 波%s", "en": "Next Wave · %d%s"},
+	"preview_wave_major_suffix": {"zh": " · 大潮压境", "en": " · Major Surge"},
+	"preview_line_realm_format": {"zh": "字境 · %s", "en": "Realm · %s"},
+	"preview_line_pressure_format": {"zh": "压境重点 · %s", "en": "Pressure · %s"},
+	"preview_line_threat_mix_format": {"zh": "威胁混编 · %s", "en": "Threat Mix · %s"},
+	"short_rest_echo_banner_format": {"zh": "歇笔回气  再补 %d%% 气血", "en": "Short Rest  Echo heal %d%%"},
+	"short_rest_echo_log_format": {"zh": "第 %d 波 · 歇笔回气再次回响", "en": "Wave %d · Short Rest echoes again"},
 	"interlude_body_archive_format": {
 		"zh": "首位卷主已散，当前房间也暂时清空，下一段会推入「%s」。\n\n简库中庭会先换成更贴近 source 的专属卷间抉择：\n奖励 · 简库拓片：带走偏旁「%s」，下一段敌人仍会更常掉残纸 / 战印，后续偏旁三选一也会更偏向这两笔。\n异事 · 封钥借契：保留残卷回响，同时开场先带着 %d 秒疾书令入深层，后续偏旁三选一会更偏向 %s。\n修整 · 守灯静读：先回复 %d%% 气血、解除眩晕，并把 %d 秒文笔提速一并带进下一段；后续偏旁三选一会更偏向 %s，后面每逢字潮推进还会再补一小口气。",
 		"en": "The first scroll lord is gone and the chamber has gone quiet. The run is about to shift into %s.\n\nSlip Archive now swaps in a denser chamber choice:\nReward · Archive Rubbing: carry radicals %s, the next chamber still lifts paper / seal drops, and later radical drafts lean toward %s.\nEvent · Latch Bargain: arm Scroll Echo for the next chamber, open it with %d s of Swift Edict, and tilt later radical drafts toward %s.\nRecovery · Lamp Respite: restore %d%% vitality, clear stun, take %d s of brush haste forward, and tilt later radical drafts toward %s before later wave pushes echo a smaller %d%% recovery."
@@ -1629,6 +1644,106 @@ const BATTLE_GUIDANCE_CONTENT := {
 	"inkstone_waiting_tip": {
 		"zh": "砚台静候。先把合字升满，再带着相关偏旁来磨词。",
 		"en": "The inkstone waits. Max a fused glyph first, then bring its related radicals here for phrase refinement."
+	},
+	"room_objective_gatekeeper_default_name": {
+		"zh": "守关魁首",
+		"en": "Gatekeeper"
+	},
+	"room_objective_status_gatekeeper_active_format": {
+		"zh": "%s · %s 击败%s后，卷间奖印才会解封。",
+		"en": "%s · %s Defeat %s to unseal the reward beacon."
+	},
+	"room_objective_status_gatekeeper_reach_format": {
+		"zh": "%s · %s 先靠近封门印，逼出守关魁首。",
+		"en": "%s · %s Reach the sealed ward to draw the gatekeeper out."
+	},
+	"room_objective_status_seal_remaining_format": {
+		"zh": "%s · %s 当前还差 %d / %d 枚封印。",
+		"en": "%s · %s Remaining seals %d/%d."
+	},
+	"guidance_sealed_ward": {
+		"zh": "封门印",
+		"en": "Sealed Ward"
+	},
+	"guidance_seals_remaining_format": {
+		"zh": "封印 %d/%d",
+		"en": "Seals %d/%d"
+	},
+	"guidance_reward_beacon": {
+		"zh": "卷间奖印",
+		"en": "Reward Beacon"
+	},
+	"reward_beacon_banner": {
+		"zh": "卷间奖印显形",
+		"en": "Reward Beacon Raised"
+	},
+	"reward_beacon_reveal_title": {
+		"zh": "卷间奖印",
+		"en": "Reward Beacon"
+	},
+	"reward_beacon_reveal_body": {
+		"zh": "卷间抉择已经显在附近。先走到这枚奖印前，才能真正定下下一条路。",
+		"en": "The chamber break is nearby now. Reach the reward beacon to resolve one between-chambers choice."
+	},
+	"reward_beacon_tip": {
+		"zh": "卷间奖印已经亮起。先亲自走到奖印前，卷间抉择才会真正打开。",
+		"en": "The chamber reward beacon is now active. Walk to it before the next chamber choice can resolve."
+	},
+	"reward_beacon_log": {
+		"zh": "卷间奖印 · 靠近后再定下一路",
+		"en": "Reward Beacon · Reach the chamber prize"
+	},
+	"room_objective_banner_format": {
+		"zh": "房间目标  %s",
+		"en": "Room Objective  %s"
+	},
+	"room_objective_reveal_title": {
+		"zh": "房间目标",
+		"en": "Room Objective"
+	},
+	"room_objective_log_format": {
+		"zh": "房间目标 · %s",
+		"en": "Room Objective · %s"
+	},
+	"room_objective_gatekeeper_banner_format": {
+		"zh": "%s  守关现身",
+		"en": "%s  Gatekeeper waiting"
+	},
+	"room_objective_gatekeeper_reveal_title": {
+		"zh": "封门守魁",
+		"en": "Seal Warden"
+	},
+	"room_objective_gatekeeper_reveal_body_format": {
+		"zh": "击败%s后，卷间奖印才会真正解封。",
+		"en": "Defeat %s to unseal the reward beacon."
+	},
+	"room_objective_gatekeeper_log_format": {
+		"zh": "%s · %s拦路",
+		"en": "%s · %s emerges"
+	},
+	"room_objective_seals_remaining_banner_format": {
+		"zh": "%s  还差 %d 枚",
+		"en": "%s  %d seals remain"
+	},
+	"room_objective_seals_remaining_log_format": {
+		"zh": "%s · 尚余 %d 枚封印",
+		"en": "%s · %d seals remain"
+	},
+	"room_objective_complete_banner_format": {
+		"zh": "%s  奖印显形",
+		"en": "%s  Reward beacon raised"
+	},
+	"room_objective_complete_log_format": {
+		"zh": "%s完成 · 奖印显形",
+		"en": "%s complete · Reward beacon raised"
+	},
+	"room_objective_gatekeeper_callout_title_format": {
+		"zh": "%s拦路",
+		"en": "%s Challenges You"
+	},
+	"room_objective_gatekeeper_callout_source_format": {
+		"zh": "%s：",
+		"en": "%s: "
 	},
 	"boss_spawn_detail_first": {
 		"zh": "先躲开场的大禁阵，再抓卷主回气时的空档。",
