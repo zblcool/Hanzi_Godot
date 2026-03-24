@@ -775,6 +775,8 @@ func _localized_recipe_data(recipe_id: String) -> Dictionary:
 
 
 func _localized_word_data(word_id: String) -> Dictionary:
+	if word_id.is_empty():
+		return {}
 	return HanziLocalization.localized_word_data(word_id, Session.get_launcher_language())
 
 
@@ -2895,12 +2897,18 @@ func _on_player_request_slash(origin: Vector3, forward: Vector3, radius: float, 
 
 
 func _on_player_request_thunder(target_count: int, damage: float, splash_radius: float, splash_damage: float, tint: Color, label: String) -> void:
-	_play_attack_sfx("thunder_strike", 1.0 + float(target_count) * 0.05 + splash_radius * 0.08)
+	if label == "岩":
+		_play_attack_sfx("rest_wave", 0.92 + splash_radius * 0.12 + damage / 72.0)
+	else:
+		_play_attack_sfx("thunder_strike", 1.0 + float(target_count) * 0.05 + splash_radius * 0.08)
 	var targets: Array = _collect_nearest_enemies(target_count)
 	for target in targets:
 		if not is_instance_valid(target) or target.is_queued_for_deletion():
 			continue
-		_spawn_wave_effect(target.global_position, 1.1 + splash_radius * 0.25, tint, label)
+		var effect_radius := 1.1 + splash_radius * 0.25
+		if label == "岩":
+			effect_radius += 0.28
+		_spawn_wave_effect(target.global_position, effect_radius, tint, label)
 		target.take_damage(damage)
 		if splash_radius > 0.0 and splash_damage > 0.0:
 			_damage_enemies_in_radius(target.global_position, splash_radius, splash_damage, target)
@@ -3350,15 +3358,18 @@ func _score_radical_choice(radical: String) -> float:
 	elif current_level < max_level:
 		score += 2.2 - float(current_level) * 0.28
 	else:
-		var word_id: String = String(recipe["word_id"])
-		var word: Dictionary = Session.get_word_data(word_id)
-		var word_level: int = int(word_skill_levels.get(word_id, 0))
-		if word_level <= 0:
-			score += 1.8 + float(word_progress.get(word_id, 0)) * 0.45
-		elif word_level < int(word["max_level"]):
-			score += 1.25 - float(word_level) * 0.1
+		var word_id: String = String(recipe.get("word_id", ""))
+		if word_id.is_empty():
+			score -= 0.8
 		else:
-			score += 0.4
+			var word: Dictionary = Session.get_word_data(word_id)
+			var word_level: int = int(word_skill_levels.get(word_id, 0))
+			if word_level <= 0:
+				score += 1.8 + float(word_progress.get(word_id, 0)) * 0.45
+			elif word_level < int(word["max_level"]):
+				score += 1.25 - float(word_level) * 0.1
+			else:
+				score += 0.4
 	return score
 
 
@@ -3381,21 +3392,29 @@ func _build_choice_data(radical: String) -> Dictionary:
 			elif level_value < max_level:
 				headline = ("Upgrade `%s` Lv.%d -> Lv.%d." if _is_english() else "提升「%s」 Lv.%d -> Lv.%d。") % [String(recipe["display"]), level_value, level_value + 1]
 			else:
-				var word: Dictionary = _localized_word_data(String(recipe["word_id"]))
-				var word_level: int = int(word_skill_levels.get(word["id"], 0))
-				var stock: int = _count_recipe_radicals(recipe["radicals"]) + 1
-				if word_level <= 0:
-					headline = ("Add one more stock to `%s`, then refine it at the inkstone %d/%d." if _is_english() else "为「%s」添一枚余材，可去砚台磨词 %d/%d。") % [
-						String(word["display"]),
-						min(int(word_progress.get(word["id"], 0)) + 1, int(word["unlock_cost"])),
-						int(word["unlock_cost"])
-					]
+				var word_id := String(recipe.get("word_id", ""))
+				if word_id.is_empty():
+					headline = (
+						"`%s` is already complete in this build. Extra `%s` stock has no phrase follow-through yet."
+						if _is_english()
+						else "「%s」当前已经写满；额外「%s」余材暂时还没有后续词技。"
+					) % [String(recipe["display"]), radical]
 				else:
-					headline = ("Add more phrase stock to raise `%s` to Lv.%d at the inkstone. Current stock %d." if _is_english() else "补充词材，可在砚台将「%s」升到 Lv.%d。当前余材 %d。") % [
-						String(word["display"]),
-						min(word_level + 1, int(word["max_level"])),
-						stock
-					]
+					var word: Dictionary = _localized_word_data(word_id)
+					var word_level: int = int(word_skill_levels.get(word["id"], 0))
+					var stock: int = _count_recipe_radicals(recipe["radicals"]) + 1
+					if word_level <= 0:
+						headline = ("Add one more stock to `%s`, then refine it at the inkstone %d/%d." if _is_english() else "为「%s」添一枚余材，可去砚台磨词 %d/%d。") % [
+							String(word["display"]),
+							min(int(word_progress.get(word["id"], 0)) + 1, int(word["unlock_cost"])),
+							int(word["unlock_cost"])
+						]
+					else:
+						headline = ("Add more phrase stock to raise `%s` to Lv.%d at the inkstone. Current stock %d." if _is_english() else "补充词材，可在砚台将「%s」升到 Lv.%d。当前余材 %d。") % [
+							String(word["display"]),
+							min(word_level + 1, int(word["max_level"])),
+							stock
+						]
 	if radical == "刂":
 		headline += (" Also strengthen %s." if _is_english() else " 并强化%s。") % _weapon_core_label()
 	headline = _append_interlude_draft_lean_copy(headline, radical)

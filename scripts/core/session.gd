@@ -256,7 +256,7 @@ func _ensure_input_action(action_name: StringName, keycodes: Array) -> void:
 			event.physical_keycode = keycode
 			InputMap.action_add_event(action_name, event)
 
-const RECIPE_ORDER := ["ming", "xiu", "hai", "lei", "ren", "yan"]
+const RECIPE_ORDER := ["ming", "xiu", "hai", "lei", "rock", "ren", "yan"]
 const RECIPES := {
 	"ming": {
 		"id": "ming",
@@ -297,6 +297,16 @@ const RECIPES := {
 		"color": Color(0.76, 0.9, 1.0, 1.0),
 		"max_level": 3,
 		"word_id": "lei_yu"
+	},
+	"rock": {
+		"id": "rock",
+		"display": "岩",
+		"radicals": ["石", "山"],
+		"title": "岩坠成字",
+		"description": "周期在最近敌群脚下写下岩印，砸出短暂震域。",
+		"color": Color(0.8, 0.77, 0.71, 1.0),
+		"max_level": 3,
+		"word_id": ""
 	},
 	"ren": {
 		"id": "ren",
@@ -469,12 +479,14 @@ const ENEMIES := {
 	}
 }
 
-const RADICAL_ORDER := ["亻", "木", "日", "月", "氵", "每", "雨", "田", "心", "火", "刂"]
+const RADICAL_ORDER := ["亻", "木", "日", "月", "石", "山", "氵", "每", "雨", "田", "心", "火", "刂"]
 const RADICAL_COLORS := {
 	"亻": Color(0.88, 0.71, 0.55, 1.0),
 	"木": Color(0.49, 0.82, 0.56, 1.0),
 	"日": Color(1.0, 0.78, 0.32, 1.0),
 	"月": Color(0.68, 0.79, 1.0, 1.0),
+	"石": Color(0.76, 0.74, 0.72, 1.0),
+	"山": Color(0.63, 0.72, 0.68, 1.0),
 	"氵": Color(0.42, 0.82, 1.0, 1.0),
 	"每": Color(0.86, 0.56, 1.0, 1.0),
 	"雨": Color(0.72, 0.9, 1.0, 1.0),
@@ -507,6 +519,18 @@ const RADICALS := {
 		"name": "月字旁",
 		"description": "推进「明」线，让武器更快进入成词。",
 		"recipe_id": "ming"
+	},
+	"石": {
+		"display": "石",
+		"name": "石字旁",
+		"description": "和 `山` 一起合成「岩」，走砸落震域与短控路线。",
+		"recipe_id": "rock"
+	},
+	"山": {
+		"display": "山",
+		"name": "山字旁",
+		"description": "补齐「岩」的另一半，把最近敌群脚下砸成震域。",
+		"recipe_id": "rock"
 	},
 	"氵": {
 		"display": "氵",
@@ -744,6 +768,8 @@ func get_recipe_data(recipe_id: String) -> Dictionary:
 
 
 func get_word_data(word_id: String) -> Dictionary:
+	if word_id.is_empty():
+		return {}
 	var fallback: Dictionary = WORDS["ming_guang"]
 	if WORDS.has(word_id):
 		return WORDS[word_id].duplicate(true)

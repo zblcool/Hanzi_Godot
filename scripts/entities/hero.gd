@@ -46,6 +46,7 @@ var bright_volley_level: int = 0
 var bright_word_level: int = 0
 var thunder_level: int = 0
 var thunder_word_level: int = 0
+var rock_level: int = 0
 var resolve_level: int = 0
 var resolve_word_level: int = 0
 var flame_level: int = 0
@@ -61,6 +62,7 @@ var heal_timer: float = 0.0
 var wave_timer: float = 0.0
 var bright_timer: float = 0.0
 var thunder_timer: float = 0.0
+var rock_timer: float = 0.0
 var flame_timer: float = 0.0
 var resolve_pulse_timer: float = 0.0
 var stealth_time: float = 0.0
@@ -316,6 +318,15 @@ func _handle_passives(delta: float) -> void:
 			request_thunder.emit(2 + thunder_level + thunder_word_level, thunder_damage, splash_radius, splash_damage, Session.RECIPES["lei"]["color"], "雷")
 			thunder_timer = max(2.35, 4.1 - float(thunder_level) * 0.34 - float(thunder_word_level) * 0.38)
 
+	if rock_level > 0:
+		rock_timer -= delta
+		if rock_timer <= 0.0:
+			var impact_damage: float = 10.0 + current_attack_damage * 0.62 + float(rock_level) * 3.1
+			var splash_radius: float = 2.15 + float(rock_level) * 0.42
+			var splash_damage: float = impact_damage * (0.42 + float(rock_level) * 0.04)
+			request_thunder.emit(1, impact_damage, splash_radius, splash_damage, Session.RECIPES["rock"]["color"], "岩")
+			rock_timer = max(3.0, 5.6 - float(rock_level) * 0.38)
+
 	if flame_level > 0:
 		flame_timer -= delta
 		if flame_timer <= 0.0:
@@ -466,6 +477,7 @@ func _apply_skill_levels() -> void:
 	var xiu_level: int = int(skill_levels.get("xiu", 0))
 	var hai_level: int = int(skill_levels.get("hai", 0))
 	var lei_level: int = int(skill_levels.get("lei", 0))
+	var rock_recipe_level: int = int(skill_levels.get("rock", 0))
 	var ren_level: int = int(skill_levels.get("ren", 0))
 	var yan_level: int = int(skill_levels.get("yan", 0))
 	var ming_word_level: int = int(word_skill_levels.get("ming_guang", 0))
@@ -481,6 +493,7 @@ func _apply_skill_levels() -> void:
 	bright_word_level = ming_word_level
 	thunder_level = lei_level
 	thunder_word_level = lei_word_level
+	rock_level = rock_recipe_level
 	resolve_level = ren_level
 	resolve_word_level = ren_word_level
 	flame_level = yan_level
@@ -500,7 +513,7 @@ func _apply_skill_levels() -> void:
 	move_speed = base_move_speed
 	projectile_speed = base_projectile_speed + float(blade_level) * 0.8 + float(ming_word_level) * 1.0
 
-	current_attack_damage = base_attack_damage + float(ming_level) * 2.4 + float(wave_level) * 1.2 + float(ming_word_level) * 4.0 + float(lei_level) * 1.1 + float(yan_level) * 1.0
+	current_attack_damage = base_attack_damage + float(ming_level) * 2.4 + float(wave_level) * 1.2 + float(ming_word_level) * 4.0 + float(lei_level) * 1.1 + float(rock_level) * 0.9 + float(yan_level) * 1.0
 	current_attack_interval = max(0.28, base_attack_interval - float(ming_level) * 0.03 - float(ming_word_level) * 0.04)
 
 	if role == "ranged":
@@ -525,6 +538,8 @@ func _apply_skill_levels() -> void:
 		bright_timer = max(1.8, 5.0 - float(bright_volley_level) * 0.45 - float(bright_word_level) * 0.6)
 	if thunder_level > 0 and thunder_timer <= 0.0:
 		thunder_timer = max(2.35, 4.1 - float(thunder_level) * 0.34 - float(thunder_word_level) * 0.38)
+	if rock_level > 0 and rock_timer <= 0.0:
+		rock_timer = max(3.0, 5.6 - float(rock_level) * 0.38)
 	if flame_level > 0 and flame_timer <= 0.0:
 		flame_timer = max(2.4, 5.1 - float(flame_level) * 0.36 - float(flame_word_level) * 0.42)
 	if resolve_active and resolve_word_level > 0 and resolve_pulse_timer <= 0.0:

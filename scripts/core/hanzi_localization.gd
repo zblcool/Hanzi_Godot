@@ -127,6 +127,8 @@ const RADICAL_EN := {
 	"木": {"name": "wood radical", "description": "The other half of `休`, and the route that keeps healing lines climbing."},
 	"日": {"name": "sun radical", "description": "Combine with `月` into `明` to strengthen your main damage tempo."},
 	"月": {"name": "moon radical", "description": "Advances the `明` route and pushes the weapon toward phrase arts sooner."},
+	"石": {"name": "stone radical", "description": "Combine with `山` into `岩` for targeted impacts and short shock zones."},
+	"山": {"name": "mountain radical", "description": "Completes `岩` and turns the nearest enemy cluster into a crushed impact zone."},
 	"氵": {"name": "water radical", "description": "Combine with `每` into `海` for wave-based crowd clear."},
 	"每": {"name": "every base", "description": "Completes `海` and helps refine it into stronger sea phrase arts."},
 	"雨": {"name": "rain radical", "description": "Combine with `田` into `雷` for lock-on lightning and mid-field control."},
@@ -140,6 +142,7 @@ const RECIPE_EN := {
 	"xiu": {"title": "Forest Rest", "description": "Heals over time and knocks back nearby enemies to stretch survivability."},
 	"hai": {"title": "Sea Tide", "description": "Detonates ink-wave ripples on a timer to clear nearby swarms."},
 	"lei": {"title": "Falling Thunder", "description": "Locks onto the nearest cluster and slams the mid-field with lightning."},
+	"rock": {"title": "Falling Crag", "description": "Marks the nearest enemy cluster with an engraved impact and leaves a short shock zone."},
 	"ren": {"title": "Endurance Instinct", "description": "Below half health, gain attack speed, damage, and move speed together."},
 	"yan": {"title": "Flame Surge", "description": "Periodically sprays flame glyph volleys in all directions to burn open space."}
 }
@@ -220,6 +223,8 @@ static func localized_recipe_data(recipe_id: String, language: String) -> Dictio
 
 
 static func localized_word_data(word_id: String, language: String) -> Dictionary:
+	if word_id.is_empty():
+		return {}
 	var word := Session.get_word_data(word_id).duplicate(true)
 	if not is_english(language):
 		return word

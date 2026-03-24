@@ -650,10 +650,13 @@ func set_skills(recipe_levels: Dictionary, word_levels: Dictionary, word_progres
 		var recipe_id := String(recipe_id_variant)
 		var recipe: Dictionary = _localized_recipe_data(recipe_id)
 		var recipe_level: int = int(recipe_levels.get(recipe_id, 0))
-		var word_id: String = String(recipe["word_id"])
-		var word: Dictionary = _localized_word_data(word_id)
-		var word_level: int = int(word_levels.get(word_id, 0))
-		if word_level > 0:
+		var word_id: String = String(recipe.get("word_id", ""))
+		var word: Dictionary = {}
+		var word_level: int = 0
+		if not word_id.is_empty():
+			word = _localized_word_data(word_id)
+			word_level = int(word_levels.get(word_id, 0))
+		if word_level > 0 and not word.is_empty():
 			cards.append({
 				"glyph": String(word["display"]),
 				"badge": "Phrase Art" if _is_english() else "成词技能",
@@ -666,9 +669,12 @@ func set_skills(recipe_levels: Dictionary, word_levels: Dictionary, word_progres
 		elif recipe_level > 0:
 			var state_text := "Lv.%d/%d" % [recipe_level, int(recipe["max_level"])]
 			if recipe_level >= int(recipe["max_level"]):
-				state_text = (
-					"Refine %d/%d" if _is_english() else "磨词 %d/%d"
-				) % [int(word_progress.get(word_id, 0)), int(word["unlock_cost"])]
+				if not word.is_empty():
+					state_text = (
+						"Refine %d/%d" if _is_english() else "磨词 %d/%d"
+					) % [int(word_progress.get(word_id, 0)), int(word["unlock_cost"])]
+				else:
+					state_text = "Complete" if _is_english() else "已写满"
 			cards.append({
 				"glyph": String(recipe["display"]),
 				"badge": "Glyph Skill" if _is_english() else "成字技能",
@@ -1168,7 +1174,7 @@ func _score_route_token(token: String) -> float:
 				score += 2.0 + float(recipe_level) * 0.9
 			if radicals.has(token):
 				score += 0.7 + float(recipe_level) * 0.35
-		if word_level > 0:
+		if not word_id.is_empty() and word_level > 0:
 			var word := Session.get_word_data(word_id)
 			if token == String(word.get("display", "")):
 				score += 3.0 + float(word_level)
@@ -1176,7 +1182,7 @@ func _score_route_token(token: String) -> float:
 				score += 1.35 + float(word_level) * 0.5
 			if radicals.has(token):
 				score += 0.95 + float(word_level) * 0.45
-		elif word_progress > 0 and recipe_level >= int(recipe.get("max_level", 1)):
+		elif not word_id.is_empty() and word_progress > 0 and recipe_level >= int(recipe.get("max_level", 1)):
 			var pending_word := Session.get_word_data(word_id)
 			if token == String(pending_word.get("display", "")):
 				score += 1.35 + float(word_progress) * 0.45
