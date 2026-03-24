@@ -1333,6 +1333,8 @@ func _make_cangjie_route_preview(preview: Dictionary, accent: Color) -> PanelCon
 		cangjie_route_preview_node_id = String(selected_node.get("id", ""))
 	var selected_node_id := String(selected_node.get("id", ""))
 	var selected_lane := String(selected_node.get("lane", ""))
+	var state_legend_variant: Variant = preview.get("state_legend", {})
+	var state_legend: Dictionary = state_legend_variant as Dictionary if state_legend_variant is Dictionary else {}
 
 	var rows_variant: Variant = preview.get("rows", [])
 	if rows_variant is Array and not (rows_variant as Array).is_empty():
@@ -1354,13 +1356,16 @@ func _make_cangjie_route_preview(preview: Dictionary, accent: Color) -> PanelCon
 		var route_node_lookup := {}
 		for row_variant in rows_variant:
 			if row_variant is Dictionary:
-				rows_box.add_child(_make_cangjie_route_row(row_variant as Dictionary, accent, selected_node_id, selected_lane, route_node_lookup))
+				rows_box.add_child(_make_cangjie_route_row(row_variant as Dictionary, accent, selected_node_id, selected_lane, route_node_lookup, state_legend))
 
 		var link_layer := CangjieRouteLinkLayer.new()
 		link_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
 		link_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		route_shell.add_child(link_layer)
 		call_deferred("_sync_cangjie_route_link_layer", link_layer, route_node_lookup, _build_cangjie_route_links(preview), selected_node_id, selected_lane, accent)
+
+	if not state_legend.is_empty():
+		box.add_child(_make_cangjie_route_state_legend(state_legend, selected_node, accent))
 
 	var node_details_variant: Variant = preview.get("node_details", {})
 	if not selected_node.is_empty() and node_details_variant is Dictionary:
@@ -1404,6 +1409,107 @@ func _make_cangjie_route_preview(preview: Dictionary, accent: Color) -> PanelCon
 	var footnote_text := _localize_cangjie_text(preview.get("footnote", ""))
 	if not footnote_text.is_empty():
 		box.add_child(_make_label(footnote_text, 14, Color(0.82, 0.9, 0.96, 0.82)))
+
+	return panel
+
+
+func _make_cangjie_route_state_legend(legend: Dictionary, selected_node: Dictionary, accent: Color) -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.08, accent.g * 0.08, accent.b * 0.1, 0.74), Color(accent.r, accent.g, accent.b, 0.28)))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", _i(18))
+	margin.add_theme_constant_override("margin_top", _i(16))
+	margin.add_theme_constant_override("margin_right", _i(18))
+	margin.add_theme_constant_override("margin_bottom", _i(16))
+	panel.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", _i(10))
+	margin.add_child(box)
+
+	var title_text := _localize_cangjie_text(legend.get("title", ""))
+	if not title_text.is_empty():
+		box.add_child(_make_label(title_text, 18, Color(1.0, 0.95, 0.86, 1.0)))
+
+	var summary_text := _localize_cangjie_text(legend.get("summary", ""))
+	if not summary_text.is_empty():
+		box.add_child(_make_label(summary_text, 14, Color(0.86, 0.9, 0.98, 0.88)))
+
+	var items_variant: Variant = legend.get("items", [])
+	if items_variant is Array and not (items_variant as Array).is_empty():
+		var grid := GridContainer.new()
+		grid.columns = 1 if _is_portrait_layout() else 2
+		grid.add_theme_constant_override("h_separation", _i(10))
+		grid.add_theme_constant_override("v_separation", _i(10))
+		box.add_child(grid)
+
+		var selected_state := String(selected_node.get("state", ""))
+		var has_selected := not selected_node.is_empty()
+		for item_variant in items_variant:
+			if item_variant is Dictionary:
+				var item := item_variant as Dictionary
+				var item_id := String(item.get("id", ""))
+				var active := item_id == selected_state or (item_id == "focus" and has_selected)
+				grid.add_child(_make_cangjie_route_state_legend_card(item, active, accent))
+
+	return panel
+
+
+func _make_cangjie_route_state_legend_card(item: Dictionary, active: bool, accent: Color) -> PanelContainer:
+	var tone: Color = item.get("tone", accent)
+	var border_alpha := 0.42 if active else 0.22
+	var fill_alpha := 0.86 if active else 0.76
+
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = _v(0.0, 144.0)
+	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(tone.r * 0.15, tone.g * 0.15, tone.b * 0.18, fill_alpha), Color(tone.r, tone.g, tone.b, border_alpha)))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", _i(14))
+	margin.add_theme_constant_override("margin_top", _i(12))
+	margin.add_theme_constant_override("margin_right", _i(14))
+	margin.add_theme_constant_override("margin_bottom", _i(12))
+	panel.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", _i(8))
+	margin.add_child(box)
+
+	var badge_row := HBoxContainer.new()
+	badge_row.add_theme_constant_override("separation", _i(8))
+	box.add_child(badge_row)
+
+	var badge_text := _localize_cangjie_text(item.get("badge", item.get("title", "")))
+	if not badge_text.is_empty():
+		badge_row.add_child(_make_tag(badge_text, Color(tone.r * 0.18, tone.g * 0.18, tone.b * 0.22, 0.9), Color(0.98, 0.94, 0.88, 0.96)))
+	if active:
+		badge_row.add_child(_make_tag("当前读法" if not _is_english() else "Active Read", Color(tone.r * 0.22, tone.g * 0.2, tone.b * 0.16, 0.92), Color(0.98, 0.94, 0.88, 0.96)))
+
+	var header := HBoxContainer.new()
+	header.add_theme_constant_override("separation", _i(10))
+	box.add_child(header)
+
+	var glyph_panel := PanelContainer.new()
+	glyph_panel.custom_minimum_size = _v(40.0, 40.0)
+	glyph_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(tone.r * 0.22, tone.g * 0.18, tone.b * 0.16, 0.92), Color(tone.r, tone.g, tone.b, 0.3)))
+	header.add_child(glyph_panel)
+
+	var glyph_label := _make_label(String(item.get("glyph", "")), 19, Color(1.0, 0.95, 0.86, 1.0))
+	glyph_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	glyph_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	glyph_label.set_anchors_preset(Control.PRESET_FULL_RECT)
+	glyph_panel.add_child(glyph_label)
+
+	var text_box := VBoxContainer.new()
+	text_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	text_box.add_theme_constant_override("separation", _i(3))
+	header.add_child(text_box)
+	text_box.add_child(_make_label(_localize_cangjie_text(item.get("title", "")), 15, Color(1.0, 0.95, 0.86, 1.0)))
+
+	var body_text := _localize_cangjie_text(item.get("body", ""))
+	if not body_text.is_empty():
+		box.add_child(_make_label(body_text, 13, Color(0.84, 0.9, 0.98, 0.84)))
 
 	return panel
 
@@ -1787,7 +1893,7 @@ func _make_cangjie_reward_chain_option_button(option: Dictionary, accent: Color)
 	return button
 
 
-func _make_cangjie_route_row(row: Dictionary, accent: Color, focused_node_id: String, focused_lane: String, node_lookup: Dictionary) -> PanelContainer:
+func _make_cangjie_route_row(row: Dictionary, accent: Color, focused_node_id: String, focused_lane: String, node_lookup: Dictionary, state_legend: Dictionary) -> PanelContainer:
 	var panel := PanelContainer.new()
 	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.06, accent.g * 0.08, accent.b * 0.1, 0.7), Color(accent.r, accent.g, accent.b, 0.22)))
 
@@ -1819,7 +1925,7 @@ func _make_cangjie_route_row(row: Dictionary, accent: Color, focused_node_id: St
 				var node := node_variant as Dictionary
 				var node_id := String(node.get("id", ""))
 				var lane_id := String(node.get("lane", ""))
-				var node_button := _make_cangjie_route_node_card(node, accent, node_id == focused_node_id, not focused_lane.is_empty() and lane_id == focused_lane)
+				var node_button := _make_cangjie_route_node_card(node, accent, node_id == focused_node_id, not focused_lane.is_empty() and lane_id == focused_lane, state_legend)
 				node_row.add_child(node_button)
 				if not node_id.is_empty():
 					node_lookup[node_id] = node_button
@@ -2009,7 +2115,7 @@ func _make_cangjie_route_ribbon_connector(accent: Color) -> Control:
 	return connector
 
 
-func _make_cangjie_route_node_card(node: Dictionary, accent: Color, active: bool, lane_active: bool) -> Button:
+func _make_cangjie_route_node_card(node: Dictionary, accent: Color, active: bool, lane_active: bool, state_legend: Dictionary) -> Button:
 	var tone: Color = node.get("tone", accent)
 	var node_id := String(node.get("id", ""))
 	var state := String(node.get("state", "option"))
@@ -2052,6 +2158,10 @@ func _make_cangjie_route_node_card(node: Dictionary, accent: Color, active: bool
 	box.add_theme_constant_override("separation", _i(6))
 	margin.add_child(box)
 
+	var state_badge := _get_cangjie_route_state_badge_text(state_legend, state)
+	if not state_badge.is_empty():
+		box.add_child(_make_tag(state_badge, Color(tone.r * 0.18, tone.g * 0.18, tone.b * 0.2, 0.88), Color(0.98, 0.94, 0.88, 0.94)))
+
 	var header := HBoxContainer.new()
 	header.add_theme_constant_override("separation", _i(10))
 	box.add_child(header)
@@ -2087,6 +2197,26 @@ func _make_cangjie_route_node_card(node: Dictionary, accent: Color, active: bool
 			String(node.get("linked_preview_option", ""))
 		))
 	return button
+
+
+func _get_cangjie_route_state_badge_text(state_legend: Dictionary, state_id: String) -> String:
+	if state_id.is_empty():
+		return ""
+	var items_variant: Variant = state_legend.get("items", [])
+	if items_variant is Array:
+		for item_variant in items_variant:
+			if item_variant is Dictionary:
+				var item := item_variant as Dictionary
+				if String(item.get("id", "")) == state_id:
+					var badge_text := _localize_cangjie_text(item.get("badge", item.get("title", "")))
+					if not badge_text.is_empty():
+						return badge_text
+
+	if state_id == "path":
+		return "Backbone" if _is_english() else "主脉"
+	if state_id == "boss":
+		return "Closure" if _is_english() else "收束"
+	return "Pivot" if _is_english() else "转笔"
 
 
 func _first_cangjie_route_preview_node(preview: Dictionary) -> Dictionary:

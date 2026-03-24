@@ -1136,6 +1136,59 @@ const CANGJIE_PORTAL_SECTIONS := [
 				"zh": "点按任一节点，查看 source 里这类房间会怎样改写牌组、资源和后续路线，并预览它更像接哪种战后 / 路书 handoff。",
 				"en": "Tap any node to inspect how that room type reshapes the deck, resources, and later route in the source run, including which reward or route-ledger handoff it most naturally feeds into."
 			},
+			"state_legend": {
+				"title": {"zh": "塔图读法图例", "en": "Route Read Legend"},
+				"summary": {
+					"zh": "source 真正开跑时，塔图会把当前主脉、侧向转笔与塔顶收束读得很清楚。Godot 这里先用样张图例把 route shell 的读法讲明白，让静态壳层也能更像一张可导航的爬塔图。",
+					"en": "In the live source climb, the map clearly separates the current backbone, lateral pivots, and summit closure. Godot stages that same read as a sample legend first so the route shell feels closer to a navigable tower board."
+				},
+				"items": [
+					{
+						"id": "path",
+						"glyph": "主",
+						"badge": {"zh": "主脉", "en": "Backbone"},
+						"title": {"zh": "当前主脉", "en": "Current Backbone"},
+						"body": {
+							"zh": "样张里更稳、更常见的推进拍，会把这一层 climb 的主方向先压出来。",
+							"en": "The steadier, more common forward beats in the sample that press the climb's main direction first."
+						},
+						"tone": Color(0.94, 0.76, 0.46, 1.0)
+					},
+					{
+						"id": "option",
+						"glyph": "转",
+						"badge": {"zh": "转笔", "en": "Pivot"},
+						"title": {"zh": "侧向转笔", "en": "Lateral Pivot"},
+						"body": {
+							"zh": "更像事件、修薄或高压换向的侧枝节点，告诉你路线可以在这里偏转。",
+							"en": "The side-branch beats that act more like events, trims, or high-pressure route bends."
+						},
+						"tone": Color(0.72, 0.66, 0.94, 1.0)
+					},
+					{
+						"id": "boss",
+						"glyph": "定",
+						"badge": {"zh": "收束", "en": "Closure"},
+						"title": {"zh": "塔顶收束", "en": "Summit Closure"},
+						"body": {
+							"zh": "塔图的收尾检验拍，把整条路线压到最后一次总判定上。",
+							"en": "The end-cap exam beat that collapses the whole route into one final verdict."
+						},
+						"tone": Color(0.86, 0.68, 0.96, 1.0)
+					},
+					{
+						"id": "focus",
+						"glyph": "焦",
+						"badge": {"zh": "聚焦", "en": "Focus"},
+						"title": {"zh": "当前点按", "en": "Current Focus"},
+						"body": {
+							"zh": "当前点按节点会同步带出路线丝带和战后 / 路书跟进样张，方便一眼看到前后手。",
+							"en": "The tapped node also drives the Route Ribbon and linked reward or ledger follow-through so the before-and-after beat is visible at a glance."
+						},
+						"tone": Color(0.52, 0.84, 0.8, 1.0)
+					}
+				]
+			},
 			"route_ribbon": {
 				"title": {"zh": "路线丝带", "en": "Route Ribbon"},
 				"summary": {
