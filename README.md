@@ -18,7 +18,7 @@
 ## 当前整体结构
 - 技术上当前是 `Godot 4.6.1` 项目，运行入口是 `project.godot -> res://scenes/app/launcher.tscn`
 - 当前仓库主线已经落地 `字海残卷` 的 Godot 迁移链路：`启动器 -> 字海二级菜单 -> 3D 战斗`
-- `仓颉之路` 目前已经有独立的启动器 portal overlay，会预览 `起笔登塔 / Start Climb`、`运行控台 / Run Controls`、`卡牌字库`、`合字图谱`、`遗物架`、`战后抉择 / Post-Battle Flow`、`塔路导览`，并把 source 页面的 `重新开局 / 查看牌组 / 返回启动器` 操作条、`Floor / HP / Deck / Relics / Gold` 顶部状态壳，以及三路线塔图的 route shell 一起迁回前台预览；其中 `查看牌组 / Open Deck` 现在还能在 portal 里直接展开一份轻量牌组 / 遗物样张，`塔路导览` 里也补上了代表性的 `路书对照 / Route Ledger` 事件预览，让 source 的压深主线 / 补齐短板 / 存势三选一不再只留在 README 记录里；但还没有在这个仓库里落成独立可玩的 Godot 场景
+- `仓颉之路` 目前已经有独立的启动器 portal overlay，会预览 `起笔登塔 / Start Climb`、`运行控台 / Run Controls`、`卡牌字库`、`合字图谱`、`遗物架`、`战后抉择 / Post-Battle Flow`、`塔路导览`，并把 source 页面的 `重新开局 / 查看牌组 / 返回启动器` 操作条、`Floor / HP / Deck / Relics / Gold` 顶部状态壳，以及三路线塔图的 route shell 一起迁回前台预览；其中 `查看牌组 / Open Deck` 现在还能在 portal 里直接展开一份轻量牌组 / 遗物样张，`战后抉择 / Post-Battle Flow` 现在也能切换查看常规拿牌、跳过保薄与精英 / 卷主遗物跟进三条链路，`塔路导览` 里也补上了代表性的 `路书对照 / Route Ledger` 事件预览，让 source 的压深主线 / 补齐短板 / 存势三选一不再只留在 README 记录里；但还没有在这个仓库里落成独立可玩的 Godot 场景
 - Web 导出通过 `./scripts/export_web.sh` 生成到 `build/index.html`，`vercel.json` 负责部署入口
 - 当前默认开发流程已经切到 `develop -> staging -> main`：`develop` 承接日常开发与自动化，`staging` 只做线上验收，`main` 保持稳定主干
 - `README.md`、`CHANGELOG.md`、`CONTRIBUTING.md` 持续同步当前迁移状态
@@ -37,7 +37,7 @@
   - iOS 提示 `分享 -> 添加到主屏幕`
 - 点击 `字海残卷` 后，会先进入真正的二级菜单 `scenes/app/zihai_menu.tscn`
 - 角色选择确认后，才进入 `scenes/battle/zihai_battle.tscn`
-- `仓颉之路` 目前不再只是静态占位卡，而是有独立 portal overlay 预览 source 里的入口、运行控台、卡牌、合字、遗物、战后奖励链路、节点与敌意样本；入口页还补上了可点按回应的对峙舞台、source 风格的 `重新开局 / 查看牌组 / 返回启动器` 操作壳预览、三路线塔图 route shell、本地 `3D 特效` 开关、可点开的轻量 `查看牌组 / Open Deck` deck sheet，以及代表性的 `路书对照 / Route Ledger` 事件样张，先把 source 的前台互动感迁回第一步；真正的 Godot 爬塔战斗仍待后续迁移接入
+- `仓颉之路` 目前不再只是静态占位卡，而是有独立 portal overlay 预览 source 里的入口、运行控台、卡牌、合字、遗物、战后奖励链路、节点与敌意样本；入口页还补上了可点按回应的对峙舞台、source 风格的 `重新开局 / 查看牌组 / 返回启动器` 操作壳预览、三路线塔图 route shell、本地 `3D 特效` 开关、可点开的轻量 `查看牌组 / Open Deck` deck sheet、可切换的战后 reward / skip / relic 链路样张，以及代表性的 `路书对照 / Route Ledger` 事件样张，先把 source 的前台互动感迁回第一步；真正的 Godot 爬塔战斗仍待后续迁移接入
 
 ## 字海残卷（目前已经是较完整可玩原型）
 ### 核心玩法

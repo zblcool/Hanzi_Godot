@@ -835,6 +835,226 @@ const CANGJIE_PORTAL_SECTIONS := [
 				"en": "Bringing this reward chain back into the launcher helps the Godot portal explain how a run keeps leaning harder into one character line instead of only showing static card samples."
 			}
 		],
+		"reward_chain_preview": {
+			"title": {"zh": "战后链路手感预览", "en": "Reward Handoff Preview"},
+			"summary": {
+				"zh": "source 的战后流程不是只有一张奖励牌。普通战斗、跳过保薄、精英 / Boss 遗物跟进各自会把路线往不同方向轻推。",
+				"en": "The source post-battle flow is more than a single reward card. Regular drafts, lean skips, and elite or boss relic follow-through each nudge the route in a different direction."
+			},
+			"hint": {
+				"zh": "点按下面任一链路，预览 source 的战后节奏会怎样把 Gold、选牌与遗物判断串成一段完整 handoff。",
+				"en": "Tap one of the branches below to preview how the source strings Gold, card choice, and relic valuation into one post-battle handoff."
+			},
+			"options": [
+				{
+					"id": "draft",
+					"glyph": "赏",
+					"title": {"zh": "常规拿牌", "en": "Regular Draft"},
+					"subtitle": {"zh": "Gold 结算后继续三选一", "en": "Settle Gold, then pick one of three"},
+					"summary": {
+						"zh": "这条线保留 source 最常见的节奏：先拿本场 Gold，再看三张候选牌里哪一张最值得把当前路线写得更厚。",
+						"en": "This keeps the source's most common cadence: settle this fight's Gold first, then decide which of three reward cards deserves to thicken the current route."
+					},
+					"tone": Color(0.94, 0.74, 0.42, 1.0),
+					"result_group": {
+						"title": {"zh": "常规战后链路", "en": "Regular Post-Battle Chain"},
+						"summary": {
+							"zh": "先结算 Gold，再读三张候选牌的角色差异。你不是无脑拿高数值，而是在决定哪条字路继续向前写。",
+							"en": "Gold resolves first, then the three reward cards are judged by role. The choice is not just raw numbers, but which character line should keep moving."
+						},
+						"cards": [
+							{
+								"glyph": "金",
+								"title": {"zh": "Gold +18", "en": "Gold +18"},
+								"subtitle": {"zh": "先落袋本场收益", "en": "Bank the fight first"},
+								"body": {
+									"zh": "普通战斗会先给一笔稳定的 Gold，让后续商店、删牌和遗物预算都有真实重量。",
+									"en": "Regular fights first pay a steady Gold amount so later shops, trims, and relic budgets all carry real weight."
+								},
+								"tags": [
+									{"zh": "战后收益", "en": "Post-fight gain"},
+									{"zh": "预算", "en": "Budget"}
+								]
+							},
+							{
+								"glyph": "明",
+								"title": {"zh": "候选 · 明", "en": "Offer · 明"},
+								"subtitle": {"zh": "节奏成字", "en": "Tempo fusion"},
+								"body": {
+									"zh": "补一张能接伤害、抽牌与墨流的成字，让当前节奏线继续往中盘延伸。",
+									"en": "Adds a formed glyph that links damage, draw, and Ink flow so the current tempo line keeps extending into the midgame."
+								},
+								"tags": [
+									{"zh": "成字", "en": "Fusion"},
+									{"zh": "节奏", "en": "Tempo"}
+								]
+							},
+							{
+								"glyph": "学",
+								"title": {"zh": "候选 · 学", "en": "Offer · 学"},
+								"subtitle": {"zh": "抽墨引擎", "en": "Draw + Ink engine"},
+								"body": {
+									"zh": "不一定直接补爆发，而是让厚一点的牌组也能顺畅运转，强化抽牌和墨的节奏骨架。",
+									"en": "Instead of immediate burst, this keeps a slightly thicker deck moving by strengthening the draw-and-Ink backbone."
+								},
+								"tags": [
+									{"zh": "引擎", "en": "Engine"},
+									{"zh": "抽墨", "en": "Draw + Ink"}
+								]
+							},
+							{
+								"glyph": "思",
+								"title": {"zh": "候选 · 思", "en": "Offer · 思"},
+								"subtitle": {"zh": "稳住控制面", "en": "Steady control lane"},
+								"body": {
+									"zh": "如果这层更需要把敌方节拍按住，控制向奖励也会在这里介入，不是每次都继续贪主线伤害。",
+									"en": "If the floor needs enemy pacing held down first, a control-biased reward can surface here instead of always greedily deepening damage."
+								},
+								"tags": [
+									{"zh": "控制", "en": "Control"},
+									{"zh": "取舍", "en": "Tradeoff"}
+								]
+							}
+						]
+					}
+				},
+				{
+					"id": "skip",
+					"glyph": "简",
+					"title": {"zh": "跳过保薄", "en": "Skip To Stay Lean"},
+					"subtitle": {"zh": "不拿牌，先守抽牌质量", "en": "Take no card and protect draw quality"},
+					"summary": {
+						"zh": "source 明确允许直接跳过奖励牌，让“更干净的抽牌质量”成为主动选择；如果带着算盘类遗物，这步还会反过来补 Gold。",
+						"en": "The source explicitly allows reward skips so cleaner draw quality becomes an active choice; with an abacus-style relic this step can even refund extra Gold."
+					},
+					"tone": Color(0.58, 0.82, 0.78, 1.0),
+					"result_group": {
+						"title": {"zh": "保薄链路", "en": "Lean-Deck Handoff"},
+						"summary": {
+							"zh": "这条分支提醒《仓颉之路》不是每次都要拿牌。有时最强的战后决定，正是维持牌组更干净、再把预算存给后面。",
+							"en": "This branch reinforces that Cangjie Road does not always want another card. Sometimes the strongest reward decision is to keep the deck cleaner and save the budget for later."
+						},
+						"cards": [
+							{
+								"glyph": "金",
+								"title": {"zh": "Gold +18", "en": "Gold +18"},
+								"subtitle": {"zh": "基础战后收益照常入账", "en": "Base fight payout still lands"},
+								"body": {
+									"zh": "跳过的是奖励牌，不是整场战斗的收益；你依然会带着这笔 Gold 去重配后续节点价值。",
+									"en": "The skip only removes the card reward, not the fight's payout; that Gold still travels forward into later node valuation."
+								},
+								"tags": [
+									{"zh": "预算保留", "en": "Budget kept"},
+									{"zh": "战后收益", "en": "Post-fight gain"}
+								]
+							},
+							{
+								"glyph": "简",
+								"title": {"zh": "跳过本轮奖励牌", "en": "Skip This Reward"},
+								"subtitle": {"zh": "让牌组别再变厚", "en": "Keep the deck from thickening"},
+								"body": {
+									"zh": "当当前牌组已经够能运转时，少拿一张牌往往比再堆一个候选更值，因为后面每一抽都会更稳定。",
+									"en": "Once the current deck already functions, skipping a card is often worth more than adding another option because every later draw becomes steadier."
+								},
+								"tags": [
+									{"zh": "精简", "en": "Lean deck"},
+									{"zh": "抽牌质量", "en": "Draw quality"}
+								]
+							},
+							{
+								"glyph": "算",
+								"title": {"zh": "算盘 · 跳牌转 Gold", "en": "Lean Ledger · Skip Into Gold"},
+								"subtitle": {"zh": "遗物把保薄改写成预算", "en": "A relic rewrites the skip into budget"},
+								"body": {
+									"zh": "带着 `算盘 / Lean Ledger` 时，跳过奖励牌还能额外拿一笔 Gold，让“少拿一张”不只是防守，而是下一段更有计划地花。",
+									"en": "When carrying `Lean Ledger`, skipping the reward also grants extra Gold so 'take nothing' becomes planned spending leverage instead of only caution."
+								},
+								"tags": [
+									{"zh": "遗物联动", "en": "Relic synergy"},
+									{"zh": "Gold", "en": "Gold"}
+								]
+							}
+						]
+					}
+				},
+				{
+					"id": "relic",
+					"glyph": "匣",
+					"title": {"zh": "精英 / Boss 跟进", "en": "Elite / Boss Follow-Through"},
+					"subtitle": {"zh": "选牌后再来一轮遗物偏转", "en": "A relic bend after the draft"},
+					"summary": {
+						"zh": "高压战斗不会在选牌后就结束。source 还会继续丢出 2 到 3 件遗物，把后续节点价值和牌张估值一起扭向新的方向。",
+						"en": "High-pressure fights do not end after the draft. The source then throws 2 to 3 relic choices on top, twisting later node value and card valuation together."
+					},
+					"tone": Color(0.72, 0.62, 0.94, 1.0),
+					"result_group": {
+						"title": {"zh": "高压战后链路", "en": "High-Pressure Reward Chain"},
+						"summary": {
+							"zh": "精英 / Boss 的战后不是单次补强，而是先看牌、再看遗物，把这层风险真正换成一次更完整的路线改写。",
+							"en": "Elite and boss rewards are not a single power spike. They first ask for a card read, then a relic read, turning the risk of that floor into a fuller route rewrite."
+						},
+						"cards": [
+							{
+								"glyph": "赏",
+								"title": {"zh": "先选 1 张奖励牌", "en": "Draft 1 Reward Card First"},
+								"subtitle": {"zh": "战后第一拍仍是读牌", "en": "The first beat still reads cards"},
+								"body": {
+									"zh": "就算是精英或 Boss，source 也不会跳过战后选牌这一拍，路线仍先通过牌张继续加深或修正。",
+									"en": "Even after elites or bosses, the source still keeps the draft beat first so the route is deepened or corrected through cards before relics step in."
+								},
+								"tags": [
+									{"zh": "先看牌", "en": "Cards first"},
+									{"zh": "节拍完整", "en": "Full cadence"}
+								]
+							},
+							{
+								"glyph": "墨",
+								"title": {"zh": "行墨罐", "en": "Traveling Inkwell"},
+								"subtitle": {"zh": "开局自带 1 墨", "en": "Start each battle with 1 Ink"},
+								"body": {
+									"zh": "这类遗物会把后续牌组里偏墨、偏成字的判断整体往前推，让某些卡的价值突然明显升高。",
+									"en": "A relic like this pushes later Ink and fusion valuation forward, suddenly raising the worth of certain cards across the deck."
+								},
+								"tags": [
+									{"zh": "遗物", "en": "Relic"},
+									{"zh": "墨流", "en": "Ink flow"}
+								]
+							},
+							{
+								"glyph": "镜",
+								"title": {"zh": "镜简", "en": "Mirror Slip"},
+								"subtitle": {"zh": "重复偏旁返抽", "en": "Repeated radicals draw back"},
+								"body": {
+									"zh": "它不会直接给伤害，却会把重复偏旁从“有点尴尬”改写成“愿意主动拿”的资源。",
+									"en": "It does not add direct damage, but rewrites repeated radicals from awkward filler into material you may actively want."
+								},
+								"tags": [
+									{"zh": "重复利用", "en": "Repeat use"},
+									{"zh": "抽牌", "en": "Draw"}
+								]
+							},
+							{
+								"glyph": "契",
+								"title": {"zh": "契印", "en": "Broker Seal"},
+								"subtitle": {"zh": "商店与遗物折扣", "en": "Cheaper shops and relics"},
+								"body": {
+									"zh": "有些遗物不会立刻改写战斗，而是把下一段商店、删牌与遗物预算全都压向更激进的方向。",
+									"en": "Some relics do not rewrite the next battle immediately, but instead push later shop, purge, and relic budgets toward greedier decisions."
+								},
+								"tags": [
+									{"zh": "商店线", "en": "Shop line"},
+									{"zh": "路线偏转", "en": "Route bend"}
+								]
+							}
+						]
+					}
+				}
+			],
+			"footnote": {
+				"zh": "Godot 这里先给战后链路补上一份可切换的前台样张，让入口能先解释 regular / skip / relic 三种节拍，而不是假装已经接好真实卡战奖励系统。",
+				"en": "Godot adds a switchable front-end sample of the reward chain here first, so the portal can explain the regular / skip / relic cadences without pretending the live card-battle reward system already exists in this repo."
+			}
+		},
 		"sample_groups": [
 			{
 				"title": {"zh": "奖励链路", "en": "Reward Loop"},
