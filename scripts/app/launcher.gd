@@ -1330,6 +1330,8 @@ func _make_cangjie_route_preview(preview: Dictionary, accent: Color) -> PanelCon
 		selected_node = _first_cangjie_route_preview_node(preview)
 	if not selected_node.is_empty():
 		cangjie_route_preview_node_id = String(selected_node.get("id", ""))
+	var selected_node_id := String(selected_node.get("id", ""))
+	var selected_lane := String(selected_node.get("lane", ""))
 
 	var rows_variant: Variant = preview.get("rows", [])
 	if rows_variant is Array:
@@ -1338,7 +1340,7 @@ func _make_cangjie_route_preview(preview: Dictionary, accent: Color) -> PanelCon
 		box.add_child(rows_box)
 		for row_variant in rows_variant:
 			if row_variant is Dictionary:
-				rows_box.add_child(_make_cangjie_route_row(row_variant as Dictionary, accent))
+				rows_box.add_child(_make_cangjie_route_row(row_variant as Dictionary, accent, selected_node_id, selected_lane))
 
 	var node_details_variant: Variant = preview.get("node_details", {})
 	if not selected_node.is_empty() and node_details_variant is Dictionary:
@@ -1647,7 +1649,7 @@ func _make_cangjie_reward_chain_option_button(option: Dictionary, accent: Color)
 	return button
 
 
-func _make_cangjie_route_row(row: Dictionary, accent: Color) -> PanelContainer:
+func _make_cangjie_route_row(row: Dictionary, accent: Color, focused_node_id: String, focused_lane: String) -> PanelContainer:
 	var panel := PanelContainer.new()
 	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.06, accent.g * 0.08, accent.b * 0.1, 0.7), Color(accent.r, accent.g, accent.b, 0.22)))
 
@@ -1676,7 +1678,10 @@ func _make_cangjie_route_row(row: Dictionary, accent: Color) -> PanelContainer:
 			node_row.add_child(left_spacer)
 		for node_variant in nodes:
 			if node_variant is Dictionary:
-				node_row.add_child(_make_cangjie_route_node_card(node_variant as Dictionary, accent))
+				var node := node_variant as Dictionary
+				var node_id := String(node.get("id", ""))
+				var lane_id := String(node.get("lane", ""))
+				node_row.add_child(_make_cangjie_route_node_card(node, accent, node_id == focused_node_id, not focused_lane.is_empty() and lane_id == focused_lane))
 		if nodes.size() == 1 and not _is_portrait_layout():
 			var right_spacer := Control.new()
 			right_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -1685,10 +1690,9 @@ func _make_cangjie_route_row(row: Dictionary, accent: Color) -> PanelContainer:
 	return panel
 
 
-func _make_cangjie_route_node_card(node: Dictionary, accent: Color) -> Button:
+func _make_cangjie_route_node_card(node: Dictionary, accent: Color, active: bool, lane_active: bool) -> Button:
 	var tone: Color = node.get("tone", accent)
 	var node_id := String(node.get("id", ""))
-	var active := not node_id.is_empty() and node_id == cangjie_route_preview_node_id
 	var state := String(node.get("state", "option"))
 	var fill_alpha := 0.14
 	var border_alpha := 0.22
@@ -1698,9 +1702,12 @@ func _make_cangjie_route_node_card(node: Dictionary, accent: Color) -> Button:
 	elif state == "boss":
 		fill_alpha = 0.28
 		border_alpha = 0.48
+	if lane_active:
+		fill_alpha = maxf(fill_alpha, 0.24)
+		border_alpha = maxf(border_alpha, 0.42)
 	if active:
-		fill_alpha += 0.08
-		border_alpha += 0.2
+		fill_alpha = maxf(fill_alpha, 0.32)
+		border_alpha = maxf(border_alpha, 0.56)
 
 	var button := Button.new()
 	button.text = ""
@@ -1709,12 +1716,13 @@ func _make_cangjie_route_node_card(node: Dictionary, accent: Color) -> Button:
 	button.focus_mode = Control.FOCUS_ALL
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	button.custom_minimum_size = _v(0.0, 112.0)
+	button.custom_minimum_size = _v(0.0, 118.0)
 	button.add_theme_stylebox_override("normal", _make_panel_style(Color(tone.r * 0.16, tone.g * 0.16, tone.b * 0.18, 0.8 + fill_alpha * 0.2), Color(tone.r, tone.g, tone.b, border_alpha)))
-	button.add_theme_stylebox_override("hover", _make_panel_style(Color(tone.r * 0.18, tone.g * 0.18, tone.b * 0.2, 0.88 + fill_alpha * 0.2), Color(tone.r, tone.g, tone.b, border_alpha + 0.08)))
-	button.add_theme_stylebox_override("pressed", _make_panel_style(Color(tone.r * 0.2, tone.g * 0.2, tone.b * 0.22, 0.94 + fill_alpha * 0.16), Color(tone.r, tone.g, tone.b, border_alpha + 0.14)))
+	button.add_theme_stylebox_override("hover", _make_panel_style(Color(tone.r * 0.18, tone.g * 0.18, tone.b * 0.2, 0.88), Color(tone.r, tone.g, tone.b, minf(border_alpha + 0.1, 0.72))))
+	button.add_theme_stylebox_override("pressed", _make_panel_style(Color(tone.r * 0.2, tone.g * 0.2, tone.b * 0.22, 0.92), Color(tone.r, tone.g, tone.b, minf(border_alpha + 0.16, 0.82))))
 
 	var margin := MarginContainer.new()
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
 	margin.add_theme_constant_override("margin_left", _i(12))
 	margin.add_theme_constant_override("margin_top", _i(10))
 	margin.add_theme_constant_override("margin_right", _i(12))
@@ -1751,10 +1759,14 @@ func _make_cangjie_route_node_card(node: Dictionary, accent: Color) -> Button:
 		box.add_child(_make_label(state_text, 13, Color(0.84, 0.9, 0.98, 0.84)))
 
 	if active:
-		box.add_child(_make_tag("当前聚焦" if not _is_english() else "Focused", Color(tone.r * 0.18, tone.g * 0.18, tone.b * 0.2, 0.9), Color(0.98, 0.94, 0.88, 0.96)))
+		box.add_child(_make_tag("Current Focus" if _is_english() else "当前焦点", Color(tone.r * 0.18, tone.g * 0.18, tone.b * 0.2, 0.9), Color(0.98, 0.94, 0.88, 0.96)))
 
 	if not node_id.is_empty():
-		button.pressed.connect(Callable(self, "_on_select_cangjie_route_preview_node").bind(node_id))
+		button.pressed.connect(Callable(self, "_on_select_cangjie_route_preview_node").bind(
+			String(node.get("id", "")),
+			String(node.get("linked_preview_kind", "")),
+			String(node.get("linked_preview_option", ""))
+		))
 	return button
 
 
@@ -2487,15 +2499,18 @@ func _on_select_cangjie_reward_chain_option(option_id: String) -> void:
 	_refresh_cangjie_portal()
 
 
-func _on_select_cangjie_route_preview_node(node_id: String) -> void:
+func _on_select_cangjie_route_preview_node(node_id: String, preview_kind: String = "", option_id: String = "") -> void:
 	cangjie_route_preview_node_id = node_id
+	if preview_kind == "reward_chain" and not option_id.is_empty():
+		cangjie_reward_chain_choice = option_id
+	elif preview_kind == "route_ledger" and not option_id.is_empty():
+		cangjie_route_ledger_choice = option_id
 	_refresh_cangjie_portal()
 
 
 func _on_select_cangjie_route_ledger_option(option_id: String) -> void:
 	cangjie_route_ledger_choice = option_id
 	_refresh_cangjie_portal()
-
 
 func _on_cangjie_duelist_pressed(card_button: Button, duelist: Dictionary) -> void:
 	if card_button == null or not is_instance_valid(card_button):

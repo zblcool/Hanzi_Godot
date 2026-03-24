@@ -1133,8 +1133,8 @@ const CANGJIE_PORTAL_SECTIONS := [
 			},
 			"default_node_id": "entry_battle",
 			"hint": {
-				"zh": "点按任一节点，查看 source 里这类房间会怎样改写牌组、资源和后续路线。",
-				"en": "Tap any node to inspect how that room type reshapes the deck, resources, and later route in the source run."
+				"zh": "点按任一节点，查看 source 里这类房间会怎样改写牌组、资源和后续路线，并预览它更像接哪种战后 / 路书 handoff。",
+				"en": "Tap any node to inspect how that room type reshapes the deck, resources, and later route in the source run, including which reward or route-ledger handoff it most naturally feeds into."
 			},
 			"node_details": {
 				"battle": {
@@ -1433,27 +1433,63 @@ const CANGJIE_PORTAL_SECTIONS := [
 						{
 							"id": "entry_battle",
 							"kind": "battle",
+							"lane": "left",
 							"glyph": "战",
 							"label": {"zh": "战斗", "en": "Battle"},
 							"note": {"zh": "先读主线", "en": "Read the line"},
+							"focus_title": {"zh": "战斗节点 · 读主线", "en": "Battle Node · Read The Line"},
+							"focus_body": {
+								"zh": "普通战斗最稳定地把 Gold 和三选一奖励接在一起，适合先看清这一趟 climb 到底在往哪条字路倾斜。",
+								"en": "Regular battles are the steadiest way to chain Gold into a three-card reward, making them the cleanest place to read which line this climb is really leaning toward."
+							},
+							"focus_tags": [
+								{"zh": "Gold + 选牌", "en": "Gold + draft"},
+								{"zh": "常规战后", "en": "Regular reward"}
+							],
+							"linked_preview_kind": "reward_chain",
+							"linked_preview_option": "draft",
 							"tone": Color(0.94, 0.74, 0.42, 1.0),
 							"state": "path"
 						},
 						{
 							"id": "route_event",
 							"kind": "event",
+							"lane": "center",
 							"glyph": "异",
 							"label": {"zh": "事件", "en": "Event"},
 							"note": {"zh": "短期换长期", "en": "Short vs long"},
+							"focus_title": {"zh": "事件节点 · 回写路线", "en": "Event Node · Write Back The Route"},
+							"focus_body": {
+								"zh": "事件节点更像一面镜子，会先读当前牌组倾向，再决定是继续压深、补齐短板，还是先把节奏存起来。",
+								"en": "Event nodes act more like mirrors: they read the current deck lean first, then decide whether to deepen it, patch a weak point, or bank tempo instead."
+							},
+							"focus_tags": [
+								{"zh": "deck-read", "en": "Deck read"},
+								{"zh": "事件分支", "en": "Event branch"}
+							],
+							"linked_preview_kind": "route_ledger",
+							"linked_preview_option": "deepen",
 							"tone": Color(0.72, 0.62, 0.94, 1.0),
 							"state": "option"
 						},
 						{
 							"id": "rest_stop",
 							"kind": "rest",
+							"lane": "right",
 							"glyph": "歇",
 							"label": {"zh": "歇息", "en": "Rest"},
 							"note": {"zh": "稳住气血", "en": "Stabilize HP"},
+							"focus_title": {"zh": "歇息节点 · 稳住底板", "en": "Rest Node · Raise The Floor"},
+							"focus_body": {
+								"zh": "歇息节点先把气血和容错拉回来，再决定下一拍是补防守短板，还是更贪后面的爆发窗口。",
+								"en": "Rest nodes restore HP and margin first, then let the climb decide whether the next beat should patch defense or greed toward a later spike."
+							},
+							"focus_tags": [
+								{"zh": "续航", "en": "Sustain"},
+								{"zh": "补短板", "en": "Patch first"}
+							],
+							"linked_preview_kind": "route_ledger",
+							"linked_preview_option": "patch",
 							"tone": Color(0.54, 0.82, 0.88, 1.0),
 							"state": "option"
 						}
@@ -1465,27 +1501,63 @@ const CANGJIE_PORTAL_SECTIONS := [
 						{
 							"id": "mid_battle",
 							"kind": "battle",
+							"lane": "left",
 							"glyph": "战",
 							"label": {"zh": "战斗", "en": "Battle"},
 							"note": {"zh": "继续拿牌", "en": "Keep drafting"},
+							"focus_title": {"zh": "战斗节点 · 继续塑形", "en": "Battle Node · Keep Shaping"},
+							"focus_body": {
+								"zh": "战斗节点会继续把拿牌和 Gold 合并在一起，让路线判断不是一锤子买卖，而是层层加深的 build 选择。",
+								"en": "Battle nodes keep card rewards and Gold bundled together so route reading is not a one-off decision, but a build direction reinforced floor after floor."
+							},
+							"focus_tags": [
+								{"zh": "继续拿牌", "en": "Keep drafting"},
+								{"zh": "稳定推进", "en": "Steady push"}
+							],
+							"linked_preview_kind": "reward_chain",
+							"linked_preview_option": "draft",
 							"tone": Color(0.94, 0.74, 0.42, 1.0),
 							"state": "option"
 						},
 						{
 							"id": "shop_node",
 							"kind": "shop",
+							"lane": "center",
 							"glyph": "肆",
 							"label": {"zh": "商店", "en": "Shop"},
 							"note": {"zh": "重配 Gold", "en": "Reassign Gold"},
+							"focus_title": {"zh": "商店节点 · 重配预算", "en": "Shop Node · Reassign The Budget"},
+							"focus_body": {
+								"zh": "商店节点会把前面攒下的 Gold 和抽牌洁净度真正换成路线重配空间，不只是单纯买一张更大的牌。",
+								"en": "Shop nodes turn saved Gold and a cleaner deck into real route-reassignment room instead of simply buying the numerically biggest card."
+							},
+							"focus_tags": [
+								{"zh": "Gold 预算", "en": "Gold budget"},
+								{"zh": "节奏存势", "en": "Bank tempo"}
+							],
+							"linked_preview_kind": "route_ledger",
+							"linked_preview_option": "tempo",
 							"tone": Color(0.96, 0.82, 0.46, 1.0),
 							"state": "path"
 						},
 						{
 							"id": "elite_node",
 							"kind": "elite",
+							"lane": "right",
 							"glyph": "魁",
 							"label": {"zh": "精英", "en": "Elite"},
 							"note": {"zh": "高压换方向", "en": "Risk for direction"},
+							"focus_title": {"zh": "精英节点 · 用压力换方向", "en": "Elite Node · Risk For Direction"},
+							"focus_body": {
+								"zh": "精英往往是最容易把路线真正扳向一侧的压力点，因为战后不只拿牌，还会继续接遗物跟进。",
+								"en": "Elites are often the point where a route truly swings to one side, because the aftermath does not stop at cards and keeps going into relic follow-through."
+							},
+							"focus_tags": [
+								{"zh": "高压", "en": "Pressure"},
+								{"zh": "遗物跟进", "en": "Relic follow-up"}
+							],
+							"linked_preview_kind": "reward_chain",
+							"linked_preview_option": "relic",
 							"tone": Color(0.94, 0.58, 0.48, 1.0),
 							"state": "option"
 						}
@@ -1497,27 +1569,63 @@ const CANGJIE_PORTAL_SECTIONS := [
 						{
 							"id": "archive_node",
 							"kind": "archive",
+							"lane": "left",
 							"glyph": "删",
 							"label": {"zh": "删改", "en": "Archive"},
 							"note": {"zh": "把牌组修薄", "en": "Thin the deck"},
+							"focus_title": {"zh": "删改节点 · 把保薄兑现", "en": "Archive Node · Cash In Leaning Out"},
+							"focus_body": {
+								"zh": "删改节点更像给整副牌做手术，适合把“跳过奖励保薄”这类选择真正兑现成更干净的抽牌质量。",
+								"en": "Archive nodes feel more like surgery on the whole deck, making them the right place to cash in choices such as skipping rewards to preserve cleaner draws."
+							},
+							"focus_tags": [
+								{"zh": "精简", "en": "Trim"},
+								{"zh": "保薄", "en": "Stay lean"}
+							],
+							"linked_preview_kind": "reward_chain",
+							"linked_preview_option": "skip",
 							"tone": Color(0.86, 0.8, 0.56, 1.0),
 							"state": "option"
 						},
 						{
 							"id": "treasure_node",
 							"kind": "treasure",
+							"lane": "center",
 							"glyph": "宝",
 							"label": {"zh": "遗物", "en": "Treasure"},
 							"note": {"zh": "遗物偏转", "en": "Relic bend"},
+							"focus_title": {"zh": "遗物节点 · 改写估值", "en": "Treasure Node · Rewrite Value"},
+							"focus_body": {
+								"zh": "遗物节点的关键不在数值更大，而在它会改写你对后续牌、商店和节点价值的判断。",
+								"en": "Treasure nodes matter not because the numbers are bigger, but because they rewrite how later cards, shops, and node choices are evaluated."
+							},
+							"focus_tags": [
+								{"zh": "遗物", "en": "Relic"},
+								{"zh": "后续偏转", "en": "Future bend"}
+							],
+							"linked_preview_kind": "reward_chain",
+							"linked_preview_option": "relic",
 							"tone": Color(0.52, 0.84, 0.8, 1.0),
 							"state": "path"
 						},
 						{
 							"id": "late_battle",
 							"kind": "battle",
+							"lane": "right",
 							"glyph": "战",
 							"label": {"zh": "战斗", "en": "Battle"},
 							"note": {"zh": "继续进塔", "en": "Keep climbing"},
+							"focus_title": {"zh": "战斗节点 · 把路线写到底", "en": "Battle Node · Write The Route Through"},
+							"focus_body": {
+								"zh": "到了更高层时，战斗节点更像一次总检阅，确认现在该继续拿牌压深，还是回头修整整副牌的厚度。",
+								"en": "By the higher floors, a battle node reads like a full inspection that tests whether the climb should keep drafting deeper or step back and trim deck thickness first."
+							},
+							"focus_tags": [
+								{"zh": "继续进塔", "en": "Keep climbing"},
+								{"zh": "路线定稿", "en": "Lock the line"}
+							],
+							"linked_preview_kind": "reward_chain",
+							"linked_preview_option": "draft",
 							"tone": Color(0.94, 0.74, 0.42, 1.0),
 							"state": "option"
 						}
@@ -1529,9 +1637,21 @@ const CANGJIE_PORTAL_SECTIONS := [
 						{
 							"id": "summit_boss",
 							"kind": "boss",
+							"lane": "summit",
 							"glyph": "塔",
 							"label": {"zh": "Boss", "en": "Boss"},
 							"note": {"zh": "整副牌的总检验", "en": "Full-build exam"},
+							"focus_title": {"zh": "Boss 节点 · 终局定卷", "en": "Boss Node · Final Build Verdict"},
+							"focus_body": {
+								"zh": "塔顶 Boss 会把整副牌的方向性一起检验完，再用战后遗物把这次 climb 的最终 verdict 写死。",
+								"en": "The summit boss checks the whole build direction at once, then seals the run's final verdict through the relic follow-through after victory."
+							},
+							"focus_tags": [
+								{"zh": "终局检验", "en": "Final exam"},
+								{"zh": "Boss 遗物", "en": "Boss relic"}
+							],
+							"linked_preview_kind": "reward_chain",
+							"linked_preview_option": "relic",
 							"tone": Color(0.86, 0.68, 0.96, 1.0),
 							"state": "boss"
 						}
