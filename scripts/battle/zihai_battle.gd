@@ -3109,7 +3109,11 @@ func _on_enemy_defeated(world_position: Vector3, enemy_type: String) -> void:
 		hud.hide_boss()
 		_on_boss_defeated(world_position)
 	if kills % 14 == 0:
-		hud.show_banner("The Tide Surges Higher" if _is_english() else "字潮再涨", Color(0.95, 0.62, 0.36, 1.0), 1.7)
+		hud.show_banner(
+			_battle_state_text("pressure_rises_banner", "字潮再涨", "The Tide Surges Higher"),
+			Color(0.95, 0.62, 0.36, 1.0),
+			1.7
+		)
 
 
 func _on_enemy_damaged(_world_position: Vector3, enemy_type: String, hit_radius: float) -> void:
@@ -3618,13 +3622,21 @@ func _apply_radical_choice(radical: String) -> void:
 	if radical == "刂":
 		radical_counts[radical] = int(radical_counts.get(radical, 0)) + 1
 		player.apply_blade_upgrade()
-		hud.show_banner(("%s into %s" if _is_english() else "%s 入%s") % [radical, _weapon_core_label()], Session.RADICAL_COLORS[radical], 1.8)
+		hud.show_banner(
+			_battle_state_format("weapon_core_attuned_banner_format", "%s 入%s", "%s into %s", [radical, _weapon_core_label()]),
+			Session.RADICAL_COLORS[radical],
+			1.8
+		)
 		_resolve_growth_chains()
 		_sync_hud()
 		return
 
 	radical_counts[radical] = int(radical_counts.get(radical, 0)) + 1
-	hud.show_banner(("Attuned %s" if _is_english() else "领悟 %s") % radical, Session.RADICAL_COLORS[radical], 1.2)
+	hud.show_banner(
+		_battle_state_format("radical_attuned_banner_format", "领悟 %s", "Attuned %s", [radical]),
+		Session.RADICAL_COLORS[radical],
+		1.2
+	)
 	_resolve_growth_chains()
 	_sync_hud()
 
@@ -3664,22 +3676,36 @@ func _set_recipe_level(recipe_id: String, new_level: int) -> void:
 	player.set_skill_level(recipe_id, new_level)
 	var recipe: Dictionary = _localized_recipe_data(recipe_id)
 	if new_level == 1:
-		hud.show_banner(("Glyph Formed  %s" if _is_english() else "合字成型  %s") % String(recipe["display"]), recipe["color"], 2.3)
+		hud.show_banner(
+			_battle_state_format("glyph_formed_banner_format", "合字成型  %s", "Glyph Formed  %s", [String(recipe["display"])]),
+			recipe["color"],
+			2.3
+		)
 		hud.show_reveal(
-			"Glyph Formed" if _is_english() else "合字成型",
+			_battle_state_text("glyph_formed_reveal_kicker", "合字成型", "Glyph Formed"),
 			String(recipe["title"]),
 			String(recipe["description"]),
 			Color(recipe["color"]),
 			String(recipe["display"]),
 			2.6
 		)
-		_log_battle_event(("Glyph Formed · %s" if _is_english() else "合字成型 · %s") % String(recipe["display"]), Color(recipe["color"]))
+		_log_battle_event(
+			_battle_state_format("glyph_formed_log_format", "合字成型 · %s", "Glyph Formed · %s", [String(recipe["display"])]),
+			Color(recipe["color"])
+		)
 		if not first_recipe_callout_shown:
 			first_recipe_callout_shown = true
 			_show_hero_callout("recipe_unlock")
 	else:
-		hud.show_banner(("%s rises to Lv.%d" if _is_english() else "%s 进为 Lv.%d") % [String(recipe["display"]), new_level], recipe["color"], 1.7)
-		_log_battle_event(("%s reaches Lv.%d" if _is_english() else "%s 升至 Lv.%d") % [String(recipe["display"]), new_level], Color(recipe["color"]))
+		hud.show_banner(
+			_battle_state_format("glyph_level_banner_format", "%s 进为 Lv.%d", "%s rises to Lv.%d", [String(recipe["display"]), new_level]),
+			recipe["color"],
+			1.7
+		)
+		_log_battle_event(
+			_battle_state_format("glyph_level_log_format", "%s 升至 Lv.%d", "%s reaches Lv.%d", [String(recipe["display"]), new_level]),
+			Color(recipe["color"])
+		)
 
 
 func _set_word_level(word_id: String, new_level: int) -> void:
@@ -3687,22 +3713,36 @@ func _set_word_level(word_id: String, new_level: int) -> void:
 	player.set_word_skill_level(word_id, new_level)
 	var word: Dictionary = _localized_word_data(word_id)
 	if new_level == 1:
-		hud.show_banner(("Phrase Art Formed  %s" if _is_english() else "词技成型  %s") % String(word["display"]), word["color"], 2.5)
+		hud.show_banner(
+			_battle_state_format("phrase_formed_banner_format", "词技成型  %s", "Phrase Art Formed  %s", [String(word["display"])]),
+			word["color"],
+			2.5
+		)
 		hud.show_reveal(
-			"Phrase Art Formed" if _is_english() else "词技成型",
+			_battle_state_text("phrase_formed_reveal_kicker", "词技成型", "Phrase Art Formed"),
 			String(word["title"]),
 			String(word["description"]),
 			Color(word["color"]),
 			String(word["display"]),
 			2.9
 		)
-		_log_battle_event(("Phrase Art Formed · %s" if _is_english() else "词技成型 · %s") % String(word["display"]), Color(word["color"]))
+		_log_battle_event(
+			_battle_state_format("phrase_formed_log_format", "词技成型 · %s", "Phrase Art Formed · %s", [String(word["display"])]),
+			Color(word["color"])
+		)
 		if not first_word_callout_shown:
 			first_word_callout_shown = true
 			_show_hero_callout("word_unlock")
 	else:
-		hud.show_banner(("%s rises to Lv.%d" if _is_english() else "%s 进为 Lv.%d") % [String(word["display"]), new_level], word["color"], 1.8)
-		_log_battle_event(("%s reaches Lv.%d" if _is_english() else "%s 升至 Lv.%d") % [String(word["display"]), new_level], Color(word["color"]))
+		hud.show_banner(
+			_battle_state_format("phrase_level_banner_format", "%s 进为 Lv.%d", "%s rises to Lv.%d", [String(word["display"]), new_level]),
+			word["color"],
+			1.8
+		)
+		_log_battle_event(
+			_battle_state_format("phrase_level_log_format", "%s 升至 Lv.%d", "%s reaches Lv.%d", [String(word["display"]), new_level]),
+			Color(word["color"])
+		)
 
 
 func _has_recipe_parts(radicals: Array) -> bool:
@@ -4722,14 +4762,28 @@ func _on_threat_level_advanced(new_threat_level: int) -> void:
 	var tint: Color = _threat_level_color(new_threat_level)
 	var wave_glyph := _threat_level_glyph(new_threat_level)
 	if _is_big_wave(new_threat_level):
-		hud.show_banner(("Glyph Tide Wave %d · Major Surge" if _is_english() else "字潮第 %d 波 · 大潮") % new_threat_level, tint, 2.35)
-		_log_battle_event(("Wave %d · Major Surge" if _is_english() else "第 %d 波 · 大潮压境") % new_threat_level, tint)
+		hud.show_banner(
+			_battle_state_format("threat_wave_major_banner_format", "字潮第 %d 波 · 大潮", "Glyph Tide Wave %d · Major Surge", [new_threat_level]),
+			tint,
+			2.35
+		)
+		_log_battle_event(
+			_battle_state_format("threat_wave_major_log_format", "第 %d 波 · 大潮压境", "Wave %d · Major Surge", [new_threat_level]),
+			tint
+		)
 		spawn_timer = min(spawn_timer, 0.16)
 		_set_soundtrack("fireflyFootpath", "大潮压境", true, true)
 		_play_cue_sfx("wave_major", 1.0 + float(new_threat_level) * 0.02)
 	else:
-		hud.show_banner(("Glyph Tide Wave %d" if _is_english() else "字潮第 %d 波") % new_threat_level, tint, 1.85)
-		_log_battle_event(("Wave %d · Tide Advances" if _is_english() else "第 %d 波 · 字潮推进") % new_threat_level, tint)
+		hud.show_banner(
+			_battle_state_format("threat_wave_banner_format", "字潮第 %d 波", "Glyph Tide Wave %d", [new_threat_level]),
+			tint,
+			1.85
+		)
+		_log_battle_event(
+			_battle_state_format("threat_wave_log_format", "第 %d 波 · 字潮推进", "Wave %d · Tide Advances", [new_threat_level]),
+			tint
+		)
 		if new_threat_level == 2:
 			_set_soundtrack("fireflyFootpath", "字潮提速", true, true)
 		_play_cue_sfx("wave_step", 0.92 + float(new_threat_level) * 0.02)
