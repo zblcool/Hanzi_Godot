@@ -18,7 +18,7 @@
 ## 当前整体结构
 - 技术上当前是 `Godot 4.6.1` 项目，运行入口是 `project.godot -> res://scenes/app/launcher.tscn`
 - 当前仓库主线已经落地 `字海残卷` 的 Godot 迁移链路：`启动器 -> 字海二级菜单 -> 3D 战斗`
-- `仓颉之路` 目前已经有独立的启动器 portal overlay，会预览 `起笔登塔 / Start Climb`、`运行控台 / Run Controls`、`卡牌字库`、`合字图谱`、`遗物架`、`战后抉择 / Post-Battle Flow`、`塔路导览`，并把 source 页面的 `重新开局 / 查看牌组 / 返回启动器` 操作条、`Floor / HP / Deck / Relics / Gold` 顶部状态壳，以及三路线塔图的 route shell 一起迁回前台预览；其中 `查看牌组 / Open Deck` 现在还能在 portal 里直接展开一份轻量牌组 / 遗物样张，`战后抉择 / Post-Battle Flow` 现在也能切换查看常规拿牌、跳过保薄与精英 / 卷主遗物跟进三条链路，`塔路导览` 里的三路线塔图本身也能点按节点展开 battle / event / rest / shop / elite / archive / treasure / boss 的 source 风格节点聚焦说明，并直接带出对应的拿牌 / 路书 / 稳线跟进标签；当前聚焦节点还会再抽出一条轻量 `路线丝带 / Route Ribbon`，把这一步前后通常接续的 climb 节拍和 `节点 -> 关键决策 -> 后续偏转` 一起并排读出来，楼层之间也改成了更接近 source 塔图读法的层间连线 overlay，并额外补上一组 `主脉 / 转笔 / 收束 / 聚焦` 样张读图图例，让 route shell 不再只是静态摆设；但还没有在这个仓库里落成独立可玩的 Godot 场景
+- `仓颉之路` 目前已经有独立的启动器 portal overlay，会预览 `起笔登塔 / Start Climb`、`运行控台 / Run Controls`、`卡牌字库`、`合字图谱`、`遗物架`、`战后抉择 / Post-Battle Flow`、`塔路导览`，并把 source 页面的 `重新开局 / 查看牌组 / 返回启动器` 操作条、`Floor / HP / Deck / Relics / Gold` 顶部状态壳，以及三路线塔图的 route shell 一起迁回前台预览；其中 `查看牌组 / Open Deck` 现在还能在 portal 里直接展开一份轻量牌组 / 遗物样张，`战后抉择 / Post-Battle Flow` 现在也能切换查看常规拿牌、跳过保薄与精英 / 卷主遗物跟进三条链路，`塔路导览` 里的三路线塔图本身也能点按节点展开 battle / event / rest / shop / elite / archive / treasure / boss 的 source 风格节点聚焦说明，并直接带出对应的拿牌 / 路书 / 稳线跟进标签；当前聚焦节点还会再抽出一条轻量 `路线丝带 / Route Ribbon`，把这一步前后通常接续的 climb 节拍和 `节点 -> 关键决策 -> 后续偏转` 一起并排读出来，楼层之间也改成了更接近 source 塔图读法的层间连线 overlay，并额外补上一组 `主脉 / 转笔 / 收束 / 聚焦` 样张读图图例；现在还会按当前聚焦节点额外演示一段轻量步态，把 `已走 / 已开 / 未亮` 三种塔图状态先挂回壳层，让 route shell 不再只是静态摆设；但还没有在这个仓库里落成独立可玩的 Godot 场景
 - Web 导出通过 `./scripts/export_web.sh` 生成到 `build/index.html`，`vercel.json` 负责部署入口
 - 当前默认开发流程已经切到 `develop -> staging -> main`：`develop` 承接日常开发与自动化，`staging` 只做线上验收，`main` 保持稳定主干
 - `README.md`、`CHANGELOG.md`、`CONTRIBUTING.md` 持续同步当前迁移状态
@@ -37,7 +37,7 @@
   - iOS 提示 `分享 -> 添加到主屏幕`
 - 点击 `字海残卷` 后，会先进入真正的二级菜单 `scenes/app/zihai_menu.tscn`
 - 角色选择确认后，才进入 `scenes/battle/zihai_battle.tscn`
-- `仓颉之路` 目前不再只是静态占位卡，而是有独立 portal overlay 预览 source 里的入口、运行控台、卡牌、合字、遗物、战后奖励链路、节点与敌意样本；入口页还补上了可点按回应的对峙舞台、source 风格的 `重新开局 / 查看牌组 / 返回启动器` 操作壳预览、三路线塔图 route shell、本地 `3D 特效` 开关、可点开的轻量 `查看牌组 / Open Deck` deck sheet、可切换的战后 reward / skip / relic 链路样张、可点按展开的节点聚焦说明，以及代表性的 `路书对照 / Route Ledger` 事件样张；`塔路导览 / Tower Guide` 里的路线节点现在还会在点按后高亮对应样张路线，并拉出与该节点关联的战后 / 路书 follow-through 卡片，顺手标出它更像接战后拿牌、路书事件还是稳线修薄节拍，并额外抽出一条轻量 `路线丝带 / Route Ribbon`，把当前房间重新嵌回代表性的 climb 节奏与 `节点 -> 决策 -> 跟进` 节拍里，同时把更接近 source 塔图读法的层间连线 overlay 和 `主脉 / 转笔 / 收束 / 聚焦` 状态图例一起挂回壳层；真正的 Godot 爬塔战斗仍待后续迁移接入
+- `仓颉之路` 目前不再只是静态占位卡，而是有独立 portal overlay 预览 source 里的入口、运行控台、卡牌、合字、遗物、战后奖励链路、节点与敌意样本；入口页还补上了可点按回应的对峙舞台、source 风格的 `重新开局 / 查看牌组 / 返回启动器` 操作壳预览、三路线塔图 route shell、本地 `3D 特效` 开关、可点开的轻量 `查看牌组 / Open Deck` deck sheet、可切换的战后 reward / skip / relic 链路样张、可点按展开的节点聚焦说明，以及代表性的 `路书对照 / Route Ledger` 事件样张；`塔路导览 / Tower Guide` 里的路线节点现在还会在点按后高亮对应样张路线，并拉出与该节点关联的战后 / 路书 follow-through 卡片，顺手标出它更像接战后拿牌、路书事件还是稳线修薄节拍，并额外抽出一条轻量 `路线丝带 / Route Ribbon`，把当前房间重新嵌回代表性的 climb 节奏与 `节点 -> 决策 -> 跟进` 节拍里，同时把更接近 source 塔图读法的层间连线 overlay、`主脉 / 转笔 / 收束 / 聚焦` 状态图例，以及一段按当前聚焦节点改写的 `已走 / 已开 / 未亮` 步态样张一起挂回壳层；真正的 Godot 爬塔战斗仍待后续迁移接入
 
 ## 字海残卷（目前已经是较完整可玩原型）
 ### 核心玩法

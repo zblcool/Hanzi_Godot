@@ -49,11 +49,18 @@ func _draw() -> void:
 			highlighted = String(link_definition.get("from_lane", "")) == active_lane or String(link_definition.get("to_lane", "")) == active_lane
 
 		var state := String(link_definition.get("state", "option"))
-		var stroke_color := Color(tone.r, tone.g, tone.b, 0.18)
-		var stroke_width := 2.0
-		if state == "path" or state == "boss":
-			stroke_color.a = 0.26
+		var progress_state := String(link_definition.get("progress_state", "locked"))
+		var stroke_color := Color(tone.r, tone.g, tone.b, 0.12)
+		var stroke_width := 1.8
+		if progress_state == "completed":
+			stroke_color.a = 0.44
 			stroke_width = 3.0
+		elif progress_state == "available":
+			stroke_color.a = 0.3
+			stroke_width = 2.4
+		if state == "path" or state == "boss":
+			stroke_color.a = maxf(stroke_color.a, 0.26)
+			stroke_width = maxf(stroke_width, 3.0)
 		if highlighted:
 			stroke_color.a = minf(0.72, stroke_color.a + 0.28)
 			stroke_width += 1.6

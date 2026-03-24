@@ -1136,6 +1136,52 @@ const CANGJIE_PORTAL_SECTIONS := [
 				"zh": "点按任一节点，查看 source 里这类房间会怎样改写牌组、资源和后续路线，并预览它更像接哪种战后 / 路书 handoff。",
 				"en": "Tap any node to inspect how that room type reshapes the deck, resources, and later route in the source run, including which reward or route-ledger handoff it most naturally feeds into."
 			},
+			"progress_stub": {
+				"title": {"zh": "样张步态", "en": "Sample Step State"},
+				"summary": {
+					"zh": "source 真正开跑时，点下一个房间后，它会立刻转成已走节点，并把直连下一层点亮成可走。Godot 这里先按当前聚焦节点演示这一步态，让 route shell 更接近 live tower map 的 available / completed 读法。",
+					"en": "In the live source climb, choosing a room immediately turns it into a completed node and lights the directly connected next row as available. Godot now stages that same step around the current focus so the route shell reads closer to the live tower map's available / completed flow."
+				},
+				"cards": [
+					{
+						"id": "completed",
+						"glyph": "已",
+						"badge": {"zh": "已走", "en": "Completed"},
+						"title": {"zh": "样张已走节点", "en": "Sample Completed Rooms"},
+						"body": {
+							"zh": "沿当前样张路径已经压过的节点，会保留更实的笔触和层间连线，像 source 里已经踩过的旧拍。",
+							"en": "Nodes already pressed through on the sample route keep a firmer stroke and path links, reading like earlier beats already consumed in the source climb."
+						},
+						"tone": Color(0.94, 0.76, 0.46, 1.0)
+					},
+					{
+						"id": "available",
+						"glyph": "启",
+						"badge": {"zh": "已开", "en": "Available"},
+						"title": {"zh": "下一层可走房间", "en": "Unlocked Next Rooms"},
+						"body": {
+							"zh": "只有与当前聚焦房间直连的下一层节点会被点亮，先把 source 那种“选完一格再开下一排”的读法挂回前台。",
+							"en": "Only the next-row rooms directly connected to the focused stop light up, bringing back the source read where the next row only opens after one room is chosen."
+						},
+						"tone": Color(0.52, 0.84, 0.8, 1.0)
+					},
+					{
+						"id": "locked",
+						"glyph": "锁",
+						"badge": {"zh": "未亮", "en": "Locked"},
+						"title": {"zh": "仍待开启的侧枝", "en": "Still-Locked Branches"},
+						"body": {
+							"zh": "其余未接上的房间先保持压暗，避免整张样图像同时可走的静态摆设。",
+							"en": "The other unconnected rooms stay dimmed first so the sample map no longer reads like a static board where every stop is equally open."
+						},
+						"tone": Color(0.64, 0.7, 0.82, 1.0)
+					}
+				],
+				"footnote_format": {
+					"zh": "当前样张基于：%s。点按别的节点，会按那一格改写已走与已开状态。",
+					"en": "Current sample basis: %s. Tapping another node rewrites the completed and available states around that stop."
+				}
+			},
 			"state_legend": {
 				"title": {"zh": "塔图读法图例", "en": "Route Read Legend"},
 				"summary": {
