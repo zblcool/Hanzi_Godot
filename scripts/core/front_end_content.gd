@@ -1632,6 +1632,76 @@ const BATTLE_INTERLUDE_CONTENT := {
 	}
 }
 
+const BATTLE_CHAMBER_CONTENT := {
+	"chambers": {
+		"entry_court": {
+			"name": {"zh": "入卷前庭", "en": "Entry Court"},
+			"tip": {
+				"zh": "这是开卷前庭，树阵、卷架与补给点还保持第一层较开阔的铺陈。",
+				"en": "This is the opening court: a wider first chamber where trees, racks, and supplies still sit in their broad entry spread."
+			},
+			"objectives": {
+				"seal_gatekeeper": {
+					"name": {"zh": "前庭启门印", "en": "Courtyard Gate Seal"},
+					"tip": {
+						"zh": "卷主退散后，先触碰这枚封门印，逼出守关魁首。只有守魁倒下，卷间奖印才会真正显形。",
+						"en": "Once the scroll lord falls, touch the sealed ward to force out its gatekeeper. Only after that warden falls will the chamber reward beacon rise."
+					},
+					"gatekeepers": {
+						"entry_court_gatekeeper": {
+							"name": {"zh": "砚门守魁", "en": "Ink Gate Warden"},
+							"taunt": {"zh": "封门未开，先过我。", "en": "The seal stays shut until I fall."}
+						}
+					}
+				},
+				"seal_relay": {
+					"name": {"zh": "前庭连锁印", "en": "Courtyard Relay Seals"},
+					"tip": {
+						"zh": "卷主退散后，前庭会再亮起两枚副印。逐一收束后，卷间奖印才会真正显形。",
+						"en": "Once the scroll lord falls, two relay seals light up across the courtyard. Collapse both of them before the chamber reward beacon can rise."
+					}
+				}
+			}
+		},
+		"slip_archive": {
+			"name": {"zh": "简库中庭", "en": "Slip Archive"},
+			"tip": {
+				"zh": "更深一层会推入简库中庭，卷架与碑刻挤得更近，补给点和砚台也会重排成新的房间读法。",
+				"en": "The next layer opens into Slip Archive, where racks and stelae crowd the room more tightly and the supply / inkstone rhythm is fully re-seeded."
+			},
+			"objectives": {
+				"storm_latch_seal": {
+					"name": {"zh": "雷纹转钥封", "en": "Storm Latch Seal"},
+					"tip": {
+						"zh": "简库卷主退散后，先触碰这枚转钥封，逼出简雷守将。只有守将倒下，通往雷纹内库的卷间奖印才会显形。",
+						"en": "Once the archive lord falls, touch this latch seal to force out the Slip Storm Marshal. Only after it falls will the reward beacon toward Thunder Vault rise."
+					},
+					"gatekeepers": {
+						"slip_archive_gatekeeper": {
+							"name": {"zh": "简雷守将", "en": "Slip Storm Marshal"},
+							"taunt": {"zh": "转钥未开，先破我阵。", "en": "Break my lattice before the vault unseals."}
+						}
+					}
+				}
+			}
+		},
+		"thunder_vault": {
+			"name": {"zh": "雷纹内库", "en": "Thunder Vault"},
+			"tip": {
+				"zh": "更深一层会推入雷纹内库，冷色石架、雷碑与补给改成更紧的中轴布置，房间读法也会跟着收束。",
+				"en": "The next layer opens into Thunder Vault, where colder stone racks, storm stelae, and mirrored supplies tighten the room around a central lane."
+			}
+		},
+		"abyss_sanctum": {
+			"name": {"zh": "卷渊终室", "en": "Abyss Sanctum"},
+			"tip": {
+				"zh": "更深一层会推入卷渊终室，深墨卷架、压阵石碑与终室补给会围成更稳的终局读法。",
+				"en": "The next layer opens into Abyss Sanctum, where darker scroll racks, sealing stelae, and a final supply ring frame the last chamber."
+			}
+		}
+	}
+}
+
 const BATTLE_GUIDANCE_CONTENT := {
 	"default_tip": {
 		"zh": "击倒字灵收集字力与补给，升级时三选一偏旁。靠近砚台按 E 磨词。",
@@ -2181,6 +2251,10 @@ static func localize_battle_text(text: String, english: bool) -> String:
 
 static func battle_interlude_content() -> Dictionary:
 	return BATTLE_INTERLUDE_CONTENT.duplicate(true)
+
+
+static func battle_chamber_content() -> Dictionary:
+	return BATTLE_CHAMBER_CONTENT.duplicate(true)
 
 
 static func battle_guidance_content() -> Dictionary:

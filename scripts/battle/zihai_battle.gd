@@ -176,12 +176,8 @@ const FIELD_PHASE_THEMES := [
 const CHAMBER_ORDER := ["entry_court", "slip_archive", "thunder_vault", "abyss_sanctum"]
 const CHAMBER_LAYOUTS := {
 	"entry_court": {
-		"name": "入卷前庭",
-		"english_name": "Entry Court",
 		"glyph": "庭",
 		"accent": Color(0.96, 0.82, 0.54, 1.0),
-		"tip": "这是开卷前庭，树阵、卷架与补给点还保持第一层较开阔的铺陈。",
-		"english_tip": "This is the opening court: a wider first chamber where trees, racks, and supplies still sit in their broad entry spread.",
 		"trees": [
 			Vector3(-9.0, 0.0, -7.0),
 			Vector3(11.0, 0.0, -11.0),
@@ -238,11 +234,7 @@ const CHAMBER_LAYOUTS := {
 		"exit_objectives": [
 			{
 				"id": "seal_gatekeeper",
-				"name": "前庭启门印",
-				"english_name": "Courtyard Gate Seal",
 				"glyph": "封",
-				"tip": "卷主退散后，先触碰这枚封门印，逼出守关魁首。只有守魁倒下，卷间奖印才会真正显形。",
-				"english_tip": "Once the scroll lord falls, touch the sealed ward to force out its gatekeeper. Only after that warden falls will the chamber reward beacon rise.",
 				"pickup_positions": [
 					Vector3(0.0, 0.0, 1.0)
 				],
@@ -251,22 +243,14 @@ const CHAMBER_LAYOUTS := {
 				"gatekeeper": {
 					"id": "entry_court_gatekeeper",
 					"type": "elite",
-					"name": "砚门守魁",
-					"english_name": "Ink Gate Warden",
 					"glyph": "砚",
-					"taunt": "封门未开，先过我。",
-					"english_taunt": "The seal stays shut until I fall.",
 					"tint": Color(0.82, 0.54, 0.34, 1.0),
 					"health_scale": 1.18
 				}
 			},
 			{
 				"id": "seal_relay",
-				"name": "前庭连锁印",
-				"english_name": "Courtyard Relay Seals",
 				"glyph": "封",
-				"tip": "卷主退散后，前庭会再亮起两枚副印。逐一收束后，卷间奖印才会真正显形。",
-				"english_tip": "Once the scroll lord falls, two relay seals light up across the courtyard. Collapse both of them before the chamber reward beacon can rise.",
 				"pickup_positions": [
 					Vector3(-11.5, 0.0, 4.0),
 					Vector3(12.5, 0.0, -5.5)
@@ -275,12 +259,8 @@ const CHAMBER_LAYOUTS := {
 		]
 	},
 	"slip_archive": {
-		"name": "简库中庭",
-		"english_name": "Slip Archive",
 		"glyph": "简",
 		"accent": Color(0.92, 0.84, 0.66, 1.0),
-		"tip": "更深一层会推入简库中庭，卷架与碑刻挤得更近，补给点和砚台也会重排成新的房间读法。",
-		"english_tip": "The next layer opens into Slip Archive, where racks and stelae crowd the room more tightly and the supply / inkstone rhythm is fully re-seeded.",
 		"trees": [
 			Vector3(-16.0, 0.0, -13.0),
 			Vector3(16.0, 0.0, -12.0),
@@ -338,11 +318,7 @@ const CHAMBER_LAYOUTS := {
 		"exit_objectives": [
 			{
 				"id": "storm_latch_seal",
-				"name": "雷纹转钥封",
-				"english_name": "Storm Latch Seal",
 				"glyph": "封",
-				"tip": "简库卷主退散后，先触碰这枚转钥封，逼出简雷守将。只有守将倒下，通往雷纹内库的卷间奖印才会显形。",
-				"english_tip": "Once the archive lord falls, touch this latch seal to force out the Slip Storm Marshal. Only after it falls will the reward beacon toward Thunder Vault rise.",
 				"pickup_positions": [
 					Vector3(0.0, 0.0, 1.5)
 				],
@@ -351,11 +327,7 @@ const CHAMBER_LAYOUTS := {
 				"gatekeeper": {
 					"id": "slip_archive_gatekeeper",
 					"type": "ritualist",
-					"name": "简雷守将",
-					"english_name": "Slip Storm Marshal",
 					"glyph": "简",
-					"taunt": "转钥未开，先破我阵。",
-					"english_taunt": "Break my lattice before the vault unseals.",
 					"tint": Color(0.62, 0.72, 0.92, 1.0),
 					"health_scale": 1.22
 				}
@@ -435,12 +407,8 @@ const CHAMBER_LAYOUTS := {
 		]
 	},
 	"thunder_vault": {
-		"name": "雷纹内库",
-		"english_name": "Thunder Vault",
 		"glyph": "雷",
 		"accent": Color(0.78, 0.88, 1.0, 1.0),
-		"tip": "更深一层会推入雷纹内库，冷色石架、雷碑与补给改成更紧的中轴布置，房间读法也会跟着收束。",
-		"english_tip": "The next layer opens into Thunder Vault, where colder stone racks, storm stelae, and mirrored supplies tighten the room around a central lane.",
 		"trees": [
 			Vector3(-18.0, 0.0, -16.0),
 			Vector3(17.0, 0.0, -14.0),
@@ -573,12 +541,8 @@ const CHAMBER_LAYOUTS := {
 		]
 	},
 	"abyss_sanctum": {
-		"name": "卷渊终室",
-		"english_name": "Abyss Sanctum",
 		"glyph": "渊",
 		"accent": Color(0.94, 0.76, 0.72, 1.0),
-		"tip": "更深一层会推入卷渊终室，深墨卷架、压阵石碑与终室补给会围成更稳的终局读法。",
-		"english_tip": "The next layer opens into Abyss Sanctum, where darker scroll racks, sealing stelae, and a final supply ring frame the last chamber.",
 		"trees": [
 			Vector3(-17.0, 0.0, -12.0),
 			Vector3(17.0, 0.0, -11.0),
@@ -1115,12 +1079,37 @@ func _current_chamber_data() -> Dictionary:
 	return {}
 
 
+func _battle_chamber_entry(chamber_id: String) -> Dictionary:
+	var chamber_collection_variant: Variant = FrontEndContent.battle_chamber_content().get("chambers", {})
+	if chamber_collection_variant is Dictionary:
+		var chamber_variant: Variant = (chamber_collection_variant as Dictionary).get(chamber_id, {})
+		if chamber_variant is Dictionary:
+			return chamber_variant as Dictionary
+	return {}
+
+
+func _battle_room_objective_entry(objective: Dictionary) -> Dictionary:
+	var chamber_entry := _battle_chamber_entry(String(objective.get("chamber_id", current_chamber_id)))
+	var objective_collection_variant: Variant = chamber_entry.get("objectives", {})
+	if objective_collection_variant is Dictionary:
+		var objective_variant: Variant = (objective_collection_variant as Dictionary).get(String(objective.get("id", "")), {})
+		if objective_variant is Dictionary:
+			return objective_variant as Dictionary
+	return {}
+
+
+func _battle_room_gatekeeper_entry(objective: Dictionary, gatekeeper: Dictionary) -> Dictionary:
+	var objective_entry := _battle_room_objective_entry(objective)
+	var gatekeeper_collection_variant: Variant = objective_entry.get("gatekeepers", {})
+	if gatekeeper_collection_variant is Dictionary:
+		var gatekeeper_variant: Variant = (gatekeeper_collection_variant as Dictionary).get(String(gatekeeper.get("id", "")), {})
+		if gatekeeper_variant is Dictionary:
+			return gatekeeper_variant as Dictionary
+	return {}
+
+
 func _localized_chamber_name(chamber_id: String) -> String:
-	var chamber_variant: Variant = CHAMBER_LAYOUTS.get(chamber_id, {})
-	if chamber_variant is Dictionary:
-		var chamber_data := chamber_variant as Dictionary
-		return String(chamber_data.get("english_name" if _is_english() else "name", chamber_id))
-	return chamber_id
+	return _front_end_text(_battle_chamber_entry(chamber_id), "name", chamber_id, chamber_id)
 
 
 func _current_chamber_name() -> String:
@@ -1128,8 +1117,8 @@ func _current_chamber_name() -> String:
 
 
 func _current_chamber_tip() -> String:
-	var chamber_data := _current_chamber_data()
-	return String(chamber_data.get("english_tip" if _is_english() else "tip", _default_battle_tip()))
+	var fallback_tip := _default_battle_tip()
+	return _front_end_text(_battle_chamber_entry(current_chamber_id), "tip", fallback_tip, fallback_tip)
 
 
 func _current_chamber_accent() -> Color:
@@ -1158,12 +1147,16 @@ func _available_chamber_exit_objectives() -> Array[Dictionary]:
 	if objectives_variant is Array:
 		for objective_variant in objectives_variant:
 			if objective_variant is Dictionary:
-				objectives.append((objective_variant as Dictionary).duplicate(true))
+				var objective_copy := (objective_variant as Dictionary).duplicate(true)
+				objective_copy["chamber_id"] = current_chamber_id
+				objectives.append(objective_copy)
 	if not objectives.is_empty():
 		return objectives
 	var objective_variant: Variant = chamber_data.get("exit_objective", {})
 	if objective_variant is Dictionary:
-		objectives.append((objective_variant as Dictionary).duplicate(true))
+		var objective_copy := (objective_variant as Dictionary).duplicate(true)
+		objective_copy["chamber_id"] = current_chamber_id
+		objectives.append(objective_copy)
 	return objectives
 
 
@@ -1175,18 +1168,20 @@ func _pick_chamber_exit_objective() -> Dictionary:
 
 
 func _localized_room_objective_name(objective: Dictionary) -> String:
-	return String(objective.get("english_name" if _is_english() else "name", ""))
+	var fallback_id := String(objective.get("id", "room_objective"))
+	return _front_end_text(_battle_room_objective_entry(objective), "name", fallback_id, fallback_id)
 
 
 func _room_objective_gatekeeper_name(objective: Dictionary) -> String:
-	var fallback_name := _battle_guidance_text(
-		"room_objective_gatekeeper_default_name",
-		"守关魁首",
-		"Gatekeeper"
-	)
+	var fallback_name := _battle_guidance_text("room_objective_gatekeeper_default_name", "守关魁首", "Gatekeeper")
 	var gatekeeper_variant: Variant = objective.get("gatekeeper", {})
 	if gatekeeper_variant is Dictionary:
-		return String(gatekeeper_variant.get("english_name" if _is_english() else "name", fallback_name))
+		return _front_end_text(
+			_battle_room_gatekeeper_entry(objective, gatekeeper_variant as Dictionary),
+			"name",
+			"守关魁首",
+			"Gatekeeper"
+		)
 	return fallback_name
 
 
@@ -1196,7 +1191,8 @@ func _room_objective_active() -> bool:
 
 func _room_objective_status_text(objective: Dictionary, remaining: int) -> String:
 	var objective_name := _localized_room_objective_name(objective)
-	var base_tip := String(objective.get("english_tip" if _is_english() else "tip", _current_chamber_tip()))
+	var fallback_tip := _current_chamber_tip()
+	var base_tip := _front_end_text(_battle_room_objective_entry(objective), "tip", fallback_tip, fallback_tip)
 	if String(objective.get("id", "")) == "seal_gatekeeper":
 		var gatekeeper_name := _room_objective_gatekeeper_name(objective)
 		if room_objective_gatekeeper_active:
@@ -1548,6 +1544,7 @@ func _spawn_room_objective_gatekeeper(objective: Dictionary, beacon_position: Ve
 	var gatekeeper_id := String(gatekeeper.get("id", ""))
 	if gatekeeper_id.is_empty():
 		gatekeeper_id = "%s_gatekeeper" % String(objective.get("id", "room_objective"))
+	gatekeeper["id"] = gatekeeper_id
 	var enemy = ENEMY_SCENE.instantiate()
 	var gatekeeper_type := String(gatekeeper.get("type", "elite"))
 	var spawn_direction := Vector3.ZERO - beacon_position
@@ -1559,12 +1556,8 @@ func _spawn_room_objective_gatekeeper(objective: Dictionary, beacon_position: Ve
 	enemy.position = beacon_position + spawn_direction * 3.8
 	enemy.position.y = 0.0
 	enemy.configure(gatekeeper_type, 1.1 + elapsed_time / 76.0, player)
-	enemy.enemy_name = String(
-		gatekeeper.get(
-			"english_name" if _is_english() else "name",
-			_battle_guidance_text("room_objective_gatekeeper_default_name", "守关魁首", "Gatekeeper")
-		)
-	)
+	var gatekeeper_copy := _battle_room_gatekeeper_entry(objective, gatekeeper)
+	enemy.enemy_name = _front_end_text(gatekeeper_copy, "name", "守关魁首", "Gatekeeper")
 	enemy.glyph = String(gatekeeper.get("glyph", "魁"))
 	enemy.tint = Color(gatekeeper.get("tint", Color(0.82, 0.54, 0.34, 1.0)))
 	enemy.max_health *= maxf(float(gatekeeper.get("health_scale", 1.0)), 0.35)
@@ -1583,7 +1576,7 @@ func _spawn_room_objective_gatekeeper(objective: Dictionary, beacon_position: Ve
 	enemy.request_projectile.connect(_on_enemy_request_projectile)
 	enemies_root.add_child(enemy)
 	room_objective_gatekeeper_id = gatekeeper_id
-	var taunt := String(gatekeeper.get("english_taunt" if _is_english() else "taunt", ""))
+	var taunt := _front_end_text(gatekeeper_copy, "taunt", "", "")
 	if not taunt.is_empty():
 		_show_battle_callout(
 			_battle_guidance_format(
