@@ -1050,6 +1050,71 @@ const CANGJIE_PORTAL_SECTIONS := [
 							{"zh": "遗物节点", "en": "Relic node"},
 							{"zh": "后续偏转", "en": "Future bend"}
 						]
+					},
+					{
+						"glyph": "歇",
+						"title": {"zh": "歇息", "en": "Rest"},
+						"subtitle": {"zh": "回气 / 预埋节奏", "en": "Recover / preload tempo"},
+						"body": {
+							"zh": "回血或蓄势，决定下一场是先求稳，还是提前把节奏贪出来。",
+							"en": "Heal or prepare, depending on whether the next floor needs stability first or greedier tempo early."
+						},
+						"tags": [
+							{"zh": "恢复", "en": "Recovery"},
+							{"zh": "蓄势", "en": "Prepare"}
+						]
+					},
+					{
+						"glyph": "肆",
+						"title": {"zh": "商店", "en": "Shop"},
+						"subtitle": {"zh": "重配 Gold", "en": "Reassign Gold"},
+						"body": {
+							"zh": "在买牌、买遗物和修薄之间重新分配 Gold，是把路线往更贪或更稳偏转的关键节点。",
+							"en": "Reallocates Gold between cards, relics, and thinning, making it a key node for bending the route greedier or steadier."
+						},
+						"tags": [
+							{"zh": "Gold", "en": "Gold"},
+							{"zh": "再分配", "en": "Reassign"}
+						]
+					},
+					{
+						"glyph": "删",
+						"title": {"zh": "删改", "en": "Archive"},
+						"subtitle": {"zh": "让牌组更薄", "en": "Thin the deck"},
+						"body": {
+							"zh": "修薄牌组很多时候比多拿一张奖励牌更值，会直接抬高后续每回合的抽牌质量。",
+							"en": "Making the deck thinner is often worth more than adding one more reward card because it directly lifts later draw quality."
+						},
+						"tags": [
+							{"zh": "修薄", "en": "Thin"},
+							{"zh": "抽牌质量", "en": "Draw quality"}
+						]
+					},
+					{
+						"glyph": "异",
+						"title": {"zh": "事件", "en": "Event"},
+						"subtitle": {"zh": "短期换长期", "en": "Short vs long"},
+						"body": {
+							"zh": "事件房会把短期收益和长期稳定放到同一题面上，常常比普通战斗更暴露路线判断。",
+							"en": "Event rooms put short-term gain and long-term stability on the same prompt, often exposing route judgment more clearly than normal battles."
+						},
+						"tags": [
+							{"zh": "取舍", "en": "Tradeoff"},
+							{"zh": "路线判断", "en": "Route read"}
+						]
+					},
+					{
+						"glyph": "塔",
+						"title": {"zh": "Boss", "en": "Boss"},
+						"subtitle": {"zh": "塔顶总检验", "en": "Summit exam"},
+						"body": {
+							"zh": "到塔顶时，这套牌必须已经把自己的路线回答得够清楚，才能真正通过整副牌的总检验。",
+							"en": "By the summit, the deck line needs to answer its own questions clearly enough to pass the full-build exam."
+						},
+						"tags": [
+							{"zh": "综合检验", "en": "Full exam"},
+							{"zh": "路线定卷", "en": "Line verdict"}
+						]
 					}
 				]
 			},
@@ -1067,6 +1132,19 @@ const CANGJIE_PORTAL_SECTIONS := [
 						"tags": [
 							{"zh": "战斗层", "en": "Battle floor"},
 							{"zh": "前期压力", "en": "Early pressure"}
+						]
+					},
+					{
+						"glyph": "魇",
+						"title": {"zh": "魇页使", "en": "Nightmare Page Envoy"},
+						"subtitle": {"zh": "蓄势 / 多段攻击", "en": "Charge / multi-hit pressure"},
+						"body": {
+							"zh": "会先蓄势再打高伤，也会切进多段输出，逼你提前读懂下一回合真正的问题。",
+							"en": "Telegraphs heavier hits through charge turns and can pivot into multi-hit pressure, rewarding earlier reads of the next turn's real question."
+						},
+						"tags": [
+							{"zh": "战斗层", "en": "Battle floor"},
+							{"zh": "蓄势读招", "en": "Intent read"}
 						]
 					},
 					{
