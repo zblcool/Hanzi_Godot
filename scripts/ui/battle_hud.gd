@@ -832,17 +832,24 @@ func _build_hero_identity_line(hero_data: Dictionary) -> String:
 		writer_mark = String(hero_data.get("focus", hero_data.get("description", ""))).strip_edges()
 	var route_seal := _build_primary_route_seal(hero_data)
 	if route_seal.is_empty():
-		return (
-			"Mark: %s" if _is_english() else "印记：%s"
+		return _battle_state_text(
+			battle_hud_content,
+			"identity_mark_format",
+			"印记：%s",
+			"Mark: %s"
 		) % writer_mark if not writer_mark.is_empty() else ""
 	if writer_mark.is_empty():
-		return (
-			"Route Seal: %s" if _is_english() else "路印：%s"
+		return _battle_state_text(
+			battle_hud_content,
+			"identity_route_seal_format",
+			"路印：%s",
+			"Route Seal: %s"
 		) % route_seal
-	return (
+	return _battle_state_text(
+		battle_hud_content,
+		"identity_mark_and_route_format",
+		"印记：%s  ·  路印：%s",
 		"Mark: %s  ·  Route Seal: %s"
-		if _is_english()
-		else "印记：%s  ·  路印：%s"
 	) % [writer_mark, route_seal]
 
 
@@ -898,13 +905,23 @@ func _build_route_focus_summary(hero_data: Dictionary) -> Dictionary:
 	if route_detail.is_empty():
 		route_detail = String(hero_data.get("route_hint", "")).strip_edges()
 	if route_detail.is_empty():
-		route_detail = _localize_text("让一条路线始终比其余分支领先，后续磨词才有清晰主线。")
+		route_detail = _battle_state_text(
+			battle_hud_content,
+			"route_focus_fallback_detail",
+			"让一条路线始终比其余分支领先，后续磨词才有清晰主线。",
+			"Keep one route ahead of the other branches so later refinement still has a clear spine."
+		)
 
 	var stage_title := String(stage_card.get("title", "")).strip_edges()
 	var stage_tags_text := " / ".join(_collect_string_array(stage_card.get("tags", [])))
 	var stage_text := ""
 	if not stage_title.is_empty():
-		stage_text = _localize_text("当前阶段：%s") % stage_title
+		stage_text = _battle_state_text(
+			battle_hud_content,
+			"route_focus_stage_format",
+			"当前阶段：%s",
+			"Stage: %s"
+		) % stage_title
 		if not stage_tags_text.is_empty():
 			stage_text += "  ·  %s" % stage_tags_text
 
@@ -944,14 +961,35 @@ func build_intro_identity_reveal() -> Dictionary:
 	var opener := _build_intro_opening_label(String(localized_hero.get("id", "")))
 	var route_parts: Array[String] = []
 	if not route_label.is_empty():
-		route_parts.append(_localize_text("主路线印：%s") % route_label)
+		route_parts.append(
+			_battle_state_text(
+				battle_hud_content,
+				"intro_route_seal_format",
+				"主路线印：%s",
+				"Route Seal: %s"
+			) % route_label
+		)
 	if not opener.is_empty():
-		route_parts.append(_localize_text("起笔：%s") % opener)
+		route_parts.append(
+			_battle_state_text(
+				battle_hud_content,
+				"intro_opening_format",
+				"起笔：%s",
+				"Opener: %s"
+			) % opener
+		)
 	if not route_parts.is_empty():
 		detail_lines.append("  ·  ".join(route_parts))
 
 	if not source.is_empty():
-		detail_lines.append(_localize_text("出处 · %s") % source)
+		detail_lines.append(
+			_battle_state_text(
+				battle_hud_content,
+				"intro_source_format",
+				"出处 · %s",
+				"Source · %s"
+			) % source
+		)
 
 	var title := String(localized_hero.get("record_title", localized_hero.get("name", ""))).strip_edges()
 	if title.is_empty():
@@ -975,23 +1013,49 @@ func build_intro_callout_detail() -> String:
 	if writer_mark.is_empty():
 		writer_mark = String(localized_hero.get("focus", localized_hero.get("description", ""))).strip_edges()
 	if not writer_mark.is_empty():
-		identity_parts.append(_localize_text("印记 · %s") % writer_mark)
+		identity_parts.append(
+			_battle_state_text(
+				battle_hud_content,
+				"callout_mark_format",
+				"印记 · %s",
+				"Mark · %s"
+			) % writer_mark
+		)
 	var route_seal := _build_primary_route_seal(localized_hero)
 	if not route_seal.is_empty():
-		identity_parts.append(_localize_text("路印 · %s") % route_seal)
+		identity_parts.append(
+			_battle_state_text(
+				battle_hud_content,
+				"callout_route_format",
+				"路印 · %s",
+				"Route Seal · %s"
+			) % route_seal
+		)
 	if not identity_parts.is_empty():
 		detail_lines.append("  ·  ".join(identity_parts))
 
 	var source := String(localized_hero.get("record_source", "")).strip_edges()
 	if not source.is_empty():
-		detail_lines.append(_localize_text("出处 · %s") % source)
+		detail_lines.append(
+			_battle_state_text(
+				battle_hud_content,
+				"intro_source_format",
+				"出处 · %s",
+				"Source · %s"
+			) % source
+		)
 	return "\n".join(detail_lines)
 
 
 func _build_intro_opening_label(hero_id: String) -> String:
 	var starting_radicals: Array[String] = Session.get_hero_starting_radicals(hero_id)
 	if starting_radicals.is_empty():
-		return _localize_text("无固定起手")
+		return _battle_state_text(
+			battle_hud_content,
+			"no_fixed_opener",
+			"无固定起手",
+			"No fixed opener"
+		)
 	return " / ".join(starting_radicals)
 
 
@@ -3957,11 +4021,16 @@ func _make_skill_card(data: Dictionary) -> PanelContainer:
 func _make_placeholder_card() -> PanelContainer:
 	return _make_skill_card({
 		"glyph": "字",
-		"badge": "等待成字",
-		"title": "尚未成型",
-		"detail": "先通过偏旁三选一推进合字，再把满级合字带去砚台磨成词技。",
+		"badge": _battle_state_text(battle_hud_content, "skill_placeholder_badge", "等待成字", "Waiting to Form"),
+		"title": _battle_state_text(battle_hud_content, "skill_placeholder_title", "尚未成型", "Not Formed Yet"),
+		"detail": _battle_state_text(
+			battle_hud_content,
+			"skill_placeholder_detail",
+			"先通过偏旁三选一推进合字，再把满级合字带去砚台磨成词技。",
+			"Advance fusions through radical picks first, then bring maxed glyphs to the inkstone for phrase refinement."
+		),
 		"recipe": "日 + 月 / 亻 + 木 / 氵 + 每",
-		"level": "预备",
+		"level": _battle_state_text(battle_hud_content, "skill_placeholder_level", "预备", "Readying"),
 		"color": Color(0.44, 0.58, 0.72, 1.0)
 	})
 

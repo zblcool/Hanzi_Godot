@@ -1290,6 +1290,13 @@ const BATTLE_HUD_CONTENT := {
 	"compact_skill_waiting_title": {"zh": "待成字", "en": "Waiting"},
 	"compact_skill_waiting_level": {"zh": "预备", "en": "Ready"},
 	"compact_skill_more": {"zh": "更多技能字", "en": "More Skills"},
+	"skill_placeholder_badge": {"zh": "等待成字", "en": "Waiting to Form"},
+	"skill_placeholder_title": {"zh": "尚未成型", "en": "Not Formed Yet"},
+	"skill_placeholder_detail": {
+		"zh": "先通过偏旁三选一推进合字，再把满级合字带去砚台磨成词技。",
+		"en": "Advance fusions through radical picks first, then bring maxed glyphs to the inkstone for phrase refinement."
+	},
+	"skill_placeholder_level": {"zh": "预备", "en": "Readying"},
 	"callout_title": {"zh": "战场呼应", "en": "Battle Callout"},
 	"callout_placeholder": {"zh": "字潮翻动时，呼应会在这里出现。", "en": "Callouts will appear here when the glyph tide shifts."},
 	"callout_detail_placeholder": {"zh": "印记 · 白纸起卷", "en": "Mark · Blank Scroll Begins"},
@@ -1302,6 +1309,20 @@ const BATTLE_HUD_CONTENT := {
 		"en": "Push the steadiest build lane first, then let inkstone refinement take over the midgame."
 	},
 	"route_focus_placeholder_stage": {"zh": "当前阶段：开卷补笔  ·  明 / 海 / 休", "en": "Stage: Opening Strokes  ·  Ming / Hai / Xiu"},
+	"route_focus_fallback_detail": {
+		"zh": "让一条路线始终比其余分支领先，后续磨词才有清晰主线。",
+		"en": "Keep one route ahead of the other branches so later refinement still has a clear spine."
+	},
+	"route_focus_stage_format": {"zh": "当前阶段：%s", "en": "Stage: %s"},
+	"identity_mark_format": {"zh": "印记：%s", "en": "Mark: %s"},
+	"identity_route_seal_format": {"zh": "路印：%s", "en": "Route Seal: %s"},
+	"identity_mark_and_route_format": {"zh": "印记：%s  ·  路印：%s", "en": "Mark: %s  ·  Route Seal: %s"},
+	"intro_route_seal_format": {"zh": "主路线印：%s", "en": "Route Seal: %s"},
+	"intro_opening_format": {"zh": "起笔：%s", "en": "Opener: %s"},
+	"intro_source_format": {"zh": "出处 · %s", "en": "Source · %s"},
+	"callout_mark_format": {"zh": "印记 · %s", "en": "Mark · %s"},
+	"callout_route_format": {"zh": "路印 · %s", "en": "Route Seal · %s"},
+	"no_fixed_opener": {"zh": "无固定起手", "en": "No fixed opener"},
 	"event_log_placeholder": {"zh": "波次、卷主、合字和拾取会记在这里。", "en": "Wave shifts, bosses, fused glyphs, and pickups will appear here."},
 	"reveal_glyph_placeholder": {"zh": "字", "en": "Glyph"},
 	"reveal_kicker_placeholder": {"zh": "字境相变", "en": "Realm Shift"},
