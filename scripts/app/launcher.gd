@@ -1347,6 +1347,23 @@ func _make_cangjie_route_preview(preview: Dictionary, accent: Color) -> PanelCon
 		if node_detail_variant is Dictionary and not (node_detail_variant as Dictionary).is_empty():
 			var node_detail := node_detail_variant as Dictionary
 			var selected_tone: Color = selected_node.get("tone", accent)
+			var follow_through_variant: Variant = node_detail.get("follow_through", {})
+			if follow_through_variant is Dictionary and not (follow_through_variant as Dictionary).is_empty():
+				var follow_through := follow_through_variant as Dictionary
+				var follow_label := _localize_cangjie_text(follow_through.get("label", ""))
+				if not follow_label.is_empty():
+					box.add_child(_make_tag(follow_label, Color(selected_tone.r * 0.18, selected_tone.g * 0.18, selected_tone.b * 0.2, 0.92), Color(0.98, 0.94, 0.88, 0.96)))
+
+				var follow_tags_variant: Variant = follow_through.get("tags", [])
+				if follow_tags_variant is Array and not (follow_tags_variant as Array).is_empty():
+					var follow_tag_grid := GridContainer.new()
+					follow_tag_grid.columns = 1 if _is_portrait_layout() else 2
+					follow_tag_grid.add_theme_constant_override("h_separation", _i(8))
+					follow_tag_grid.add_theme_constant_override("v_separation", _i(8))
+					box.add_child(follow_tag_grid)
+					for tag_variant in follow_tags_variant:
+						follow_tag_grid.add_child(_make_tag(_localize_cangjie_text(tag_variant), Color(selected_tone.r * 0.16, selected_tone.g * 0.16, selected_tone.b * 0.18, 0.88), Color(0.98, 0.94, 0.88, 0.94)))
+
 			var detail_summary := _localize_cangjie_text(node_detail.get("summary", ""))
 			if not detail_summary.is_empty():
 				box.add_child(_make_label(detail_summary, 15, Color(0.94, 0.92, 0.88, 0.94)))

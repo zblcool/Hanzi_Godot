@@ -1138,6 +1138,13 @@ const CANGJIE_PORTAL_SECTIONS := [
 			},
 			"node_details": {
 				"battle": {
+					"follow_through": {
+						"label": {"zh": "联动预览 · 战后抉择", "en": "Linked Preview · Post-Battle Flow"},
+						"tags": [
+							{"zh": "Gold + 选牌", "en": "Gold + draft"},
+							{"zh": "继续压深或保薄", "en": "Deepen or stay lean"}
+						]
+					},
 					"summary": {
 						"zh": "普通战斗会先结算 Gold，再给三选一奖励牌或跳过保薄，是最稳定的路线读法。",
 						"en": "Regular battles settle Gold first, then offer a three-card reward or a lean skip, making them the steadiest route read."
@@ -1167,6 +1174,13 @@ const CANGJIE_PORTAL_SECTIONS := [
 					}
 				},
 				"event": {
+					"follow_through": {
+						"label": {"zh": "联动预览 · 路书对照", "en": "Linked Preview · Route Ledger"},
+						"tags": [
+							{"zh": "读当前 deck 倾向", "en": "Read current deck lean"},
+							{"zh": "压深 / 补短 / 存势", "en": "Deepen / patch / tempo"}
+						]
+					},
 					"summary": {
 						"zh": "事件节点会像 `路书对照`、讲师提问或破页掮客那样，让短期收益和长期结构直接撞在一起。",
 						"en": "Event nodes act more like `Route Ledger`, the tutor prompt, or the page broker, colliding short-term gain with long-term structure."
@@ -1196,6 +1210,13 @@ const CANGJIE_PORTAL_SECTIONS := [
 					}
 				},
 				"rest": {
+					"follow_through": {
+						"label": {"zh": "联动预览 · 稳线节拍", "en": "Linked Preview · Stabilize Beat"},
+						"tags": [
+							{"zh": "回血 / 起手准备", "en": "Heal / opening setup"},
+							{"zh": "低风险调整", "en": "Low-risk reset"}
+						]
+					},
 					"summary": {
 						"zh": "歇息点不是单纯回血，而是在 `回气 18` 与 `回气 8 + 下场 +1 Energy / +1 Ink` 之间做低风险准备。",
 						"en": "Rest stops are not pure healing. They split between `heal 18` and `heal 8 + next battle +1 Energy / +1 Ink`."
@@ -1225,6 +1246,13 @@ const CANGJIE_PORTAL_SECTIONS := [
 					}
 				},
 				"shop": {
+					"follow_through": {
+						"label": {"zh": "联动预览 · Gold 重配", "en": "Linked Preview · Gold Reallocation"},
+						"tags": [
+							{"zh": "买牌 / 遗物 / 删牌", "en": "Cards / relics / purge"},
+							{"zh": "restock", "en": "Restock"}
+						]
+					},
 					"summary": {
 						"zh": "商店会同时卖牌和遗物，还支持 restock 与花 Gold 删牌，是整条 climb 里最显性的资源重配节点。",
 						"en": "Shops sell both cards and relics while also supporting restocks and paid deck trims, making them the clearest resource-reallocation node in the climb."
@@ -1254,6 +1282,13 @@ const CANGJIE_PORTAL_SECTIONS := [
 					}
 				},
 				"elite": {
+					"follow_through": {
+						"label": {"zh": "联动预览 · 战后遗物", "en": "Linked Preview · Post-Elite Relic"},
+						"tags": [
+							{"zh": "高压换 relic", "en": "Pressure for relic"},
+							{"zh": "二次偏转路线", "en": "Second route bend"}
+						]
+					},
 					"summary": {
 						"zh": "精英不只更痛，它还会把战后流程往后推一层：先打高压意图，再接遗物跟进，让路线被二次偏转。",
 						"en": "Elites are not only harder. They push the post-battle flow one layer deeper: survive heavier intents, then take a relic follow-up that bends the route again."
@@ -1283,6 +1318,13 @@ const CANGJIE_PORTAL_SECTIONS := [
 					}
 				},
 				"archive": {
+					"follow_through": {
+						"label": {"zh": "联动预览 · 修薄 / 复制", "en": "Linked Preview · Trim / Duplicate"},
+						"tags": [
+							{"zh": "删牌", "en": "Trim"},
+							{"zh": "复制关键件", "en": "Duplicate key piece"}
+						]
+					},
 					"summary": {
 						"zh": "删改房不是单一删牌口。source 会在 `删 1 张` 与 `复制 1 张非 Smudge 牌` 之间切换，让牌组形状同时可收可放。",
 						"en": "Archive rooms are not trim-only. The source switches between `remove 1 card` and `copy 1 non-Smudge card`, so deck shape can tighten or widen on purpose."
@@ -1312,6 +1354,13 @@ const CANGJIE_PORTAL_SECTIONS := [
 					}
 				},
 				"treasure": {
+					"follow_through": {
+						"label": {"zh": "联动预览 · 可见遗物", "en": "Linked Preview · Visible Relic"},
+						"tags": [
+							{"zh": "三选一 relic", "en": "Pick 1 relic"},
+							{"zh": "改写后续估值", "en": "Rewrite later value"}
+						]
+					},
 					"summary": {
 						"zh": "遗物房会把几件可见 relic 摊在面前，让你直接挑那件最能偏转当前路线的东西，而不是只吃随机宝箱。",
 						"en": "Treasure rooms lay several visible relics in front of you so you can choose the one that best bends the current route instead of taking a blind chest roll."
@@ -1341,6 +1390,13 @@ const CANGJIE_PORTAL_SECTIONS := [
 					}
 				},
 				"boss": {
+					"follow_through": {
+						"label": {"zh": "联动预览 · 塔顶定稿", "en": "Linked Preview · Summit Verdict"},
+						"tags": [
+							{"zh": "整副牌总检验", "en": "Full-build exam"},
+							{"zh": "收尾 relic / verdict", "en": "Finishing relic / verdict"}
+						]
+					},
 					"summary": {
 						"zh": "Boss 是整副牌的总检验。此时路线、遗物、Gold 重配与事件取舍都会一起压到最后一场问答里。",
 						"en": "The boss is the full-build exam. By then the route, relics, Gold reallocation, and event tradeoffs all collapse into one final question."
