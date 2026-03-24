@@ -271,6 +271,7 @@ signal battle_setting_changed(setting_key: String, value: Variant)
 
 var ui_font: Font
 var current_language := "zh"
+var battle_hud_content: Dictionary = FrontEndContent.battle_hud_content()
 var root_control: Control
 var safe_content_root: Control
 var left_column: VBoxContainer
@@ -560,7 +561,12 @@ func return_to_pause_menu() -> void:
 
 
 func set_health(current: float, maximum: float) -> void:
-	var line := ("Vitality  %d / %d" if _is_english() else "气血  %d / %d") % [int(ceil(current)), int(ceil(maximum))]
+	var line := _battle_state_text(
+		battle_hud_content,
+		"health_format",
+		"气血  %d / %d",
+		"Vitality  %d / %d"
+	) % [int(ceil(current)), int(ceil(maximum))]
 	health_label.text = line
 	health_bar.max_value = max(1.0, maximum)
 	health_bar.value = clamp(current, 0.0, maximum)
@@ -572,7 +578,12 @@ func set_health(current: float, maximum: float) -> void:
 
 
 func set_progress(level: int, current: int, target: int) -> void:
-	var line := ("Ink  Lv.%d   %d / %d" if _is_english() else "字墨  Lv.%d   %d / %d") % [level, current, target]
+	var line := _battle_state_text(
+		battle_hud_content,
+		"progress_format",
+		"字墨  Lv.%d   %d / %d",
+		"Ink  Lv.%d   %d / %d"
+	) % [level, current, target]
 	progress_label.text = line
 	xp_bar.max_value = max(1, target)
 	xp_bar.value = clamp(current, 0, target)
@@ -587,13 +598,18 @@ func set_status(elapsed: float, kills: int, threat: int) -> void:
 	var total_seconds: int = int(floor(elapsed))
 	var minutes: int = int(total_seconds / 60)
 	var seconds: int = total_seconds % 60
-	if _is_english():
-		status_label.text = "Time  %02d:%02d\nWave  %d\nKills  %d" % [minutes, seconds, threat, kills]
-	else:
-		status_label.text = "存活  %02d:%02d\n波次  %d\n击破  %d" % [minutes, seconds, threat, kills]
+	status_label.text = _battle_state_text(
+		battle_hud_content,
+		"status_multiline_format",
+		"存活  %02d:%02d\n波次  %d\n击破  %d",
+		"Time  %02d:%02d\nWave  %d\nKills  %d"
+	) % [minutes, seconds, threat, kills]
 	if compact_status_label != null:
-		compact_status_label.text = (
-			"Time %02d:%02d  ·  Wave %d  ·  Kills %d" if _is_english() else "存活 %02d:%02d  ·  波次 %d  ·  击破 %d"
+		compact_status_label.text = _battle_state_text(
+			battle_hud_content,
+			"status_compact_format",
+			"存活 %02d:%02d  ·  波次 %d  ·  击破 %d",
+			"Time %02d:%02d  ·  Wave %d  ·  Kills %d"
 		) % [minutes, seconds, threat, kills]
 
 
@@ -617,19 +633,40 @@ func set_radicals(radicals: Dictionary) -> void:
 				compact_parts.append("%s×%d" % [radical, amount])
 
 	if total_count <= 0:
-		radicals_label.text = "No radicals are currently stored." if _is_english() else "当前尚未留存偏旁"
-		radical_chip_container.add_child(_make_radical_chip("字", 0, Color(0.4, 0.54, 0.68, 1.0), "全部化字"))
+		radicals_label.text = _battle_state_text(
+			battle_hud_content,
+			"radicals_empty_detail",
+			"当前尚未留存偏旁",
+			"No radicals are currently stored."
+		)
+		radical_chip_container.add_child(
+			_make_radical_chip(
+				"字",
+				0,
+				Color(0.4, 0.54, 0.68, 1.0),
+				_battle_state_text(battle_hud_content, "radicals_fully_fused_label", "全部化字", "Fully fused")
+			)
+		)
 		if compact_radicals_label != null:
-			compact_radicals_label.text = "Radicals 0  ·  fully fused" if _is_english() else "偏旁 0 枚  ·  当前全部化字"
+			compact_radicals_label.text = _battle_state_text(
+				battle_hud_content,
+				"radicals_compact_empty",
+				"偏旁 0 枚  ·  当前全部化字",
+				"Radicals 0  ·  fully fused"
+			)
 	else:
-		radicals_label.text = (
+		radicals_label.text = _battle_state_text(
+			battle_hud_content,
+			"radicals_stored_detail_format",
+			"当前留存 %d 枚偏旁，可继续合字或磨词",
 			"Stored %d radicals. Keep fusing glyphs or bring them to the inkstone."
-			if _is_english()
-			else "当前留存 %d 枚偏旁，可继续合字或磨词"
 		) % total_count
 		if compact_radicals_label != null:
-			compact_radicals_label.text = (
-				"Radicals %d  ·  %s" if _is_english() else "偏旁 %d 枚  ·  %s"
+			compact_radicals_label.text = _battle_state_text(
+				battle_hud_content,
+				"radicals_compact_format",
+				"偏旁 %d 枚  ·  %s",
+				"Radicals %d  ·  %s"
 			) % [total_count, "  ".join(compact_parts)]
 
 	_refresh_route_focus()
@@ -662,7 +699,7 @@ func set_skills(recipe_levels: Dictionary, word_levels: Dictionary, word_progres
 		if word_level > 0 and not word.is_empty():
 			cards.append({
 				"glyph": String(word["display"]),
-				"badge": "Phrase Art" if _is_english() else "成词技能",
+				"badge": _battle_state_text(battle_hud_content, "skill_badge_phrase_art", "成词技能", "Phrase Art"),
 				"title": String(word["title"]),
 				"detail": String(word["description"]),
 				"recipe": "%s + %s" % [String(recipe["radicals"][0]), String(recipe["radicals"][1])],
@@ -673,14 +710,17 @@ func set_skills(recipe_levels: Dictionary, word_levels: Dictionary, word_progres
 			var state_text := "Lv.%d/%d" % [recipe_level, int(recipe["max_level"])]
 			if recipe_level >= int(recipe["max_level"]):
 				if not word.is_empty():
-					state_text = (
-						"Refine %d/%d" if _is_english() else "磨词 %d/%d"
+					state_text = _battle_state_text(
+						battle_hud_content,
+						"skill_refine_format",
+						"磨词 %d/%d",
+						"Refine %d/%d"
 					) % [int(word_progress.get(word_id, 0)), int(word["unlock_cost"])]
 				else:
-					state_text = "Complete" if _is_english() else "已写满"
+					state_text = _battle_state_text(battle_hud_content, "skill_complete", "已写满", "Complete")
 			cards.append({
 				"glyph": String(recipe["display"]),
-				"badge": "Glyph Skill" if _is_english() else "成字技能",
+				"badge": _battle_state_text(battle_hud_content, "skill_badge_glyph_skill", "成字技能", "Glyph Skill"),
 				"title": String(recipe["title"]),
 				"detail": String(recipe["description"]),
 				"recipe": "%s + %s" % [String(recipe["radicals"][0]), String(recipe["radicals"][1])],
@@ -690,9 +730,19 @@ func set_skills(recipe_levels: Dictionary, word_levels: Dictionary, word_progres
 
 	cards.append({
 		"glyph": "刀" if hero_id == "xia" else "笔",
-		"badge": "Weapon Core" if _is_english() else "武器核心",
-		"title": ("Blade Arc" if hero_id == "xia" else "Brush Edge") if _is_english() else ("刀势" if hero_id == "xia" else "笔锋"),
-		"detail": "Directly strengthens the primary weapon and stays tied to this hero." if _is_english() else "独立强化主武器强度，和角色身份直接绑定。",
+		"badge": _battle_state_text(battle_hud_content, "weapon_core_badge", "武器核心", "Weapon Core"),
+		"title": _battle_state_text(
+			battle_hud_content,
+			"weapon_core_title_blade" if hero_id == "xia" else "weapon_core_title_brush",
+			"刀势" if hero_id == "xia" else "笔锋",
+			"Blade Arc" if hero_id == "xia" else "Brush Edge"
+		),
+		"detail": _battle_state_text(
+			battle_hud_content,
+			"weapon_core_detail",
+			"独立强化主武器强度，和角色身份直接绑定。",
+			"Directly strengthens the primary weapon and stays tied to this hero."
+		),
 		"recipe": "刂",
 		"level": "Lv.%d" % blade_level,
 		"color": Color(0.96, 0.54, 0.36, 1.0)
@@ -1053,7 +1103,7 @@ func _build_route_focus_state_lines(compact_copy: bool = false) -> Array[String]
 	var localized_hero := _localized_hero_data(configured_hero_data)
 	var summary := _build_route_focus_summary(localized_hero)
 	var lines: Array[String] = []
-	lines.append(_localize_text("路线参考"))
+	lines.append(_battle_state_text(battle_hud_content, "route_focus_state_title", "路线参考", "Route Focus"))
 	var title_key := "compact" if compact_copy else "title"
 	var title := String(summary.get(title_key, "")).strip_edges()
 	if not title.is_empty():
@@ -1086,10 +1136,11 @@ func _build_route_progress_text() -> String:
 		if int(cached_word_levels.get(String(word_id_variant), 0)) > 0:
 			formed_word_count += 1
 
-	return (
+	return _battle_state_text(
+		battle_hud_content,
+		"route_progress_format",
+		"构筑进度：偏旁 %d  ·  成字 %d  ·  词技 %d",
 		"Build: radicals %d  ·  glyphs %d  ·  phrases %d"
-		if _is_english()
-		else "构筑进度：偏旁 %d  ·  成字 %d  ·  词技 %d"
 	) % [radical_total, formed_recipe_count, formed_word_count]
 
 
@@ -1278,8 +1329,8 @@ func _refresh_compact_skill_chips(cards: Array[Dictionary]) -> void:
 		compact_skill_chip_container.add_child(
 			_make_compact_skill_chip(
 				"字",
-				"Waiting" if _is_english() else "待成字",
-				"Ready" if _is_english() else "预备",
+				_battle_state_text(battle_hud_content, "compact_skill_waiting_title", "待成字", "Waiting"),
+				_battle_state_text(battle_hud_content, "compact_skill_waiting_level", "预备", "Ready"),
 				Color(0.44, 0.58, 0.72, 1.0)
 			)
 		)
@@ -1299,7 +1350,12 @@ func _refresh_compact_skill_chips(cards: Array[Dictionary]) -> void:
 	var hidden_count: int = cards.size() - visible_count
 	if hidden_count > 0:
 		compact_skill_chip_container.add_child(
-			_make_compact_skill_chip("+", "More Skills" if _is_english() else "更多技能字", "+%d" % hidden_count, Color(0.62, 0.78, 0.94, 1.0))
+			_make_compact_skill_chip(
+				"+",
+				_battle_state_text(battle_hud_content, "compact_skill_more", "更多技能字", "More Skills"),
+				"+%d" % hidden_count,
+				Color(0.62, 0.78, 0.94, 1.0)
+			)
 		)
 
 
@@ -1398,7 +1454,7 @@ func show_boss(name: String, glyph: String, tint: Color, maximum: float) -> void
 	boss_panel.visible = true
 	boss_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(tint.r * 0.12, tint.g * 0.12, tint.b * 0.16, 0.96), Color(tint.r, tint.g, tint.b, 0.72), 24))
 	boss_name_label.text = "%s  %s" % [glyph, name]
-	boss_detail_label.text = "Boss Descends" if _is_english() else "卷主降阵"
+	boss_detail_label.text = _battle_state_text(battle_hud_content, "boss_descends", "卷主降阵", "Boss Descends")
 	boss_bar.add_theme_stylebox_override("fill", _make_fill_style(tint, 10))
 	boss_bar.max_value = max(1.0, maximum)
 	boss_bar.value = maximum
@@ -1410,8 +1466,11 @@ func set_boss_health(current: float, maximum: float) -> void:
 	boss_panel.visible = true
 	boss_bar.max_value = max(1.0, maximum)
 	boss_bar.value = clamp(current, 0.0, maximum)
-	boss_detail_label.text = (
-		"Boss Descends   %d / %d" if _is_english() else "卷主降阵   %d / %d"
+	boss_detail_label.text = _battle_state_text(
+		battle_hud_content,
+		"boss_descends_health_format",
+		"卷主降阵   %d / %d",
+		"Boss Descends   %d / %d"
 	) % [int(ceil(current)), int(ceil(maximum))]
 
 
@@ -1423,7 +1482,12 @@ func hide_boss() -> void:
 func show_radical_choices(level: int, choices: Array[Dictionary], pending_count: int) -> void:
 	choice_mode = "radical"
 	choice_pending_count = pending_count
-	choice_title_label.text = ("Ink Breakthrough  Lv.%d" if _is_english() else "字力突破  Lv.%d") % level
+	choice_title_label.text = _battle_state_text(
+		battle_hud_content,
+		"choice_radical_title_format",
+		"字力突破  Lv.%d",
+		"Ink Breakthrough  Lv.%d"
+	) % level
 	choice_hint_label.text = _build_radical_choice_hint(pending_count)
 	overlay_label.visible = false
 	_hide_reveal()
@@ -1448,7 +1512,12 @@ func show_radical_choices(level: int, choices: Array[Dictionary], pending_count:
 func show_word_choices(choices: Array[Dictionary]) -> void:
 	choice_mode = "word"
 	choice_pending_count = 0
-	choice_title_label.text = "Inkstone Refinement" if _is_english() else "砚台磨词"
+	choice_title_label.text = _battle_state_text(
+		battle_hud_content,
+		"choice_word_title",
+		"砚台磨词",
+		"Inkstone Refinement"
+	)
 	choice_hint_label.text = _build_word_choice_hint()
 	overlay_label.visible = false
 	_hide_reveal()
@@ -2750,22 +2819,48 @@ func _truncate_overlay_text(text: String, limit: int) -> String:
 
 func _build_radical_choice_hint(pending_count: int) -> String:
 	if _should_use_micro_layout():
-		return ("Pick 1 radical. Left: %d" if _is_english() else "三选一偏旁。剩余：%d") % pending_count
+		return _battle_state_text(
+			battle_hud_content,
+			"radical_choice_hint_micro_format",
+			"三选一偏旁。剩余：%d",
+			"Pick 1 radical. Left: %d"
+		) % pending_count
 	if _should_use_web_tight_layout():
-		return ("Pick 1 radical to advance a glyph route. Left: %d" if _is_english() else "三选一偏旁，推进合字路线。剩余：%d") % pending_count
-	return (
+		return _battle_state_text(
+			battle_hud_content,
+			"radical_choice_hint_tight_format",
+			"三选一偏旁，推进合字路线。剩余：%d",
+			"Pick 1 radical to advance a glyph route. Left: %d"
+		) % pending_count
+	return _battle_state_text(
+		battle_hud_content,
+		"radical_choice_hint_full_format",
+		"从三枚偏旁里选一枚。它会推进合字，满级后继续磨成词技。剩余待选：%d",
 		"Pick one of the three radicals. It pushes a glyph route forward and later refines into a phrase art. Remaining picks: %d"
-		if _is_english()
-		else "从三枚偏旁里选一枚。它会推进合字，满级后继续磨成词技。剩余待选：%d"
 	) % pending_count
 
 
 func _build_word_choice_hint() -> String:
 	if _should_use_micro_layout():
-		return "Spend 1 linked radical to refine a phrase art." if _is_english() else "消耗 1 枚相关偏旁，磨成词技。"
+		return _battle_state_text(
+			battle_hud_content,
+			"word_choice_hint_micro",
+			"消耗 1 枚相关偏旁，磨成词技。",
+			"Spend 1 linked radical to refine a phrase art."
+		)
 	if _should_use_web_tight_layout():
-		return "Spend one linked radical to refine a maxed glyph into a phrase art." if _is_english() else "消耗 1 枚相关偏旁，把满级合字磨成词技。"
-	return "Use extra maxed-glyph stock to refine a higher phrase art. Each refinement spends one related radical." if _is_english() else "把满级合字的余材磨成更高一层的词技。每次磨词会消耗一枚相关偏旁。"
+		return _battle_state_text(
+			battle_hud_content,
+			"word_choice_hint_tight",
+			"消耗 1 枚相关偏旁，把满级合字磨成词技。",
+			"Spend one linked radical to refine a maxed glyph into a phrase art."
+		)
+	return _battle_state_text(
+		battle_hud_content,
+		"word_choice_hint_full",
+		"把满级合字的余材磨成更高一层的词技。每次磨词会消耗一枚相关偏旁。",
+		"Use extra maxed-glyph stock to refine a higher phrase art. Each refinement spends one related radical."
+	)
 
 
 func _format_choice_button_text(title: String, headline: String, description: String) -> String:

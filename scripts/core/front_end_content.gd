@@ -1260,8 +1260,36 @@ const BATTLE_STATE_CONTENT := {
 }
 
 const BATTLE_HUD_CONTENT := {
+	"health_format": {"zh": "气血  %d / %d", "en": "Vitality  %d / %d"},
+	"progress_format": {"zh": "字墨  Lv.%d   %d / %d", "en": "Ink  Lv.%d   %d / %d"},
+	"status_multiline_format": {"zh": "存活  %02d:%02d\n波次  %d\n击破  %d", "en": "Time  %02d:%02d\nWave  %d\nKills  %d"},
+	"status_compact_format": {"zh": "存活 %02d:%02d  ·  波次 %d  ·  击破 %d", "en": "Time %02d:%02d  ·  Wave %d  ·  Kills %d"},
+	"radicals_empty_detail": {"zh": "当前尚未留存偏旁", "en": "No radicals are currently stored."},
+	"radicals_fully_fused_label": {"zh": "全部化字", "en": "Fully fused"},
+	"radicals_compact_empty": {"zh": "偏旁 0 枚  ·  当前全部化字", "en": "Radicals 0  ·  fully fused"},
+	"radicals_stored_detail_format": {
+		"zh": "当前留存 %d 枚偏旁，可继续合字或磨词",
+		"en": "Stored %d radicals. Keep fusing glyphs or bring them to the inkstone."
+	},
+	"radicals_compact_format": {"zh": "偏旁 %d 枚  ·  %s", "en": "Radicals %d  ·  %s"},
 	"compact_tip_placeholder": {"zh": "击倒字灵收集字力与补给。", "en": "Defeat glyph spirits to collect ink power and supplies."},
 	"compact_route_placeholder": {"zh": "墨守流  ·  开卷补笔", "en": "Inkguard Route  ·  Opening Strokes"},
+	"route_focus_state_title": {"zh": "路线参考", "en": "Route Focus"},
+	"route_progress_format": {"zh": "构筑进度：偏旁 %d  ·  成字 %d  ·  词技 %d", "en": "Build: radicals %d  ·  glyphs %d  ·  phrases %d"},
+	"skill_badge_phrase_art": {"zh": "成词技能", "en": "Phrase Art"},
+	"skill_badge_glyph_skill": {"zh": "成字技能", "en": "Glyph Skill"},
+	"skill_refine_format": {"zh": "磨词 %d/%d", "en": "Refine %d/%d"},
+	"skill_complete": {"zh": "已写满", "en": "Complete"},
+	"weapon_core_badge": {"zh": "武器核心", "en": "Weapon Core"},
+	"weapon_core_title_blade": {"zh": "刀势", "en": "Blade Arc"},
+	"weapon_core_title_brush": {"zh": "笔锋", "en": "Brush Edge"},
+	"weapon_core_detail": {
+		"zh": "独立强化主武器强度，和角色身份直接绑定。",
+		"en": "Directly strengthens the primary weapon and stays tied to this hero."
+	},
+	"compact_skill_waiting_title": {"zh": "待成字", "en": "Waiting"},
+	"compact_skill_waiting_level": {"zh": "预备", "en": "Ready"},
+	"compact_skill_more": {"zh": "更多技能字", "en": "More Skills"},
 	"callout_title": {"zh": "战场呼应", "en": "Battle Callout"},
 	"callout_placeholder": {"zh": "字潮翻动时，呼应会在这里出现。", "en": "Callouts will appear here when the glyph tide shifts."},
 	"callout_detail_placeholder": {"zh": "印记 · 白纸起卷", "en": "Mark · Blank Scroll Begins"},
@@ -1281,6 +1309,28 @@ const BATTLE_HUD_CONTENT := {
 	"reveal_detail_placeholder": {
 		"zh": "大字揭示会在这里提示合字、词技与字境变化。",
 		"en": "Big reveal cards here announce fused glyphs, phrase arts, and realm shifts."
+	},
+	"boss_descends": {"zh": "卷主降阵", "en": "Boss Descends"},
+	"boss_descends_health_format": {"zh": "卷主降阵   %d / %d", "en": "Boss Descends   %d / %d"},
+	"choice_radical_title_format": {"zh": "字力突破  Lv.%d", "en": "Ink Breakthrough  Lv.%d"},
+	"choice_word_title": {"zh": "砚台磨词", "en": "Inkstone Refinement"},
+	"radical_choice_hint_micro_format": {"zh": "三选一偏旁。剩余：%d", "en": "Pick 1 radical. Left: %d"},
+	"radical_choice_hint_tight_format": {
+		"zh": "三选一偏旁，推进合字路线。剩余：%d",
+		"en": "Pick 1 radical to advance a glyph route. Left: %d"
+	},
+	"radical_choice_hint_full_format": {
+		"zh": "从三枚偏旁里选一枚。它会推进合字，满级后继续磨成词技。剩余待选：%d",
+		"en": "Pick one of the three radicals. It pushes a glyph route forward and later refines into a phrase art. Remaining picks: %d"
+	},
+	"word_choice_hint_micro": {"zh": "消耗 1 枚相关偏旁，磨成词技。", "en": "Spend 1 linked radical to refine a phrase art."},
+	"word_choice_hint_tight": {
+		"zh": "消耗 1 枚相关偏旁，把满级合字磨成词技。",
+		"en": "Spend one linked radical to refine a maxed glyph into a phrase art."
+	},
+	"word_choice_hint_full": {
+		"zh": "把满级合字的余材磨成更高一层的词技。每次磨词会消耗一枚相关偏旁。",
+		"en": "Use extra maxed-glyph stock to refine a higher phrase art. Each refinement spends one related radical."
 	},
 	"map_title": {"zh": "残卷地图", "en": "Scroll Map"},
 	"map_legend_title": {"zh": "图例", "en": "Legend"},
