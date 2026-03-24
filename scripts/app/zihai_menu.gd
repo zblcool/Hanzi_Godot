@@ -7,6 +7,7 @@ const BASE_VIEWPORT := Vector2(2100.0, 1200.0)
 const MIN_UI_SCALE := 0.6
 const HERO_REACTION_DURATION := 3.2
 const HERO_SELECTION_PULSE_DURATION := 0.72
+const LEADERBOARD_SCROLL_TOP_THRESHOLD := 260
 const NIGHT_THEME := {
 	"background": Color(0.03, 0.05, 0.07, 1.0),
 	"glow_amber": Color(0.88, 0.58, 0.28, 0.08),
@@ -77,12 +78,15 @@ var enemy_archive_overlay: Control
 var enemy_archive_body_label: Label
 var leaderboard_overlay: Control
 var leaderboard_summary_label: Label
+var leaderboard_scroll: ScrollContainer
 var leaderboard_body_label: Label
 var leaderboard_manual_button: Button
 var leaderboard_test_button: Button
 var leaderboard_sort_wave_button: Button
 var leaderboard_sort_kills_button: Button
 var leaderboard_sort_time_button: Button
+var leaderboard_scroll_top_button: Button
+var leaderboard_scroll_top_tween: Tween
 var leaderboard_view: String = "manual"
 var leaderboard_sort: String = "wave"
 var profile_overlay: Control
@@ -245,12 +249,15 @@ func _rebuild_ui() -> void:
 	enemy_archive_body_label = null
 	leaderboard_overlay = null
 	leaderboard_summary_label = null
+	leaderboard_scroll = null
 	leaderboard_body_label = null
 	leaderboard_manual_button = null
 	leaderboard_test_button = null
 	leaderboard_sort_wave_button = null
 	leaderboard_sort_kills_button = null
 	leaderboard_sort_time_button = null
+	leaderboard_scroll_top_button = null
+	leaderboard_scroll_top_tween = null
 	profile_overlay = null
 	profile_name_input = null
 	profile_status_label = null
@@ -1860,22 +1867,26 @@ func _build_leaderboard_overlay() -> void:
 	leaderboard_sort_time_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	sort_row.add_child(leaderboard_sort_time_button)
 
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	box.add_child(scroll)
+	leaderboard_scroll = ScrollContainer.new()
+	leaderboard_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	leaderboard_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	leaderboard_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	box.add_child(leaderboard_scroll)
+	leaderboard_scroll.get_v_scroll_bar().value_changed.connect(_on_leaderboard_scroll_changed)
 
 	leaderboard_body_label = _make_label("", 18, Color(0.9, 0.92, 0.95, 0.96))
 	leaderboard_body_label.custom_minimum_size = _v(720.0, 0.0)
 	leaderboard_body_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	leaderboard_body_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.add_child(leaderboard_body_label)
+	leaderboard_scroll.add_child(leaderboard_body_label)
 
 	var action_row := HBoxContainer.new()
 	action_row.alignment = BoxContainer.ALIGNMENT_END
 	action_row.add_theme_constant_override("separation", _i(12))
 	box.add_child(action_row)
+	leaderboard_scroll_top_button = _make_pill_button(_localize_text(String(leaderboard_content.get("scroll_top", "返回顶部"))), _v(170.0, 52.0), Callable(self, "_on_leaderboard_scroll_top_pressed"))
+	leaderboard_scroll_top_button.visible = false
+	action_row.add_child(leaderboard_scroll_top_button)
 	action_row.add_child(_make_pill_button(String(overlay_content.get("close_text", "收起战绩")), _v(150.0, 52.0), Callable(self, "_hide_leaderboard_overlay")))
 	_refresh_leaderboard_overlay()
 
@@ -2868,6 +2879,7 @@ func _refresh_leaderboard_overlay() -> void:
 	_apply_leaderboard_sort_button(leaderboard_sort_wave_button, _localize_text(String(leaderboard_content.get("sort_wave", "按波次"))), leaderboard_sort == "wave")
 	_apply_leaderboard_sort_button(leaderboard_sort_kills_button, _localize_text(String(leaderboard_content.get("sort_kills", "按击破"))), leaderboard_sort == "kills")
 	_apply_leaderboard_sort_button(leaderboard_sort_time_button, _localize_text(String(leaderboard_content.get("sort_time", "按存活"))), leaderboard_sort == "time")
+	call_deferred("_refresh_leaderboard_scroll_top_button")
 
 
 func _apply_leaderboard_view_button(button: Button, title: String, count: int, active: bool) -> void:
@@ -3194,12 +3206,19 @@ func _show_leaderboard_overlay() -> void:
 	_hide_recipe_atlas_overlay()
 	_hide_enemy_archive_overlay()
 	_refresh_leaderboard_overlay()
+	if leaderboard_scroll != null:
+		leaderboard_scroll.scroll_vertical = 0
 	leaderboard_overlay.visible = true
+	_refresh_leaderboard_scroll_top_button()
 
 
 func _hide_leaderboard_overlay() -> void:
+	if leaderboard_scroll_top_tween != null:
+		leaderboard_scroll_top_tween.kill()
+		leaderboard_scroll_top_tween = null
 	if leaderboard_overlay != null:
 		leaderboard_overlay.visible = false
+	_refresh_leaderboard_scroll_top_button()
 
 
 func _on_leaderboard_manual_pressed() -> void:
@@ -3225,6 +3244,35 @@ func _on_leaderboard_sort_kills_pressed() -> void:
 func _on_leaderboard_sort_time_pressed() -> void:
 	leaderboard_sort = "time"
 	_refresh_leaderboard_overlay()
+
+
+func _on_leaderboard_scroll_changed(_value: float) -> void:
+	_refresh_leaderboard_scroll_top_button()
+
+
+func _on_leaderboard_scroll_top_pressed() -> void:
+	if leaderboard_scroll == null:
+		return
+	if leaderboard_scroll_top_tween != null:
+		leaderboard_scroll_top_tween.kill()
+	leaderboard_scroll_top_tween = create_tween()
+	leaderboard_scroll_top_tween.tween_property(leaderboard_scroll, "scroll_vertical", 0, 0.22).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	leaderboard_scroll_top_tween.finished.connect(func() -> void:
+		leaderboard_scroll_top_tween = null
+		_refresh_leaderboard_scroll_top_button()
+	)
+
+
+func _refresh_leaderboard_scroll_top_button() -> void:
+	if leaderboard_scroll_top_button == null:
+		return
+	var should_show := (
+		leaderboard_overlay != null
+		and leaderboard_overlay.visible
+		and leaderboard_scroll != null
+		and leaderboard_scroll.scroll_vertical > LEADERBOARD_SCROLL_TOP_THRESHOLD
+	)
+	leaderboard_scroll_top_button.visible = should_show
 
 
 func _show_profile_overlay() -> void:
