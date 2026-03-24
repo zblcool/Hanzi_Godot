@@ -1136,6 +1136,13 @@ const CANGJIE_PORTAL_SECTIONS := [
 				"zh": "点按任一节点，查看 source 里这类房间会怎样改写牌组、资源和后续路线，并预览它更像接哪种战后 / 路书 handoff。",
 				"en": "Tap any node to inspect how that room type reshapes the deck, resources, and later route in the source run, including which reward or route-ledger handoff it most naturally feeds into."
 			},
+			"route_ribbon": {
+				"title": {"zh": "路线丝带", "en": "Route Ribbon"},
+				"summary": {
+					"zh": "source 的塔图不会把节点孤立看待。Godot 这里先把当前聚焦房间塞回一条代表性 climb 样张里，让你先读到它前后通常会怎样接续。",
+					"en": "The source tower board does not treat nodes as isolated stops. Godot now drops the focused room back into a representative climb sample so its before-and-after handoff reads more like one route."
+				}
+			},
 			"node_details": {
 				"battle": {
 					"follow_through": {
