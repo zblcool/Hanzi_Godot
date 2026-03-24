@@ -1342,6 +1342,8 @@ func _make_cangjie_route_preview(preview: Dictionary, accent: Color) -> PanelCon
 	var progress_info := _build_cangjie_route_progress_info(preview, selected_node)
 	var progress_states_variant: Variant = progress_info.get("node_states", {})
 	var progress_states: Dictionary = progress_states_variant as Dictionary if progress_states_variant is Dictionary else {}
+	var node_details_variant: Variant = preview.get("node_details", {})
+	var node_details: Dictionary = node_details_variant as Dictionary if node_details_variant is Dictionary else {}
 
 	var rows_variant: Variant = preview.get("rows", [])
 	if rows_variant is Array and not (rows_variant as Array).is_empty():
@@ -1376,12 +1378,11 @@ func _make_cangjie_route_preview(preview: Dictionary, accent: Color) -> PanelCon
 	if not progress_stub.is_empty():
 		box.add_child(_make_cangjie_route_progress_stub_panel(progress_stub, progress_info, selected_node, accent))
 	if not next_row_handoff.is_empty():
-		box.add_child(_make_cangjie_route_next_row_panel(next_row_handoff, preview, selected_node, accent))
+		box.add_child(_make_cangjie_route_next_row_panel(next_row_handoff, preview, selected_node, progress_info, node_details, accent))
 
-	var node_details_variant: Variant = preview.get("node_details", {})
-	if not selected_node.is_empty() and node_details_variant is Dictionary:
+	if not selected_node.is_empty() and not node_details.is_empty():
 		var detail_key := String(selected_node.get("kind", selected_node.get("id", "")))
-		var node_detail_variant: Variant = (node_details_variant as Dictionary).get(detail_key, {})
+		var node_detail_variant: Variant = node_details.get(detail_key, {})
 		if node_detail_variant is Dictionary and not (node_detail_variant as Dictionary).is_empty():
 			var node_detail := node_detail_variant as Dictionary
 			var selected_tone: Color = selected_node.get("tone", accent)
@@ -1624,7 +1625,7 @@ func _make_cangjie_route_progress_stub_card(item: Dictionary, count: int, accent
 	return panel
 
 
-func _make_cangjie_route_next_row_panel(config: Dictionary, preview: Dictionary, selected_node: Dictionary, accent: Color) -> PanelContainer:
+func _make_cangjie_route_next_row_panel(config: Dictionary, preview: Dictionary, selected_node: Dictionary, progress_info: Dictionary, node_details: Dictionary, accent: Color) -> PanelContainer:
 	var panel := PanelContainer.new()
 	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.08, accent.g * 0.08, accent.b * 0.1, 0.74), Color(accent.r, accent.g, accent.b, 0.28)))
 
@@ -1648,12 +1649,17 @@ func _make_cangjie_route_next_row_panel(config: Dictionary, preview: Dictionary,
 		box.add_child(_make_label(summary_text, 14, Color(0.86, 0.9, 0.98, 0.88)))
 
 	var badge_text := _localize_cangjie_text(config.get("badge", ""))
-	var next_nodes := _collect_cangjie_route_next_nodes(preview, selected_node)
+	var next_nodes := _collect_cangjie_route_next_nodes(preview, selected_node, progress_info)
 	if next_nodes.is_empty():
-		var empty_text := _localize_cangjie_text(config.get("empty_summary", ""))
-		if not empty_text.is_empty():
-			box.add_child(_make_label(empty_text, 14, Color(0.84, 0.9, 0.98, 0.84)))
+		box.add_child(_make_cangjie_route_next_row_empty_card(config, accent))
 	else:
+		var first_next_variant: Variant = next_nodes[0]
+		var open_count_format := _localize_cangjie_text(config.get("open_count_format", ""))
+		if not open_count_format.is_empty() and first_next_variant is Dictionary:
+			var floor_text := _localize_cangjie_text((first_next_variant as Dictionary).get("floor", {}))
+			if not floor_text.is_empty():
+				box.add_child(_make_tag(open_count_format % [floor_text, next_nodes.size()], Color(accent.r * 0.18, accent.g * 0.18, accent.b * 0.22, 0.9), Color(0.98, 0.94, 0.88, 0.96)))
+
 		var grid := GridContainer.new()
 		grid.columns = 1 if _is_portrait_layout() else 3
 		grid.add_theme_constant_override("h_separation", _i(10))
@@ -1661,7 +1667,13 @@ func _make_cangjie_route_next_row_panel(config: Dictionary, preview: Dictionary,
 		box.add_child(grid)
 		for next_node_variant in next_nodes:
 			if next_node_variant is Dictionary:
-				grid.add_child(_make_cangjie_route_next_row_card(next_node_variant as Dictionary, badge_text, accent))
+				var indexed_node := next_node_variant as Dictionary
+				var node_variant: Variant = indexed_node.get("node", {})
+				var node: Dictionary = node_variant as Dictionary if node_variant is Dictionary else {}
+				var detail_key := String(node.get("kind", node.get("id", "")))
+				var detail_variant: Variant = node_details.get(detail_key, {})
+				var detail: Dictionary = detail_variant as Dictionary if detail_variant is Dictionary else {}
+				grid.add_child(_make_cangjie_route_next_row_card(indexed_node, detail, badge_text, accent))
 
 	var footnote_format := _localize_cangjie_text(config.get("footnote_format", ""))
 	var selected_label := _localize_cangjie_text(selected_node.get("label", ""))
@@ -1671,15 +1683,19 @@ func _make_cangjie_route_next_row_panel(config: Dictionary, preview: Dictionary,
 	return panel
 
 
-func _collect_cangjie_route_next_nodes(preview: Dictionary, selected_node: Dictionary) -> Array[Dictionary]:
+func _collect_cangjie_route_next_nodes(preview: Dictionary, selected_node: Dictionary, progress_info: Dictionary) -> Array[Dictionary]:
 	var next_nodes: Array[Dictionary] = []
 	var selected_connections_variant: Variant = selected_node.get("connections", [])
 	if not (selected_connections_variant is Array) or (selected_connections_variant as Array).is_empty():
 		return next_nodes
 
 	var route_index := _build_cangjie_route_preview_index(preview)
+	var progress_states_variant: Variant = progress_info.get("node_states", {})
+	var progress_states: Dictionary = progress_states_variant as Dictionary if progress_states_variant is Dictionary else {}
 	for next_id_variant in selected_connections_variant:
 		var next_id := String(next_id_variant)
+		if String(progress_states.get(next_id, "locked")) != "available":
+			continue
 		var indexed_variant: Variant = route_index.get(next_id, {})
 		if indexed_variant is Dictionary and not (indexed_variant as Dictionary).is_empty():
 			next_nodes.append(indexed_variant as Dictionary)
@@ -1713,7 +1729,7 @@ func _build_cangjie_route_preview_index(preview: Dictionary) -> Dictionary:
 	return route_index
 
 
-func _make_cangjie_route_next_row_card(indexed_node: Dictionary, badge_text: String, accent: Color) -> PanelContainer:
+func _make_cangjie_route_next_row_card(indexed_node: Dictionary, node_detail: Dictionary, badge_text: String, accent: Color) -> PanelContainer:
 	var node_variant: Variant = indexed_node.get("node", {})
 	var node: Dictionary = node_variant as Dictionary if node_variant is Dictionary else {}
 	var tone: Color = node.get("tone", accent)
@@ -1743,6 +1759,11 @@ func _make_cangjie_route_next_row_card(indexed_node: Dictionary, badge_text: Str
 	var floor_text := _localize_cangjie_text(indexed_node.get("floor", {}))
 	if not floor_text.is_empty():
 		badge_row.add_child(_make_tag(floor_text, Color(tone.r * 0.16, tone.g * 0.16, tone.b * 0.2, 0.86), Color(0.98, 0.94, 0.88, 0.94)))
+	var follow_through_variant: Variant = node_detail.get("follow_through", {})
+	var follow_through: Dictionary = follow_through_variant as Dictionary if follow_through_variant is Dictionary else {}
+	var follow_label := _localize_cangjie_text(follow_through.get("label", ""))
+	if not follow_label.is_empty():
+		badge_row.add_child(_make_tag(follow_label, Color(tone.r * 0.14, tone.g * 0.14, tone.b * 0.18, 0.84), Color(0.98, 0.94, 0.88, 0.92)))
 
 	var header := HBoxContainer.new()
 	header.add_theme_constant_override("separation", _i(10))
@@ -1769,11 +1790,11 @@ func _make_cangjie_route_next_row_card(indexed_node: Dictionary, badge_text: Str
 	if not note_text.is_empty():
 		text_box.add_child(_make_label(note_text, 13, Color(0.84, 0.9, 0.98, 0.84)))
 
-	var body_text := _localize_cangjie_text(node.get("focus_body", ""))
+	var body_text := _localize_cangjie_text(node_detail.get("summary", node.get("focus_body", "")))
 	if not body_text.is_empty():
 		box.add_child(_make_label(body_text, 13, Color(0.84, 0.9, 0.98, 0.84)))
 
-	var tags_variant: Variant = node.get("focus_tags", [])
+	var tags_variant: Variant = follow_through.get("tags", node.get("focus_tags", []))
 	if tags_variant is Array and not (tags_variant as Array).is_empty():
 		var tag_flow := HFlowContainer.new()
 		tag_flow.add_theme_constant_override("h_separation", _i(6))
@@ -1783,6 +1804,33 @@ func _make_cangjie_route_next_row_card(indexed_node: Dictionary, badge_text: Str
 			var tag_text := _localize_cangjie_text(tag_variant)
 			if not tag_text.is_empty():
 				tag_flow.add_child(_make_tag(tag_text, Color(tone.r * 0.16, tone.g * 0.16, tone.b * 0.18, 0.88), Color(0.98, 0.94, 0.88, 0.94)))
+
+	return panel
+
+
+func _make_cangjie_route_next_row_empty_card(config: Dictionary, accent: Color) -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = _v(0.0, 132.0)
+	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.15, accent.g * 0.15, accent.b * 0.18, 0.8), Color(accent.r, accent.g, accent.b, 0.24)))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", _i(14))
+	margin.add_theme_constant_override("margin_top", _i(12))
+	margin.add_theme_constant_override("margin_right", _i(14))
+	margin.add_theme_constant_override("margin_bottom", _i(12))
+	panel.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", _i(8))
+	margin.add_child(box)
+
+	var title_text := _localize_cangjie_text(config.get("empty_title", ""))
+	if not title_text.is_empty():
+		box.add_child(_make_label(title_text, 15, Color(1.0, 0.95, 0.86, 1.0)))
+
+	var body_text := _localize_cangjie_text(config.get("empty_body", ""))
+	if not body_text.is_empty():
+		box.add_child(_make_label(body_text, 13, Color(0.84, 0.9, 0.98, 0.84)))
 
 	return panel
 

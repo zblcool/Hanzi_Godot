@@ -1183,19 +1183,24 @@ const CANGJIE_PORTAL_SECTIONS := [
 				}
 			},
 			"next_row_handoff": {
-				"title": {"zh": "下一排接续", "en": "Unlocked Next Row"},
+				"title": {"zh": "下一排接续", "en": "Next-Row Handoff"},
 				"summary": {
-					"zh": "source 真正点下一个节点后，亮起的下一排不会只剩状态颜色，而会立刻变成新的路线问题。Godot 这里先把当前聚焦节点直连会点亮的房间抽成一组说明卡，让“已开”不再只是一个状态标签。",
-					"en": "After the live source map locks a room in, the newly lit row is not just a state color. It immediately becomes the next route question. Godot now pulls the directly connected rooms into a compact explainer so `available` reads as more than a badge."
+					"zh": "source 真正点下一个节点后，亮起的下一排不会只剩状态颜色，而会立刻变成新的路线问题。Godot 这里先把当前聚焦节点真正会点亮的房间抽成一组接续卡，并补上它们更像接战后拿牌、路书事件、稳线修整还是遗物偏转的提示。",
+					"en": "After the live source map locks a room in, the newly lit row is not just a state color. It immediately becomes the next route question. Godot now pulls the rooms the current focus would actually unlock into a handoff strip and spells out whether they lean toward post-battle drafting, route-ledger pressure, stabilizing resets, or relic bends."
 				},
-				"empty_summary": {
-					"zh": "当前聚焦已经来到样张收束处，下一排不会再展开新房间；source 真正塔顶也会在这里把这次 climb 收回最终 verdict。",
-					"en": "The current focus is already at the sample closure, so no new row opens from here; at the live source summit the climb also folds back into its final verdict at this point."
+				"open_count_format": {
+					"zh": "%s · 已开 %d 个节点",
+					"en": "%s · %d rooms open"
 				},
 				"badge": {"zh": "已开房间", "en": "Available Now"},
 				"footnote_format": {
-					"zh": "当前聚焦：%s。source 真正开跑时，下一排只会点亮这些直连房间。",
-					"en": "Current focus: %s. In the live source climb, only these directly connected rooms would light up on the next row."
+					"zh": "当前聚焦：%s。source 真正开跑时，下一排只会点亮这些直连房间，并同时把它们的后手压力一起暴露出来。",
+					"en": "Current focus: %s. In the live source climb, only these directly connected rooms would light up on the next row, along with the downstream pressure each one creates."
+				},
+				"empty_title": {"zh": "塔顶收束", "en": "Summit Closure"},
+				"empty_body": {
+					"zh": "当前聚焦已经来到样张收束处，下一排不会再展开新房间；source 真正塔顶也会在这里把这次 climb 收回最终 verdict。",
+					"en": "The current focus is already at the sample closure, so no new row opens from here; at the live source summit the climb also folds back into its final verdict at this point."
 				}
 			},
 			"state_legend": {
