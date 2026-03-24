@@ -744,6 +744,42 @@ func _battle_interlude_format(key: String, fallback_zh: String, fallback_en: Str
 	return text % values if not values.is_empty() else text
 
 
+func _battle_interlude_option_label(choice_id: String, next_chamber_id: String, reward_radical: String, reserve_radical: String) -> String:
+	var reward_pair := reward_radical if reserve_radical == reward_radical else "%s%s" % [reward_radical, reserve_radical]
+	if _is_slip_archive_interlude(next_chamber_id):
+		match choice_id:
+			"reward":
+				return _battle_interlude_format("option_archive_reward_format", "奖励 · 简库拓片「%s」", "Reward · Archive Rubbing %s", [reward_pair])
+			"event":
+				return _battle_interlude_text("option_archive_event", "异事 · 封钥借契", "Event · Latch Bargain")
+			"recovery":
+				return _battle_interlude_text("option_archive_recovery", "修整 · 守灯静读", "Recovery · Lamp Respite")
+	elif _is_thunder_vault_interlude(next_chamber_id):
+		match choice_id:
+			"reward":
+				return _battle_interlude_format("option_vault_reward_format", "奖励 · 雷纹拓笔「%s」", "Reward · Storm Etching %s", [reward_radical])
+			"event":
+				return _battle_interlude_text("option_vault_event", "异事 · 伏雷换契", "Event · Vault Bargain")
+			"recovery":
+				return _battle_interlude_text("option_vault_recovery", "修整 · 伏纹稳息", "Recovery · Grounding Ward")
+	elif _is_abyss_sanctum_interlude(next_chamber_id):
+		match choice_id:
+			"reward":
+				return _battle_interlude_format("option_abyss_reward_format", "奖励 · 终室备墨「%s」", "Reward · Final Draft %s", [reward_pair])
+			"event":
+				return _battle_interlude_text("option_abyss_event", "异事 · 渊页誓约", "Event · Abyss Pact")
+			"recovery":
+				return _battle_interlude_text("option_abyss_recovery", "修整 · 压关静息", "Recovery · Stilling Breath")
+	match choice_id:
+		"reward":
+			return _battle_interlude_format("option_default_reward_format", "奖励 · 偏旁「%s」", "Reward · Radical %s", [reward_radical])
+		"event":
+			return _battle_interlude_text("option_default_event", "异事 · 残卷回响", "Event · Scroll Echo")
+		"recovery":
+			return _battle_interlude_text("option_default_recovery", "修整 · 歇笔回气", "Recovery · Short Rest")
+	return choice_id
+
+
 func _localized_hero_data(hero_data: Dictionary) -> Dictionary:
 	return HanziLocalization.localized_hero_data(String(hero_data.get("id", "")), Session.get_launcher_language())
 
@@ -879,53 +915,10 @@ func _chamber_interlude_options() -> Array[Dictionary]:
 	var reward_radical := String(chamber_interlude_offer.get("reward_radical", "日"))
 	var reserve_radical := String(chamber_interlude_offer.get("reserve_radical", reward_radical))
 	var next_chamber_id := _chamber_interlude_next_chamber_id()
-	var reward_pair := reward_radical if reserve_radical == reward_radical else "%s%s" % [reward_radical, reserve_radical]
-	if _is_slip_archive_interlude(next_chamber_id):
-		if _is_english():
-			return [
-				{"id": "reward", "label": "Reward · Archive %s" % reward_pair},
-				{"id": "event", "label": "Event · Latch Bargain"},
-				{"id": "recovery", "label": "Recovery · Lamp Respite"}
-			]
-		return [
-			{"id": "reward", "label": "奖励 · 简库拓片「%s」" % reward_pair},
-			{"id": "event", "label": "异事 · 封钥借契"},
-			{"id": "recovery", "label": "修整 · 守灯静读"}
-		]
-	if _is_thunder_vault_interlude(next_chamber_id):
-		if _is_english():
-			return [
-				{"id": "reward", "label": "Reward · Storm Etching %s" % reward_radical},
-				{"id": "event", "label": "Event · Vault Bargain"},
-				{"id": "recovery", "label": "Recovery · Grounding Ward"}
-			]
-		return [
-			{"id": "reward", "label": "奖励 · 雷纹拓笔「%s」" % reward_radical},
-			{"id": "event", "label": "异事 · 伏雷换契"},
-			{"id": "recovery", "label": "修整 · 伏纹稳息"}
-		]
-	if _is_abyss_sanctum_interlude(next_chamber_id):
-		if _is_english():
-			return [
-				{"id": "reward", "label": "Reward · Final Draft %s" % reward_pair},
-				{"id": "event", "label": "Event · Abyss Pact"},
-				{"id": "recovery", "label": "Recovery · Stilling Breath"}
-			]
-		return [
-			{"id": "reward", "label": "奖励 · 终室备墨「%s」" % reward_pair},
-			{"id": "event", "label": "异事 · 渊页誓约"},
-			{"id": "recovery", "label": "修整 · 压关静息"}
-		]
-	if _is_english():
-		return [
-			{"id": "reward", "label": "Reward · Radical %s" % reward_radical},
-			{"id": "event", "label": "Event · Scroll Echo"},
-			{"id": "recovery", "label": "Recovery · Short Rest"}
-		]
 	return [
-		{"id": "reward", "label": "奖励 · 偏旁「%s」" % reward_radical},
-		{"id": "event", "label": "异事 · 残卷回响"},
-		{"id": "recovery", "label": "修整 · 歇笔回气"}
+		{"id": "reward", "label": _battle_interlude_option_label("reward", next_chamber_id, reward_radical, reserve_radical)},
+		{"id": "event", "label": _battle_interlude_option_label("event", next_chamber_id, reward_radical, reserve_radical)},
+		{"id": "recovery", "label": _battle_interlude_option_label("recovery", next_chamber_id, reward_radical, reserve_radical)}
 	]
 
 
