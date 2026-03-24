@@ -135,6 +135,7 @@ var cangjie_section_content_box: VBoxContainer
 var cangjie_nav_buttons: Dictionary = {}
 var cangjie_section := "start_climb"
 var cangjie_stage_fx_enabled := true
+var cangjie_run_shell_open := false
 var cangjie_duelist_line_indices := {}
 var changelog_overlay: Control
 var profile_overlay: Control
@@ -1045,6 +1046,9 @@ func _refresh_cangjie_portal() -> void:
 	var duel_preview_variant: Variant = active_section.get("duel_preview", {})
 	if duel_preview_variant is Dictionary and not (duel_preview_variant as Dictionary).is_empty():
 		cangjie_section_content_box.add_child(_make_cangjie_duel_preview(duel_preview_variant as Dictionary, accent))
+	var run_shell_preview_variant: Variant = active_section.get("run_shell_preview", {})
+	if run_shell_preview_variant is Dictionary and not (run_shell_preview_variant as Dictionary).is_empty():
+		cangjie_section_content_box.add_child(_make_cangjie_run_shell_preview(run_shell_preview_variant as Dictionary, accent))
 	var route_preview_variant: Variant = active_section.get("route_preview", {})
 	if route_preview_variant is Dictionary and not (route_preview_variant as Dictionary).is_empty():
 		cangjie_section_content_box.add_child(_make_cangjie_route_preview(route_preview_variant as Dictionary, accent))
@@ -1129,6 +1133,159 @@ func _make_cangjie_duel_preview(preview: Dictionary, accent: Color) -> PanelCont
 	var hint_text := _localize_cangjie_text(preview.get("hint", ""))
 	if not hint_text.is_empty():
 		box.add_child(_make_label(hint_text, 15, Color(0.82, 0.9, 0.96, 0.82)))
+
+	return panel
+
+
+func _make_cangjie_run_shell_preview(preview: Dictionary, accent: Color) -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.08, accent.g * 0.08, accent.b * 0.1, 0.78), Color(accent.r, accent.g, accent.b, 0.28)))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", _i(18))
+	margin.add_theme_constant_override("margin_top", _i(16))
+	margin.add_theme_constant_override("margin_right", _i(18))
+	margin.add_theme_constant_override("margin_bottom", _i(16))
+	panel.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", _i(10))
+	margin.add_child(box)
+	box.add_child(_make_label(_localize_cangjie_text(preview.get("title", "")), 20, Color(1.0, 0.95, 0.86, 1.0)))
+
+	var summary_text := _localize_cangjie_text(preview.get("summary", ""))
+	if not summary_text.is_empty():
+		box.add_child(_make_label(summary_text, 16, Color(0.88, 0.92, 0.96, 0.92)))
+
+	var action_row := HFlowContainer.new()
+	action_row.add_theme_constant_override("h_separation", _i(10))
+	action_row.add_theme_constant_override("v_separation", _i(10))
+	box.add_child(action_row)
+
+	var actions_variant: Variant = preview.get("actions", [])
+	if actions_variant is Array:
+		for action_variant in actions_variant:
+			if action_variant is Dictionary:
+				action_row.add_child(_make_cangjie_run_action_control(action_variant as Dictionary, accent))
+
+	var status_row := HFlowContainer.new()
+	status_row.add_theme_constant_override("h_separation", _i(10))
+	status_row.add_theme_constant_override("v_separation", _i(10))
+	box.add_child(status_row)
+
+	var status_variant: Variant = preview.get("status_pills", [])
+	if status_variant is Array:
+		for pill_variant in status_variant:
+			if pill_variant is Dictionary:
+				status_row.add_child(_make_cangjie_run_status_pill(pill_variant as Dictionary, accent))
+
+	var deck_preview_variant: Variant = preview.get("deck_preview", {})
+	if deck_preview_variant is Dictionary and not (deck_preview_variant as Dictionary).is_empty():
+		if cangjie_run_shell_open:
+			box.add_child(_make_cangjie_deck_preview_panel(deck_preview_variant as Dictionary, accent))
+		else:
+			var deck_hint := _localize_cangjie_text((deck_preview_variant as Dictionary).get("hint", ""))
+			if not deck_hint.is_empty():
+				box.add_child(_make_label(deck_hint, 14, Color(0.82, 0.9, 0.96, 0.84)))
+
+	return panel
+
+
+func _make_cangjie_run_action_control(action: Dictionary, accent: Color) -> Control:
+	var action_id := String(action.get("id", "action"))
+	var tone: Color = action.get("tone", accent)
+	if action_id == "deck":
+		var label_key := "active_label" if cangjie_run_shell_open else "label"
+		var button := Button.new()
+		button.text = _localize_cangjie_text(action.get(label_key, action.get("label", "")))
+		button.custom_minimum_size = _v(170.0 if _is_portrait_layout() else 184.0, 46.0)
+		button.add_theme_font_override("font", title_font)
+		button.add_theme_font_size_override("font_size", _i(18))
+		button.add_theme_color_override("font_color", Color(0.98, 0.94, 0.88, 0.98))
+		button.add_theme_stylebox_override("normal", _make_panel_style(Color(tone.r * 0.16, tone.g * 0.16, tone.b * 0.18, 0.94), Color(tone.r, tone.g, tone.b, 0.34)))
+		button.add_theme_stylebox_override("hover", _make_panel_style(Color(tone.r * 0.2, tone.g * 0.18, tone.b * 0.2, 0.98), Color(tone.r, tone.g, tone.b, 0.46)))
+		button.add_theme_stylebox_override("pressed", _make_panel_style(Color(tone.r * 0.24, tone.g * 0.22, tone.b * 0.24, 1.0), Color(tone.r, tone.g, tone.b, 0.54)))
+		button.pressed.connect(_on_toggle_cangjie_run_shell_pressed)
+		return button
+
+	return _make_cangjie_shell_pill(_localize_cangjie_text(action.get("label", "")), tone, _v(170.0 if _is_portrait_layout() else 184.0, 46.0), 18)
+
+
+func _make_cangjie_shell_pill(text: String, tone: Color, size: Vector2, font_size: int) -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = size
+	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(tone.r * 0.14, tone.g * 0.14, tone.b * 0.16, 0.88), Color(tone.r, tone.g, tone.b, 0.24)))
+
+	var label := _make_label(text, font_size, Color(0.98, 0.94, 0.88, 0.98))
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.set_anchors_preset(Control.PRESET_FULL_RECT)
+	panel.add_child(label)
+	return panel
+
+
+func _make_cangjie_run_status_pill(pill: Dictionary, accent: Color) -> PanelContainer:
+	var tone: Color = pill.get("tone", accent)
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = _v(138.0, 72.0)
+	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(tone.r * 0.12, tone.g * 0.12, tone.b * 0.14, 0.86), Color(tone.r, tone.g, tone.b, 0.24)))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", _i(12))
+	margin.add_theme_constant_override("margin_top", _i(10))
+	margin.add_theme_constant_override("margin_right", _i(12))
+	margin.add_theme_constant_override("margin_bottom", _i(10))
+	panel.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", _i(4))
+	margin.add_child(box)
+
+	var label := _make_label(_localize_cangjie_text(pill.get("label", "")), 13, Color(0.82, 0.9, 0.96, 0.84))
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	box.add_child(label)
+
+	var value := _make_label(_localize_cangjie_text(pill.get("value", "")), 20, Color(1.0, 0.95, 0.86, 1.0))
+	value.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	box.add_child(value)
+
+	return panel
+
+
+func _make_cangjie_deck_preview_panel(preview: Dictionary, accent: Color) -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.06, accent.g * 0.08, accent.b * 0.1, 0.72), Color(accent.r, accent.g, accent.b, 0.26)))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", _i(18))
+	margin.add_theme_constant_override("margin_top", _i(16))
+	margin.add_theme_constant_override("margin_right", _i(18))
+	margin.add_theme_constant_override("margin_bottom", _i(16))
+	panel.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", _i(10))
+	margin.add_child(box)
+	box.add_child(_make_label(_localize_cangjie_text(preview.get("title", "")), 20, Color(1.0, 0.95, 0.86, 1.0)))
+
+	var summary_text := _localize_cangjie_text(preview.get("summary", ""))
+	if not summary_text.is_empty():
+		box.add_child(_make_label(summary_text, 16, Color(0.88, 0.92, 0.96, 0.92)))
+
+	var tags_variant: Variant = preview.get("tags", [])
+	if tags_variant is Array and not (tags_variant as Array).is_empty():
+		var tag_row := HFlowContainer.new()
+		tag_row.add_theme_constant_override("h_separation", _i(8))
+		tag_row.add_theme_constant_override("v_separation", _i(8))
+		box.add_child(tag_row)
+		for tag_variant in tags_variant:
+			tag_row.add_child(_make_tag(_localize_cangjie_text(tag_variant), Color(accent.r * 0.16, accent.g * 0.16, accent.b * 0.18, 0.86), Color(0.98, 0.94, 0.88, 0.96)))
+
+	var groups_variant: Variant = preview.get("groups", [])
+	if groups_variant is Array:
+		for group_variant in groups_variant:
+			if group_variant is Dictionary:
+				box.add_child(_make_cangjie_group_panel(group_variant as Dictionary, accent))
 
 	return panel
 
@@ -1952,6 +2109,11 @@ func _on_toggle_cangjie_stage_fx_pressed() -> void:
 	_refresh_cangjie_portal()
 
 
+func _on_toggle_cangjie_run_shell_pressed() -> void:
+	cangjie_run_shell_open = not cangjie_run_shell_open
+	_refresh_cangjie_portal()
+
+
 func _on_cangjie_duelist_pressed(card_button: Button, duelist: Dictionary) -> void:
 	if card_button == null or not is_instance_valid(card_button):
 		return
@@ -2032,6 +2194,7 @@ func _show_cangjie_portal() -> void:
 		_hide_about()
 		_hide_changelog()
 		_hide_profile()
+		cangjie_run_shell_open = false
 		cangjie_overlay.visible = true
 		_refresh_cangjie_portal()
 
@@ -2043,6 +2206,7 @@ func _hide_cangjie_portal() -> void:
 
 func _on_cangjie_section_pressed(section_id: String) -> void:
 	cangjie_section = section_id
+	cangjie_run_shell_open = false
 	_refresh_cangjie_portal()
 
 

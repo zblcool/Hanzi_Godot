@@ -358,6 +358,159 @@ const CANGJIE_PORTAL_SECTIONS := [
 				"en": "Godot explains this run shell in the portal first so the same navigation frame is easier to reuse once a playable scene lands."
 			}
 		],
+		"run_shell_preview": {
+			"title": {"zh": "运行壳预览", "en": "Run Shell Preview"},
+			"summary": {
+				"zh": "source 页面的 `重新开局 / 查看牌组 / 返回启动器` 不是摆设。Godot 现在先把其中最关键的 `查看牌组` 做成可点开的轻量样张，方便在 portal 里直接读 deck 形状和遗物节奏。",
+				"en": "On the source page, `Restart Run / Open Deck / Back To Launcher` are not decorative. Godot now restores the key `Open Deck` beat as a lightweight tappable sample so deck shape and relic pacing can be read directly inside the portal."
+			},
+			"actions": [
+				{
+					"id": "restart",
+					"label": {"zh": "重新开局", "en": "Restart Run"},
+					"tone": Color(0.94, 0.74, 0.42, 1.0)
+				},
+				{
+					"id": "deck",
+					"label": {"zh": "查看牌组", "en": "Open Deck"},
+					"active_label": {"zh": "收起牌组", "en": "Close Deck"},
+					"tone": Color(0.58, 0.76, 0.94, 1.0)
+				},
+				{
+					"id": "back",
+					"label": {"zh": "返回启动器", "en": "Back To Launcher"},
+					"tone": Color(0.78, 0.66, 0.94, 1.0)
+				}
+			],
+			"status_pills": [
+				{
+					"label": {"zh": "Floor", "en": "Floor"},
+					"value": "1",
+					"tone": Color(0.94, 0.74, 0.42, 1.0)
+				},
+				{
+					"label": {"zh": "HP", "en": "HP"},
+					"value": "72 / 72",
+					"tone": Color(0.54, 0.82, 0.88, 1.0)
+				},
+				{
+					"label": {"zh": "Deck", "en": "Deck"},
+					"value": "10",
+					"tone": Color(0.66, 0.68, 0.94, 1.0)
+				},
+				{
+					"label": {"zh": "Relics", "en": "Relics"},
+					"value": "2",
+					"tone": Color(0.88, 0.58, 0.62, 1.0)
+				},
+				{
+					"label": {"zh": "Gold", "en": "Gold"},
+					"value": "40",
+					"tone": Color(0.96, 0.82, 0.46, 1.0)
+				}
+			],
+			"deck_preview": {
+				"hint": {
+					"zh": "点按 `查看牌组`，展开一份 source 风格的当前牌组 / 遗物样张。",
+					"en": "Tap `Open Deck` to reveal a source-style current deck and relic sample."
+				},
+				"title": {"zh": "当前牌组样张", "en": "Current Deck Sample"},
+				"summary": {
+					"zh": "source 的 `Open Deck` 会把当前牌组厚度、主线走向和已持遗物一起摊开。Godot 先在 portal 里补回这层轻量 deck sheet，后续真接入爬塔场景时更容易沿用同一层读法。",
+					"en": "The source `Open Deck` lays out deck thickness, current line, and owned relics together. Godot now restores that layer as a lightweight portal-side deck sheet so the same read can carry into a future playable climb."
+				},
+				"tags": [
+					{"zh": "Deck 10", "en": "Deck 10"},
+					{"zh": "Relics 2", "en": "Relics 2"},
+					{"zh": "明 / 雷 / 休 主线", "en": "Bright / Thunder / Rest lines"}
+				],
+				"groups": [
+					{
+						"title": {"zh": "当前牌组", "en": "Current Deck"},
+						"summary": {
+							"zh": "用 3 张代表牌先把当前牌组的起手、成字与引擎关系摊开，不必等真正进战后再回忆 deck 形状。",
+							"en": "These representative cards expose the opener, fusion, and engine relationship up front so the deck shape does not have to wait for a real battle scene."
+						},
+						"cards": [
+							{
+								"glyph": "日",
+								"title": {"zh": "日 · 起手偏旁", "en": "日 · Sun Trace"},
+								"subtitle": {"zh": "偏旁起手", "en": "Radical opener"},
+								"body": {
+									"zh": "造成 6 伤害，并把「明」这条线提前写进牌组。",
+									"en": "Deal 6 damage and seed the 明 line into the deck early."
+								},
+								"tags": [
+									{"zh": "偏旁", "en": "Radical"},
+									{"zh": "铺垫", "en": "Setup"}
+								]
+							},
+							{
+								"glyph": "明",
+								"title": {"zh": "明 · 节奏成字", "en": "明 · Twin Gleam"},
+								"subtitle": {"zh": "日 + 月", "en": "Sun + moon"},
+								"body": {
+									"zh": "成型后同时补伤害、抽牌与墨流，是 source 里很典型的节奏主线。",
+									"en": "Once formed it gives damage, draw, and Ink flow together, making it a typical source tempo spine."
+								},
+								"tags": [
+									{"zh": "成字", "en": "Fusion"},
+									{"zh": "节奏", "en": "Tempo"}
+								]
+							},
+							{
+								"glyph": "学",
+								"title": {"zh": "学 · 抽墨引擎", "en": "学 · Study Thread"},
+								"subtitle": {"zh": "引擎牌", "en": "Engine card"},
+								"body": {
+									"zh": "抽 2 并补 1 墨，提醒这条线不只靠合字，还要靠真正的 draw / Ink 引擎维持厚牌组运转。",
+									"en": "Draw 2 and gain 1 Ink, showing the line relies on a real draw and Ink engine instead of fusions alone."
+								},
+								"tags": [
+									{"zh": "引擎", "en": "Engine"},
+									{"zh": "抽墨", "en": "Draw + Ink"}
+								]
+							}
+						]
+					},
+					{
+						"title": {"zh": "已持遗物", "en": "Owned Relics"},
+						"summary": {
+							"zh": "source deck sheet 也会把遗物一起摊开，提醒这条线的节奏判断不只来自牌本身。",
+							"en": "The source deck sheet also exposes relics so route judgment is not read from cards alone."
+						},
+						"cards": [
+							{
+								"glyph": "砚",
+								"title": {"zh": "砚 · 开局多抽", "en": "Inkstone · Opening Draw"},
+								"subtitle": {"zh": "战斗起手", "en": "Battle opener"},
+								"body": {
+									"zh": "每场战斗开局多抽 1，让慢线更快碰到关键偏旁与成字。",
+									"en": "Draw 1 extra card at the start of each battle so slower lines hit key radicals and fusions sooner."
+								},
+								"tags": [
+									{"zh": "起手抽牌", "en": "Opening draw"},
+									{"zh": "节奏提速", "en": "Tempo boost"}
+								]
+							},
+							{
+								"glyph": "镜",
+								"title": {"zh": "镜 · 重复返抽", "en": "Mirror Slip · Repeat Draw"},
+								"subtitle": {"zh": "重复偏旁", "en": "Repeated radical"},
+								"body": {
+									"zh": "每回合第一次打出重复偏旁时抽 1，直接改写重复材料的价值判断。",
+									"en": "The first repeated radical each turn draws 1, directly changing how duplicate material is valued."
+								},
+								"tags": [
+									{"zh": "重复利用", "en": "Repeat use"},
+									{"zh": "资源再估值", "en": "Revalue resources"}
+								]
+							}
+						]
+					}
+				]
+			}
+		},
 		"sample_groups": [
 			{
 				"title": {"zh": "常驻操作", "en": "Always-On Controls"},
