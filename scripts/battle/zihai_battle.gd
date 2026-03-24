@@ -83,18 +83,6 @@ const SOUNDTRACK_LIBRARY := {
 		"accent": Color(0.98, 0.76, 0.42, 1.0)
 	}
 }
-const ENEMY_ENTRANCE_TAUNTS := {
-	"elite": [
-		"魇潮已至，退无可退。",
-		"把名字留在败卷里。",
-		"这一页写你的败笔。"
-	],
-	"boss": [
-		"残卷深处，不留活笔。",
-		"你会写进我的卷底。",
-		"到此为止，执笔者。"
-	]
-}
 const FIELD_PHASE_THEMES := [
 	{
 		"id": "stelaeGrove",
@@ -704,9 +692,34 @@ func _battle_state_text(key: String, fallback_zh: String, fallback_en: String = 
 	return _front_end_text(FrontEndContent.battle_state_content(), key, fallback_zh, fallback_en)
 
 
+func _battle_state_format(key: String, fallback_zh: String, fallback_en: String, values: Array = []) -> String:
+	var text := _battle_state_text(key, fallback_zh, fallback_en)
+	return text % values if not values.is_empty() else text
+
+
 func _battle_guidance_format(key: String, fallback_zh: String, fallback_en: String, values: Array = []) -> String:
 	var text := _battle_guidance_text(key, fallback_zh, fallback_en)
 	return text % values if not values.is_empty() else text
+
+
+func _battle_guidance_array(entry: Variant) -> Array[String]:
+	var lines: Array[String] = []
+	var localized_entry: Variant = entry
+	if entry is Dictionary:
+		localized_entry = (entry as Dictionary).get("en" if _is_english() else "zh", [])
+	if localized_entry is Array:
+		for line_variant in localized_entry:
+			var line := String(line_variant).strip_edges()
+			if not line.is_empty():
+				lines.append(line)
+	return lines
+
+
+func _enemy_entrance_taunt_pool(enemy_type: String) -> Array[String]:
+	var taunt_groups_variant: Variant = FrontEndContent.battle_guidance_content().get("enemy_entrance_taunts", {})
+	if taunt_groups_variant is Dictionary:
+		return _battle_guidance_array((taunt_groups_variant as Dictionary).get(enemy_type, {}))
+	return []
 
 
 func _battle_field_phase_content() -> Dictionary:
@@ -2438,25 +2451,25 @@ func _show_hero_callout(context: String, duration: float = 3.2) -> void:
 	if context == "intro" and hud != null and hud.has_method("build_intro_callout_detail"):
 		detail = String(hud.build_intro_callout_detail())
 	_show_battle_callout(
-		("%s Responds" % hero_name) if _is_english() else "%s应声" % hero_name,
+		_battle_guidance_format("hero_callout_title_format", "%s应声", "%s Responds", [hero_name]),
 		line,
 		accent,
-		("%s: " % hero_name) if _is_english() else "%s：" % hero_name,
+		_battle_guidance_format("hero_callout_log_prefix_format", "%s：", "%s: ", [hero_name]),
 		duration,
 		detail
 	)
 
 
 func _show_enemy_taunt(enemy_name: String, enemy_type: String, tint: Color, duration: float = 2.9) -> void:
-	var pool: Array = ENEMY_ENTRANCE_TAUNTS.get(enemy_type, [])
+	var pool: Array[String] = _enemy_entrance_taunt_pool(enemy_type)
 	var line := _pick_callout_line(pool, "enemy_%s" % enemy_type)
 	if line.is_empty():
 		return
 	_show_battle_callout(
-		("%s Challenges You" % enemy_name) if _is_english() else "%s叫阵" % enemy_name,
+		_battle_guidance_format("enemy_taunt_title_format", "%s叫阵", "%s Challenges You", [enemy_name]),
 		line,
 		tint,
-		("%s: " % enemy_name) if _is_english() else "%s：" % enemy_name,
+		_battle_guidance_format("enemy_taunt_log_prefix_format", "%s：", "%s: ", [enemy_name]),
 		duration
 	)
 
@@ -2633,7 +2646,7 @@ func _spawn_enemy() -> void:
 	enemy.request_projectile.connect(_on_enemy_request_projectile)
 	enemies_root.add_child(enemy)
 	if enemy_type == "elite":
-		hud.show_banner("Elite Incoming" if _is_english() else "精英现身", Color(0.94, 0.42, 0.52, 1.0), 2.0)
+		hud.show_banner(_battle_state_text("elite_incoming_banner", "精英现身", "Elite Incoming"), Color(0.94, 0.42, 0.52, 1.0), 2.0)
 		if elite_taunt_cooldown <= 0.0:
 			_show_enemy_taunt(String(enemy.enemy_name), enemy_type, Color(enemy.tint), 2.7)
 			elite_taunt_cooldown = 18.0
@@ -2663,7 +2676,7 @@ func _spawn_boss(stage_index: int) -> void:
 	spawn_timer = max(spawn_timer, 1.4)
 
 	var tint: Color = _boss_banner_color(stage_index)
-	hud.show_banner("Boss Appears" if _is_english() else "卷主现身", tint, 2.4)
+	hud.show_banner(_battle_state_text("boss_appears_banner", "卷主现身", "Boss Appears"), tint, 2.4)
 	hud.set_tip(_boss_stage_tip(stage_index))
 	hud.show_boss(String(boss.enemy_name), String(boss.glyph), tint, boss.max_health)
 	hud.show_reveal(
@@ -2674,7 +2687,7 @@ func _spawn_boss(stage_index: int) -> void:
 		String(boss.glyph),
 		3.2
 	)
-	_log_battle_event(("Boss Appears · %s" if _is_english() else "卷主现身 · %s") % String(boss.enemy_name), tint)
+	_log_battle_event(_battle_state_format("boss_appears_log_format", "卷主现身 · %s", "Boss Appears · %s", [String(boss.enemy_name)]), tint)
 	_show_enemy_taunt(String(boss.enemy_name), "boss", tint, 3.1)
 	_set_soundtrack("fireflyFootpath", "卷主压阵", true, true)
 	_play_cue_sfx("boss_appear", 1.08)
@@ -4392,7 +4405,7 @@ func _on_boss_defeated(world_position: Vector3) -> void:
 		chamber_break_pending = false
 		Session.chapter_progress["chapter_complete"] = true
 		hud.show_banner(
-			_battle_guidance_text("boss_defeat_banner_complete", "残卷一暂定", "Scroll I Secured"),
+			_battle_state_text("chapter_secured_banner", "残卷一暂定", "Scroll I Secured"),
 			Color(1.0, 0.88, 0.58, 1.0),
 			2.6
 		)
@@ -4405,15 +4418,15 @@ func _on_boss_defeated(world_position: Vector3) -> void:
 			3.35
 		)
 		hud.set_tip(
-			_battle_guidance_text(
-				"boss_defeat_tip_complete",
+			_battle_state_text(
+				"chapter_secured_tip",
 				"本卷卷主都已崩散，章节目标完成。继续战斗可测试成长上限。",
 				"All scroll lords have collapsed. The chapter goal is complete, and you can keep fighting to test the build ceiling."
 			)
 		)
 		_log_battle_event(
-			_battle_guidance_text(
-				"boss_defeat_log_complete",
+			_battle_state_text(
+				"chapter_secured_log",
 				"残卷一暂定 · 卷主尽散",
 				"Scroll I Secured · Bosses gone"
 			),
@@ -4429,7 +4442,7 @@ func _on_boss_defeated(world_position: Vector3) -> void:
 	else:
 		chamber_break_pending = true
 		hud.show_banner(
-			_battle_guidance_text("boss_defeat_banner_next", "卷主退散", "Boss Dispersed"),
+			_battle_state_text("boss_dispersed_banner", "卷主退散", "Boss Dispersed"),
 			Color(1.0, 0.84, 0.52, 1.0),
 			2.2
 		)
@@ -4442,15 +4455,15 @@ func _on_boss_defeated(world_position: Vector3) -> void:
 			3.1
 		)
 		hud.set_tip(
-			_battle_guidance_text(
-				"boss_defeat_tip_next",
+			_battle_state_text(
+				"boss_dispersed_tip",
 				"卷主崩散后，先清掉残留字灵；战场安静下来后，会先停在卷间缓冲再继续入深层。",
 				"The scroll lord has fallen. Clear the lingering glyph spirits and a chamber break will open before the run pushes deeper."
 			)
 		)
 		_log_battle_event(
-			_battle_guidance_text(
-				"boss_defeat_log_next",
+			_battle_state_text(
+				"boss_dispersed_log",
 				"卷主退散 · 残卷继续翻开",
 				"Boss Dispersed · The scroll unfolds deeper"
 			),
