@@ -3078,12 +3078,16 @@ func _boss_banner_color(stage_index: int) -> Color:
 
 func _boss_stage_tip(stage_index: int) -> String:
 	if stage_index <= 0:
-		if _is_english():
-			return "The scroll lord has entered the inkfield. Dodge the large forbidden arrays first, then punish the gaps after each cast."
-		return "卷主踏入墨阵。先躲大范围禁阵，再抓它施法后的空档。"
-	if _is_english():
-		return "A deeper scroll lord has appeared. It layers volleys, charges, and forbidden arrays into one sequence."
-	return "更深的卷主现身了。它会把弹幕、冲锋和禁阵叠在一起。"
+		return _battle_guidance_text(
+			"boss_stage_tip_first",
+			"卷主踏入墨阵。先躲大范围禁阵，再抓它施法后的空档。",
+			"The scroll lord has entered the inkfield. Dodge the large forbidden arrays first, then punish the gaps after each cast."
+		)
+	return _battle_guidance_text(
+		"boss_stage_tip_deeper",
+		"更深的卷主现身了。它会把弹幕、冲锋和禁阵叠在一起。",
+		"A deeper scroll lord has appeared. It layers volleys, charges, and forbidden arrays into one sequence."
+	)
 
 
 func _on_player_fire_projectile(origin: Vector3, direction: Vector3, damage: float, speed: float, glyph: String, tint: Color) -> void:
@@ -4453,13 +4457,23 @@ func _start_opening_sequence() -> void:
 		if _is_english():
 			intro_title = _localized_intro_title(start_wave, intro_title)
 			intro_tip = _localized_intro_tip(start_wave, intro_tip)
-	var intro_suffix := "enters the scroll" if _is_english() else "入卷"
-	hud.show_banner("%s  ·  %s %s" % [intro_title, String(localized_hero["name"]), intro_suffix], accent, 2.6)
+	var localized_hero_name := String(localized_hero["name"])
+	var intro_suffix := _battle_guidance_text("intro_entry_suffix", "入卷", "enters the scroll")
+	hud.show_banner(
+		_battle_guidance_format(
+			"intro_banner_format",
+			"%s  ·  %s %s",
+			"%s  ·  %s %s",
+			[intro_title, localized_hero_name, intro_suffix]
+		),
+		accent,
+		2.6
+	)
 	var intro_identity: Dictionary = hud.build_intro_identity_reveal()
 	if not intro_identity.is_empty():
 		hud.show_reveal(
 			intro_title,
-			String(intro_identity.get("title", String(localized_hero.get("name", "")))),
+			String(intro_identity.get("title", localized_hero_name)),
 			String(intro_identity.get("detail", intro_tip)),
 			accent,
 			String(intro_identity.get("glyph", String(hero_data["glyph"]))),
@@ -4473,7 +4487,15 @@ func _start_opening_sequence() -> void:
 		soundtrack_cue = "试阵开卷"
 	_set_soundtrack(soundtrack_track, soundtrack_cue, true, true)
 	_play_cue_sfx("run_start", 1.0)
-	_log_battle_event("%s · %s %s" % [intro_title, String(localized_hero["name"]), "enters the scroll" if _is_english() else "入卷"], accent)
+	_log_battle_event(
+		_battle_guidance_format(
+			"intro_log_format",
+			"%s · %s %s",
+			"%s · %s %s",
+			[intro_title, localized_hero_name, intro_suffix]
+		),
+		accent
+	)
 	_spawn_wave_effect(player.global_position, 3.3, accent, String(hero_data["glyph"]))
 	_spawn_intro_symbols(String(hero_data["glyph"]), accent)
 	_show_hero_callout("intro", 3.0)

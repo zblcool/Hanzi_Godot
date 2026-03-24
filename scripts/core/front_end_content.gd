@@ -2016,6 +2016,18 @@ const BATTLE_GUIDANCE_CONTENT := {
 		"zh": "%s：",
 		"en": "%s: "
 	},
+	"intro_banner_format": {
+		"zh": "%s  ·  %s %s",
+		"en": "%s  ·  %s %s"
+	},
+	"intro_entry_suffix": {
+		"zh": "入卷",
+		"en": "enters the scroll"
+	},
+	"intro_log_format": {
+		"zh": "%s · %s %s",
+		"en": "%s · %s %s"
+	},
 	"boss_spawn_detail_first": {
 		"zh": "先躲开场的大禁阵，再抓卷主回气时的空档。",
 		"en": "Large forbidden arrays arrive first. Dodge the opening layer, then punish the recovery."
@@ -2023,6 +2035,14 @@ const BATTLE_GUIDANCE_CONTENT := {
 	"boss_spawn_detail_deeper": {
 		"zh": "更深的卷主会把弹幕、冲锋和禁阵连成更长一套节奏。",
 		"en": "This deeper lord chains volleys, charges, and forbidden arrays into one longer rhythm."
+	},
+	"boss_stage_tip_first": {
+		"zh": "卷主踏入墨阵。先躲大范围禁阵，再抓它施法后的空档。",
+		"en": "The scroll lord has entered the inkfield. Dodge the large forbidden arrays first, then punish the gaps after each cast."
+	},
+	"boss_stage_tip_deeper": {
+		"zh": "更深的卷主现身了。它会把弹幕、冲锋和禁阵叠在一起。",
+		"en": "A deeper scroll lord has appeared. It layers volleys, charges, and forbidden arrays into one sequence."
 	},
 	"scroll_label_current": {
 		"zh": "残卷一",
