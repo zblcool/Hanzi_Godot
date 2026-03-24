@@ -573,6 +573,81 @@ const CHAMBER_LAYOUTS := {
 		"utility_pickups": [
 			{"position": Vector3(-14.0, 0.0, -13.0), "supply_id": "fury"},
 			{"position": Vector3(14.0, 0.0, -13.0), "supply_id": "magnet"}
+		],
+		"phrase_events": [
+			{
+				"id": "desperate_life",
+				"text": "绝处逢生",
+				"english_text": "Life at the Brink",
+				"position": Vector3(-13.2, 0.0, 6.2),
+				"glyph": "生",
+				"tint": Color(0.94, 0.66, 0.62, 1.0),
+				"guardian_position": Vector3(-8.0, 0.0, 8.6),
+				"guardian_type": "tank",
+				"guardian_health_scale": 1.46,
+				"guardian_glyph": "生",
+				"guardian_name": "逢生守渊",
+				"english_guardian_name": "Lifeward Sentinel",
+				"guardian_tint": Color(0.96, 0.7, 0.64, 1.0),
+				"reward_type": "heal",
+				"reward_amount": 24.0,
+				"discover_radius": 6.4
+			},
+			{
+				"id": "burn_boats",
+				"text": "破釜沉舟",
+				"english_text": "Break the Cauldrons",
+				"position": Vector3(13.4, 0.0, 6.4),
+				"glyph": "釜",
+				"tint": Color(0.94, 0.56, 0.42, 1.0),
+				"guardian_position": Vector3(8.6, 0.0, 8.8),
+				"guardian_type": "assassin",
+				"guardian_health_scale": 1.34,
+				"guardian_glyph": "釜",
+				"guardian_name": "沉舟断锋",
+				"english_guardian_name": "Burnboat Reaver",
+				"guardian_tint": Color(0.98, 0.64, 0.46, 1.0),
+				"reward_type": "xp",
+				"reward_amount": 20.0,
+				"discover_radius": 6.3
+			},
+			{
+				"id": "turn_the_tide",
+				"text": "力挽狂澜",
+				"english_text": "Turn the Wild Tide",
+				"position": Vector3(-6.2, 0.0, -4.2),
+				"glyph": "澜",
+				"tint": Color(0.7, 0.62, 0.92, 1.0),
+				"guardian_position": Vector3(-1.0, 0.0, -1.2),
+				"guardian_type": "ritualist",
+				"guardian_health_scale": 1.36,
+				"guardian_glyph": "澜",
+				"guardian_name": "回澜镇卷",
+				"english_guardian_name": "Tidebind Keeper",
+				"guardian_tint": Color(0.76, 0.68, 0.96, 1.0),
+				"reward_type": "reveal",
+				"reward_amount": 1.1,
+				"discover_radius": 6.2
+			},
+			{
+				"id": "carry_the_fire",
+				"text": "薪火相传",
+				"english_text": "Pass the Fire Forward",
+				"position": Vector3(6.4, 0.0, -4.4),
+				"glyph": "薪",
+				"tint": Color(0.98, 0.72, 0.52, 1.0),
+				"guardian_position": Vector3(1.2, 0.0, -1.6),
+				"guardian_type": "elite",
+				"guardian_health_scale": 1.42,
+				"guardian_glyph": "薪",
+				"guardian_name": "薪火守誓",
+				"english_guardian_name": "Firevow Guardian",
+				"guardian_tint": Color(1.0, 0.78, 0.58, 1.0),
+				"reward_type": "radical",
+				"reward_radical": "火",
+				"reward_amount": 1.0,
+				"discover_radius": 6.1
+			}
 		]
 	}
 }
