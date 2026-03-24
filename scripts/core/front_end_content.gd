@@ -1212,6 +1212,14 @@ const MENU_LEADERBOARD_CONTENT := {
 	"enemy_kill_joiner": " "
 }
 
+const MENU_ENEMY_CONTENT := {
+	"intro": "以下条目对应当前残卷里已经接入的敌人谱系、预警方式与最实用的临场处理思路。",
+	"entry_format": "%s  %s  ·  %s",
+	"summary_format": "  %s",
+	"warning_format": "  预警：%s",
+	"counter_format": "  应对：%s"
+}
+
 const BATTLE_STATE_CONTENT := {
 	"pause_title": {"zh": "墨阵暂歇", "en": "Inkfield Interlude"},
 	"summary_title": {"zh": "当前进度", "en": "Current run"},
@@ -1265,7 +1273,62 @@ const BATTLE_HUD_CONTENT := {
 		"zh": "先把最稳的 build 主线写深，再让砚台磨词接手中盘。",
 		"en": "Push the steadiest build lane first, then let inkstone refinement take over the midgame."
 	},
-	"route_focus_placeholder_stage": {"zh": "当前阶段：开卷补笔  ·  明 / 海 / 休", "en": "Stage: Opening Strokes  ·  Ming / Hai / Xiu"}
+	"route_focus_placeholder_stage": {"zh": "当前阶段：开卷补笔  ·  明 / 海 / 休", "en": "Stage: Opening Strokes  ·  Ming / Hai / Xiu"},
+	"event_log_placeholder": {"zh": "波次、卷主、合字和拾取会记在这里。", "en": "Wave shifts, bosses, fused glyphs, and pickups will appear here."},
+	"reveal_glyph_placeholder": {"zh": "字", "en": "Glyph"},
+	"reveal_kicker_placeholder": {"zh": "字境相变", "en": "Realm Shift"},
+	"reveal_title_placeholder": {"zh": "碑林", "en": "Stele Grove"},
+	"reveal_detail_placeholder": {
+		"zh": "大字揭示会在这里提示合字、词技与字境变化。",
+		"en": "Big reveal cards here announce fused glyphs, phrase arts, and realm shifts."
+	},
+	"map_title": {"zh": "残卷地图", "en": "Scroll Map"},
+	"map_legend_title": {"zh": "图例", "en": "Legend"},
+	"map_help_micro": {"zh": "拖拽查看，按钮缩放。Esc / M 收起。", "en": "Drag to pan. Buttons zoom. Esc / M closes."},
+	"map_help_tight": {"zh": "拖拽查看，滚轮或按钮缩放。Esc / Tab / M 收起。", "en": "Drag to pan. Wheel or buttons zoom. Esc / Tab / M closes."},
+	"map_help_full": {"zh": "拖拽视野，滚轮或按钮缩放。按 Esc、Tab、M 或再次点地图收起。", "en": "Drag to pan. Use the wheel or buttons to zoom. Press Esc, Tab, M, or the map button again to close."},
+	"map_zoom_out": {"zh": "缩小", "en": "Zoom Out"},
+	"map_zoom_in": {"zh": "放大", "en": "Zoom In"},
+	"map_zoom_reset": {"zh": "重置", "en": "Reset"},
+	"map_close": {"zh": "收起地图", "en": "Close Map"},
+	"map_legend_rows": [
+		{
+			"symbol": "▲",
+			"title": {"zh": "执笔者", "en": "Scribe"},
+			"detail": {"zh": "当前角色朝向与位置。", "en": "Your current position and facing."},
+			"color": Color(0.98, 0.78, 0.42, 1.0)
+		},
+		{
+			"symbol": "●",
+			"title": {"zh": "敌群", "en": "Enemy Pack"},
+			"detail": {"zh": "常规敌人正在逼近的位置。", "en": "Where regular enemies are currently converging."},
+			"color": Color(0.92, 0.42, 0.34, 1.0)
+		},
+		{
+			"symbol": "■",
+			"title": {"zh": "卷主 / 砚台 / 宝箱", "en": "Boss / Inkstone / Chest"},
+			"detail": {"zh": "方块标出卷主、磨词砚台与可开启宝箱。", "en": "Squares mark bosses, phrase-grinding inkstones, and unopened chests."},
+			"color": Color(0.98, 0.76, 0.54, 1.0)
+		},
+		{
+			"symbol": "○",
+			"title": {"zh": "树丛 / 墨池", "en": "Bush / Ink Pool"},
+			"detail": {"zh": "圆形轮廓对应草丛与墨池。", "en": "Circular markers represent bushes and ink pools."},
+			"color": Color(0.56, 0.84, 0.66, 1.0)
+		},
+		{
+			"symbol": "◆",
+			"title": {"zh": "碑刻 / 卷架", "en": "Stele / Scroll Rack"},
+			"detail": {"zh": "静态地标，便于定方位。", "en": "Static landmarks that help orientation."},
+			"color": Color(0.62, 0.84, 1.0, 1.0)
+		},
+		{
+			"symbol": "▩",
+			"title": {"zh": "迷雾", "en": "Fog"},
+			"detail": {"zh": "未探索区域会被雾面遮住，走到附近才会展开。", "en": "Unexplored areas stay covered until you move close enough."},
+			"color": Color(0.58, 0.66, 0.76, 1.0)
+		}
+	]
 }
 
 const BATTLE_PICKUP_CONTENT := {
@@ -1375,6 +1438,16 @@ const BATTLE_HUD_EN_TEXT := {
 	"路线参考": "Route Focus",
 	"当前阶段：%s": "Stage: %s",
 	"让一条路线始终比其余分支领先，后续磨词才有清晰主线。": "Keep one route ahead of the rest so later phrase refinement has a clear lane.",
+	"印记 · 白纸起卷": "Mark · Blank Scroll Begins",
+	"守  墨守流  ·  续航 / 站场": "Guard  Inkguard Route  ·  Sustain / Hold",
+	"先把最稳的 build 主线写深，再让砚台磨词接手中盘。": "Push the steadiest build lane first, then let inkstone refinement take over the midgame.",
+	"当前阶段：开卷补笔  ·  明 / 海 / 休": "Stage: Opening Strokes  ·  Ming / Hai / Xiu",
+	"波次、卷主、合字和拾取会记在这里。": "Wave shifts, bosses, fused glyphs, and pickups will appear here.",
+	"字境相变": "Realm Shift",
+	"碑林": "Stele Grove",
+	"大字揭示会在这里提示合字、词技与字境变化。": "Big reveal cards here announce fused glyphs, phrase arts, and realm shifts.",
+	"拖拽查看，按钮缩放。Esc / M 收起。": "Drag to pan. Buttons zoom. Esc / M closes.",
+	"拖拽查看，滚轮或按钮缩放。Esc / Tab / M 收起。": "Drag to pan. Wheel or buttons zoom. Esc / Tab / M closes.",
 	"敌群 0  ·  砚台 0  ·  草丛 0": "Enemy pack 0  ·  Inkstone 0  ·  Bush 0"
 }
 
@@ -1610,14 +1683,6 @@ const BATTLE_GUIDANCE_CONTENT := {
 		"zh": "魁首开始现身，补给和成词节奏都要提前准备。",
 		"en": "Elites begin appearing more often, so prepare supplies and phrase timing before the next pressure spike."
 	}
-}
-
-const MENU_ENEMY_CONTENT := {
-	"intro": "以下条目对应当前残卷里已经接入的敌人谱系、预警方式与最实用的临场处理思路。",
-	"entry_format": "%s  %s  ·  %s",
-	"summary_format": "  %s",
-	"warning_format": "  预警：%s",
-	"counter_format": "  应对：%s"
 }
 
 const MENU_EN_TEXT := {

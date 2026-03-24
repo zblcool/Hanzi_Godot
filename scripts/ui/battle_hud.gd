@@ -435,8 +435,7 @@ func _localize_text(text: String) -> String:
 	return FrontEndContent.localize_battle_text(text, true)
 
 
-func _battle_state_text(state_content: Dictionary, key: String, fallback_zh: String, fallback_en: String = "") -> String:
-	var entry_variant = state_content.get(key, {})
+func _battle_state_entry_text(entry_variant: Variant, fallback_zh: String, fallback_en: String = "") -> String:
 	if entry_variant is Dictionary:
 		var entry := entry_variant as Dictionary
 		var fallback_text := fallback_en if _is_english() and not fallback_en.is_empty() else fallback_zh
@@ -444,6 +443,10 @@ func _battle_state_text(state_content: Dictionary, key: String, fallback_zh: Str
 	if _is_english() and not fallback_en.is_empty():
 		return fallback_en
 	return fallback_zh
+
+
+func _battle_state_text(state_content: Dictionary, key: String, fallback_zh: String, fallback_en: String = "") -> String:
+	return _battle_state_entry_text(state_content.get(key, {}), fallback_zh, fallback_en)
 
 
 func _localized_hero_data(hero_data: Dictionary) -> Dictionary:
@@ -1227,7 +1230,8 @@ func _refresh_event_log_views() -> void:
 			child.queue_free()
 
 	if event_log_entries.is_empty():
-		var placeholder_text := "Wave shifts, bosses, fused glyphs, and pickups will appear here." if _is_english() else "波次、卷主、合字和拾取会记在这里。"
+		var hud_content := FrontEndContent.battle_hud_content()
+		var placeholder_text := _battle_state_text(hud_content, "event_log_placeholder", "波次、卷主、合字和拾取会记在这里。", "Wave shifts, bosses, fused glyphs, and pickups will appear here.")
 		if event_log_list != null:
 			event_log_list.add_child(_make_event_log_row(placeholder_text, Color(0.52, 0.64, 0.76, 1.0), false, true))
 		if compact_event_list != null:
@@ -2357,7 +2361,7 @@ func _build_ui() -> void:
 	reveal_row.add_theme_constant_override("separation", 18)
 	reveal_margin.add_child(reveal_row)
 
-	reveal_glyph_label = _make_label("字", 70, Color(1.0, 0.92, 0.78, 1.0), 4.0)
+	reveal_glyph_label = _make_label(_battle_state_text(hud_content, "reveal_glyph_placeholder", "字", "Glyph"), 70, Color(1.0, 0.92, 0.78, 1.0), 4.0)
 	reveal_glyph_label.custom_minimum_size = Vector2(104.0, 104.0)
 	reveal_glyph_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	reveal_glyph_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -2368,11 +2372,11 @@ func _build_ui() -> void:
 	reveal_box.add_theme_constant_override("separation", 6)
 	reveal_row.add_child(reveal_box)
 
-	reveal_kicker_label = _make_label("字境相变", 15, Color(0.98, 0.84, 0.6, 0.9), 3.0)
+	reveal_kicker_label = _make_label(_battle_state_text(hud_content, "reveal_kicker_placeholder", "字境相变", "Realm Shift"), 15, Color(0.98, 0.84, 0.6, 0.9), 3.0)
 	reveal_box.add_child(reveal_kicker_label)
-	reveal_title_label = _make_label("碑林", 34, Color(1.0, 0.96, 0.9, 1.0))
+	reveal_title_label = _make_label(_battle_state_text(hud_content, "reveal_title_placeholder", "碑林", "Stele Grove"), 34, Color(1.0, 0.96, 0.9, 1.0))
 	reveal_box.add_child(reveal_title_label)
-	reveal_detail_label = _make_label("大字揭示会在这里提示合字、词技与字境变化。", 16, Color(0.88, 0.93, 0.97, 0.94), 2.0)
+	reveal_detail_label = _make_label(_battle_state_text(hud_content, "reveal_detail_placeholder", "大字揭示会在这里提示合字、词技与字境变化。", "Big reveal cards here announce fused glyphs, phrase arts, and realm shifts."), 16, Color(0.88, 0.93, 0.97, 0.94), 2.0)
 	reveal_box.add_child(reveal_detail_label)
 
 	soundtrack_toast = _make_panel(Color(0.08, 0.11, 0.13, 0.96), Color(0.92, 0.69, 0.38, 0.64), Vector2(300.0, 100.0))
@@ -2819,11 +2823,12 @@ func _compact_map_summary_segment(segment: String) -> String:
 
 
 func _build_map_help_text() -> String:
+	var hud_content := FrontEndContent.battle_hud_content()
 	if _should_use_micro_layout():
-		return "Drag to pan. Buttons zoom. Esc / M closes." if _is_english() else "拖拽查看，按钮缩放。Esc / M 收起。"
+		return _battle_state_text(hud_content, "map_help_micro", "拖拽查看，按钮缩放。Esc / M 收起。", "Drag to pan. Buttons zoom. Esc / M closes.")
 	if _should_use_web_tight_layout():
-		return "Drag to pan. Wheel or buttons zoom. Esc / Tab / M closes." if _is_english() else "拖拽查看，滚轮或按钮缩放。Esc / Tab / M 收起。"
-	return "Drag to pan. Mouse wheel or buttons zoom. Press Esc, Tab, M, or tap the map button again to close." if _is_english() else "拖拽视野，滚轮或按钮缩放。按 Esc、Tab、M 或再次点地图收起。"
+		return _battle_state_text(hud_content, "map_help_tight", "拖拽查看，滚轮或按钮缩放。Esc / Tab / M 收起。", "Drag to pan. Wheel or buttons zoom. Esc / Tab / M closes.")
+	return _battle_state_text(hud_content, "map_help_full", "拖拽视野，滚轮或按钮缩放。按 Esc、Tab、M 或再次点地图收起。", "Drag to pan. Use the wheel or buttons to zoom. Press Esc, Tab, M, or the map button again to close.")
 
 
 func _refresh_map_legend_density() -> void:
@@ -2998,6 +3003,7 @@ func hide_map_overlay() -> void:
 
 
 func _build_map_overlay(root: Control) -> void:
+	var hud_content := FrontEndContent.battle_hud_content()
 	map_overlay = Control.new()
 	map_zoom_buttons = []
 	map_close_button = null
@@ -3040,7 +3046,7 @@ func _build_map_overlay(root: Control) -> void:
 	shell.add_theme_constant_override("separation", 16)
 	margin.add_child(shell)
 
-	map_title_label = _make_label("残卷地图", 38, Color(1.0, 0.95, 0.86, 1.0))
+	map_title_label = _make_label(_battle_state_text(hud_content, "map_title", "残卷地图", "Scroll Map"), 38, Color(1.0, 0.95, 0.86, 1.0))
 	shell.add_child(map_title_label)
 	map_summary_label = _make_label("", 18, Color(0.88, 0.92, 0.96, 0.94))
 	shell.add_child(map_summary_label)
@@ -3091,24 +3097,22 @@ func _build_map_overlay(root: Control) -> void:
 	map_side_box.add_theme_constant_override("separation", 12)
 	side_margin.add_child(map_side_box)
 
-	map_legend_title_label = _make_label("图例", 24, Color(1.0, 0.92, 0.8, 1.0))
+	map_legend_title_label = _make_label(_battle_state_text(hud_content, "map_legend_title", "图例", "Legend"), 24, Color(1.0, 0.92, 0.8, 1.0))
 	map_side_box.add_child(map_legend_title_label)
-	for legend_data in [
-		{"symbol": "▲", "title": "执笔者", "detail": "当前角色朝向与位置。", "color": Color(0.98, 0.78, 0.42, 1.0)},
-		{"symbol": "●", "title": "敌群", "detail": "常规敌人正在逼近的位置。", "color": Color(0.92, 0.42, 0.34, 1.0)},
-		{"symbol": "■", "title": "卷主 / 砚台 / 宝箱", "detail": "方块标出卷主、磨词砚台与可开启宝箱。", "color": Color(0.98, 0.76, 0.54, 1.0)},
-		{"symbol": "○", "title": "树丛 / 墨池", "detail": "圆形轮廓对应草丛与墨池。", "color": Color(0.56, 0.84, 0.66, 1.0)},
-		{"symbol": "◆", "title": "碑刻 / 卷架", "detail": "静态地标，便于定方位。", "color": Color(0.62, 0.84, 1.0, 1.0)},
-		{"symbol": "▩", "title": "迷雾", "detail": "未探索区域会被雾面遮住，走到附近才会展开。", "color": Color(0.58, 0.66, 0.76, 1.0)}
-	]:
-		var legend_row := _make_map_legend_row(
-			String(legend_data["symbol"]),
-			String(legend_data["title"]),
-			String(legend_data["detail"]),
-			Color(legend_data["color"])
-		)
-		map_legend_rows.append(legend_row)
-		map_side_box.add_child(legend_row)
+	var legend_rows_variant: Variant = hud_content.get("map_legend_rows", [])
+	if legend_rows_variant is Array:
+		for legend_data_variant in legend_rows_variant:
+			if not (legend_data_variant is Dictionary):
+				continue
+			var legend_data := legend_data_variant as Dictionary
+			var legend_row := _make_map_legend_row(
+				String(legend_data.get("symbol", "")),
+				_battle_state_entry_text(legend_data.get("title", {}), "执笔者", "Scribe"),
+				_battle_state_entry_text(legend_data.get("detail", {}), "当前角色朝向与位置。", "Your current position and facing."),
+				Color(legend_data.get("color", Color(0.58, 0.66, 0.76, 1.0)))
+			)
+			map_legend_rows.append(legend_row)
+			map_side_box.add_child(legend_row)
 
 	map_side_spacer = Control.new()
 	map_side_spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -3123,22 +3127,22 @@ func _build_map_overlay(root: Control) -> void:
 	map_zoom_row.add_theme_constant_override("separation", 10)
 	map_side_box.add_child(map_zoom_row)
 
-	var zoom_out_button := _make_pill_button("缩小", Callable(self, "_on_map_zoom_out_pressed"))
+	var zoom_out_button := _make_pill_button(_battle_state_text(hud_content, "map_zoom_out", "缩小", "Zoom Out"), Callable(self, "_on_map_zoom_out_pressed"))
 	zoom_out_button.custom_minimum_size = Vector2(86.0, 48.0)
 	map_zoom_row.add_child(zoom_out_button)
 	map_zoom_buttons.append(zoom_out_button)
 
-	var zoom_in_button := _make_pill_button("放大", Callable(self, "_on_map_zoom_in_pressed"))
+	var zoom_in_button := _make_pill_button(_battle_state_text(hud_content, "map_zoom_in", "放大", "Zoom In"), Callable(self, "_on_map_zoom_in_pressed"))
 	zoom_in_button.custom_minimum_size = Vector2(86.0, 48.0)
 	map_zoom_row.add_child(zoom_in_button)
 	map_zoom_buttons.append(zoom_in_button)
 
-	var zoom_reset_button := _make_pill_button("重置", Callable(self, "_on_map_zoom_reset_pressed"))
+	var zoom_reset_button := _make_pill_button(_battle_state_text(hud_content, "map_zoom_reset", "重置", "Reset"), Callable(self, "_on_map_zoom_reset_pressed"))
 	zoom_reset_button.custom_minimum_size = Vector2(86.0, 48.0)
 	map_zoom_row.add_child(zoom_reset_button)
 	map_zoom_buttons.append(zoom_reset_button)
 
-	map_close_button = _make_pill_button("收起地图", Callable(self, "_emit_map_toggle"))
+	map_close_button = _make_pill_button(_battle_state_text(hud_content, "map_close", "收起地图", "Close Map"), Callable(self, "_emit_map_toggle"))
 	map_close_button.custom_minimum_size = Vector2(0.0, 50.0)
 	map_side_box.add_child(map_close_button)
 
