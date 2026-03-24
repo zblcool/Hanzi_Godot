@@ -1602,8 +1602,8 @@ const BATTLE_INTERLUDE_CONTENT := {
 	"reward_default_log_format": {"zh": "卷间抉择 · 偏旁补给 %s · 偏旁偏向 %s", "en": "Between Chambers · Radical supply %s · Draft lean %s"},
 	"event_archive_banner_format": {"zh": "封钥借契  疾书令 %d 秒", "en": "Latch Bargain  Swift Edict %d s"},
 	"event_archive_tip_format": {
-		"zh": "封钥借契已经定下：下一段会先带着 %d 秒疾书令入场，残卷回响也会继续保留额外残纸与精英疾书令，直到下一位卷主；后续偏旁三选一会更偏向 %s。",
-		"en": "Latch bargain sealed. The next chamber opens with %d s of Swift Edict, Scroll Echo still carries extra paper plus elite edicts until the next scroll lord, and later radical drafts tilt toward %s."
+		"zh": "封钥借契已经定下：下一段会先带着 %d 秒疾书令与 %d 秒纸域护势入场，残卷回响也会继续保留额外残纸与精英疾书令，直到下一位卷主；后续偏旁三选一会更偏向 %s。",
+		"en": "Latch bargain sealed. The next chamber opens with %d s of Swift Edict plus %d s of paper ward, Scroll Echo still carries extra paper plus elite edicts until the next scroll lord, and later radical drafts tilt toward %s."
 	},
 	"event_archive_log_format": {"zh": "卷间抉择 · 封钥借契已经挂载 · 偏旁偏向 %s", "en": "Between Chambers · Latch Bargain armed · Draft lean %s"},
 	"event_vault_banner_format": {"zh": "伏雷换契  疾书令 %d 秒", "en": "Vault Bargain  Swift Edict %d s"},
@@ -1680,8 +1680,8 @@ const BATTLE_INTERLUDE_CONTENT := {
 	"short_rest_echo_banner_format": {"zh": "歇笔回气  再补 %d%% 气血", "en": "Short Rest  Echo heal %d%%"},
 	"short_rest_echo_log_format": {"zh": "第 %d 波 · 歇笔回气再次回响", "en": "Wave %d · Short Rest echoes again"},
 	"interlude_body_archive_format": {
-		"zh": "首位卷主已散，当前房间也暂时清空，下一段会推入「%s」。\n\n简库中庭会先换成更贴近 source 的专属卷间抉择：\n奖励 · 简库拓片：带走偏旁「%s」，下一段敌人仍会更常掉残纸 / 战印，后续偏旁三选一也会更偏向这两笔。\n异事 · 封钥借契：保留残卷回响，同时开场先带着 %d 秒疾书令入深层，后续偏旁三选一会更偏向 %s。\n修整 · 守灯静读：先回复 %d%% 气血、解除眩晕，并把 %d 秒文笔提速一并带进下一段；后续偏旁三选一会更偏向 %s，后面每逢字潮推进还会再补一小口气。",
-		"en": "The first scroll lord is gone and the chamber has gone quiet. The run is about to shift into %s.\n\nSlip Archive now swaps in a denser chamber choice:\nReward · Archive Rubbing: carry radicals %s, the next chamber still lifts paper / seal drops, and later radical drafts lean toward %s.\nEvent · Latch Bargain: arm Scroll Echo for the next chamber, open it with %d s of Swift Edict, and tilt later radical drafts toward %s.\nRecovery · Lamp Respite: restore %d%% vitality, clear stun, take %d s of brush haste forward, and tilt later radical drafts toward %s before later wave pushes echo a smaller %d%% recovery."
+		"zh": "首位卷主已散，当前房间也暂时清空，下一段会推入「%s」。\n\n简库中庭会先换成更贴近 source 的专属卷间抉择：\n奖励 · 简库拓片：带走偏旁「%s」，下一段敌人仍会更常掉残纸 / 战印，后续偏旁三选一也会更偏向这两笔。\n异事 · 封钥借契：保留残卷回响，同时开场先带着 %d 秒疾书令与 %d 秒纸域护势入深层，后续偏旁三选一会更偏向 %s。\n修整 · 守灯静读：先回复 %d%% 气血、解除眩晕，并把 %d 秒文笔提速一并带进下一段；后续偏旁三选一会更偏向 %s，后面每逢字潮推进还会再补一小口气。",
+		"en": "The first scroll lord is gone and the chamber has gone quiet. The run is about to shift into %s.\n\nSlip Archive now swaps in a denser chamber choice:\nReward · Archive Rubbing: carry radicals %s, the next chamber still lifts paper / seal drops, and later radical drafts lean toward %s.\nEvent · Latch Bargain: arm Scroll Echo for the next chamber, open it with %d s of Swift Edict plus %d s of paper ward, and tilt later radical drafts toward %s.\nRecovery · Lamp Respite: restore %d%% vitality, clear stun, take %d s of brush haste forward, and tilt later radical drafts toward %s before later wave pushes echo a smaller %d%% recovery."
 	},
 	"interlude_body_vault_format": {
 		"zh": "当前卷主已散，房间也暂时清空，下一段会推入「%s」。\n\n雷纹内库会先换成更贴近 source 的专属卷间抉择：\n奖励 · 雷纹拓笔：带走偏旁「%s」，并带着 %d 秒文笔提速入场。\n异事 · 伏雷换契：下一段会先带着 %d 秒疾书令闯入雷纹内库。\n修整 · 伏纹稳息：先回复 %d%% 气血、解除眩晕，并把 %d 秒纸域护势带进下一段。",

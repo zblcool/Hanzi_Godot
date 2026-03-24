@@ -42,6 +42,7 @@ const CHAMBER_SCROLL_ECHO_BASIC_PAPER_CHANCE := 0.12
 const CHAMBER_INTERLUDE_REST_ECHO_HEAL_RATIO := 0.08
 const CHAMBER_INTERLUDE_REST_ECHO_BRUSH_DURATION := 4.0
 const CHAMBER_ARCHIVE_EVENT_FURY_DURATION := 10.0
+const CHAMBER_ARCHIVE_EVENT_WARD_DURATION := 10.0
 const CHAMBER_ARCHIVE_REST_HEAL_RATIO := 0.3
 const CHAMBER_ARCHIVE_REST_BRUSH_DURATION := 10.0
 const CHAMBER_VAULT_REWARD_BRUSH_DURATION := 12.0
@@ -2186,13 +2187,14 @@ func _chamber_interlude_body(next_wave: int) -> String:
 	if _is_slip_archive_interlude(next_chamber_id):
 		return _battle_interlude_format(
 			"interlude_body_archive_format",
-			"首位卷主已散，当前房间也暂时清空，下一段会推入「%s」。\n\n简库中庭会先换成更贴近 source 的专属卷间抉择：\n奖励 · 简库拓片：带走偏旁「%s」，下一段敌人仍会更常掉残纸 / 战印，后续偏旁三选一也会更偏向这两笔。\n异事 · 封钥借契：保留残卷回响，同时开场先带着 %d 秒疾书令入深层，后续偏旁三选一会更偏向 %s。\n修整 · 守灯静读：先回复 %d%% 气血、解除眩晕，并把 %d 秒文笔提速一并带进下一段；后续偏旁三选一会更偏向 %s，后面每逢字潮推进还会再补一小口气。",
-			"The first scroll lord is gone and the chamber has gone quiet. The run is about to shift into %s.\n\nSlip Archive now swaps in a denser chamber choice:\nReward · Archive Rubbing: carry radicals %s, the next chamber still lifts paper / seal drops, and later radical drafts lean toward %s.\nEvent · Latch Bargain: arm Scroll Echo for the next chamber, open it with %d s of Swift Edict, and tilt later radical drafts toward %s.\nRecovery · Lamp Respite: restore %d%% vitality, clear stun, take %d s of brush haste forward, and tilt later radical drafts toward %s before later wave pushes echo a smaller %d%% recovery.",
+			"首位卷主已散，当前房间也暂时清空，下一段会推入「%s」。\n\n简库中庭会先换成更贴近 source 的专属卷间抉择：\n奖励 · 简库拓片：带走偏旁「%s」，下一段敌人仍会更常掉残纸 / 战印，后续偏旁三选一也会更偏向这两笔。\n异事 · 封钥借契：保留残卷回响，同时开场先带着 %d 秒疾书令与 %d 秒纸域护势入深层，后续偏旁三选一会更偏向 %s。\n修整 · 守灯静读：先回复 %d%% 气血、解除眩晕，并把 %d 秒文笔提速一并带进下一段；后续偏旁三选一会更偏向 %s，后面每逢字潮推进还会再补一小口气。",
+			"The first scroll lord is gone and the chamber has gone quiet. The run is about to shift into %s.\n\nSlip Archive now swaps in a denser chamber choice:\nReward · Archive Rubbing: carry radicals %s, the next chamber still lifts paper / seal drops, and later radical drafts lean toward %s.\nEvent · Latch Bargain: arm Scroll Echo for the next chamber, open it with %d s of Swift Edict plus %d s of paper ward, and tilt later radical drafts toward %s.\nRecovery · Lamp Respite: restore %d%% vitality, clear stun, take %d s of brush haste forward, and tilt later radical drafts toward %s before later wave pushes echo a smaller %d%% recovery.",
 			[
 				next_chamber_name,
 				reward_bundle,
 				reward_bundle,
 				int(round(CHAMBER_ARCHIVE_EVENT_FURY_DURATION)),
+				int(round(CHAMBER_ARCHIVE_EVENT_WARD_DURATION)),
 				archive_event_lean,
 				int(round(CHAMBER_ARCHIVE_REST_HEAL_RATIO * 100.0)),
 				int(round(CHAMBER_ARCHIVE_REST_BRUSH_DURATION)),
@@ -5236,14 +5238,16 @@ func _on_hud_chamber_interlude_selected(choice_id: String) -> void:
 				_arm_interlude_draft_lean("latch_bargain", CHAMBER_ARCHIVE_EVENT_DRAFT_LEAN, "封钥借契", "Latch Bargain")
 				if is_instance_valid(player):
 					player.apply_fury_haste(CHAMBER_ARCHIVE_EVENT_FURY_DURATION)
+					if player.has_method("apply_paper_ward"):
+						player.apply_paper_ward(CHAMBER_ARCHIVE_EVENT_WARD_DURATION)
 				hud.show_banner(
 					_front_end_text(interlude_content, "event_archive_banner_format", "封钥借契  疾书令 %d 秒", "Latch Bargain  Swift Edict %d s") % int(round(CHAMBER_ARCHIVE_EVENT_FURY_DURATION)),
 					Color(0.96, 0.62, 0.34, 1.0),
 					1.95
 				)
 				hud.set_tip(
-					_front_end_text(interlude_content, "event_archive_tip_format", "封钥借契已经定下：下一段会先带着 %d 秒疾书令入场，残卷回响也会继续保留额外残纸与精英疾书令，直到下一位卷主；后续偏旁三选一会更偏向 %s。", "Latch bargain sealed. The next chamber opens with %d s of Swift Edict, Scroll Echo still carries extra paper plus elite edicts until the next scroll lord, and later radical drafts tilt toward %s.")
-					% [int(round(CHAMBER_ARCHIVE_EVENT_FURY_DURATION)), _interlude_draft_lean_text(CHAMBER_ARCHIVE_EVENT_DRAFT_LEAN)]
+					_front_end_text(interlude_content, "event_archive_tip_format", "封钥借契已经定下：下一段会先带着 %d 秒疾书令与 %d 秒纸域护势入场，残卷回响也会继续保留额外残纸与精英疾书令，直到下一位卷主；后续偏旁三选一会更偏向 %s。", "Latch bargain sealed. The next chamber opens with %d s of Swift Edict plus %d s of paper ward, Scroll Echo still carries extra paper plus elite edicts until the next scroll lord, and later radical drafts tilt toward %s.")
+					% [int(round(CHAMBER_ARCHIVE_EVENT_FURY_DURATION)), int(round(CHAMBER_ARCHIVE_EVENT_WARD_DURATION)), _interlude_draft_lean_text(CHAMBER_ARCHIVE_EVENT_DRAFT_LEAN)]
 				)
 				_log_battle_event(
 					_front_end_text(interlude_content, "event_archive_log_format", "卷间抉择 · 封钥借契已经挂载 · 偏旁偏向 %s", "Between Chambers · Latch Bargain armed · Draft lean %s") % _interlude_draft_lean_text(CHAMBER_ARCHIVE_EVENT_DRAFT_LEAN),
