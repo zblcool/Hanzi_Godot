@@ -2,6 +2,7 @@ extends Control
 
 const CJKFont := preload("res://scripts/core/cjk_font.gd")
 const FrontEndContent := preload("res://scripts/core/front_end_content.gd")
+const CangjieRouteLinkLayer := preload("res://scripts/ui/cangjie_route_link_layer.gd")
 const BASE_VIEWPORT := Vector2(2100.0, 1200.0)
 const MIN_UI_SCALE := 0.6
 const NIGHT_THEME := {
@@ -1332,26 +1333,34 @@ func _make_cangjie_route_preview(preview: Dictionary, accent: Color) -> PanelCon
 		cangjie_route_preview_node_id = String(selected_node.get("id", ""))
 	var selected_node_id := String(selected_node.get("id", ""))
 	var selected_lane := String(selected_node.get("lane", ""))
-	var ribbon_steps: Array[Dictionary] = []
-	if not selected_node.is_empty():
-		ribbon_steps = _build_cangjie_route_ribbon_steps(preview, selected_node)
 
 	var rows_variant: Variant = preview.get("rows", [])
-	if rows_variant is Array:
-		var rows := rows_variant as Array
+	if rows_variant is Array and not (rows_variant as Array).is_empty():
+		var route_shell := PanelContainer.new()
+		route_shell.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.06, accent.g * 0.08, accent.b * 0.1, 0.72), Color(accent.r, accent.g, accent.b, 0.24)))
+		box.add_child(route_shell)
+
+		var shell_margin := MarginContainer.new()
+		shell_margin.add_theme_constant_override("margin_left", _i(12))
+		shell_margin.add_theme_constant_override("margin_top", _i(12))
+		shell_margin.add_theme_constant_override("margin_right", _i(12))
+		shell_margin.add_theme_constant_override("margin_bottom", _i(12))
+		route_shell.add_child(shell_margin)
+
 		var rows_box := VBoxContainer.new()
 		rows_box.add_theme_constant_override("separation", _i(10))
-		box.add_child(rows_box)
-		for row_index in range(rows.size()):
-			var row_variant: Variant = rows[row_index]
-			if not (row_variant is Dictionary):
-				continue
-			rows_box.add_child(_make_cangjie_route_row(row_variant as Dictionary, accent, selected_node_id, selected_lane))
-			if row_index >= rows.size() - 1:
-				continue
-			var next_row_variant: Variant = rows[row_index + 1]
-			if next_row_variant is Dictionary:
-				rows_box.add_child(_make_cangjie_route_connector_strip(row_variant as Dictionary, next_row_variant as Dictionary, ribbon_steps, row_index, accent))
+		shell_margin.add_child(rows_box)
+
+		var route_node_lookup := {}
+		for row_variant in rows_variant:
+			if row_variant is Dictionary:
+				rows_box.add_child(_make_cangjie_route_row(row_variant as Dictionary, accent, selected_node_id, selected_lane, route_node_lookup))
+
+		var link_layer := CangjieRouteLinkLayer.new()
+		link_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+		link_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		route_shell.add_child(link_layer)
+		call_deferred("_sync_cangjie_route_link_layer", link_layer, route_node_lookup, _build_cangjie_route_links(preview), selected_node_id, selected_lane, accent)
 
 	var node_details_variant: Variant = preview.get("node_details", {})
 	if not selected_node.is_empty() and node_details_variant is Dictionary:
@@ -1778,7 +1787,7 @@ func _make_cangjie_reward_chain_option_button(option: Dictionary, accent: Color)
 	return button
 
 
-func _make_cangjie_route_row(row: Dictionary, accent: Color, focused_node_id: String, focused_lane: String) -> PanelContainer:
+func _make_cangjie_route_row(row: Dictionary, accent: Color, focused_node_id: String, focused_lane: String, node_lookup: Dictionary) -> PanelContainer:
 	var panel := PanelContainer.new()
 	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.06, accent.g * 0.08, accent.b * 0.1, 0.7), Color(accent.r, accent.g, accent.b, 0.22)))
 
@@ -1810,7 +1819,10 @@ func _make_cangjie_route_row(row: Dictionary, accent: Color, focused_node_id: St
 				var node := node_variant as Dictionary
 				var node_id := String(node.get("id", ""))
 				var lane_id := String(node.get("lane", ""))
-				node_row.add_child(_make_cangjie_route_node_card(node, accent, node_id == focused_node_id, not focused_lane.is_empty() and lane_id == focused_lane))
+				var node_button := _make_cangjie_route_node_card(node, accent, node_id == focused_node_id, not focused_lane.is_empty() and lane_id == focused_lane)
+				node_row.add_child(node_button)
+				if not node_id.is_empty():
+					node_lookup[node_id] = node_button
 		if nodes.size() == 1 and not _is_portrait_layout():
 			var right_spacer := Control.new()
 			right_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -1819,147 +1831,61 @@ func _make_cangjie_route_row(row: Dictionary, accent: Color, focused_node_id: St
 	return panel
 
 
-func _make_cangjie_route_connector_strip(current_row: Dictionary, next_row: Dictionary, ribbon_steps: Array[Dictionary], row_index: int, accent: Color) -> Control:
-	var links := _build_cangjie_route_connector_links(current_row, next_row, ribbon_steps, row_index, accent)
-
-	var strip := Control.new()
-	strip.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	strip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	strip.custom_minimum_size = _v(0.0, 56.0 if _is_portrait_layout() else 68.0)
-	strip.set_meta("cangjie_route_links", links)
-	strip.resized.connect(Callable(self, "_refresh_cangjie_route_connector_strip").bind(strip))
-	call_deferred("_refresh_cangjie_route_connector_strip", strip)
-	return strip
-
-
-func _build_cangjie_route_connector_links(current_row: Dictionary, next_row: Dictionary, ribbon_steps: Array[Dictionary], row_index: int, accent: Color) -> Array[Dictionary]:
+func _build_cangjie_route_links(preview: Dictionary) -> Array[Dictionary]:
+	var rows_variant: Variant = preview.get("rows", [])
 	var links: Array[Dictionary] = []
-	var current_nodes_variant: Variant = current_row.get("nodes", [])
-	var next_nodes_variant: Variant = next_row.get("nodes", [])
-	if not (current_nodes_variant is Array) or not (next_nodes_variant is Array):
+	if not (rows_variant is Array):
 		return links
 
-	var highlight_from_lane := ""
-	var highlight_to_lane := ""
-	if ribbon_steps.size() > row_index + 1:
-		highlight_from_lane = String(ribbon_steps[row_index].get("lane", ""))
-		highlight_to_lane = String(ribbon_steps[row_index + 1].get("lane", ""))
-
-	for current_node_variant in current_nodes_variant as Array:
-		if not (current_node_variant is Dictionary):
+	var node_lookup := {}
+	for row_variant in rows_variant:
+		if not (row_variant is Dictionary):
 			continue
-		var current_node := current_node_variant as Dictionary
-		var from_lane := String(current_node.get("lane", ""))
-		if from_lane.is_empty():
+		var nodes_variant: Variant = (row_variant as Dictionary).get("nodes", [])
+		if not (nodes_variant is Array):
 			continue
+		for node_variant in nodes_variant:
+			if node_variant is Dictionary:
+				var node := node_variant as Dictionary
+				var node_id := String(node.get("id", ""))
+				if not node_id.is_empty():
+					node_lookup[node_id] = node
 
-		for next_node_variant in next_nodes_variant as Array:
-			if not (next_node_variant is Dictionary):
+	for row_variant in rows_variant:
+		if not (row_variant is Dictionary):
+			continue
+		var nodes_variant: Variant = (row_variant as Dictionary).get("nodes", [])
+		if not (nodes_variant is Array):
+			continue
+		for node_variant in nodes_variant:
+			if not (node_variant is Dictionary):
 				continue
-			var next_node := next_node_variant as Dictionary
-			var to_lane := String(next_node.get("lane", ""))
-			if to_lane.is_empty() or not _cangjie_lanes_connect(from_lane, to_lane):
+			var node := node_variant as Dictionary
+			var from_id := String(node.get("id", ""))
+			var connections_variant: Variant = node.get("connections", [])
+			if from_id.is_empty() or not (connections_variant is Array):
 				continue
-
-			var active := from_lane == highlight_from_lane and to_lane == highlight_to_lane
-			var tone: Color = current_node.get("tone", accent)
-			if active:
-				tone = ribbon_steps[row_index].get("tone", tone)
-
-			links.append({
-				"from_lane": from_lane,
-				"to_lane": to_lane,
-				"tone": tone,
-				"active": active
-			})
+			for connection_variant in connections_variant:
+				var to_id := String(connection_variant)
+				var target_node: Dictionary = node_lookup.get(to_id, {})
+				if target_node.is_empty():
+					continue
+				links.append({
+					"from_id": from_id,
+					"to_id": to_id,
+					"from_lane": String(node.get("lane", "")),
+					"to_lane": String(target_node.get("lane", "")),
+					"tone": node.get("tone", Color.WHITE),
+					"state": String(node.get("state", "option"))
+				})
 
 	return links
 
 
-func _refresh_cangjie_route_connector_strip(strip: Control) -> void:
-	if strip == null or not is_instance_valid(strip):
+func _sync_cangjie_route_link_layer(link_layer: Control, node_lookup: Dictionary, route_links: Array[Dictionary], focused_node_id: String, focused_lane: String, accent: Color) -> void:
+	if link_layer == null or not is_instance_valid(link_layer):
 		return
-	for child in strip.get_children():
-		strip.remove_child(child)
-		child.queue_free()
-
-	var size := strip.size
-	if size.x <= 0.0 or size.y <= 0.0:
-		return
-
-	var links_variant: Variant = strip.get_meta("cangjie_route_links", [])
-	if not (links_variant is Array):
-		return
-
-	for link_variant in links_variant as Array:
-		if not (link_variant is Dictionary):
-			continue
-		var link := link_variant as Dictionary
-		var tone: Color = link.get("tone", Color(0.86, 0.9, 0.98, 1.0))
-		var active := bool(link.get("active", false))
-		var from_x := size.x * _cangjie_lane_anchor_ratio(String(link.get("from_lane", "")))
-		var to_x := size.x * _cangjie_lane_anchor_ratio(String(link.get("to_lane", "")))
-		var top_y := _f(8.0)
-		var bottom_y := size.y - _f(8.0)
-		var mid_y := size.y * 0.5
-		var swing := maxf(_f(8.0), absf(to_x - from_x) * 0.22)
-
-		if active:
-			var glow := Line2D.new()
-			glow.antialiased = true
-			glow.width = _f(8.0)
-			glow.default_color = Color(tone.r, tone.g, tone.b, 0.18)
-			glow.add_point(Vector2(from_x, top_y))
-			glow.add_point(Vector2(from_x, mid_y - swing * 0.3))
-			glow.add_point(Vector2(to_x, mid_y + swing * 0.3))
-			glow.add_point(Vector2(to_x, bottom_y))
-			strip.add_child(glow)
-
-		var line := Line2D.new()
-		line.antialiased = true
-		line.width = _f(4.0 if active else 2.0)
-		line.default_color = Color(tone.r, tone.g, tone.b, 0.82 if active else 0.24)
-		line.add_point(Vector2(from_x, top_y))
-		line.add_point(Vector2(from_x, mid_y - swing * 0.3))
-		line.add_point(Vector2(to_x, mid_y + swing * 0.3))
-		line.add_point(Vector2(to_x, bottom_y))
-		strip.add_child(line)
-
-
-func _cangjie_lanes_connect(from_lane: String, to_lane: String) -> bool:
-	if from_lane.is_empty() or to_lane.is_empty():
-		return false
-	if from_lane == "summit" or to_lane == "summit":
-		return true
-	return absi(_cangjie_lane_sort_index(from_lane) - _cangjie_lane_sort_index(to_lane)) <= 1
-
-
-func _cangjie_lane_sort_index(lane: String) -> int:
-	match lane:
-		"left":
-			return 0
-		"center":
-			return 1
-		"right":
-			return 2
-		"summit":
-			return 1
-		_:
-			return 1
-
-
-func _cangjie_lane_anchor_ratio(lane: String) -> float:
-	match lane:
-		"left":
-			return 0.18
-		"center":
-			return 0.5
-		"right":
-			return 0.82
-		"summit":
-			return 0.5
-		_:
-			return 0.5
+	link_layer.call("set_route_data", node_lookup, route_links, focused_node_id, focused_lane, accent)
 
 
 func _build_cangjie_route_ribbon_steps(preview: Dictionary, selected_node: Dictionary) -> Array[Dictionary]:

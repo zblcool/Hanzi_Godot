@@ -1128,8 +1128,8 @@ const CANGJIE_PORTAL_SECTIONS := [
 		"route_preview": {
 			"title": {"zh": "三路线塔图预览", "en": "Three-Lane Route Preview"},
 			"summary": {
-				"zh": "source《仓颉之路》会先把真正的三路线塔图摆出来，而不是只列节点名称。Godot 现在先把这层 route shell 迁回入口，方便在真正开打前就读懂这次 climb 的转向点。",
-				"en": "The source Cangjie Road opens with an actual three-lane tower board instead of only listing node names. Godot now brings that route shell back into the portal so the climb's pivot points can be read before a real run starts."
+				"zh": "source《仓颉之路》会先把真正的三路线塔图摆出来，而不是只列节点名称。Godot 现在先把这层 route shell 和层间连线一起迁回入口，方便在真正开打前就读懂这次 climb 的转向点。",
+				"en": "The source Cangjie Road opens with an actual three-lane tower board instead of only listing node names. Godot now brings that route shell plus its between-row path links back into the portal so the climb's pivot points can be read before a real run starts."
 			},
 			"default_node_id": "entry_battle",
 			"hint": {
@@ -1647,6 +1647,7 @@ const CANGJIE_PORTAL_SECTIONS := [
 							],
 							"linked_preview_kind": "reward_chain",
 							"linked_preview_option": "draft",
+							"connections": ["mid_battle", "shop_node"],
 							"tone": Color(0.94, 0.74, 0.42, 1.0),
 							"state": "path"
 						},
@@ -1668,6 +1669,7 @@ const CANGJIE_PORTAL_SECTIONS := [
 							],
 							"linked_preview_kind": "route_ledger",
 							"linked_preview_option": "deepen",
+							"connections": ["mid_battle", "shop_node", "elite_node"],
 							"tone": Color(0.72, 0.62, 0.94, 1.0),
 							"state": "option"
 						},
@@ -1689,6 +1691,7 @@ const CANGJIE_PORTAL_SECTIONS := [
 							],
 							"linked_preview_kind": "route_ledger",
 							"linked_preview_option": "patch",
+							"connections": ["shop_node", "elite_node"],
 							"tone": Color(0.54, 0.82, 0.88, 1.0),
 							"state": "option"
 						}
@@ -1715,6 +1718,7 @@ const CANGJIE_PORTAL_SECTIONS := [
 							],
 							"linked_preview_kind": "reward_chain",
 							"linked_preview_option": "draft",
+							"connections": ["archive_node", "treasure_node"],
 							"tone": Color(0.94, 0.74, 0.42, 1.0),
 							"state": "option"
 						},
@@ -1736,6 +1740,7 @@ const CANGJIE_PORTAL_SECTIONS := [
 							],
 							"linked_preview_kind": "route_ledger",
 							"linked_preview_option": "tempo",
+							"connections": ["archive_node", "treasure_node", "late_battle"],
 							"tone": Color(0.96, 0.82, 0.46, 1.0),
 							"state": "path"
 						},
@@ -1757,6 +1762,7 @@ const CANGJIE_PORTAL_SECTIONS := [
 							],
 							"linked_preview_kind": "reward_chain",
 							"linked_preview_option": "relic",
+							"connections": ["treasure_node", "late_battle"],
 							"tone": Color(0.94, 0.58, 0.48, 1.0),
 							"state": "option"
 						}
@@ -1783,6 +1789,7 @@ const CANGJIE_PORTAL_SECTIONS := [
 							],
 							"linked_preview_kind": "reward_chain",
 							"linked_preview_option": "skip",
+							"connections": ["summit_boss"],
 							"tone": Color(0.86, 0.8, 0.56, 1.0),
 							"state": "option"
 						},
@@ -1804,6 +1811,7 @@ const CANGJIE_PORTAL_SECTIONS := [
 							],
 							"linked_preview_kind": "reward_chain",
 							"linked_preview_option": "relic",
+							"connections": ["summit_boss"],
 							"tone": Color(0.52, 0.84, 0.8, 1.0),
 							"state": "path"
 						},
@@ -1825,6 +1833,7 @@ const CANGJIE_PORTAL_SECTIONS := [
 							],
 							"linked_preview_kind": "reward_chain",
 							"linked_preview_option": "draft",
+							"connections": ["summit_boss"],
 							"tone": Color(0.94, 0.74, 0.42, 1.0),
 							"state": "option"
 						}
