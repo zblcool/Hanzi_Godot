@@ -1403,6 +1403,10 @@ const BATTLE_HUD_CONTENT := {
 		"zh": "%s  ·  敌群 %d  ·  砚台 %d  ·  草丛 %d  ·  地标 %d  ·  探索 %d%%",
 		"en": "%s  ·  Enemies %d  ·  Inkstones %d  ·  Bushes %d  ·  Landmarks %d  ·  Explored %d%%"
 	},
+	"map_summary_empty": {
+		"zh": "敌群 0  ·  砚台 0  ·  草丛 0",
+		"en": "Enemies 0  ·  Inkstones 0  ·  Bushes 0"
+	},
 	"map_legend_title": {"zh": "图例", "en": "Legend"},
 	"map_help_micro": {"zh": "拖拽查看，按钮缩放。Esc / M 收起。", "en": "Drag to pan. Buttons zoom. Esc / M closes."},
 	"map_help_tight": {"zh": "拖拽查看，滚轮或按钮缩放。Esc / Tab / M 收起。", "en": "Drag to pan. Wheel or buttons zoom. Esc / Tab / M closes."},

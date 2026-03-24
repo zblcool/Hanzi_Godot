@@ -3145,7 +3145,14 @@ func show_map_overlay(snapshot: Dictionary) -> void:
 	overlay_label.visible = false
 	_hide_reveal()
 	map_canvas.set_snapshot(snapshot)
-	var full_summary := _localize_text(String(snapshot.get("summary", "敌群 0  ·  砚台 0  ·  草丛 0")))
+	var hud_content := FrontEndContent.battle_hud_content()
+	var fallback_summary := _battle_state_text(
+		hud_content,
+		"map_summary_empty",
+		"敌群 0  ·  砚台 0  ·  草丛 0",
+		"Enemies 0  ·  Inkstones 0  ·  Bushes 0"
+	)
+	var full_summary := _localize_text(String(snapshot.get("summary", fallback_summary)))
 	map_summary_label.set_meta("map_full_text", full_summary)
 	map_summary_label.tooltip_text = full_summary
 	map_summary_label.text = _format_map_summary_text(full_summary)
