@@ -1269,7 +1269,22 @@ const BATTLE_STATE_CONTENT := {
 	"action_restart_run": {"zh": "重新开始", "en": "Restart Run"},
 	"action_return_menu": {"zh": "返回菜单", "en": "Return to Menu"},
 	"action_back_to_pause": {"zh": "返回暂停", "en": "Back to Pause"},
-	"action_continue_deeper": {"zh": "续卷入深层", "en": "Continue Deeper"}
+	"action_continue_deeper": {"zh": "续卷入深层", "en": "Continue Deeper"},
+	"elite_incoming_banner": {"zh": "精英现身", "en": "Elite Incoming"},
+	"boss_appears_banner": {"zh": "卷主现身", "en": "Boss Appears"},
+	"boss_appears_log_format": {"zh": "卷主现身 · %s", "en": "Boss Appears · %s"},
+	"chapter_secured_banner": {"zh": "残卷一暂定", "en": "Scroll I Secured"},
+	"chapter_secured_tip": {
+		"zh": "本卷卷主都已崩散，章节目标完成。继续战斗可测试成长上限。",
+		"en": "All scroll lords have collapsed. The chapter goal is complete, and you can keep fighting to test the build ceiling."
+	},
+	"chapter_secured_log": {"zh": "残卷一暂定 · 卷主尽散", "en": "Scroll I Secured · Bosses gone"},
+	"boss_dispersed_banner": {"zh": "卷主退散", "en": "Boss Dispersed"},
+	"boss_dispersed_tip": {
+		"zh": "卷主崩散后，先清掉残留字灵；战场安静下来后，会先停在卷间缓冲再继续入深层。",
+		"en": "The scroll lord has fallen. Clear the lingering glyph spirits and a chamber break will open before the run pushes deeper."
+	},
+	"boss_dispersed_log": {"zh": "卷主退散 · 残卷继续翻开", "en": "Boss Dispersed · The scroll unfolds deeper"}
 }
 
 const BATTLE_HUD_CONTENT := {
@@ -1780,6 +1795,48 @@ const BATTLE_GUIDANCE_CONTENT := {
 		"zh": "%s 磨词 %d/%d",
 		"en": "%s refine %d/%d"
 	},
+	"hero_callout_title_format": {
+		"zh": "%s应声",
+		"en": "%s Responds"
+	},
+	"hero_callout_log_prefix_format": {
+		"zh": "%s：",
+		"en": "%s: "
+	},
+	"enemy_taunt_title_format": {
+		"zh": "%s叫阵",
+		"en": "%s Challenges You"
+	},
+	"enemy_taunt_log_prefix_format": {
+		"zh": "%s：",
+		"en": "%s: "
+	},
+	"enemy_entrance_taunts": {
+		"elite": {
+			"zh": [
+				"魇潮已至，退无可退。",
+				"把名字留在败卷里。",
+				"这一页写你的败笔。"
+			],
+			"en": [
+				"The nightmare tide is here. There is no retreat.",
+				"Leave your name in the broken scroll.",
+				"This page will record your failed stroke."
+			]
+		},
+		"boss": {
+			"zh": [
+				"残卷深处，不留活笔。",
+				"你会写进我的卷底。",
+				"到此为止，执笔者。"
+			],
+			"en": [
+				"No living stroke survives this deep in the scroll.",
+				"Your name will be written into the bottom of my scroll.",
+				"This is where your writing ends, scribe."
+			]
+		}
+	},
 	"room_objective_gatekeeper_default_name": {
 		"zh": "守关魁首",
 		"en": "Gatekeeper"
@@ -1888,6 +1945,34 @@ const BATTLE_GUIDANCE_CONTENT := {
 		"zh": "更深的卷主会把弹幕、冲锋和禁阵连成更长一套节奏。",
 		"en": "This deeper lord chains volleys, charges, and forbidden arrays into one longer rhythm."
 	},
+	"scroll_label_current": {
+		"zh": "残卷一",
+		"en": "Scroll I"
+	},
+	"boss_stage_label_first": {
+		"zh": "首卷主",
+		"en": "First Scroll Lord"
+	},
+	"boss_stage_label_deeper": {
+		"zh": "深层卷主",
+		"en": "Deeper Scroll Lord"
+	},
+	"boss_reveal_title_first_format": {
+		"zh": "%s压阵而至",
+		"en": "%s enters the field"
+	},
+	"boss_reveal_title_deeper_format": {
+		"zh": "%s自深卷降阵",
+		"en": "%s descends deeper"
+	},
+	"boss_defeat_reveal_title_complete": {
+		"zh": "本卷卷主皆已崩散",
+		"en": "All scroll lords have fallen"
+	},
+	"boss_defeat_reveal_title_next": {
+		"zh": "更深一层正在翻开",
+		"en": "The deeper layer unfolds"
+	},
 	"boss_defeat_detail_complete": {
 		"zh": "本卷目标已经定住，后续战斗主要用于继续测试这条 build 的上限。",
 		"en": "Chapter target secured. Keep fighting only to test how far this build can still climb."
@@ -1895,6 +1980,46 @@ const BATTLE_GUIDANCE_CONTENT := {
 	"boss_defeat_detail_next": {
 		"zh": "先收拢散落补给，再准备迎接下一位卷主和更密的混编字潮。",
 		"en": "Gather the scattered supplies, then prepare for the next scroll lord and denser mixed waves."
+	},
+	"boss_defeat_banner_complete": {
+		"zh": "残卷一暂定",
+		"en": "Scroll I Secured"
+	},
+	"boss_defeat_tip_complete": {
+		"zh": "本卷卷主都已崩散，章节目标完成。继续战斗可测试成长上限。",
+		"en": "All scroll lords have collapsed. The chapter goal is complete, and you can keep fighting to test the build ceiling."
+	},
+	"boss_defeat_log_complete": {
+		"zh": "残卷一暂定 · 卷主尽散",
+		"en": "Scroll I Secured · Bosses gone"
+	},
+	"boss_defeat_soundtrack_complete": {
+		"zh": "残卷暂定",
+		"en": "Scroll Secured"
+	},
+	"boss_defeat_banner_next": {
+		"zh": "卷主退散",
+		"en": "Boss Dispersed"
+	},
+	"boss_defeat_tip_next": {
+		"zh": "卷主崩散后，先清掉残留字灵；战场安静下来后，会先停在卷间缓冲再继续入深层。",
+		"en": "The scroll lord has fallen. Clear the lingering glyph spirits and a chamber break will open before the run pushes deeper."
+	},
+	"boss_defeat_log_next": {
+		"zh": "卷主退散 · 残卷继续翻开",
+		"en": "Boss Dispersed · The scroll unfolds deeper"
+	},
+	"boss_defeat_soundtrack_next": {
+		"zh": "残卷回气",
+		"en": "Scroll Recovery"
+	},
+	"test_jump_banner_format": {
+		"zh": "试阵跃迁 · 第 %d 波",
+		"en": "Test Jump · Wave %d"
+	},
+	"test_jump_tip_format": {
+		"zh": "已清空当前敌群并切到第 %d 波，可继续观察刷怪节奏、演出密度和 FPS。",
+		"en": "The current enemies, hazards, and projectiles were cleared and the run jumped to wave %d so you can inspect pacing, effect density, and FPS."
 	},
 	"phrase_reward_heal_format": {
 		"zh": "回复 %d 点气血",

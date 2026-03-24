@@ -842,23 +842,29 @@ func _localized_intro_tip(start_wave: int, fallback: String) -> String:
 
 
 func _current_scroll_label() -> String:
-	return "Scroll I" if _is_english() else "残卷一"
+	return _battle_guidance_text("scroll_label_current", "残卷一", "Scroll I")
 
 
 func _boss_stage_label(stage_index: int) -> String:
 	if stage_index <= 0:
-		return "First Scroll Lord" if _is_english() else "首卷主"
-	return "Deeper Scroll Lord" if _is_english() else "深层卷主"
+		return _battle_guidance_text("boss_stage_label_first", "首卷主", "First Scroll Lord")
+	return _battle_guidance_text("boss_stage_label_deeper", "深层卷主", "Deeper Scroll Lord")
 
 
 func _boss_reveal_title(stage_index: int, boss_name: String) -> String:
 	if stage_index <= 0:
-		if _is_english():
-			return "%s enters the field" % boss_name
-		return "%s压阵而至" % boss_name
-	if _is_english():
-		return "%s descends deeper" % boss_name
-	return "%s自深卷降阵" % boss_name
+		return _battle_guidance_format(
+			"boss_reveal_title_first_format",
+			"%s压阵而至",
+			"%s enters the field",
+			[boss_name]
+		)
+	return _battle_guidance_format(
+		"boss_reveal_title_deeper_format",
+		"%s自深卷降阵",
+		"%s descends deeper",
+		[boss_name]
+	)
 
 
 func _boss_spawn_reveal_detail(stage_index: int) -> String:
@@ -877,8 +883,16 @@ func _boss_spawn_reveal_detail(stage_index: int) -> String:
 
 func _boss_defeat_reveal_title(completed_bosses: int) -> String:
 	if completed_bosses >= BOSS_SPAWN_TIMES.size():
-		return "All scroll lords have fallen" if _is_english() else "本卷卷主皆已崩散"
-	return "The deeper layer unfolds" if _is_english() else "更深一层正在翻开"
+		return _battle_guidance_text(
+			"boss_defeat_reveal_title_complete",
+			"本卷卷主皆已崩散",
+			"All scroll lords have fallen"
+		)
+	return _battle_guidance_text(
+		"boss_defeat_reveal_title_next",
+		"更深一层正在翻开",
+		"The deeper layer unfolds"
+	)
 
 
 func _boss_defeat_reveal_detail(completed_bosses: int) -> String:
@@ -4348,9 +4362,22 @@ func _jump_to_next_wave_for_test() -> void:
 	_update_boss_flow()
 	_sync_hud()
 	if hud != null:
-		hud.show_banner(("Test Jump · Wave %d" if _is_english() else "试阵跃迁 · 第 %d 波") % next_wave, _threat_level_color(next_wave), 1.95)
-		hud.set_tip(("The current enemies, hazards, and projectiles were cleared and the run jumped to wave %d so you can inspect pacing, effect density, and FPS." if _is_english() else "已清空当前敌群并切到第 %d 波，可继续观察刷怪节奏、演出密度和 FPS。") % next_wave)
-		_log_battle_event(("Test Jump · Wave %d" if _is_english() else "试阵跃迁 · 第 %d 波") % next_wave, _threat_level_color(next_wave))
+		var test_jump_banner := _battle_guidance_format(
+			"test_jump_banner_format",
+			"试阵跃迁 · 第 %d 波",
+			"Test Jump · Wave %d",
+			[next_wave]
+		)
+		hud.show_banner(test_jump_banner, _threat_level_color(next_wave), 1.95)
+		hud.set_tip(
+			_battle_guidance_format(
+				"test_jump_tip_format",
+				"已清空当前敌群并切到第 %d 波，可继续观察刷怪节奏、演出密度和 FPS。",
+				"The current enemies, hazards, and projectiles were cleared and the run jumped to wave %d so you can inspect pacing, effect density, and FPS.",
+				[next_wave]
+			)
+		)
+		_log_battle_event(test_jump_banner, _threat_level_color(next_wave))
 
 
 func _on_boss_defeated(world_position: Vector3) -> void:
@@ -4364,7 +4391,11 @@ func _on_boss_defeated(world_position: Vector3) -> void:
 	if completed_bosses >= BOSS_SPAWN_TIMES.size():
 		chamber_break_pending = false
 		Session.chapter_progress["chapter_complete"] = true
-		hud.show_banner("Scroll I Secured" if _is_english() else "残卷一暂定", Color(1.0, 0.88, 0.58, 1.0), 2.6)
+		hud.show_banner(
+			_battle_guidance_text("boss_defeat_banner_complete", "残卷一暂定", "Scroll I Secured"),
+			Color(1.0, 0.88, 0.58, 1.0),
+			2.6
+		)
 		hud.show_reveal(
 			_current_scroll_label(),
 			_boss_defeat_reveal_title(completed_bosses),
@@ -4373,13 +4404,35 @@ func _on_boss_defeated(world_position: Vector3) -> void:
 			"定",
 			3.35
 		)
-		hud.set_tip("All scroll lords have collapsed. The chapter goal is complete, and you can keep fighting to test the build ceiling." if _is_english() else "本卷卷主都已崩散，章节目标完成。继续战斗可测试成长上限。")
-		_log_battle_event("Scroll I Secured · Bosses gone" if _is_english() else "残卷一暂定 · 卷主尽散", Color(1.0, 0.88, 0.58, 1.0))
-		_set_soundtrack("mosslightCanopy", "残卷暂定", true, true)
+		hud.set_tip(
+			_battle_guidance_text(
+				"boss_defeat_tip_complete",
+				"本卷卷主都已崩散，章节目标完成。继续战斗可测试成长上限。",
+				"All scroll lords have collapsed. The chapter goal is complete, and you can keep fighting to test the build ceiling."
+			)
+		)
+		_log_battle_event(
+			_battle_guidance_text(
+				"boss_defeat_log_complete",
+				"残卷一暂定 · 卷主尽散",
+				"Scroll I Secured · Bosses gone"
+			),
+			Color(1.0, 0.88, 0.58, 1.0)
+		)
+		_set_soundtrack(
+			"mosslightCanopy",
+			_battle_guidance_text("boss_defeat_soundtrack_complete", "残卷暂定", "Scroll Secured"),
+			true,
+			true
+		)
 		_show_hero_callout("chapter_complete", 3.2)
 	else:
 		chamber_break_pending = true
-		hud.show_banner("Boss Dispersed" if _is_english() else "卷主退散", Color(1.0, 0.84, 0.52, 1.0), 2.2)
+		hud.show_banner(
+			_battle_guidance_text("boss_defeat_banner_next", "卷主退散", "Boss Dispersed"),
+			Color(1.0, 0.84, 0.52, 1.0),
+			2.2
+		)
 		hud.show_reveal(
 			_boss_defeat_kicker(completed_bosses),
 			_boss_defeat_reveal_title(completed_bosses),
@@ -4388,9 +4441,27 @@ func _on_boss_defeated(world_position: Vector3) -> void:
 			"破",
 			3.1
 		)
-		hud.set_tip("The scroll lord has fallen. Clear the lingering glyph spirits and a chamber break will open before the run pushes deeper." if _is_english() else "卷主崩散后，先清掉残留字灵；战场安静下来后，会先停在卷间缓冲再继续入深层。")
-		_log_battle_event("Boss Dispersed · The scroll unfolds deeper" if _is_english() else "卷主退散 · 残卷继续翻开", Color(1.0, 0.84, 0.52, 1.0))
-		_set_soundtrack("mosslightCanopy", "残卷回气", true, true)
+		hud.set_tip(
+			_battle_guidance_text(
+				"boss_defeat_tip_next",
+				"卷主崩散后，先清掉残留字灵；战场安静下来后，会先停在卷间缓冲再继续入深层。",
+				"The scroll lord has fallen. Clear the lingering glyph spirits and a chamber break will open before the run pushes deeper."
+			)
+		)
+		_log_battle_event(
+			_battle_guidance_text(
+				"boss_defeat_log_next",
+				"卷主退散 · 残卷继续翻开",
+				"Boss Dispersed · The scroll unfolds deeper"
+			),
+			Color(1.0, 0.84, 0.52, 1.0)
+		)
+		_set_soundtrack(
+			"mosslightCanopy",
+			_battle_guidance_text("boss_defeat_soundtrack_next", "残卷回气", "Scroll Recovery"),
+			true,
+			true
+		)
 		_show_hero_callout("boss_defeat", 3.0)
 	_spawn_wave_effect(world_position, 7.2, Color(1.0, 0.74, 0.46, 1.0), "破")
 	_gain_experience(12)
