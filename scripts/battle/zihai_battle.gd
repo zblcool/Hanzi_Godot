@@ -1170,6 +1170,16 @@ func _arm_scroll_echo_modifier() -> void:
 	_arm_chamber_modifier("scroll_echo")
 
 
+func _build_chamber_carry_snapshot() -> Dictionary:
+	var snapshot: Dictionary = {}
+	if not chamber_modifier_id.is_empty():
+		snapshot["modifier_id"] = chamber_modifier_id
+	var lean_radicals := _interlude_draft_lean_radicals()
+	if not lean_radicals.is_empty():
+		snapshot["draft_radicals"] = lean_radicals
+	return snapshot
+
+
 func _scroll_echo_modifier_active() -> bool:
 	return chamber_modifier_id == "scroll_echo"
 
@@ -4351,6 +4361,7 @@ func _sync_hud() -> void:
 	hud.set_status(elapsed_time, kills, threat_level)
 	hud.set_radicals(radical_counts)
 	hud.set_skills(skill_levels, word_skill_levels, word_progress, blade_level, Session.selected_hero)
+	hud.set_chamber_carry_state(_build_chamber_carry_snapshot())
 
 
 func _apply_intro_preset() -> void:

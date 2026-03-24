@@ -410,6 +410,7 @@ var cached_recipe_levels: Dictionary = {}
 var cached_word_levels: Dictionary = {}
 var cached_word_progress: Dictionary = {}
 var cached_blade_level := 0
+var cached_chamber_carry_state: Dictionary = {}
 
 
 func _ready() -> void:
@@ -757,6 +758,28 @@ func set_skills(recipe_levels: Dictionary, word_levels: Dictionary, word_progres
 		skill_cards_box.add_child(_make_skill_card(card))
 	_refresh_compact_skill_chips(cards)
 	_refresh_route_focus()
+
+
+func set_chamber_carry_state(carry_state: Dictionary) -> void:
+	cached_chamber_carry_state = carry_state.duplicate(true)
+	if state_overlay == null or not state_overlay.visible:
+		return
+	if state_mode == "pause" and not last_pause_summary.is_empty():
+		state_body_label.text = _build_pause_state_body(
+			float(last_pause_summary.get("elapsed", 0.0)),
+			int(last_pause_summary.get("kills", 0)),
+			int(last_pause_summary.get("threat", 1)),
+			int(last_pause_summary.get("level", 1))
+		)
+	elif state_mode == "game_over" and not last_game_over_data.is_empty():
+		state_body_label.text = _build_game_over_state_body(
+			String(last_game_over_data.get("summary", "")),
+			float(last_game_over_data.get("elapsed", 0.0)),
+			int(last_game_over_data.get("kills", 0)),
+			int(last_game_over_data.get("threat", 1)),
+			int(last_game_over_data.get("level", 1)),
+			String(last_game_over_data.get("leaderboard_view", "manual"))
+		)
 
 
 func set_tip(text: String) -> void:
@@ -1108,6 +1131,10 @@ func _build_pause_state_body(elapsed: float, kills: int, threat: int, level: int
 	if not route_lines.is_empty():
 		lines.append("")
 		lines.append_array(route_lines)
+	var carry_lines := _build_chamber_carry_state_lines(compact_copy)
+	if not carry_lines.is_empty():
+		lines.append("")
+		lines.append_array(carry_lines)
 	lines.append("")
 	lines.append(
 		_battle_state_text(
@@ -1157,6 +1184,10 @@ func _build_game_over_state_body(summary: String, elapsed: float, kills: int, th
 	if not route_lines.is_empty():
 		lines.append("")
 		lines.append_array(route_lines)
+	var carry_lines := _build_chamber_carry_state_lines(compact_copy)
+	if not carry_lines.is_empty():
+		lines.append("")
+		lines.append_array(carry_lines)
 	return "\n".join(lines)
 
 
@@ -1183,6 +1214,79 @@ func _build_route_focus_state_lines(compact_copy: bool = false) -> Array[String]
 	if not detail.is_empty():
 		lines.append(detail)
 	return lines
+
+
+func _build_chamber_carry_state_lines(compact_copy: bool = false) -> Array[String]:
+	var modifier_id := String(cached_chamber_carry_state.get("modifier_id", "")).strip_edges()
+	var lean_radicals := _build_chamber_carry_radicals()
+	if modifier_id.is_empty() and lean_radicals.is_empty():
+		var empty_lines: Array[String] = []
+		return empty_lines
+
+	var state_content := FrontEndContent.battle_state_content()
+	var lines: Array[String] = []
+	lines.append(_battle_state_text(state_content, "carry_state_title", "卷间余势", "Interlude Carry"))
+	var modifier_line := _build_chamber_modifier_state_text(modifier_id, compact_copy)
+	if not modifier_line.is_empty():
+		lines.append(
+			_truncate_overlay_text(modifier_line, 60 if _is_english() else 28)
+			if compact_copy
+			else modifier_line
+		)
+	if not lean_radicals.is_empty():
+		var lean_line := _battle_state_text(
+			state_content,
+			"carry_lean_compact_format" if compact_copy else "carry_lean_format",
+			"偏向：%s" if compact_copy else "偏旁偏向：%s",
+			"Lean: %s" if compact_copy else "Draft lean: %s"
+		) % " / ".join(lean_radicals)
+		lines.append(
+			_truncate_overlay_text(lean_line, 60 if _is_english() else 28)
+			if compact_copy
+			else lean_line
+		)
+	return lines
+
+
+func _build_chamber_carry_radicals() -> Array[String]:
+	var radicals: Array[String] = []
+	var radicals_variant: Variant = cached_chamber_carry_state.get("draft_radicals", [])
+	if radicals_variant is Array:
+		for radical_variant in radicals_variant:
+			var radical := String(radical_variant)
+			if radical.is_empty() or radicals.has(radical):
+				continue
+			radicals.append(radical)
+	return radicals
+
+
+func _build_chamber_modifier_state_text(modifier_id: String, compact_copy: bool = false) -> String:
+	if modifier_id.is_empty():
+		return ""
+	var state_content := FrontEndContent.battle_state_content()
+	match modifier_id:
+		"reward_supply":
+			return _battle_state_text(
+				state_content,
+				"carry_modifier_reward_supply_compact" if compact_copy else "carry_modifier_reward_supply",
+				"补给余势：敌群更易掉残纸 / 战印" if compact_copy else "补给余势：下一位卷主前，压境敌群更容易掉落残纸与战印。",
+				"Supply carry: more paper and seal drops" if compact_copy else "Supply carry: until the next scroll lord, pressure enemies are more likely to drop paper scraps and seals."
+			)
+		"scroll_echo":
+			return _battle_state_text(
+				state_content,
+				"carry_modifier_scroll_echo_compact" if compact_copy else "carry_modifier_scroll_echo",
+				"残卷回响：敌群补残纸，精英可掉疾书令" if compact_copy else "残卷回响：下一位卷主前，压境敌群会额外回响残纸，精英也可能掉落疾书令。",
+				"Scroll Echo: extra paper, elite Swift Edicts" if compact_copy else "Scroll Echo: until the next scroll lord, pressure enemies echo extra paper scraps and elites can drop Swift Edict."
+			)
+		"short_rest":
+			return _battle_state_text(
+				state_content,
+				"carry_modifier_short_rest_compact" if compact_copy else "carry_modifier_short_rest",
+				"歇笔余势：后续推进再补一口气" if compact_copy else "歇笔余势：下一位卷主前，后续字潮推进仍会回补一小口气。",
+				"Recovery carry: later pushes echo healing" if compact_copy else "Recovery carry: until the next scroll lord, later wave pushes still echo a smaller heal."
+			)
+	return ""
 
 
 func _build_route_progress_text() -> String:

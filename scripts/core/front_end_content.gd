@@ -1227,6 +1227,33 @@ const BATTLE_STATE_CONTENT := {
 	"summary_compact_format": {"zh": "存活 %s  ·  波次 %d  ·  击破 %d  ·  Lv.%d", "en": "Time %s  ·  W%d  ·  K%d  ·  Lv.%d"},
 	"summary_time_format": {"zh": "存活 %s", "en": "Time %s"},
 	"summary_stats_format": {"zh": "波次 %d   击破 %d   等级 Lv.%d", "en": "Wave %d   Kills %d   Level Lv.%d"},
+	"carry_state_title": {"zh": "卷间余势", "en": "Interlude Carry"},
+	"carry_modifier_reward_supply": {
+		"zh": "补给余势：下一位卷主前，压境敌群更容易掉落残纸与战印。",
+		"en": "Supply carry: until the next scroll lord, pressure enemies are more likely to drop paper scraps and seals."
+	},
+	"carry_modifier_reward_supply_compact": {
+		"zh": "补给余势：敌群更易掉残纸 / 战印",
+		"en": "Supply carry: more paper and seal drops"
+	},
+	"carry_modifier_scroll_echo": {
+		"zh": "残卷回响：下一位卷主前，压境敌群会额外回响残纸，精英也可能掉落疾书令。",
+		"en": "Scroll Echo: until the next scroll lord, pressure enemies echo extra paper scraps and elites can drop Swift Edict."
+	},
+	"carry_modifier_scroll_echo_compact": {
+		"zh": "残卷回响：敌群补残纸，精英可掉疾书令",
+		"en": "Scroll Echo: extra paper, elite Swift Edicts"
+	},
+	"carry_modifier_short_rest": {
+		"zh": "歇笔余势：下一位卷主前，后续字潮推进仍会回补一小口气。",
+		"en": "Recovery carry: until the next scroll lord, later wave pushes still echo a smaller heal."
+	},
+	"carry_modifier_short_rest_compact": {
+		"zh": "歇笔余势：后续推进再补一口气",
+		"en": "Recovery carry: later pushes echo healing"
+	},
+	"carry_lean_format": {"zh": "偏旁偏向：%s", "en": "Draft lean: %s"},
+	"carry_lean_compact_format": {"zh": "偏向：%s", "en": "Lean: %s"},
 	"pause_controls_compact": {"zh": "按 E / Esc 继续，R 重开", "en": "E / Esc resume · R restart"},
 	"pause_controls_full": {"zh": "按 E 或 Esc 继续，按 R 立即重开。", "en": "Press E or Esc to resume, or R to restart immediately."},
 	"game_over_title": {"zh": "字海沉没", "en": "The Ink Sea Sinks"},
