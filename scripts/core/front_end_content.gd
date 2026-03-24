@@ -1448,6 +1448,102 @@ const BATTLE_GUIDANCE_CONTENT := {
 	"inkstone_waiting_tip": {
 		"zh": "砚台静候。先把合字升满，再带着相关偏旁来磨词。",
 		"en": "The inkstone waits. Max a fused glyph first, then bring its related radicals here for phrase refinement."
+	},
+	"boss_spawn_detail_first": {
+		"zh": "先躲开场的大禁阵，再抓卷主回气时的空档。",
+		"en": "Large forbidden arrays arrive first. Dodge the opening layer, then punish the recovery."
+	},
+	"boss_spawn_detail_deeper": {
+		"zh": "更深的卷主会把弹幕、冲锋和禁阵连成更长一套节奏。",
+		"en": "This deeper lord chains volleys, charges, and forbidden arrays into one longer rhythm."
+	},
+	"boss_defeat_detail_complete": {
+		"zh": "本卷目标已经定住，后续战斗主要用于继续测试这条 build 的上限。",
+		"en": "Chapter target secured. Keep fighting only to test how far this build can still climb."
+	},
+	"boss_defeat_detail_next": {
+		"zh": "先收拢散落补给，再准备迎接下一位卷主和更密的混编字潮。",
+		"en": "Gather the scattered supplies, then prepare for the next scroll lord and denser mixed waves."
+	},
+	"phrase_reward_heal_format": {
+		"zh": "回复 %d 点气血",
+		"en": "restore %d vitality"
+	},
+	"phrase_reward_xp_format": {
+		"zh": "获得 %d 点字墨",
+		"en": "gain %d ink"
+	},
+	"phrase_reward_reveal": {
+		"zh": "扩开附近迷雾显形",
+		"en": "widen nearby fog reveal"
+	},
+	"phrase_reward_radical_format": {
+		"zh": "获得偏旁「%s」",
+		"en": "gain radical %s"
+	},
+	"phrase_reward_default": {
+		"zh": "领取句阵赏赐",
+		"en": "claim the sentence reward"
+	},
+	"phrase_guardian_banner_format": {
+		"zh": "句阵守卫 · %s",
+		"en": "Sentence Guardian · %s"
+	},
+	"phrase_guardian_reveal_title": {
+		"zh": "守句现身",
+		"en": "Guarded Phrase"
+	},
+	"phrase_guardian_reveal_body_format": {
+		"zh": "击败守句魁首，即可%s。",
+		"en": "Defeat the guardian to %s."
+	},
+	"phrase_guardian_tip_format": {
+		"zh": "这段房间里已经显出「%s」句阵。击败守句魁首后，就能%s。",
+		"en": "The guarded phrase `%s` has surfaced in this chamber. Defeat its guardian to %s."
+	},
+	"phrase_guardian_log_format": {
+		"zh": "句阵守卫 · %s",
+		"en": "Phrase Guardian · %s"
+	},
+	"phrase_revealed_banner_format": {
+		"zh": "句成异动 · %s",
+		"en": "Phrase Revealed · %s"
+	},
+	"phrase_revealed_reveal_title": {
+		"zh": "句成异动",
+		"en": "Verse Revealed"
+	},
+	"phrase_revealed_reward_format": {
+		"zh": "奖励 · %s",
+		"en": "Reward · %s"
+	},
+	"phrase_revealed_tip_format": {
+		"zh": "「%s」句阵已经显成，句阵赏赐会为你%s。",
+		"en": "The guarded phrase `%s` is now yours. The sentence reward will %s."
+	},
+	"phrase_revealed_log_format": {
+		"zh": "句成异动 · %s · %s",
+		"en": "Phrase Revealed · %s · %s"
+	},
+	"chamber_pressure_big_wave": {
+		"zh": "刷怪速度和场上字灵上限都会一起抬高。",
+		"en": "Enemy cap and spawn rate both rise together."
+	},
+	"chamber_pressure_wave_2": {
+		"zh": "弓手会开始混进字潮，远程牵制变多。",
+		"en": "Ranged pressure starts mixing into the tide."
+	},
+	"chamber_pressure_wave_3": {
+		"zh": "突刺和地阵会开始叠在一起施压。",
+		"en": "Dashes and ground arrays start overlapping."
+	},
+	"chamber_pressure_wave_4": {
+		"zh": "冲锋线会开始切穿混编字潮。",
+		"en": "Charge lines start cutting through mixed waves."
+	},
+	"chamber_pressure_wave_default": {
+		"zh": "魁首会更常压阵，混编节奏会更硬。",
+		"en": "Elites begin anchoring the pack more often."
 	}
 }
 

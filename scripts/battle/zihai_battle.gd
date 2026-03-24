@@ -748,6 +748,11 @@ func _battle_guidance_text(key: String, fallback_zh: String, fallback_en: String
 	return _front_end_text(FrontEndContent.battle_guidance_content(), key, fallback_zh, fallback_en)
 
 
+func _battle_guidance_format(key: String, fallback_zh: String, fallback_en: String, values: Array = []) -> String:
+	var text := _battle_guidance_text(key, fallback_zh, fallback_en)
+	return text % values if not values.is_empty() else text
+
+
 func _localized_hero_data(hero_data: Dictionary) -> Dictionary:
 	return HanziLocalization.localized_hero_data(String(hero_data.get("id", "")), Session.get_launcher_language())
 
@@ -824,8 +829,16 @@ func _boss_reveal_title(stage_index: int, boss_name: String) -> String:
 
 func _boss_spawn_reveal_detail(stage_index: int) -> String:
 	if stage_index <= 0:
-		return "Large forbidden arrays arrive first. Dodge the opening layer, then punish the recovery." if _is_english() else "先躲开场的大禁阵，再抓卷主回气时的空档。"
-	return "This deeper lord chains volleys, charges, and forbidden arrays into one longer rhythm." if _is_english() else "更深的卷主会把弹幕、冲锋和禁阵连成更长一套节奏。"
+		return _battle_guidance_text(
+			"boss_spawn_detail_first",
+			"先躲开场的大禁阵，再抓卷主回气时的空档。",
+			"Large forbidden arrays arrive first. Dodge the opening layer, then punish the recovery."
+		)
+	return _battle_guidance_text(
+		"boss_spawn_detail_deeper",
+		"更深的卷主会把弹幕、冲锋和禁阵连成更长一套节奏。",
+		"This deeper lord chains volleys, charges, and forbidden arrays into one longer rhythm."
+	)
 
 
 func _boss_defeat_reveal_title(completed_bosses: int) -> String:
@@ -836,8 +849,16 @@ func _boss_defeat_reveal_title(completed_bosses: int) -> String:
 
 func _boss_defeat_reveal_detail(completed_bosses: int) -> String:
 	if completed_bosses >= BOSS_SPAWN_TIMES.size():
-		return "Chapter target secured. Keep fighting only to test how far this build can still climb." if _is_english() else "本卷目标已经定住，后续战斗主要用于继续测试这条 build 的上限。"
-	return "Gather the scattered supplies, then prepare for the next scroll lord and denser mixed waves." if _is_english() else "先收拢散落补给，再准备迎接下一位卷主和更密的混编字潮。"
+		return _battle_guidance_text(
+			"boss_defeat_detail_complete",
+			"本卷目标已经定住，后续战斗主要用于继续测试这条 build 的上限。",
+			"Chapter target secured. Keep fighting only to test how far this build can still climb."
+		)
+	return _battle_guidance_text(
+		"boss_defeat_detail_next",
+		"先收拢散落补给，再准备迎接下一位卷主和更密的混编字潮。",
+		"Gather the scattered supplies, then prepare for the next scroll lord and denser mixed waves."
+	)
 
 
 func _boss_defeat_kicker(completed_bosses: int) -> String:
@@ -1561,16 +1582,39 @@ func _phrase_event_reward_copy(phrase_event: Dictionary) -> String:
 	var reward_amount := int(round(float(phrase_event.get("reward_amount", 0.0))))
 	match reward_type:
 		"heal":
-			return ("restore %d vitality" if _is_english() else "回复 %d 点气血") % reward_amount
+			return _battle_guidance_format(
+				"phrase_reward_heal_format",
+				"回复 %d 点气血",
+				"restore %d vitality",
+				[reward_amount]
+			)
 		"xp":
-			return ("gain %d ink" if _is_english() else "获得 %d 点字墨") % reward_amount
+			return _battle_guidance_format(
+				"phrase_reward_xp_format",
+				"获得 %d 点字墨",
+				"gain %d ink",
+				[reward_amount]
+			)
 		"reveal":
-			return "widen nearby fog reveal" if _is_english() else "扩开附近迷雾显形"
+			return _battle_guidance_text(
+				"phrase_reward_reveal",
+				"扩开附近迷雾显形",
+				"widen nearby fog reveal"
+			)
 		"radical":
 			var reward_radical := String(phrase_event.get("reward_radical", "日"))
-			return ("gain radical %s" if _is_english() else "获得偏旁「%s」") % reward_radical
+			return _battle_guidance_format(
+				"phrase_reward_radical_format",
+				"获得偏旁「%s」",
+				"gain radical %s",
+				[reward_radical]
+			)
 		_:
-			return "claim the sentence reward" if _is_english() else "领取句阵赏赐"
+			return _battle_guidance_text(
+				"phrase_reward_default",
+				"领取句阵赏赐",
+				"claim the sentence reward"
+			)
 
 
 func _update_phrase_events() -> void:
@@ -1596,23 +1640,45 @@ func _update_phrase_events() -> void:
 		var reward_copy := _phrase_event_reward_copy(phrase_event)
 		if hud != null:
 			hud.show_banner(
-				("Sentence Guardian · %s" if _is_english() else "句阵守卫 · %s") % phrase_text,
+				_battle_guidance_format(
+					"phrase_guardian_banner_format",
+					"句阵守卫 · %s",
+					"Sentence Guardian · %s",
+					[phrase_text]
+				),
 				accent,
 				1.7
 			)
 			hud.show_reveal(
-				"Guarded Phrase" if _is_english() else "守句现身",
+				_battle_guidance_text("phrase_guardian_reveal_title", "守句现身", "Guarded Phrase"),
 				phrase_text,
-				("Defeat the guardian to %s." if _is_english() else "击败守句魁首，即可%s。") % reward_copy,
+				_battle_guidance_format(
+					"phrase_guardian_reveal_body_format",
+					"击败守句魁首，即可%s。",
+					"Defeat the guardian to %s.",
+					[reward_copy]
+				),
 				accent,
 				String(phrase_event.get("guardian_glyph", phrase_event.get("glyph", "句"))),
 				2.8
 			)
 			hud.set_tip(
-				("The guarded phrase `%s` has surfaced in this chamber. Defeat its guardian to %s." if _is_english() else "这段房间里已经显出「%s」句阵。击败守句魁首后，就能%s。")
-				% [phrase_text, reward_copy]
+				_battle_guidance_format(
+					"phrase_guardian_tip_format",
+					"这段房间里已经显出「%s」句阵。击败守句魁首后，就能%s。",
+					"The guarded phrase `%s` has surfaced in this chamber. Defeat its guardian to %s.",
+					[phrase_text, reward_copy]
+				)
 			)
-		_log_battle_event(("Phrase Guardian · %s" if _is_english() else "句阵守卫 · %s") % phrase_text, accent)
+		_log_battle_event(
+			_battle_guidance_format(
+				"phrase_guardian_log_format",
+				"句阵守卫 · %s",
+				"Phrase Guardian · %s",
+				[phrase_text]
+			),
+			accent
+		)
 		_spawn_phrase_guardian(phrase_event)
 
 
@@ -1699,23 +1765,45 @@ func _grant_phrase_event_reward(phrase_event: Dictionary) -> void:
 	)
 	if hud != null:
 		hud.show_banner(
-			("Phrase Revealed · %s" if _is_english() else "句成异动 · %s") % phrase_text,
+			_battle_guidance_format(
+				"phrase_revealed_banner_format",
+				"句成异动 · %s",
+				"Phrase Revealed · %s",
+				[phrase_text]
+			),
 			accent,
 			1.9
 		)
 		hud.show_reveal(
-			"Verse Revealed" if _is_english() else "句成异动",
+			_battle_guidance_text("phrase_revealed_reveal_title", "句成异动", "Verse Revealed"),
 			phrase_text,
-			("Reward · %s" if _is_english() else "奖励 · %s") % reward_copy,
+			_battle_guidance_format(
+				"phrase_revealed_reward_format",
+				"奖励 · %s",
+				"Reward · %s",
+				[reward_copy]
+			),
 			accent,
 			String(phrase_event.get("glyph", phrase_event.get("guardian_glyph", "句"))),
 			2.7
 		)
 		hud.set_tip(
-			("The guarded phrase `%s` is now yours. The sentence reward will %s." if _is_english() else "「%s」句阵已经显成，句阵赏赐会为你%s。")
-			% [phrase_text, reward_copy]
+			_battle_guidance_format(
+				"phrase_revealed_tip_format",
+				"「%s」句阵已经显成，句阵赏赐会为你%s。",
+				"The guarded phrase `%s` is now yours. The sentence reward will %s.",
+				[phrase_text, reward_copy]
+			)
 		)
-	_log_battle_event(("Phrase Revealed · %s · %s" if _is_english() else "句成异动 · %s · %s") % [phrase_text, reward_copy], accent)
+	_log_battle_event(
+		_battle_guidance_format(
+			"phrase_revealed_log_format",
+			"句成异动 · %s · %s",
+			"Phrase Revealed · %s · %s",
+			[phrase_text, reward_copy]
+		),
+		accent
+	)
 	_sync_hud()
 
 
@@ -1755,16 +1843,36 @@ func _chamber_interlude_title() -> String:
 
 func _chamber_preview_pressure_copy(next_wave: int) -> String:
 	if _is_big_wave(next_wave):
-		return "Enemy cap and spawn rate both rise together." if _is_english() else "刷怪速度和场上字灵上限都会一起抬高。"
+		return _battle_guidance_text(
+			"chamber_pressure_big_wave",
+			"刷怪速度和场上字灵上限都会一起抬高。",
+			"Enemy cap and spawn rate both rise together."
+		)
 	match next_wave:
 		2:
-			return "Ranged pressure starts mixing into the tide." if _is_english() else "弓手会开始混进字潮，远程牵制变多。"
+			return _battle_guidance_text(
+				"chamber_pressure_wave_2",
+				"弓手会开始混进字潮，远程牵制变多。",
+				"Ranged pressure starts mixing into the tide."
+			)
 		3:
-			return "Dashes and ground arrays start overlapping." if _is_english() else "突刺和地阵会开始叠在一起施压。"
+			return _battle_guidance_text(
+				"chamber_pressure_wave_3",
+				"突刺和地阵会开始叠在一起施压。",
+				"Dashes and ground arrays start overlapping."
+			)
 		4:
-			return "Charge lines start cutting through mixed waves." if _is_english() else "冲锋线会开始切穿混编字潮。"
+			return _battle_guidance_text(
+				"chamber_pressure_wave_4",
+				"冲锋线会开始切穿混编字潮。",
+				"Charge lines start cutting through mixed waves."
+			)
 		_:
-			return "Elites begin anchoring the pack more often." if _is_english() else "魁首会更常压阵，混编节奏会更硬。"
+			return _battle_guidance_text(
+				"chamber_pressure_wave_default",
+				"魁首会更常压阵，混编节奏会更硬。",
+				"Elites begin anchoring the pack more often."
+			)
 
 
 func _chamber_preview_threat_ids(next_wave: int) -> Array[String]:
