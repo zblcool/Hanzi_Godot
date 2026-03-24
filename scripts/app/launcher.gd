@@ -1342,11 +1342,6 @@ func _make_cangjie_route_preview(preview: Dictionary, accent: Color) -> PanelCon
 			if row_variant is Dictionary:
 				rows_box.add_child(_make_cangjie_route_row(row_variant as Dictionary, accent, selected_node_id, selected_lane))
 
-	if not selected_node.is_empty():
-		var route_ribbon_variant: Variant = preview.get("route_ribbon", {})
-		if route_ribbon_variant is Dictionary and not (route_ribbon_variant as Dictionary).is_empty():
-			box.add_child(_make_cangjie_route_ribbon_panel(route_ribbon_variant as Dictionary, preview, selected_node, accent))
-
 	var node_details_variant: Variant = preview.get("node_details", {})
 	if not selected_node.is_empty() and node_details_variant is Dictionary:
 		var detail_key := String(selected_node.get("kind", selected_node.get("id", "")))
@@ -1375,6 +1370,13 @@ func _make_cangjie_route_preview(preview: Dictionary, accent: Color) -> PanelCon
 			if not detail_summary.is_empty():
 				box.add_child(_make_label(detail_summary, 15, Color(0.94, 0.92, 0.88, 0.94)))
 
+			var preview_route_ribbon_variant: Variant = preview.get("route_ribbon", {})
+			var preview_route_ribbon: Dictionary = preview_route_ribbon_variant as Dictionary if preview_route_ribbon_variant is Dictionary else {}
+			var node_route_ribbon_variant: Variant = node_detail.get("route_ribbon", {})
+			var node_route_ribbon: Dictionary = node_route_ribbon_variant as Dictionary if node_route_ribbon_variant is Dictionary else {}
+			if not preview_route_ribbon.is_empty() or not node_route_ribbon.is_empty():
+				box.add_child(_make_cangjie_route_ribbon_panel(preview_route_ribbon, node_route_ribbon, preview, selected_node, selected_tone))
+
 			var group_variant: Variant = node_detail.get("group", {})
 			if group_variant is Dictionary and not (group_variant as Dictionary).is_empty():
 				box.add_child(_make_cangjie_group_panel(group_variant as Dictionary, selected_tone))
@@ -1386,7 +1388,7 @@ func _make_cangjie_route_preview(preview: Dictionary, accent: Color) -> PanelCon
 	return panel
 
 
-func _make_cangjie_route_ribbon_panel(ribbon: Dictionary, preview: Dictionary, selected_node: Dictionary, accent: Color) -> PanelContainer:
+func _make_cangjie_route_ribbon_panel(preview_ribbon: Dictionary, node_ribbon: Dictionary, preview: Dictionary, selected_node: Dictionary, accent: Color) -> PanelContainer:
 	var panel := PanelContainer.new()
 	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.08, accent.g * 0.08, accent.b * 0.1, 0.74), Color(accent.r, accent.g, accent.b, 0.28)))
 
@@ -1400,14 +1402,31 @@ func _make_cangjie_route_ribbon_panel(ribbon: Dictionary, preview: Dictionary, s
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", _i(10))
 	margin.add_child(box)
+	var ribbon_title_source := node_ribbon if not node_ribbon.is_empty() else preview_ribbon
+	var ribbon_summary_source := node_ribbon if not node_ribbon.is_empty() else preview_ribbon
 
-	var title_text := _localize_cangjie_text(ribbon.get("title", ""))
+	var title_text := _localize_cangjie_text(ribbon_title_source.get("title", preview_ribbon.get("title", "")))
 	if not title_text.is_empty():
 		box.add_child(_make_label(title_text, 18, Color(1.0, 0.95, 0.86, 1.0)))
 
-	var summary_text := _localize_cangjie_text(ribbon.get("summary", ""))
+	var summary_text := _localize_cangjie_text(ribbon_summary_source.get("summary", preview_ribbon.get("summary", "")))
 	if not summary_text.is_empty():
 		box.add_child(_make_label(summary_text, 14, Color(0.86, 0.9, 0.98, 0.88)))
+
+	var explicit_steps_variant: Variant = node_ribbon.get("steps", [])
+	if explicit_steps_variant is Array and not (explicit_steps_variant as Array).is_empty():
+		var beat_flow: BoxContainer = VBoxContainer.new() if _is_portrait_layout() else HBoxContainer.new()
+		beat_flow.add_theme_constant_override("separation", _i(10))
+		box.add_child(beat_flow)
+
+		var explicit_steps := explicit_steps_variant as Array
+		for step_index in range(explicit_steps.size()):
+			var step_variant: Variant = explicit_steps[step_index]
+			if step_variant is Dictionary:
+				var beat_step := _make_cangjie_route_ribbon_beat_step(step_variant as Dictionary, accent, step_index)
+				beat_step.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				beat_flow.add_child(beat_step)
+		return panel
 
 	var steps := _build_cangjie_route_ribbon_steps(preview, selected_node)
 	if steps.is_empty():
@@ -1425,6 +1444,57 @@ func _make_cangjie_route_ribbon_panel(ribbon: Dictionary, preview: Dictionary, s
 		ribbon_flow.add_child(step_card)
 		if step_index < steps.size() - 1:
 			ribbon_flow.add_child(_make_cangjie_route_ribbon_connector(step_tone))
+
+	return panel
+
+
+func _make_cangjie_route_ribbon_beat_step(step: Dictionary, accent: Color, step_index: int) -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = _v(0.0, 112.0)
+
+	var weight: float = clampf(1.0 - float(step_index) * 0.08, 0.0, 1.0)
+	var fill: float = 0.74 + weight * 0.08
+	var border: float = 0.18 + weight * 0.08
+	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.15, accent.g * 0.15, accent.b * 0.18, fill), Color(accent.r, accent.g, accent.b, border)))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", _i(12))
+	margin.add_theme_constant_override("margin_top", _i(12))
+	margin.add_theme_constant_override("margin_right", _i(12))
+	margin.add_theme_constant_override("margin_bottom", _i(12))
+	panel.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", _i(8))
+	margin.add_child(box)
+
+	var beat_label := ("第 %d 拍" if not _is_english() else "Beat %d") % (step_index + 1)
+	box.add_child(_make_tag(beat_label, Color(accent.r * 0.18, accent.g * 0.18, accent.b * 0.22, 0.9), Color(0.98, 0.94, 0.88, 0.96)))
+
+	var header := HBoxContainer.new()
+	header.add_theme_constant_override("separation", _i(10))
+	box.add_child(header)
+
+	var glyph_panel := PanelContainer.new()
+	glyph_panel.custom_minimum_size = _v(38.0, 38.0)
+	glyph_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.22, accent.g * 0.18, accent.b * 0.16, 0.92), Color(accent.r, accent.g, accent.b, 0.28)))
+	header.add_child(glyph_panel)
+
+	var glyph_label := _make_label(String(step.get("glyph", "")), 18, Color(1.0, 0.95, 0.86, 1.0))
+	glyph_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	glyph_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	glyph_label.set_anchors_preset(Control.PRESET_FULL_RECT)
+	glyph_panel.add_child(glyph_label)
+
+	var text_box := VBoxContainer.new()
+	text_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	text_box.add_theme_constant_override("separation", _i(3))
+	header.add_child(text_box)
+	text_box.add_child(_make_label(_localize_cangjie_text(step.get("title", "")), 15, Color(1.0, 0.95, 0.86, 1.0)))
+
+	var subtitle_text := _localize_cangjie_text(step.get("subtitle", ""))
+	if not subtitle_text.is_empty():
+		text_box.add_child(_make_label(subtitle_text, 13, Color(0.84, 0.9, 0.98, 0.84)))
 
 	return panel
 
