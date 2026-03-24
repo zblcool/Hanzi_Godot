@@ -1505,6 +1505,14 @@ const BATTLE_GUIDANCE_CONTENT := {
 		"zh": "句阵守卫 · %s",
 		"en": "Phrase Guardian · %s"
 	},
+	"phrase_guardian_default_name": {
+		"zh": "守句魁首",
+		"en": "Sentence Guardian"
+	},
+	"phrase_guardian_stela_badge": {
+		"zh": "句阵守卫",
+		"en": "Guarded Phrase"
+	},
 	"phrase_revealed_banner_format": {
 		"zh": "句成异动 · %s",
 		"en": "Phrase Revealed · %s"

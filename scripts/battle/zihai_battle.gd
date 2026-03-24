@@ -1694,7 +1694,7 @@ func _spawn_phrase_guardian(phrase_event: Dictionary) -> void:
 	guardian.enemy_name = String(
 		phrase_event.get(
 			"english_guardian_name" if _is_english() else "guardian_name",
-			"Sentence Guardian" if _is_english() else "守句魁首"
+			_battle_guidance_text("phrase_guardian_default_name", "守句魁首", "Sentence Guardian")
 		)
 	)
 	guardian.glyph = String(phrase_event.get("guardian_glyph", "句"))
@@ -5601,7 +5601,7 @@ func _create_phrase_stela(phrase_event: Dictionary) -> void:
 	stela_root.add_child(phrase_label)
 
 	var badge_label := Label3D.new()
-	badge_label.text = "Guarded Phrase" if _is_english() else "句阵守卫"
+	badge_label.text = _battle_guidance_text("phrase_guardian_stela_badge", "句阵守卫", "Guarded Phrase")
 	badge_label.font = CJKFont.get_font()
 	badge_label.font_size = 12
 	badge_label.position = Vector3(0.0, 3.7, 0.0)
