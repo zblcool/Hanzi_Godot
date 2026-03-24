@@ -753,6 +753,15 @@ func _battle_guidance_format(key: String, fallback_zh: String, fallback_en: Stri
 	return text % values if not values.is_empty() else text
 
 
+func _battle_interlude_text(key: String, fallback_zh: String, fallback_en: String = "") -> String:
+	return _front_end_text(FrontEndContent.battle_interlude_content(), key, fallback_zh, fallback_en)
+
+
+func _battle_interlude_format(key: String, fallback_zh: String, fallback_en: String, values: Array = []) -> String:
+	var text := _battle_interlude_text(key, fallback_zh, fallback_en)
+	return text % values if not values.is_empty() else text
+
+
 func _localized_hero_data(hero_data: Dictionary) -> Dictionary:
 	return HanziLocalization.localized_hero_data(String(hero_data.get("id", "")), Session.get_launcher_language())
 
@@ -1908,9 +1917,12 @@ func _chamber_transition_title(next_chamber_id: String) -> String:
 
 func _chamber_transition_body(next_chamber_id: String) -> String:
 	var next_chamber_name := _localized_chamber_name(next_chamber_id)
-	if _is_english():
-		return "Your between-chambers choice is sealed. %s is next, and entering it will reset the fog, field props, and pressure layout around a fresh chamber state.\n\nCheck the final preview below, then continue deeper when ready." % next_chamber_name
-	return "这次卷间抉择已经定下，下一段会进入「%s」。真正续卷后，迷雾显形、场景布置和下一波压境都会按新房间重新铺开。\n\n先再看一眼下一段预览，准备好后再续卷入深层。" % next_chamber_name
+	return _battle_interlude_format(
+		"transition_body_format",
+		"这次卷间抉择已经定下，下一段会进入「%s」。真正续卷后，迷雾显形、场景布置和下一波压境都会按新房间重新铺开。\n\n先再看一眼下一段预览，准备好后再续卷入深层。",
+		"Your between-chambers choice is sealed. %s is next, and entering it will reset the fog, field props, and pressure layout around a fresh chamber state.\n\nCheck the final preview below, then continue deeper when ready.",
+		[next_chamber_name]
+	)
 
 
 func _open_chamber_transition_overlay(next_chamber_id: String, next_wave: int) -> void:
@@ -1951,8 +1963,11 @@ func _chamber_interlude_body(next_wave: int) -> String:
 	var archive_event_lean := _interlude_draft_lean_text(CHAMBER_ARCHIVE_EVENT_DRAFT_LEAN)
 	var archive_rest_lean := _interlude_draft_lean_text(CHAMBER_ARCHIVE_REST_DRAFT_LEAN)
 	if _is_slip_archive_interlude(next_chamber_id):
-		if _is_english():
-			return "The first scroll lord is gone and the chamber has gone quiet. The run is about to shift into %s.\n\nSlip Archive now swaps in a denser chamber choice:\nReward · Archive Rubbing: carry radicals %s, the next chamber still lifts paper / seal drops, and later radical drafts lean toward %s.\nEvent · Latch Bargain: arm Scroll Echo for the next chamber, open it with %d s of Swift Edict, and tilt later radical drafts toward %s.\nRecovery · Lamp Respite: restore %d%% vitality, clear stun, take %d s of brush haste forward, and tilt later radical drafts toward %s before later wave pushes echo a smaller %d%% recovery." % [
+		return _battle_interlude_format(
+			"interlude_body_archive_format",
+			"首位卷主已散，当前房间也暂时清空，下一段会推入「%s」。\n\n简库中庭会先换成更贴近 source 的专属卷间抉择：\n奖励 · 简库拓片：带走偏旁「%s」，下一段敌人仍会更常掉残纸 / 战印，后续偏旁三选一也会更偏向这两笔。\n异事 · 封钥借契：保留残卷回响，同时开场先带着 %d 秒疾书令入深层，后续偏旁三选一会更偏向 %s。\n修整 · 守灯静读：先回复 %d%% 气血、解除眩晕，并把 %d 秒文笔提速一并带进下一段；后续偏旁三选一会更偏向 %s，后面每逢字潮推进还会再补一小口气。",
+			"The first scroll lord is gone and the chamber has gone quiet. The run is about to shift into %s.\n\nSlip Archive now swaps in a denser chamber choice:\nReward · Archive Rubbing: carry radicals %s, the next chamber still lifts paper / seal drops, and later radical drafts lean toward %s.\nEvent · Latch Bargain: arm Scroll Echo for the next chamber, open it with %d s of Swift Edict, and tilt later radical drafts toward %s.\nRecovery · Lamp Respite: restore %d%% vitality, clear stun, take %d s of brush haste forward, and tilt later radical drafts toward %s before later wave pushes echo a smaller %d%% recovery.",
+			[
 				next_chamber_name,
 				reward_bundle,
 				reward_bundle,
@@ -1963,18 +1978,13 @@ func _chamber_interlude_body(next_wave: int) -> String:
 				archive_rest_lean,
 				int(round(CHAMBER_INTERLUDE_REST_ECHO_HEAL_RATIO * 100.0))
 			]
-		return "首位卷主已散，当前房间也暂时清空，下一段会推入「%s」。\n\n简库中庭会先换成更贴近 source 的专属卷间抉择：\n奖励 · 简库拓片：带走偏旁「%s」，下一段敌人仍会更常掉残纸 / 战印，后续偏旁三选一也会更偏向这两笔。\n异事 · 封钥借契：保留残卷回响，同时开场先带着 %d 秒疾书令入深层，后续偏旁三选一会更偏向 %s。\n修整 · 守灯静读：先回复 %d%% 气血、解除眩晕，并把 %d 秒文笔提速一并带进下一段；后续偏旁三选一会更偏向 %s，后面每逢字潮推进还会再补一小口气。" % [
-			next_chamber_name,
-			reward_bundle,
-			int(round(CHAMBER_ARCHIVE_EVENT_FURY_DURATION)),
-			archive_event_lean,
-			int(round(CHAMBER_ARCHIVE_REST_HEAL_RATIO * 100.0)),
-			int(round(CHAMBER_ARCHIVE_REST_BRUSH_DURATION)),
-			archive_rest_lean
-		]
+		)
 	if _is_thunder_vault_interlude(next_chamber_id):
-		if _is_english():
-			return "The current scroll lord is gone and the chamber has gone quiet. The run is about to shift into %s.\n\nThunder Vault now swaps in a colder chamber choice:\nReward · Storm Etching: carry radical %s and enter with %d s of brush haste.\nEvent · Vault Bargain: enter with %d s of Swift Edict already running.\nRecovery · Grounding Ward: restore %d%% vitality, clear stun, and carry %d s of paper ward into the next chamber." % [
+		return _battle_interlude_format(
+			"interlude_body_vault_format",
+			"当前卷主已散，房间也暂时清空，下一段会推入「%s」。\n\n雷纹内库会先换成更贴近 source 的专属卷间抉择：\n奖励 · 雷纹拓笔：带走偏旁「%s」，并带着 %d 秒文笔提速入场。\n异事 · 伏雷换契：下一段会先带着 %d 秒疾书令闯入雷纹内库。\n修整 · 伏纹稳息：先回复 %d%% 气血、解除眩晕，并把 %d 秒纸域护势带进下一段。",
+			"The current scroll lord is gone and the chamber has gone quiet. The run is about to shift into %s.\n\nThunder Vault now swaps in a colder chamber choice:\nReward · Storm Etching: carry radical %s and enter with %d s of brush haste.\nEvent · Vault Bargain: enter with %d s of Swift Edict already running.\nRecovery · Grounding Ward: restore %d%% vitality, clear stun, and carry %d s of paper ward into the next chamber.",
+			[
 				next_chamber_name,
 				reward_radical,
 				int(round(CHAMBER_VAULT_REWARD_BRUSH_DURATION)),
@@ -1982,17 +1992,13 @@ func _chamber_interlude_body(next_wave: int) -> String:
 				int(round(CHAMBER_VAULT_REST_HEAL_RATIO * 100.0)),
 				int(round(CHAMBER_VAULT_REST_WARD_DURATION))
 			]
-		return "当前卷主已散，房间也暂时清空，下一段会推入「%s」。\n\n雷纹内库会先换成更贴近 source 的专属卷间抉择：\n奖励 · 雷纹拓笔：带走偏旁「%s」，并带着 %d 秒文笔提速入场。\n异事 · 伏雷换契：下一段会先带着 %d 秒疾书令闯入雷纹内库。\n修整 · 伏纹稳息：先回复 %d%% 气血、解除眩晕，并把 %d 秒纸域护势带进下一段。" % [
-			next_chamber_name,
-			reward_radical,
-			int(round(CHAMBER_VAULT_REWARD_BRUSH_DURATION)),
-			int(round(CHAMBER_VAULT_EVENT_FURY_DURATION)),
-			int(round(CHAMBER_VAULT_REST_HEAL_RATIO * 100.0)),
-			int(round(CHAMBER_VAULT_REST_WARD_DURATION))
-		]
+		)
 	if _is_abyss_sanctum_interlude(next_chamber_id):
-		if _is_english():
-			return "The current scroll lord is gone and the chamber has gone quiet. The run is about to shift into %s.\n\nAbyss Sanctum now swaps in a final chamber choice:\nReward · Final Draft: carry radicals %s before the last chamber.\nEvent · Abyss Pact: open the sanctum with %d s of Swift Edict and %d s of brush haste together.\nRecovery · Stilling Breath: restore %d%% vitality, clear stun, and carry %d s of paper ward into the final room." % [
+		return _battle_interlude_format(
+			"interlude_body_abyss_format",
+			"当前卷主已散，房间也暂时清空，下一段会推入「%s」。\n\n卷渊终室会先换成一组终室专属卷间抉择：\n奖励 · 终室备墨：带走偏旁「%s」，把最后一轮字路先补齐。\n异事 · 渊页誓约：终室开场会同时带着 %d 秒疾书令与 %d 秒文笔提速。\n修整 · 压关静息：先回复 %d%% 气血、解除眩晕，并把 %d 秒纸域护势一并带进终室。",
+			"The current scroll lord is gone and the chamber has gone quiet. The run is about to shift into %s.\n\nAbyss Sanctum now swaps in a final chamber choice:\nReward · Final Draft: carry radicals %s before the last chamber.\nEvent · Abyss Pact: open the sanctum with %d s of Swift Edict and %d s of brush haste together.\nRecovery · Stilling Breath: restore %d%% vitality, clear stun, and carry %d s of paper ward into the final room.",
+			[
 				next_chamber_name,
 				reward_bundle,
 				int(round(CHAMBER_ABYSS_EVENT_FURY_DURATION)),
@@ -2000,16 +2006,12 @@ func _chamber_interlude_body(next_wave: int) -> String:
 				int(round(CHAMBER_ABYSS_REST_HEAL_RATIO * 100.0)),
 				int(round(CHAMBER_ABYSS_REST_WARD_DURATION))
 			]
-		return "当前卷主已散，房间也暂时清空，下一段会推入「%s」。\n\n卷渊终室会先换成一组终室专属卷间抉择：\n奖励 · 终室备墨：带走偏旁「%s」，把最后一轮字路先补齐。\n异事 · 渊页誓约：终室开场会同时带着 %d 秒疾书令与 %d 秒文笔提速。\n修整 · 压关静息：先回复 %d%% 气血、解除眩晕，并把 %d 秒纸域护势一并带进终室。" % [
-			next_chamber_name,
-			reward_bundle,
-			int(round(CHAMBER_ABYSS_EVENT_FURY_DURATION)),
-			int(round(CHAMBER_ABYSS_EVENT_BRUSH_DURATION)),
-			int(round(CHAMBER_ABYSS_REST_HEAL_RATIO * 100.0)),
-			int(round(CHAMBER_ABYSS_REST_WARD_DURATION))
-		]
-	if _is_english():
-		return "The first scroll lord is gone and the chamber has gone quiet. The run is about to shift into %s.\n\nCheck the next push below, then choose one:\nReward keeps radical %s and lifts paper / seal drops through the next chamber.\nEvent carries a Scroll Echo forward so pressure enemies echo extra paper and elites can drop %d s of Swift Edict until the next scroll lord.\nRecovery restores %d%% vitality, clears stun, and grants %d s of brush haste now, then repeats a smaller %d%% recovery echo on later wave pushes." % [
+		)
+	return _battle_interlude_format(
+		"interlude_body_default_format",
+		"首位卷主已散，当前房间也暂时清空，下一段会推入「%s」。\n\n先看下方下一段预览，再定一项：\n奖励 · 偏旁补给：带走偏旁「%s」，而且下一段敌人会更常掉残纸 / 战印。\n异事 · 残卷回响：给下一段挂上一层掉落偏向，让压境敌群额外回响残纸，精英也能额外吐出 %d 秒疾书令，持续到下一位卷主。\n修整 · 歇笔回气：先回复 %d%% 气血、解除眩晕并获得 %d 秒文笔提速，后面每逢字潮推进还会再补一小口气。",
+		"The first scroll lord is gone and the chamber has gone quiet. The run is about to shift into %s.\n\nCheck the next push below, then choose one:\nReward keeps radical %s and lifts paper / seal drops through the next chamber.\nEvent carries a Scroll Echo forward so pressure enemies echo extra paper and elites can drop %d s of Swift Edict until the next scroll lord.\nRecovery restores %d%% vitality, clears stun, and grants %d s of brush haste now, then repeats a smaller %d%% recovery echo on later wave pushes.",
+		[
 			next_chamber_name,
 			reward_radical,
 			int(round(CHAMBER_SCROLL_ECHO_FURY_DROP_DURATION)),
@@ -2017,13 +2019,7 @@ func _chamber_interlude_body(next_wave: int) -> String:
 			int(round(CHAMBER_INTERLUDE_REST_BRUSH_DURATION)),
 			int(round(CHAMBER_INTERLUDE_REST_ECHO_HEAL_RATIO * 100.0))
 		]
-	return "首位卷主已散，当前房间也暂时清空，下一段会推入「%s」。\n\n先看下方下一段预览，再定一项：\n奖励 · 偏旁补给：带走偏旁「%s」，而且下一段敌人会更常掉残纸 / 战印。\n异事 · 残卷回响：给下一段挂上一层掉落偏向，让压境敌群额外回响残纸，精英也能额外吐出 %d 秒疾书令，持续到下一位卷主。\n修整 · 歇笔回气：先回复 %d%% 气血、解除眩晕并获得 %d 秒文笔提速，后面每逢字潮推进还会再补一小口气。" % [
-		next_chamber_name,
-		reward_radical,
-		int(round(CHAMBER_SCROLL_ECHO_FURY_DROP_DURATION)),
-		int(round(CHAMBER_INTERLUDE_REST_HEAL_RATIO * 100.0)),
-		int(round(CHAMBER_INTERLUDE_REST_BRUSH_DURATION))
-	]
+	)
 
 
 func _apply_chamber_modifier_wave_echo(new_threat_level: int) -> void:
@@ -4509,26 +4505,36 @@ func _threat_level_glyph(new_threat_level: int) -> String:
 
 func _threat_level_tip(new_threat_level: int) -> String:
 	if _is_big_wave(new_threat_level):
-		if _is_english():
-			return "A major surge is here. Spawn rate and enemy cap both rise, so clear the outer ranged threats before spending skills on the center crush."
-		return "大潮压境。刷怪频率和场上敌量上限同时抬高，先清外围远程，再留技能处理中心重压。"
+		return _battle_guidance_text(
+			"threat_tip_big_wave",
+			"大潮压境。刷怪频率和场上敌量上限同时抬高，先清外围远程，再留技能处理中心重压。",
+			"A major surge is here. Spawn rate and enemy cap both rise, so clear the outer ranged threats before spending skills on the center crush."
+		)
 	match new_threat_level:
 		2:
-			if _is_english():
-				return "The tide rises. Archers start entering the line, so watch for ranged pressure while kiting."
-			return "字潮抬升。弓手开始混入阵线，注意被远程拉扯。"
+			return _battle_guidance_text(
+				"threat_tip_wave_2",
+				"字潮抬升。弓手开始混入阵线，注意被远程拉扯。",
+				"The tide rises. Archers start entering the line, so watch for ranged pressure while kiting."
+			)
 		3:
-			if _is_english():
-				return "The tide swells again. Assassins and ritualists join the wave, so dashes and ground arrays will overlap."
-			return "字潮再涨。忍与阵师入场，突刺和地阵会一起施压。"
+			return _battle_guidance_text(
+				"threat_tip_wave_3",
+				"字潮再涨。忍与阵师入场，突刺和地阵会一起施压。",
+				"The tide swells again. Assassins and ritualists join the wave, so dashes and ground arrays will overlap."
+			)
 		4:
-			if _is_english():
-				return "Ink cavalry has entered the field. Keep moving and do not stand inside the charge line for too long."
-			return "墨骑踏阵。保持走位，不要在冲锋预警线里停太久。"
+			return _battle_guidance_text(
+				"threat_tip_wave_4",
+				"墨骑踏阵。保持走位，不要在冲锋预警线里停太久。",
+				"Ink cavalry has entered the field. Keep moving and do not stand inside the charge line for too long."
+			)
 		_:
-			if _is_english():
-				return "Elites begin appearing more often, so prepare supplies and phrase timing before the next pressure spike."
-			return "魁首开始现身，补给和成词节奏都要提前准备。"
+			return _battle_guidance_text(
+				"threat_tip_wave_default",
+				"魁首开始现身，补给和成词节奏都要提前准备。",
+				"Elites begin appearing more often, so prepare supplies and phrase timing before the next pressure spike."
+			)
 
 
 func _spawn_intro_symbols(glyph: String, tint: Color) -> void:
