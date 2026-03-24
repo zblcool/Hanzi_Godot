@@ -5456,23 +5456,33 @@ func _build_word_choice_data(word_id: String) -> Dictionary:
 	var stock: int = _count_recipe_radicals(recipe["radicals"])
 	var headline: String
 	if word_level <= 0:
-		headline = ("Refine %d/%d" if _is_english() else "磨词 %d/%d") % [
+		headline = _battle_state_format("word_choice_headline_refine_format", "磨词 %d/%d", "Refine %d/%d", [
 			min(int(word_progress.get(word_id, 0)) + 1, int(word["unlock_cost"])),
 			int(word["unlock_cost"])
-		]
+		])
 	else:
-		headline = ("Phrase Upgrade  Lv.%d -> Lv.%d" if _is_english() else "词技升级  Lv.%d -> Lv.%d") % [word_level, min(word_level + 1, int(word["max_level"]))]
+		headline = _battle_state_format(
+			"word_choice_headline_upgrade_format",
+			"词技升级  Lv.%d -> Lv.%d",
+			"Phrase Upgrade  Lv.%d -> Lv.%d",
+			[word_level, min(word_level + 1, int(word["max_level"]))]
+		)
 
 	return {
 		"word_id": word_id,
 		"display": String(word["display"]),
 		"title": String(word["title"]),
 		"headline": headline,
-		"description": ("%s\nCurrent stock: %d, drawn from `%s`." if _is_english() else "%s\n当前余材：%d 枚，来自「%s」。") % [
-			String(word["description"]),
-			stock,
-			String(recipe["display"])
-		],
+		"description": _battle_state_format(
+			"word_choice_description_format",
+			"%s\n当前余材：%d 枚，来自「%s」。",
+			"%s\nCurrent stock: %d, drawn from `%s`.",
+			[
+				String(word["description"]),
+				stock,
+				String(recipe["display"])
+			]
+		),
 		"color": Color(word["color"])
 	}
 

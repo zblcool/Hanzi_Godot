@@ -1820,6 +1820,18 @@ const BATTLE_GUIDANCE_CONTENT := {
 		"zh": "%s 磨词 %d/%d",
 		"en": "%s refine %d/%d"
 	},
+	"word_choice_headline_refine_format": {
+		"zh": "磨词 %d/%d",
+		"en": "Refine %d/%d"
+	},
+	"word_choice_headline_upgrade_format": {
+		"zh": "词技升级  Lv.%d -> Lv.%d",
+		"en": "Phrase Upgrade  Lv.%d -> Lv.%d"
+	},
+	"word_choice_description_format": {
+		"zh": "%s\n当前余材：%d 枚，来自「%s」。",
+		"en": "%s\nCurrent stock: %d, drawn from `%s`."
+	},
 	"hero_callout_title_format": {
 		"zh": "%s应声",
 		"en": "%s Responds"
