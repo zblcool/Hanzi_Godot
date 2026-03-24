@@ -1229,6 +1229,18 @@ const BATTLE_STATE_CONTENT := {
 	"pause_controls_compact": {"zh": "按 E / Esc 继续，R 重开", "en": "E / Esc resume · R restart"},
 	"pause_controls_full": {"zh": "按 E 或 Esc 继续，按 R 立即重开。", "en": "Press E or Esc to resume, or R to restart immediately."},
 	"game_over_title": {"zh": "字海沉没", "en": "The Ink Sea Sinks"},
+	"game_over_summary_manual": {
+		"zh": "墨潮吞没了你。按 R 立即重开，或按 Esc 返回二级菜单。",
+		"en": "The ink tide swallowed you. Press R to restart immediately, or Esc to return to the sub-menu."
+	},
+	"game_over_summary_test": {
+		"zh": "试阵记录已写入试阵榜，不会影响主卷榜。按 R 立即重开，或按 Esc 返回二级菜单。",
+		"en": "This test-run result has been written to the test board and will not affect the main-scroll board. Press R to restart immediately, or Esc to return to the sub-menu."
+	},
+	"game_over_summary_shortcut": {
+		"zh": "这次捷径不会写入排行榜。按 R 立即重开，或按 Esc 返回二级菜单。",
+		"en": "This shortcut run will not be written into the leaderboard. Press R to restart immediately, or Esc to return to the sub-menu."
+	},
 	"settings_title": {"zh": "战场布置", "en": "Battle Setup"},
 	"settings_body_format": {
 		"zh": "对照 hanziHero 的 Performance / LOD 面板，当前战场布置已经补齐完整的低风险首轮矩阵。改动会立即生效，并写入本地运行设置。\n\n当前\n演出档：%s\n视觉字效：%s\n敌方血条：%s\n环境字影：%s\n远敌细节：%s",

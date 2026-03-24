@@ -700,6 +700,10 @@ func _battle_guidance_text(key: String, fallback_zh: String, fallback_en: String
 	return _front_end_text(FrontEndContent.battle_guidance_content(), key, fallback_zh, fallback_en)
 
 
+func _battle_state_text(key: String, fallback_zh: String, fallback_en: String = "") -> String:
+	return _front_end_text(FrontEndContent.battle_state_content(), key, fallback_zh, fallback_en)
+
+
 func _battle_guidance_format(key: String, fallback_zh: String, fallback_en: String, values: Array = []) -> String:
 	var text := _battle_guidance_text(key, fallback_zh, fallback_en)
 	return text % values if not values.is_empty() else text
@@ -4106,7 +4110,11 @@ func _on_player_defeated() -> void:
 	Engine.time_scale = 0.0
 	hud.hide_map_overlay()
 	hud.hide_boss()
-	hud.show_banner("The Ink Sea Sinks" if _is_english() else "字海沉没", Color(1.0, 0.76, 0.58, 1.0), 2.0)
+	hud.show_banner(
+		_battle_state_text("game_over_title", "字海沉没", "The Ink Sea Sinks"),
+		Color(1.0, 0.76, 0.58, 1.0),
+		2.0
+	)
 	Session.last_run_summary = _build_run_summary()
 	var start_wave := maxi(1, int(Session.last_run_summary.get("start_wave", 1)))
 	var recordable := bool(Session.last_run_summary.get("recordable", true))
@@ -4115,7 +4123,11 @@ func _on_player_defeated() -> void:
 		Session.record_local_run(Session.last_run_summary, Session.selected_hero)
 		if leaderboard_view == "test":
 			hud.set_game_over(
-				"This test-run result has been written to the test board and will not affect the main-scroll board. Press R to restart immediately, or Esc to return to the sub-menu." if _is_english() else "试阵记录已写入试阵榜，不会影响主卷榜。按 R 立即重开，或按 Esc 返回二级菜单。",
+				_battle_state_text(
+					"game_over_summary_test",
+					"试阵记录已写入试阵榜，不会影响主卷榜。按 R 立即重开，或按 Esc 返回二级菜单。",
+					"This test-run result has been written to the test board and will not affect the main-scroll board. Press R to restart immediately, or Esc to return to the sub-menu."
+				),
 				elapsed_time,
 				kills,
 				threat_level,
@@ -4124,7 +4136,11 @@ func _on_player_defeated() -> void:
 			)
 		else:
 			hud.set_game_over(
-				"The ink tide swallowed you. Press R to restart immediately, or Esc to return to the sub-menu." if _is_english() else "墨潮吞没了你。按 R 立即重开，或按 Esc 返回二级菜单。",
+				_battle_state_text(
+					"game_over_summary_manual",
+					"墨潮吞没了你。按 R 立即重开，或按 Esc 返回二级菜单。",
+					"The ink tide swallowed you. Press R to restart immediately, or Esc to return to the sub-menu."
+				),
 				elapsed_time,
 				kills,
 				threat_level,
@@ -4133,7 +4149,11 @@ func _on_player_defeated() -> void:
 			)
 	else:
 		hud.set_game_over(
-			"This shortcut run will not be written into the leaderboard. Press R to restart immediately, or Esc to return to the sub-menu." if _is_english() else "这次捷径不会写入排行榜。按 R 立即重开，或按 Esc 返回二级菜单。",
+			_battle_state_text(
+				"game_over_summary_shortcut",
+				"这次捷径不会写入排行榜。按 R 立即重开，或按 Esc 返回二级菜单。",
+				"This shortcut run will not be written into the leaderboard. Press R to restart immediately, or Esc to return to the sub-menu."
+			),
 			elapsed_time,
 			kills,
 			threat_level,
