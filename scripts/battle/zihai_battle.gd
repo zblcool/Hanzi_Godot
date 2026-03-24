@@ -3498,37 +3498,61 @@ func _build_choice_data(radical: String) -> Dictionary:
 			if level_value <= 0:
 				var partner: String = _get_partner_radical(recipe_id, radical)
 				if int(radical_counts.get(partner, 0)) > 0:
-					headline = ("Complete the final stroke and form `%s` immediately." if _is_english() else "补上最后一笔，立成「%s」。") % String(recipe["display"])
+					headline = _battle_guidance_text(
+						"choice_complete_glyph_now_format",
+						"补上最后一笔，立成「%s」。",
+						"Complete the final stroke and form `%s` immediately."
+					) % String(recipe["display"])
 				else:
-					headline = ("Collect toward `%s` and open this glyph route." if _is_english() else "收集成字，通往「%s」。") % String(recipe["display"])
+					headline = _battle_guidance_text(
+						"choice_collect_glyph_route_format",
+						"收集成字，通往「%s」。",
+						"Collect toward `%s` and open this glyph route."
+					) % String(recipe["display"])
 			elif level_value < max_level:
-				headline = ("Upgrade `%s` Lv.%d -> Lv.%d." if _is_english() else "提升「%s」 Lv.%d -> Lv.%d。") % [String(recipe["display"]), level_value, level_value + 1]
+				headline = _battle_guidance_text(
+					"choice_upgrade_glyph_format",
+					"提升「%s」 Lv.%d -> Lv.%d。",
+					"Upgrade `%s` Lv.%d -> Lv.%d."
+				) % [String(recipe["display"]), level_value, level_value + 1]
 			else:
 				var word_id := String(recipe.get("word_id", ""))
 				if word_id.is_empty():
-					headline = (
+					headline = _battle_guidance_text(
+						"choice_no_phrase_followthrough_format",
+						"「%s」当前已经写满；额外「%s」余材暂时还没有后续词技。",
 						"`%s` is already complete in this build. Extra `%s` stock has no phrase follow-through yet."
-						if _is_english()
-						else "「%s」当前已经写满；额外「%s」余材暂时还没有后续词技。"
 					) % [String(recipe["display"]), radical]
 				else:
 					var word: Dictionary = _localized_word_data(word_id)
 					var word_level: int = int(word_skill_levels.get(word["id"], 0))
 					var stock: int = _count_recipe_radicals(recipe["radicals"]) + 1
 					if word_level <= 0:
-						headline = ("Add one more stock to `%s`, then refine it at the inkstone %d/%d." if _is_english() else "为「%s」添一枚余材，可去砚台磨词 %d/%d。") % [
+						headline = _battle_guidance_text(
+							"choice_phrase_unlock_progress_format",
+							"为「%s」添一枚余材，可去砚台磨词 %d/%d。",
+							"Add one more stock to `%s`, then refine it at the inkstone %d/%d."
+						) % [
 							String(word["display"]),
 							min(int(word_progress.get(word["id"], 0)) + 1, int(word["unlock_cost"])),
 							int(word["unlock_cost"])
 						]
 					else:
-						headline = ("Add more phrase stock to raise `%s` to Lv.%d at the inkstone. Current stock %d." if _is_english() else "补充词材，可在砚台将「%s」升到 Lv.%d。当前余材 %d。") % [
+						headline = _battle_guidance_text(
+							"choice_phrase_upgrade_ready_format",
+							"补充词材，可在砚台将「%s」升到 Lv.%d。当前余材 %d。",
+							"Add more phrase stock to raise `%s` to Lv.%d at the inkstone. Current stock %d."
+						) % [
 							String(word["display"]),
 							min(word_level + 1, int(word["max_level"])),
 							stock
 						]
 	if radical == "刂":
-		headline += (" Also strengthen %s." if _is_english() else " 并强化%s。") % _weapon_core_label()
+		headline += _battle_guidance_text(
+			"choice_weapon_core_suffix_format",
+			" 并强化%s。",
+			" Also strengthen %s."
+		) % _weapon_core_label()
 	headline = _append_interlude_draft_lean_copy(headline, radical)
 
 	return {
@@ -5176,7 +5200,11 @@ func _handle_inkstone_interact() -> void:
 	if _has_grindable_words():
 		_present_word_choices()
 	else:
-		hud.show_banner("No glyph is ready for the inkstone" if _is_english() else "砚上无字可磨", Color(0.7, 0.84, 1.0, 1.0), 1.5)
+		hud.show_banner(
+			_battle_guidance_text("inkstone_no_glyph_ready", "砚上无字可磨", "No glyph is ready for the inkstone"),
+			Color(0.7, 0.84, 1.0, 1.0),
+			1.5
+		)
 
 
 func _find_nearby_inkstone() -> Node3D:
@@ -5290,7 +5318,11 @@ func _apply_word_choice(word_id: String) -> void:
 	var recipe: Dictionary = _localized_recipe_data(String(word["recipe_id"]))
 	var stored_radical: String = _find_available_recipe_radical(recipe["radicals"])
 	if stored_radical.is_empty():
-		hud.show_banner("Not enough stock" if _is_english() else "余材不足", Color(word["color"]), 1.4)
+		hud.show_banner(
+			_battle_guidance_text("word_refine_stock_missing", "余材不足", "Not enough stock"),
+			Color(word["color"]),
+			1.4
+		)
 		return
 
 	radical_counts[stored_radical] = int(radical_counts.get(stored_radical, 0)) - 1
@@ -5301,11 +5333,15 @@ func _apply_word_choice(word_id: String) -> void:
 			word_progress[word_id] = int(word["unlock_cost"])
 			_set_word_level(word_id, 1)
 		else:
-			hud.show_banner(("%s refine %d/%d" if _is_english() else "%s 磨词 %d/%d") % [
-				String(word["display"]),
-				int(word_progress[word_id]),
-				int(word["unlock_cost"])
-			], word["color"], 1.6)
+			hud.show_banner(
+				_battle_guidance_text("word_refine_progress_format", "%s 磨词 %d/%d", "%s refine %d/%d") % [
+					String(word["display"]),
+					int(word_progress[word_id]),
+					int(word["unlock_cost"])
+				],
+				word["color"],
+				1.6
+			)
 	elif word_level < int(word["max_level"]):
 		_set_word_level(word_id, word_level + 1)
 

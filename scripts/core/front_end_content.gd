@@ -1645,6 +1645,46 @@ const BATTLE_GUIDANCE_CONTENT := {
 		"zh": "砚台静候。先把合字升满，再带着相关偏旁来磨词。",
 		"en": "The inkstone waits. Max a fused glyph first, then bring its related radicals here for phrase refinement."
 	},
+	"inkstone_no_glyph_ready": {
+		"zh": "砚上无字可磨",
+		"en": "No glyph is ready for the inkstone"
+	},
+	"choice_complete_glyph_now_format": {
+		"zh": "补上最后一笔，立成「%s」。",
+		"en": "Complete the final stroke and form `%s` immediately."
+	},
+	"choice_collect_glyph_route_format": {
+		"zh": "收集成字，通往「%s」。",
+		"en": "Collect toward `%s` and open this glyph route."
+	},
+	"choice_upgrade_glyph_format": {
+		"zh": "提升「%s」 Lv.%d -> Lv.%d。",
+		"en": "Upgrade `%s` Lv.%d -> Lv.%d."
+	},
+	"choice_no_phrase_followthrough_format": {
+		"zh": "「%s」当前已经写满；额外「%s」余材暂时还没有后续词技。",
+		"en": "`%s` is already complete in this build. Extra `%s` stock has no phrase follow-through yet."
+	},
+	"choice_phrase_unlock_progress_format": {
+		"zh": "为「%s」添一枚余材，可去砚台磨词 %d/%d。",
+		"en": "Add one more stock to `%s`, then refine it at the inkstone %d/%d."
+	},
+	"choice_phrase_upgrade_ready_format": {
+		"zh": "补充词材，可在砚台将「%s」升到 Lv.%d。当前余材 %d。",
+		"en": "Add more phrase stock to raise `%s` to Lv.%d at the inkstone. Current stock %d."
+	},
+	"choice_weapon_core_suffix_format": {
+		"zh": " 并强化%s。",
+		"en": " Also strengthen %s."
+	},
+	"word_refine_stock_missing": {
+		"zh": "余材不足",
+		"en": "Not enough stock"
+	},
+	"word_refine_progress_format": {
+		"zh": "%s 磨词 %d/%d",
+		"en": "%s refine %d/%d"
+	},
 	"room_objective_gatekeeper_default_name": {
 		"zh": "守关魁首",
 		"en": "Gatekeeper"
