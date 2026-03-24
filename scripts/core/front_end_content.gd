@@ -1185,8 +1185,8 @@ const CANGJIE_PORTAL_SECTIONS := [
 			"next_row_handoff": {
 				"title": {"zh": "下一排接续", "en": "Next-Row Handoff"},
 				"summary": {
-					"zh": "source 真正点下一个节点后，亮起的下一排不会只剩状态颜色，而会立刻变成新的路线问题。Godot 这里先把当前聚焦节点真正会点亮的房间抽成一组接续卡，并补上它们更像接战后拿牌、路书事件、稳线修整还是遗物偏转的提示。",
-					"en": "After the live source map locks a room in, the newly lit row is not just a state color. It immediately becomes the next route question. Godot now pulls the rooms the current focus would actually unlock into a handoff strip and spells out whether they lean toward post-battle drafting, route-ledger pressure, stabilizing resets, or relic bends."
+					"zh": "source 真正点下一个节点后，亮起的下一排不会只剩状态颜色，而会立刻变成新的路线问题。Godot 这里先把当前聚焦节点真正会点亮的房间抽成一组接续卡，并补上它们更像接战后拿牌、路书事件、稳线修整还是遗物偏转的提示；现在每张卡还会直接带出一小条节点节拍，先读这一格最常见的 `节点 -> 关键决策 -> 跟进`。",
+					"en": "After the live source map locks a room in, the newly lit row is not just a state color. It immediately becomes the next route question. Godot now pulls the rooms the current focus would actually unlock into a handoff strip, spells out whether they lean toward post-battle drafting, route-ledger pressure, stabilizing resets, or relic bends, and now also exposes a compact `node -> decision -> follow-through` beat strip on each unlocked card."
 				},
 				"open_count_format": {
 					"zh": "%s · 已开 %d 个节点",

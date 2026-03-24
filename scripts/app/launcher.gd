@@ -1735,7 +1735,7 @@ func _make_cangjie_route_next_row_card(indexed_node: Dictionary, node_detail: Di
 	var tone: Color = node.get("tone", accent)
 
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size = _v(0.0, 190.0)
+	panel.custom_minimum_size = _v(0.0, 246.0)
 	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(tone.r * 0.15, tone.g * 0.15, tone.b * 0.18, 0.82), Color(tone.r, tone.g, tone.b, 0.28)))
 
 	var margin := MarginContainer.new()
@@ -1805,6 +1805,60 @@ func _make_cangjie_route_next_row_card(indexed_node: Dictionary, node_detail: Di
 			if not tag_text.is_empty():
 				tag_flow.add_child(_make_tag(tag_text, Color(tone.r * 0.16, tone.g * 0.16, tone.b * 0.18, 0.88), Color(0.98, 0.94, 0.88, 0.94)))
 
+	var beat_strip := _make_cangjie_route_next_row_beat_strip(node_detail, tone)
+	if beat_strip != null:
+		box.add_child(beat_strip)
+
+	return panel
+
+
+func _make_cangjie_route_next_row_beat_strip(node_detail: Dictionary, accent: Color) -> Control:
+	var route_ribbon_variant: Variant = node_detail.get("route_ribbon", {})
+	if not (route_ribbon_variant is Dictionary):
+		return null
+
+	var route_ribbon := route_ribbon_variant as Dictionary
+	var steps_variant: Variant = route_ribbon.get("steps", [])
+	if not (steps_variant is Array) or (steps_variant as Array).is_empty():
+		return null
+
+	var wrap := VBoxContainer.new()
+	wrap.add_theme_constant_override("separation", _i(6))
+
+	var title_text := _localize_cangjie_text(route_ribbon.get("title", ""))
+	if not title_text.is_empty():
+		wrap.add_child(_make_label(title_text, 12, Color(0.82, 0.9, 0.98, 0.78)))
+
+	var beat_flow := HFlowContainer.new()
+	beat_flow.add_theme_constant_override("h_separation", _i(6))
+	beat_flow.add_theme_constant_override("v_separation", _i(6))
+	wrap.add_child(beat_flow)
+
+	var steps := steps_variant as Array
+	for step_index in range(steps.size()):
+		var step_variant: Variant = steps[step_index]
+		if not (step_variant is Dictionary):
+			continue
+		beat_flow.add_child(_make_cangjie_route_next_row_beat_chip(step_variant as Dictionary, accent))
+		if step_index < steps.size() - 1:
+			beat_flow.add_child(_make_label("→", 14, Color(accent.r, accent.g, accent.b, 0.72)))
+
+	return wrap
+
+
+func _make_cangjie_route_next_row_beat_chip(step: Dictionary, accent: Color) -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.18, accent.g * 0.18, accent.b * 0.2, 0.84), Color(accent.r, accent.g, accent.b, 0.24)))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", _i(10))
+	margin.add_theme_constant_override("margin_top", _i(6))
+	margin.add_theme_constant_override("margin_right", _i(10))
+	margin.add_theme_constant_override("margin_bottom", _i(6))
+	panel.add_child(margin)
+
+	var label_text := "%s %s" % [String(step.get("glyph", "")), _localize_cangjie_text(step.get("title", ""))]
+	margin.add_child(_make_label(label_text.strip_edges(), 12, Color(0.98, 0.94, 0.88, 0.94)))
 	return panel
 
 
