@@ -18,6 +18,7 @@ const BattleChamberCatalog := preload("res://scripts/battle/battle_chamber_catal
 const BattleChamberRules := preload("res://scripts/battle/battle_chamber_rules.gd")
 const BattleEnvironmentSupport := preload("res://scripts/battle/battle_environment_support.gd")
 const BattleGuidanceSupport := preload("res://scripts/battle/battle_guidance_support.gd")
+const BattlePhraseGuardianSupport := preload("res://scripts/battle/battle_phrase_guardian_support.gd")
 const BattlePhraseEventSupport := preload("res://scripts/battle/battle_phrase_event_support.gd")
 const BattleRoomObjectiveRules := preload("res://scripts/battle/battle_room_objective_rules.gd")
 const BattleSupplyRules := preload("res://scripts/battle/battle_supply_rules.gd")
@@ -742,6 +743,7 @@ var battle_chamber_catalog := BattleChamberCatalog.new()
 var battle_chamber_rules := BattleChamberRules.new()
 var battle_environment := BattleEnvironmentSupport.new()
 var battle_guidance_support := BattleGuidanceSupport.new()
+var battle_phrase_guardian_support := BattlePhraseGuardianSupport.new()
 var battle_phrase_event_support := BattlePhraseEventSupport.new()
 var battle_room_objective_rules := BattleRoomObjectiveRules.new()
 var battle_supply_rules := BattleSupplyRules.new()
@@ -1798,23 +1800,22 @@ func _update_phrase_events() -> void:
 
 
 func _spawn_phrase_guardian(phrase_event: Dictionary) -> void:
-	if bool(phrase_event.get("guardian_spawned", false)) or bool(phrase_event.get("guardian_defeated", false)) or not is_instance_valid(player):
+	if not battle_phrase_guardian_support.can_spawn_guardian(phrase_event, is_instance_valid(player)):
 		return
 
-	var guardian = ENEMY_SCENE.instantiate()
-	var guardian_position: Vector3 = phrase_event.get("guardian_position", Vector3.ZERO)
-	var guardian_type := String(phrase_event.get("guardian_type", "elite"))
-	guardian.position = guardian_position
-	guardian.configure(guardian_type, 1.05 + elapsed_time / 78.0, player)
-	guardian.enemy_name = String(
-		phrase_event.get(
-			"english_guardian_name" if _is_english() else "guardian_name",
-			_battle_guidance_text("phrase_guardian_default_name", "守句魁首", "Sentence Guardian")
-		)
+	var spawn_plan: Dictionary = battle_phrase_guardian_support.build_guardian_spawn_plan(
+		phrase_event,
+		elapsed_time,
+		_is_english(),
+		_battle_guidance_text("phrase_guardian_default_name", "守句魁首", "Sentence Guardian")
 	)
-	guardian.glyph = String(phrase_event.get("guardian_glyph", "句"))
-	guardian.tint = Color(phrase_event.get("guardian_tint", phrase_event.get("tint", Color(0.72, 0.2, 0.34, 1.0))))
-	guardian.max_health *= maxf(float(phrase_event.get("guardian_health_scale", 0.92)), 0.35)
+	var guardian = ENEMY_SCENE.instantiate()
+	guardian.position = spawn_plan.get("position", Vector3.ZERO)
+	guardian.configure(String(spawn_plan.get("type", "elite")), float(spawn_plan.get("power_scale", 1.0)), player)
+	guardian.enemy_name = String(spawn_plan.get("name", "Sentence Guardian"))
+	guardian.glyph = String(spawn_plan.get("glyph", "句"))
+	guardian.tint = Color(spawn_plan.get("tint", Color(0.72, 0.2, 0.34, 1.0)))
+	guardian.max_health *= float(spawn_plan.get("health_scale", 1.0))
 	guardian.health = guardian.max_health
 	guardian.display_health = guardian.health
 	if guardian.has_method("set_health_bar_visible"):
@@ -1824,17 +1825,17 @@ func _spawn_phrase_guardian(phrase_event: Dictionary) -> void:
 	guardian.defeated.connect(_on_enemy_defeated)
 	if guardian.has_signal("damaged"):
 		guardian.damaged.connect(_on_enemy_damaged)
-	guardian.defeated.connect(Callable(self, "_on_phrase_guardian_defeated").bind(String(phrase_event.get("id", ""))))
+	guardian.defeated.connect(Callable(self, "_on_phrase_guardian_defeated").bind(String(spawn_plan.get("event_id", ""))))
 	guardian.request_hazard.connect(_on_enemy_request_hazard)
 	guardian.request_line_hazard.connect(_on_enemy_request_line_hazard)
 	guardian.request_projectile.connect(_on_enemy_request_projectile)
 	enemies_root.add_child(guardian)
-	phrase_event["guardian_spawned"] = true
+	battle_phrase_guardian_support.mark_guardian_spawned(phrase_event)
 	_spawn_wave_effect(
 		guardian.global_position,
-		3.8,
-		Color(phrase_event.get("guardian_tint", phrase_event.get("tint", Color(0.76, 0.86, 1.0, 1.0)))),
-		String(phrase_event.get("guardian_glyph", "句"))
+		float(spawn_plan.get("effect_radius", 3.8)),
+		Color(spawn_plan.get("effect_tint", Color(0.76, 0.86, 1.0, 1.0))),
+		String(spawn_plan.get("effect_glyph", "句"))
 	)
 
 
@@ -1842,19 +1843,20 @@ func _on_phrase_guardian_defeated(_world_position: Vector3, _enemy_type: String,
 	var phrase_event := _find_phrase_event(event_id)
 	if phrase_event.is_empty():
 		return
-	phrase_event["guardian_defeated"] = true
-	phrase_event["guardian_spawned"] = false
+	battle_phrase_guardian_support.mark_guardian_defeated(phrase_event)
 	_grant_phrase_event_reward(phrase_event)
 
 
 func _grant_phrase_event_reward(phrase_event: Dictionary) -> void:
-	if bool(phrase_event.get("reward_granted", false)):
+	var reward_resolution: Dictionary = battle_phrase_guardian_support.build_reward_resolution(
+		phrase_event,
+		_pick_chamber_interlude_radical()
+	)
+	if reward_resolution.is_empty():
 		return
-	phrase_event["reward_granted"] = true
-
-	var reward_type := String(phrase_event.get("reward_type", "heal"))
-	var reward_amount := float(phrase_event.get("reward_amount", 0.0))
-	var accent := Color(phrase_event.get("tint", Color(0.76, 0.86, 1.0, 1.0)))
+	var reward_type := String(reward_resolution.get("reward_type", "heal"))
+	var reward_amount := float(reward_resolution.get("reward_amount", 0.0))
+	var accent := Color(reward_resolution.get("accent", Color(0.76, 0.86, 1.0, 1.0)))
 	var phrase_text := _phrase_event_display_text(phrase_event)
 	var reward_copy := _phrase_event_reward_copy(phrase_event)
 
@@ -1869,14 +1871,14 @@ func _grant_phrase_event_reward(phrase_event: Dictionary) -> void:
 			if is_instance_valid(player):
 				_reveal_map_around_position(player.global_position)
 		"radical":
-			_apply_radical_choice(String(phrase_event.get("reward_radical", _pick_chamber_interlude_radical())))
+			_apply_radical_choice(String(reward_resolution.get("reward_radical", "日")))
 
-	var phrase_position: Vector3 = phrase_event.get("position", Vector3.ZERO)
+	var phrase_position: Vector3 = reward_resolution.get("phrase_position", Vector3.ZERO)
 	_spawn_wave_effect(
 		phrase_position,
 		3.4,
 		accent,
-		String(phrase_event.get("glyph", phrase_event.get("guardian_glyph", "句")))
+		String(reward_resolution.get("phrase_glyph", "句"))
 	)
 	if hud != null:
 		hud.show_banner(
