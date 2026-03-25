@@ -3954,6 +3954,16 @@ func _make_cangjie_sample_card(card: Dictionary, accent: Color) -> PanelContaine
 	var subtitle_text := _localize_cangjie_text(card.get("subtitle", ""))
 	if not subtitle_text.is_empty():
 		heading_box.add_child(_make_label(subtitle_text, 14, Color(0.92, 0.82, 0.62, 0.92)))
+	if _is_english():
+		var learning_meta_parts: Array[String] = []
+		var pinyin_text := String(card.get("pinyin", "")).strip_edges()
+		if not pinyin_text.is_empty():
+			learning_meta_parts.append(pinyin_text)
+		var gloss_text := _localize_cangjie_text(card.get("gloss", "")).strip_edges()
+		if not gloss_text.is_empty():
+			learning_meta_parts.append(gloss_text)
+		if not learning_meta_parts.is_empty():
+			heading_box.add_child(_make_label(" · ".join(learning_meta_parts), 13, Color(0.82, 0.9, 0.98, 0.8)))
 
 	box.add_child(_make_label(_localize_cangjie_text(card.get("body", "")), 15, Color(0.88, 0.92, 0.96, 0.94)))
 

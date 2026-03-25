@@ -633,6 +633,8 @@ const CANGJIE_PORTAL_SECTIONS := [
 						"glyph": "日",
 						"title": {"zh": "日 · 起手偏旁", "en": "日 · Sun Trace"},
 						"subtitle": {"zh": "偏旁起手", "en": "Radical opener"},
+						"pinyin": "ri",
+						"gloss": "sun radical",
 						"body": {
 							"zh": "先用直白伤害起手，并把「明」这条线写进牌库。",
 							"en": "Open with clean damage and seed the 明 line into the deck early."
@@ -646,6 +648,8 @@ const CANGJIE_PORTAL_SECTIONS := [
 						"glyph": "明",
 						"title": {"zh": "明 · 节奏成字", "en": "明 · Tempo Fusion"},
 						"subtitle": {"zh": "日 + 月", "en": "Sun + moon"},
+						"pinyin": "ming",
+						"gloss": "bright",
 						"body": {
 							"zh": "成型后同时补伤害、抽牌和墨流，是很标准的节奏成字。",
 							"en": "Once formed it supplies damage, draw, and Ink flow together, making it a classic tempo fusion."
@@ -659,6 +663,8 @@ const CANGJIE_PORTAL_SECTIONS := [
 						"glyph": "学",
 						"title": {"zh": "学 · 抽墨引擎", "en": "学 · Study Thread"},
 						"subtitle": {"zh": "引擎牌", "en": "Engine card"},
+						"pinyin": "xue",
+						"gloss": "study",
 						"body": {
 							"zh": "抽 2 并补 1 墨，提醒这条线不只有合字，还有真正维持牌组运转的引擎牌。",
 							"en": "Draw 2 and gain 1 Ink, showing the line needs real engine cards instead of only fusions."
@@ -703,6 +709,8 @@ const CANGJIE_PORTAL_SECTIONS := [
 						"glyph": "明",
 						"title": {"zh": "明 · 节奏线", "en": "Bright · Tempo Line"},
 						"subtitle": {"zh": "日 + 月", "en": "Sun + moon"},
+						"pinyin": "ming",
+						"gloss": "bright",
 						"body": {
 							"zh": "补格挡、抽牌和墨流，适合作为标准中速节奏主线。",
 							"en": "Adds Block, draw, and Ink flow, making it a clean mid-speed tempo spine."
@@ -716,6 +724,8 @@ const CANGJIE_PORTAL_SECTIONS := [
 						"glyph": "雷",
 						"title": {"zh": "雷 · 控爆线", "en": "Thunder · Control Burst"},
 						"subtitle": {"zh": "雨 + 田", "en": "Rain + field"},
+						"pinyin": "lei",
+						"gloss": "thunder",
 						"body": {
 							"zh": "更偏进攻与控制，适合把易伤和爆发串成一条线。",
 							"en": "Leans into attack and control, especially when chaining Vulnerable into burst."
@@ -729,6 +739,8 @@ const CANGJIE_PORTAL_SECTIONS := [
 						"glyph": "休",
 						"title": {"zh": "休 · 稳健线", "en": "Rest · Sustain Line"},
 						"subtitle": {"zh": "人 + 木", "en": "Human + wood"},
+						"pinyin": "xiu",
+						"gloss": "rest",
 						"body": {
 							"zh": "把抽牌、防御和续航缝在一起，更像能扛中层压力的慢线。",
 							"en": "Stitches draw, defense, and sustain together into a steadier line that can absorb mid-floor pressure."
@@ -773,6 +785,8 @@ const CANGJIE_PORTAL_SECTIONS := [
 						"glyph": "砚",
 						"title": {"zh": "砚 · 开局多抽", "en": "Inkstone · Opening Draw"},
 						"subtitle": {"zh": "战斗起手", "en": "Battle opener"},
+						"pinyin": "yan",
+						"gloss": "inkstone",
 						"body": {
 							"zh": "每场战斗开局多抽 1，让慢线更快碰到关键偏旁与成字。",
 							"en": "Draw 1 extra card at the start of each battle so slower lines reach key radicals and fusions sooner."
@@ -786,6 +800,8 @@ const CANGJIE_PORTAL_SECTIONS := [
 						"glyph": "镜",
 						"title": {"zh": "镜 · 重复返抽", "en": "Mirror Slip · Repeat Draw"},
 						"subtitle": {"zh": "重复偏旁", "en": "Repeated radical"},
+						"pinyin": "jing",
+						"gloss": "mirror slip",
 						"body": {
 							"zh": "每回合第一次打出重复偏旁时抽 1，直接改写你对重复材料的价值判断。",
 							"en": "The first repeated radical each turn draws 1, directly changing how valuable duplicate material feels."
@@ -799,6 +815,8 @@ const CANGJIE_PORTAL_SECTIONS := [
 						"glyph": "契",
 						"title": {"zh": "契 · 商店折扣", "en": "Broker Seal · Shop Cut"},
 						"subtitle": {"zh": "牌 / 遗物更便宜", "en": "Cheaper cards / relics"},
+						"pinyin": "qi",
+						"gloss": "broker seal",
 						"body": {
 							"zh": "让路线能更激进，也更愿意在买牌、买遗物和修薄之间重新分配 Gold。",
 							"en": "Makes routes greedier and shifts how willingly you spend Gold on cards, relics, or thinning."
