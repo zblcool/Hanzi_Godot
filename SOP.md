@@ -31,7 +31,14 @@ git merge --ff-only origin/develop
 git merge origin/main
 ```
 
-3. 本地或同一局域网预览时，优先使用：
+3. 如果这轮工作是通过 Codex 或本地自动化推进，先确认 Godot MCP 可用，再开始改动。
+
+说明：
+- 先做一次轻量检查，例如读取 Godot 版本或项目信息
+- 如果 Godot MCP 可用，优先用它做项目结构读取、场景/节点操作、Godot 运行态检查和编辑器侧调试输出读取
+- 文件编辑和 headless 脚本不再是默认交互层，而是代码落地、验证和兜底层
+
+4. 本地或同一局域网预览时，优先使用：
 
 ```bash
 ./scripts/lan-preview.sh
@@ -41,7 +48,7 @@ git merge origin/main
 - 这条命令默认会先重新导出 Godot Web 产物，再启动本地 HTTP 服务
 - 如果只想复用现有 `build/` 目录，可以运行 `AUTO_EXPORT=0 ./scripts/lan-preview.sh`
 
-4. 提交前，优先做最小验证：
+5. 提交前，优先做最小验证：
 
 ```bash
 ./scripts/smoke_test_scenes.sh
@@ -74,5 +81,8 @@ git merge origin/main
 ## 自动化约定
 
 - 常规自动化默认在 `develop` 上工作和推送
+- Godot 仓库自动化每次开始时，先做一次 Godot MCP 连通性检查
+- 如果 Godot MCP 可用，优先用 MCP 做 Godot 侧读取、运行和调试，再用仓库脚本做验证
+- 如果 Godot MCP 不可用，自动化要在 inbox 里明确记录 blocker，然后再退回文件流和 headless 验证
 - `staging` 保留给人工触发的线上验收
 - `main` 只接已经确认稳定的结果
