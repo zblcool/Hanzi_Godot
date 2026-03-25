@@ -1311,7 +1311,7 @@ const CANGJIE_PORTAL_SECTIONS := [
 						"zh": "普通战斗会先结算 Gold，再给三选一奖励牌或跳过保薄，是最稳定的路线读法。",
 						"en": "Regular battles settle Gold first, then offer a three-card reward or a lean skip, making them the steadiest route read."
 					},
-					"valuation_group": {
+					"value_shift": {
 						"title": {"zh": "估值偏转 · 战后怎么看", "en": "Value Shift · How Rewards Reprice"},
 						"summary": {
 							"zh": "source 的战后奖池不会把每张牌当成等值补充。当前 deck 倾向与已持遗物，会一起决定这场战斗之后什么最值。",
@@ -1439,7 +1439,7 @@ const CANGJIE_PORTAL_SECTIONS := [
 						"zh": "事件节点会像 `路书对照`、讲师提问或破页掮客那样，让短期收益和长期结构直接撞在一起。",
 						"en": "Event nodes act more like `Route Ledger`, the tutor prompt, or the page broker, colliding short-term gain with long-term structure."
 					},
-					"valuation_group": {
+					"value_shift": {
 						"title": {"zh": "估值偏转 · 路书怎么看你", "en": "Value Shift · How The Ledger Reads You"},
 						"summary": {
 							"zh": "source 的事件房不是随机赠品。它会先读现在这副牌最像哪条路，再决定压深、补短还是存势谁更值。",
@@ -1567,7 +1567,7 @@ const CANGJIE_PORTAL_SECTIONS := [
 						"zh": "歇息点不是单纯回血，而是在 `回气 18` 与 `回气 8 + 下场 +1 Energy / +1 Ink` 之间做低风险准备。",
 						"en": "Rest stops are not pure healing. They split between `heal 18` and `heal 8 + next battle +1 Energy / +1 Ink`."
 					},
-					"valuation_group": {
+					"value_shift": {
 						"title": {"zh": "估值偏转 · 稳线还是抢起手", "en": "Value Shift · Stabilize Or Frontload"},
 						"summary": {
 							"zh": "source 的歇息房会把血线与下场起手一起计价，所以它值不值，不只看你掉了多少血，也看下一拍想不想抢节奏。",
@@ -1681,7 +1681,7 @@ const CANGJIE_PORTAL_SECTIONS := [
 						"zh": "商店会同时卖牌和遗物，还支持 restock 与花 Gold 删牌，是整条 climb 里最显性的资源重配节点。",
 						"en": "Shops sell both cards and relics while also supporting restocks and paid deck trims, making them the clearest resource-reallocation node in the climb."
 					},
-					"valuation_group": {
+					"value_shift": {
 						"title": {"zh": "估值偏转 · Gold 怎么花最值", "en": "Value Shift · Where Gold Matters Most"},
 						"summary": {
 							"zh": "source 商店不是看见更大数字就买。当前 deck 厚薄、前面保薄收益，以及特定经济 relic，都会改写哪一侧货架更值。",
@@ -1809,7 +1809,7 @@ const CANGJIE_PORTAL_SECTIONS := [
 						"zh": "精英不只更痛，它还会把战后流程往后推一层：先打高压意图，再接遗物跟进，让路线被二次偏转。",
 						"en": "Elites are not only harder. They push the post-battle flow one layer deeper: survive heavier intents, then take a relic follow-up that bends the route again."
 					},
-					"valuation_group": {
+					"value_shift": {
 						"title": {"zh": "估值偏转 · 这份压力值不值", "en": "Value Shift · Is This Pressure Worth It"},
 						"summary": {
 							"zh": "source 的精英房会把风险和回报绑得更紧。要不要走这格，取决于当前牌组能否顶住更重的 intent，换到一次真正改路的 relic 跟进。",
@@ -1923,7 +1923,7 @@ const CANGJIE_PORTAL_SECTIONS := [
 						"zh": "删改房不是单一删牌口。source 会在 `删 1 张` 与 `复制 1 张非 Smudge 牌` 之间切换，让牌组形状同时可收可放。",
 						"en": "Archive rooms are not trim-only. The source switches between `remove 1 card` and `copy 1 non-Smudge card`, so deck shape can tighten or widen on purpose."
 					},
-					"valuation_group": {
+					"value_shift": {
 						"title": {"zh": "估值偏转 · 修薄还是复制", "en": "Value Shift · Trim Or Duplicate"},
 						"summary": {
 							"zh": "source 的 archive 房不会默认删牌。牌组里累积的厚度、Smudge 和关键件稀缺度，会一起决定修薄还是复制更值。",
@@ -2051,7 +2051,7 @@ const CANGJIE_PORTAL_SECTIONS := [
 						"zh": "遗物房会把几件可见 relic 摊在面前，让你直接挑那件最能偏转当前路线的东西，而不是只吃随机宝箱。",
 						"en": "Treasure rooms lay several visible relics in front of you so you can choose the one that best bends the current route instead of taking a blind chest roll."
 					},
-					"valuation_group": {
+					"value_shift": {
 						"title": {"zh": "估值偏转 · 哪件 relic 会扭整张图", "en": "Value Shift · Which Relic Twists The Whole Map"},
 						"summary": {
 							"zh": "source 的 treasure 房不是看哪件遗物描述更花。真正的问题是，这一件会不会把后面奖励、商店与节点估值一起带偏。",
@@ -2179,7 +2179,7 @@ const CANGJIE_PORTAL_SECTIONS := [
 						"zh": "Boss 是整副牌的总检验。此时路线、遗物、Gold 重配与事件取舍都会一起压到最后一场问答里。",
 						"en": "The boss is the full-build exam. By then the route, relics, Gold reallocation, and event tradeoffs all collapse into one final question."
 					},
-					"valuation_group": {
+					"value_shift": {
 						"title": {"zh": "估值偏转 · 前面所有判断在这结算", "en": "Value Shift · Every Earlier Judgment Settles Here"},
 						"summary": {
 							"zh": "source 的塔顶不是最后再拿一张牌那么简单。它会把前面每次压深、补短、存势、修薄与 relic 偏转一起结算，告诉你这些估值判断到底有没有站住。",

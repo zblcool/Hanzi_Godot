@@ -2021,6 +2021,10 @@ func _make_cangjie_route_next_row_card(indexed_node: Dictionary, node_detail: Di
 	if route_read_variant is Dictionary and not (route_read_variant as Dictionary).is_empty():
 		box.add_child(_make_cangjie_route_next_row_route_read_panel(route_read_variant as Dictionary, tone))
 
+	var value_shift_variant: Variant = node_detail.get("value_shift", {})
+	if value_shift_variant is Dictionary and not (value_shift_variant as Dictionary).is_empty():
+		box.add_child(_make_cangjie_route_next_row_value_shift_panel(value_shift_variant as Dictionary, tone))
+
 	var tags_variant: Variant = follow_through.get("tags", node.get("focus_tags", []))
 	if tags_variant is Array and not (tags_variant as Array).is_empty():
 		var tag_flow := HFlowContainer.new()
@@ -2075,6 +2079,36 @@ func _make_cangjie_route_next_row_route_read_panel(route_read: Dictionary, accen
 		box.add_child(_make_label(title_text, 13, Color(1.0, 0.95, 0.86, 0.98)))
 
 	var summary_text := _localize_cangjie_text(route_read.get("summary", ""))
+	if not summary_text.is_empty():
+		box.add_child(_make_label(summary_text, 12, Color(0.84, 0.9, 0.98, 0.82)))
+
+	return panel
+
+
+func _make_cangjie_route_next_row_value_shift_panel(value_shift: Dictionary, accent: Color) -> PanelContainer:
+	var tone: Color = value_shift.get("tone", accent)
+
+	var panel := PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(tone.r * 0.14, tone.g * 0.14, tone.b * 0.18, 0.78), Color(tone.r, tone.g, tone.b, 0.24)))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", _i(12))
+	margin.add_theme_constant_override("margin_top", _i(10))
+	margin.add_theme_constant_override("margin_right", _i(12))
+	margin.add_theme_constant_override("margin_bottom", _i(10))
+	panel.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", _i(6))
+	margin.add_child(box)
+
+	box.add_child(_make_tag("Value Shift" if _is_english() else "估值偏转", Color(tone.r * 0.18, tone.g * 0.18, tone.b * 0.22, 0.86), Color(0.98, 0.94, 0.88, 0.94)))
+
+	var title_text := _localize_cangjie_text(value_shift.get("title", ""))
+	if not title_text.is_empty():
+		box.add_child(_make_label(title_text, 13, Color(1.0, 0.95, 0.86, 0.96)))
+
+	var summary_text := _localize_cangjie_text(value_shift.get("summary", ""))
 	if not summary_text.is_empty():
 		box.add_child(_make_label(summary_text, 12, Color(0.84, 0.9, 0.98, 0.82)))
 
