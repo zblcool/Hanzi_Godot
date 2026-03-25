@@ -1648,7 +1648,12 @@ func _make_cangjie_route_next_row_panel(config: Dictionary, preview: Dictionary,
 	if not summary_text.is_empty():
 		box.add_child(_make_label(summary_text, 14, Color(0.86, 0.9, 0.98, 0.88)))
 
+	var action_hint := _localize_cangjie_text(config.get("action_hint", ""))
+	if not action_hint.is_empty():
+		box.add_child(_make_label(action_hint, 13, Color(0.94, 0.76, 0.46, 0.82)))
+
 	var badge_text := _localize_cangjie_text(config.get("badge", ""))
+	var card_hint_text := _localize_cangjie_text(config.get("card_hint_badge", ""))
 	var next_nodes := _collect_cangjie_route_next_nodes(preview, selected_node, progress_info)
 	if next_nodes.is_empty():
 		box.add_child(_make_cangjie_route_next_row_empty_card(config, accent))
@@ -1673,7 +1678,7 @@ func _make_cangjie_route_next_row_panel(config: Dictionary, preview: Dictionary,
 				var detail_key := String(node.get("kind", node.get("id", "")))
 				var detail_variant: Variant = node_details.get(detail_key, {})
 				var detail: Dictionary = detail_variant as Dictionary if detail_variant is Dictionary else {}
-				grid.add_child(_make_cangjie_route_next_row_card(indexed_node, detail, badge_text, accent))
+				grid.add_child(_make_cangjie_route_next_row_card(indexed_node, detail, badge_text, card_hint_text, accent))
 
 	var footnote_format := _localize_cangjie_text(config.get("footnote_format", ""))
 	var selected_label := _localize_cangjie_text(selected_node.get("label", ""))
@@ -1729,21 +1734,26 @@ func _build_cangjie_route_preview_index(preview: Dictionary) -> Dictionary:
 	return route_index
 
 
-func _make_cangjie_route_next_row_card(indexed_node: Dictionary, node_detail: Dictionary, badge_text: String, accent: Color) -> PanelContainer:
+func _make_cangjie_route_next_row_card(indexed_node: Dictionary, node_detail: Dictionary, badge_text: String, card_hint_text: String, accent: Color) -> Button:
 	var node_variant: Variant = indexed_node.get("node", {})
 	var node: Dictionary = node_variant as Dictionary if node_variant is Dictionary else {}
 	var tone: Color = node.get("tone", accent)
 
-	var panel := PanelContainer.new()
-	panel.custom_minimum_size = _v(0.0, 246.0)
-	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(tone.r * 0.15, tone.g * 0.15, tone.b * 0.18, 0.82), Color(tone.r, tone.g, tone.b, 0.28)))
+	var button := Button.new()
+	button.custom_minimum_size = _v(0.0, 246.0)
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.add_theme_stylebox_override("normal", _make_panel_style(Color(tone.r * 0.15, tone.g * 0.15, tone.b * 0.18, 0.82), Color(tone.r, tone.g, tone.b, 0.28)))
+	button.add_theme_stylebox_override("hover", _make_panel_style(Color(tone.r * 0.18, tone.g * 0.18, tone.b * 0.22, 0.88), Color(tone.r, tone.g, tone.b, 0.4)))
+	button.add_theme_stylebox_override("pressed", _make_panel_style(Color(tone.r * 0.2, tone.g * 0.2, tone.b * 0.24, 0.92), Color(tone.r, tone.g, tone.b, 0.52)))
+	button.add_theme_stylebox_override("focus", _make_panel_style(Color(tone.r * 0.18, tone.g * 0.18, tone.b * 0.22, 0.88), Color(tone.r, tone.g, tone.b, 0.44)))
+	button.add_theme_stylebox_override("disabled", _make_panel_style(Color(tone.r * 0.15, tone.g * 0.15, tone.b * 0.18, 0.82), Color(tone.r, tone.g, tone.b, 0.28)))
 
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", _i(14))
 	margin.add_theme_constant_override("margin_top", _i(12))
 	margin.add_theme_constant_override("margin_right", _i(14))
 	margin.add_theme_constant_override("margin_bottom", _i(12))
-	panel.add_child(margin)
+	button.add_child(margin)
 
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", _i(8))
@@ -1756,6 +1766,8 @@ func _make_cangjie_route_next_row_card(indexed_node: Dictionary, node_detail: Di
 
 	if not badge_text.is_empty():
 		badge_row.add_child(_make_tag(badge_text, Color(tone.r * 0.18, tone.g * 0.18, tone.b * 0.22, 0.9), Color(0.98, 0.94, 0.88, 0.96)))
+	if not card_hint_text.is_empty():
+		badge_row.add_child(_make_tag(card_hint_text, Color(tone.r * 0.22, tone.g * 0.18, tone.b * 0.16, 0.88), Color(0.98, 0.94, 0.88, 0.96)))
 	var floor_text := _localize_cangjie_text(indexed_node.get("floor", {}))
 	if not floor_text.is_empty():
 		badge_row.add_child(_make_tag(floor_text, Color(tone.r * 0.16, tone.g * 0.16, tone.b * 0.2, 0.86), Color(0.98, 0.94, 0.88, 0.94)))
@@ -1813,7 +1825,19 @@ func _make_cangjie_route_next_row_card(indexed_node: Dictionary, node_detail: Di
 	if beat_strip != null:
 		box.add_child(beat_strip)
 
-	return panel
+	_set_mouse_filter_recursive(margin, Control.MOUSE_FILTER_IGNORE)
+
+	var node_id := String(node.get("id", ""))
+	if not node_id.is_empty():
+		button.pressed.connect(Callable(self, "_on_select_cangjie_route_preview_node").bind(
+			node_id,
+			String(node.get("linked_preview_kind", "")),
+			String(node.get("linked_preview_option", ""))
+		))
+	else:
+		button.disabled = true
+
+	return button
 
 
 func _make_cangjie_route_next_row_route_read_panel(route_read: Dictionary, accent: Color) -> PanelContainer:
@@ -3458,6 +3482,13 @@ func _make_tag(text: String, fill_color: Color, text_color: Color) -> PanelConta
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	margin.add_child(label)
 	return tag
+
+
+func _set_mouse_filter_recursive(control: Control, mouse_filter: int) -> void:
+	control.mouse_filter = mouse_filter
+	for child in control.get_children():
+		if child is Control:
+			_set_mouse_filter_recursive(child as Control, mouse_filter)
 
 
 func _build_floating_symbols() -> void:
