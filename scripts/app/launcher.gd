@@ -1014,6 +1014,10 @@ func _build_cangjie_overlay() -> void:
 	language_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	footer_row.add_child(language_button)
 
+	var profile_button := _make_pill_button("玩家名帖", _v(0.0, 52.0), Callable(self, "_show_profile"))
+	profile_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	footer_row.add_child(profile_button)
+
 	var close_button := Button.new()
 	close_button.text = _localize_text("返回游戏选择")
 	close_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
