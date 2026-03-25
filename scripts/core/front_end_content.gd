@@ -2388,8 +2388,8 @@ const CANGJIE_PORTAL_SECTIONS := [
 								{"zh": "Gold 预算", "en": "Gold budget"},
 								{"zh": "节奏存势", "en": "Bank tempo"}
 							],
-							"linked_preview_kind": "route_ledger",
-							"linked_preview_option": "tempo",
+							"linked_preview_kind": "shop",
+							"linked_preview_option": "restock",
 							"connections": ["archive_node", "treasure_node", "late_battle"],
 							"tone": Color(0.96, 0.82, 0.46, 1.0),
 							"state": "path"
@@ -2519,6 +2519,167 @@ const CANGJIE_PORTAL_SECTIONS := [
 			"footnote": {
 				"zh": "这只是 source 三路线塔图的前台壳预览，不假装已经接通真正的 Godot 节点逻辑。",
 				"en": "This is only a front-shell preview of the source three-lane tower board, not a claim that Godot already has the real node logic wired up."
+			}
+		},
+		"shop_preview": {
+			"title": {"zh": "商店重配预览", "en": "Shop Reallocation Preview"},
+			"summary": {
+				"zh": "source 的商店不只是把货架摆给你看。它会把 `Gold 40`、`补货 34`、`删牌 72`，以及 `契 / Broker Seal` 的折价一起压成一拍真正的预算判断。",
+				"en": "The source shop is more than a shelf of offers. It compresses `Gold 40`, `Restock 34`, `Purge 72`, and `Broker Seal` discounts into one real budget judgment."
+			},
+			"hint": {
+				"zh": "点按下面任一货架样张，预览 source 商店如何在补货、留钱删牌和经济遗物折价之间真正重写这笔 Gold 的去向。",
+				"en": "Tap one of the shelf samples below to preview how the source shop rewrites the same Gold through restocks, saving for a purge, and economy-relic discounts."
+			},
+			"options": [
+				{
+					"id": "restock",
+					"glyph": "刷",
+					"title": {"zh": "先刷一轮货架", "en": "Restock The Shelf First"},
+					"subtitle": {"zh": "`Gold 40` 还能先补货 `34`", "en": "`Gold 40` can still pay `Restock 34`"},
+					"summary": {
+						"zh": "如果眼前的牌和遗物都不够贴线，而删牌价又还摸不到，source 的正确商店线往往不是硬买一件，而是先花 `34` 把整排货架重洗一次。",
+						"en": "If the current cards and relics miss the route while purge is still out of reach, the correct source shop line is often not forcing a buy, but paying `34` to reroll the whole shelf once."
+					},
+					"tone": Color(0.96, 0.82, 0.46, 1.0),
+					"result_group": {
+						"title": {"zh": "商店样张 · 先补货", "en": "Shop Sample · Restock First"},
+						"summary": {
+							"zh": "这类商店回合会先把 `Gold 40` 变成一轮新货架，因为 `3 张牌 + 2 件遗物` 的重洗本身就可能比勉强拿一件离线货更值。",
+							"en": "This kind of shop turn converts `Gold 40` into a fresh shelf first, because rerolling `3 cards + 2 relics` can already be worth more than forcing one off-line purchase."
+						},
+						"cards": [
+							{
+								"glyph": "刷",
+								"title": {"zh": "补货价 34 · 先把整排重洗", "en": "Restock 34 · Reroll The Whole Shelf"},
+								"subtitle": {"zh": "`3 牌 + 2 遗物` 整排换新", "en": "Refresh all `3 cards + 2 relics`"},
+								"body": {
+									"zh": "source 的第一次补货只要 `34`，对这份 `Gold 40` 样张来说，先把整排牌和遗物都翻新，会比买下一件不贴线的牌更像真正的路线投资。",
+									"en": "The source shop's first restock costs only `34`, so for this `Gold 40` sample, refreshing the whole card-and-relic shelf can be a truer route investment than buying one misaligned card."
+								},
+								"tags": [
+									{"zh": "Gold 40", "en": "Gold 40"},
+									{"zh": "补货 34", "en": "Restock 34"},
+									{"zh": "留 6", "en": "Leave 6"}
+								]
+							},
+							{
+								"glyph": "寻",
+								"title": {"zh": "刷出来的是贴线货，不是大数字", "en": "Fish For Fit, Not Raw Size"},
+								"subtitle": {"zh": "追 `学 / Script` 或 `契 / Broker Seal`", "en": "Chase `Script` or `Broker Seal`"},
+								"body": {
+									"zh": "补货真正要追的是更贴当前路线的页或会继续改价的经济 relic，比如把 `学 / Script`、`契 / Broker Seal` 这类更会改写后手的货架刷出来。",
+									"en": "The real point of restock is to hunt for pages or economy relics that fit the route better, such as surfacing `Script` or `Broker Seal` instead of settling for a larger but less aligned number."
+								},
+								"tags": [
+									{"zh": "贴线货架", "en": "Aligned shelf"},
+									{"zh": "继续改价", "en": "Keep repricing"},
+									{"zh": "路线投资", "en": "Route investment"}
+								]
+							}
+						]
+					}
+				},
+				{
+					"id": "purge",
+					"glyph": "删",
+					"title": {"zh": "先别打散删牌预算", "en": "Do Not Break The Purge Budget"},
+					"subtitle": {"zh": "`删牌 72`，`Gold 40` 还差一截", "en": "`Purge 72` leaves `Gold 40` short"},
+					"summary": {
+						"zh": "如果当前抽牌已经被离线路线的页拖乱，source 商店里最值的选择可能反而是什么都不买，把这笔钱先留到能真正删牌的节点。",
+						"en": "If off-route pages are already scrambling the draw order, the highest-value source shop play can actually be buying nothing and carrying the budget toward the first real purge window."
+					},
+					"tone": Color(0.82, 0.72, 0.48, 1.0),
+					"result_group": {
+						"title": {"zh": "商店样张 · 攒到删牌", "en": "Shop Sample · Save For The Purge"},
+						"summary": {
+							"zh": "这类商店判断会先承认 `Gold 40` 还不够删牌，再把下一场 Gold、跳过奖励或经济 relic 一起看成把预算推到 `72` 的前置动作。",
+							"en": "This kind of shop judgment starts by admitting that `Gold 40` is still short of a purge, then treats the next battle payout, reward skip, or economy relic as setup to cross `72`."
+						},
+						"cards": [
+							{
+								"glyph": "删",
+								"title": {"zh": "删牌价 72 会逼你先存钱", "en": "Purge 72 Forces A Saving Line"},
+								"subtitle": {"zh": "预算先别被离线货拆掉", "en": "Do not let the shelf split the budget"},
+								"body": {
+									"zh": "source 的删牌价默认要 `72`，所以当最该处理的是一张拖节奏的页时，正确答案往往不是勉强买货，而是把这笔钱完整留住。",
+									"en": "The source shop's base purge costs `72`, so when the real problem is one pace-dragging page, the correct answer is often not forcing a purchase but keeping the budget intact."
+								},
+								"tags": [
+									{"zh": "删牌 72", "en": "Purge 72"},
+									{"zh": "先存钱", "en": "Save first"},
+									{"zh": "别被货架分散", "en": "Do not get distracted"}
+								]
+							},
+							{
+								"glyph": "算",
+								"title": {"zh": "下一拍的 Gold 也会被改写", "en": "The Next Gold Beat Gets Repriced Too"},
+								"subtitle": {"zh": "`战后 +18` 或 `算盘 / Lean Ledger +30`", "en": "`Battle +18` or `Lean Ledger +30`"},
+								"body": {
+									"zh": "一旦开始围着删牌预算读图，下一场战后的 `Gold +18`、跳过奖励触发的 `算盘 / Lean Ledger +30`，都会被重新理解成把 `40` 推到删牌线的关键一拍。",
+									"en": "Once the map is being read around a purge budget, the next post-battle `Gold +18` or a reward skip through `Lean Ledger +30` both become key beats for pushing that `40` toward the purge line."
+								},
+								"tags": [
+									{"zh": "战后 Gold", "en": "Post-battle Gold"},
+									{"zh": "Lean Ledger", "en": "Lean Ledger"},
+									{"zh": "删牌线", "en": "Purge line"}
+								]
+							}
+						]
+					}
+				},
+				{
+					"id": "broker",
+					"glyph": "契",
+					"title": {"zh": "契会一起改写四种价格", "en": "Broker Seal Reprices Four Levers"},
+					"subtitle": {"zh": "`牌 -18 / 遗物 -20 / 补货 -8 / 删牌 -18`", "en": "`Cards -18 / relics -20 / restock -8 / purge -18`"},
+					"summary": {
+						"zh": "`契 / Broker Seal` 一到手，source 商店就不再只是单点消费，而是可能让同一笔 Gold 连着撑起买牌、补货，甚至更快摸到删牌窗口。",
+						"en": "Once `Broker Seal` is live, the source shop stops being a single purchase point and can let the same Gold fund a card, a restock, or even a much sooner purge window."
+					},
+					"tone": Color(0.72, 0.62, 0.94, 1.0),
+					"result_group": {
+						"title": {"zh": "商店样张 · 契改价", "en": "Shop Sample · Broker Repricing"},
+						"summary": {
+							"zh": "`契 / Broker Seal` 会把商店里的四条杠杆一起压价，所以它不是只给一条被动说明，而是直接让后面的商店节点整体升值。",
+							"en": "`Broker Seal` discounts all four shop levers at once, so it does not act like a passive tooltip but directly makes later shop nodes worth more as a whole."
+						},
+						"cards": [
+							{
+								"glyph": "契",
+								"title": {"zh": "契会同时压四种价格", "en": "Broker Seal Discounts Four Prices"},
+								"subtitle": {"zh": "精确改写 source 货架数学", "en": "Directly rewrites the source shelf math"},
+								"body": {
+									"zh": "source 里 `契 / Broker Seal` 会让牌价降 `18`、遗物降 `20`、补货降 `8`、删牌降 `18`，把整间商店从“只能做一件事”改成“可能连做两件事”。",
+									"en": "In the source run, `Broker Seal` drops card costs by `18`, relics by `20`, restock by `8`, and purge by `18`, turning the shop from “do one thing” into “possibly do two things.”"
+								},
+								"tags": [
+									{"zh": "牌 -18", "en": "Cards -18"},
+									{"zh": "遗物 -20", "en": "Relics -20"},
+									{"zh": "删牌 -18", "en": "Purge -18"}
+								]
+							},
+							{
+								"glyph": "金",
+								"title": {"zh": "同一笔 Gold 开始像路线投资", "en": "The Same Gold Starts Acting Like Route Capital"},
+								"subtitle": {"zh": "`40~60 Gold` 不再只够单点消费", "en": "`40-60 Gold` no longer funds only one action"},
+								"body": {
+									"zh": "折价一旦生效，后面的商店就更容易出现“先买贴线牌，再补货追第二件”或“买完仍接近删牌线”这种 source 才有的连续预算判断。",
+									"en": "Once the discount lands, later shops more easily create source-style continuous budget calls such as “buy the aligned card, then restock for a second look” or “buy now and still stay close to purge range.”"
+								},
+								"tags": [
+									{"zh": "连续预算", "en": "Continuous budget"},
+									{"zh": "二次动作", "en": "Second action"},
+									{"zh": "路线投资", "en": "Route capital"}
+								]
+							}
+						]
+					}
+				}
+			],
+			"footnote": {
+				"zh": "Godot 这里先把 source 商店最关键的 `补货 / 删牌 / 折价` 预算判断挂回 portal，不假装已经接通真实商店节点和 live deck 结算。",
+				"en": "Godot stages the source shop's key `restock / purge / discount` budget reads back into the portal first without pretending live shop nodes or real deck settlement already exist here."
 			}
 		},
 		"route_ledger_preview": {
