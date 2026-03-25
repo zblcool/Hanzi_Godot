@@ -2309,12 +2309,12 @@ const CANGJIE_PORTAL_SECTIONS := [
 							"note": {"zh": "短期换长期", "en": "Short vs long"},
 							"focus_title": {"zh": "事件节点 · 回写路线", "en": "Event Node · Write Back The Route"},
 							"focus_body": {
-								"zh": "事件节点更像一面镜子，会先读当前牌组倾向，再决定是继续压深、补齐短板，还是先把节奏存起来。",
-								"en": "Event nodes act more like mirrors: they read the current deck lean first, then decide whether to deepen it, patch a weak point, or bank tempo instead."
+								"zh": "事件节点更像一面镜子，会先读当前牌组倾向，再决定是翻出 `路书对照` 去压深 / 补短 / 存势，还是端出 `抄手交易` 让你拿重手、净污或用代价换一笔 Gold。",
+								"en": "Event nodes act more like mirrors: they read the current deck lean first, then either surface a `Route Ledger` to deepen / patch / bank tempo or a `Copyist Bargain` that trades HP, Smudge, and Gold for a sharper bend."
 							},
 							"focus_tags": [
 								{"zh": "deck-read", "en": "Deck read"},
-								{"zh": "事件分支", "en": "Event branch"}
+								{"zh": "抄手交易", "en": "Copyist Bargain"}
 							],
 							"linked_preview_kind": "route_ledger",
 							"linked_preview_option": "deepen",
@@ -2673,6 +2673,161 @@ const CANGJIE_PORTAL_SECTIONS := [
 			"footnote": {
 				"zh": "Godot 这里先展示一份代表性的 route-ledger 样张，不假装已经在本仓库里接通真实 deck 分析与事件分支。",
 				"en": "Godot shows a representative route-ledger sample here first, without pretending this repository already has real deck analysis or live event branching wired in."
+			}
+		},
+		"broker_preview": {
+			"title": {"zh": "抄手交易预览", "en": "Copyist Bargain Preview"},
+			"summary": {
+				"zh": "source 的事件节点不只会摊开 `路书对照 / Route Ledger`。它们也可能翻出 `抄手交易 / Copyist Bargain`，让你在押重手、净掉 `污`，或拿一笔带代价的 Gold 之间做更尖锐的短线决策。",
+				"en": "Source event nodes do not stop at `Route Ledger`. They can also surface `Copyist Bargain`, asking whether to lean heavier, wipe `Smudge`, or take extra Gold at a cost."
+			},
+			"hint": {
+				"zh": "点按下面任一交易样张，预览 source 事件怎样把生命、污牌与 Gold 一起压成一拍更尖锐的路线决定。",
+				"en": "Tap one of the bargain offers below to preview how the source event turns HP, Smudge, and Gold into a sharper route decision."
+			},
+			"options": [
+				{
+					"id": "power",
+					"glyph": "契",
+					"title": {"zh": "押重手", "en": "Lean Heavier"},
+					"subtitle": {"zh": "失去 7 点生命，换两张更重的牌", "en": "Trade 7 HP for a heavier pair"},
+					"summary": {
+						"zh": "这份样张直接把眼前的生命值换成更激进的构筑推进：先吃一口伤，再把 `令 / 边` 这类更会改写中盘节拍的牌压进 deck。",
+						"en": "This sample converts immediate HP into a greedier build push: take the hit now, then stuff heavier cards like `Edict / Margin` straight into the deck."
+					},
+					"tone": Color(0.94, 0.58, 0.48, 1.0),
+					"result_group": {
+						"title": {"zh": "抄手交易 · 押重手", "en": "Copyist Bargain · Lean Heavier"},
+						"summary": {
+							"zh": "这类交易说明 source 事件并不总先问你要不要稳。它也会逼你把生命值直接换成更重的 deck 形状。",
+							"en": "This kind of bargain shows that source events do not always ask whether to stabilize first. They can force you to turn HP directly into a heavier deck shape."
+						},
+						"cards": [
+							{
+								"glyph": "令",
+								"title": {"zh": "令 · 起手压拍", "en": "Edict · Frontload The Beat"},
+								"subtitle": {"zh": "把起手压得更凶", "en": "Push the opening harder"},
+								"body": {
+									"zh": "用一张更重的爆发牌把路线直接往前扯，提醒这类事件本身就能改写 deck 的勇敢程度。",
+									"en": "Adds a heavier burst piece that yanks the route forward, reminding you that this event can rewrite how brave the deck is allowed to be."
+								},
+								"tags": [
+									{"zh": "重手", "en": "Heavier line"},
+									{"zh": "爆发", "en": "Burst"}
+								]
+							},
+							{
+								"glyph": "边",
+								"title": {"zh": "边 · 压厚边线", "en": "Margin · Thicken The Edge"},
+								"subtitle": {"zh": "让中盘延伸更明显", "en": "Stretch the midgame further"},
+								"body": {
+									"zh": "不是单纯补一张数值牌，而是把后续的商店、删改与遗物读法都往更厚的一侧扭过去。",
+									"en": "This is not just another stat card. It twists later shop, archive, and relic reads toward a thicker line."
+								},
+								"tags": [
+									{"zh": "路线改写", "en": "Route bend"},
+									{"zh": "中盘", "en": "Midgame"}
+								]
+							}
+						]
+					}
+				},
+				{
+					"id": "cleanse",
+					"glyph": "净",
+					"title": {"zh": "抹去污痕", "en": "Wipe The Smudge"},
+					"subtitle": {"zh": "先把卡手与伤口抹平", "en": "Clear the clog first"},
+					"summary": {
+						"zh": "source 的另一种交易不是继续押大，而是优先处理 `污`。如果当前 deck 还没沾上污牌，这格就直接回一口气，把事件改成纯粹的容错回补。",
+						"en": "Another source bargain does not push greedier. It cleans `Smudge` first; if the deck is still clean, the event instead turns into a direct HP refill."
+					},
+					"tone": Color(0.56, 0.84, 0.8, 1.0),
+					"result_group": {
+						"title": {"zh": "抄手交易 · 净掉阻滞", "en": "Copyist Bargain · Clear The Clog"},
+						"summary": {
+							"zh": "这类选择把事件节点从“加一张什么牌”转成“先不要继续让牌组变坏”，让 source 的风险管理更像真正的爬塔判断。",
+							"en": "This style of choice turns the event node from “which card should I add” into “do not let the deck get any worse first,” making risk management feel more like a real climb judgment."
+						},
+						"cards": [
+							{
+								"glyph": "净",
+								"title": {"zh": "移除 1 张污", "en": "Remove 1 Smudge"},
+								"subtitle": {"zh": "先把抽牌顺序救回来", "en": "Restore the draw order first"},
+								"body": {
+									"zh": "直接清掉一张会拖累起手和节奏的污牌，让之后的抽牌、删改与战后选牌都回到更清楚的判断线。",
+									"en": "Directly strips out a Smudge that drags opening hands and tempo, so later draws, trims, and reward choices sit on a cleaner judgment line."
+								},
+								"tags": [
+									{"zh": "净牌", "en": "Cleanse"},
+									{"zh": "抽牌质量", "en": "Draw quality"}
+								]
+							},
+							{
+								"glyph": "气",
+								"title": {"zh": "若无污则回气 10", "en": "If Clean, Restore 10 HP"},
+								"subtitle": {"zh": "干净牌组换成回血", "en": "Clean deck becomes healing"},
+								"body": {
+									"zh": "说明 source 事件不会把没有污的 run 变成空奖励，而是把净牌位直接折成更高的容错。",
+									"en": "This shows the source event does not turn a clean run into a blank reward. It folds that cleanse slot into more margin instead."
+								},
+								"tags": [
+									{"zh": "回血", "en": "Heal"},
+									{"zh": "容错", "en": "Margin"}
+								]
+							}
+						]
+					}
+				},
+				{
+					"id": "greed",
+					"glyph": "售",
+					"title": {"zh": "把它卖掉", "en": "Sell The Page"},
+					"subtitle": {"zh": "先拿 55 Gold，再吞 1 张污", "en": "Take 55 Gold, then eat 1 Smudge"},
+					"summary": {
+						"zh": "这份交易把短期预算直接抬起来，但会把 `污` 塞回牌组，逼你之后在商店、删改与战后拿牌时继续为这笔 Gold 还债。",
+						"en": "This bargain spikes the short-term budget immediately, but stuffs `Smudge` back into the deck so later shops, archive trims, and reward choices keep paying for that Gold."
+					},
+					"tone": Color(0.96, 0.82, 0.46, 1.0),
+					"result_group": {
+						"title": {"zh": "抄手交易 · Gold 换污", "en": "Copyist Bargain · Gold For Smudge"},
+						"summary": {
+							"zh": "source 事件会把资源与牌库负担绑在一起，让贪钱不是单向占便宜，而是真正改写后续节点估值的路线决定。",
+							"en": "Source events bind resources and deck burden together, so greedy Gold is not a freebie. It becomes a route decision that reprices later nodes."
+						},
+						"cards": [
+							{
+								"glyph": "金",
+								"title": {"zh": "Gold +55", "en": "Gold +55"},
+								"subtitle": {"zh": "把下一站预算直接抬高", "en": "Raise the next budget immediately"},
+								"body": {
+									"zh": "更高的预算会让商店、补货、删牌和某些遗物一下子变得值得看，但这不是没有代价的顺风车。",
+									"en": "The bigger budget makes shops, restocks, trims, and some relics immediately more attractive, but it is not a free ride."
+								},
+								"tags": [
+									{"zh": "预算抬升", "en": "Budget spike"},
+									{"zh": "商店线", "en": "Shop line"}
+								]
+							},
+							{
+								"glyph": "污",
+								"title": {"zh": "污 +1", "en": "Smudge +1"},
+								"subtitle": {"zh": "之后还得把债还掉", "en": "You still have to pay it back"},
+								"body": {
+									"zh": "额外 Gold 不是纯赚，它会把未来的抽牌质量、删改优先级和事件容错一起拉歪。",
+									"en": "The extra Gold is not pure upside. It warps future draw quality, archive priorities, and event margin together."
+								},
+								"tags": [
+									{"zh": "代价", "en": "Cost"},
+									{"zh": "污牌", "en": "Smudge"}
+								]
+							}
+						]
+					}
+				}
+			],
+			"footnote": {
+				"zh": "Godot 这里先把 `抄手交易` 作为第二种代表性事件样张挂回 portal，不假装已经接通真实 deck 检查、污牌管理与 live 事件落点。",
+				"en": "Godot brings `Copyist Bargain` back into the portal as a second representative event sample without pretending the live deck checks, Smudge handling, or real event routing already exist here."
 			}
 		},
 		"sample_groups": [
