@@ -2309,11 +2309,12 @@ const CANGJIE_PORTAL_SECTIONS := [
 							"note": {"zh": "短期换长期", "en": "Short vs long"},
 							"focus_title": {"zh": "事件节点 · 回写路线", "en": "Event Node · Write Back The Route"},
 							"focus_body": {
-								"zh": "事件节点更像一面镜子，会先读当前牌组倾向，再决定是翻出 `路书对照` 去压深 / 补短 / 存势，还是端出 `抄手交易` 让你拿重手、净污或用代价换一笔 Gold。",
-								"en": "Event nodes act more like mirrors: they read the current deck lean first, then either surface a `Route Ledger` to deepen / patch / bank tempo or a `Copyist Bargain` that trades HP, Smudge, and Gold for a sharper bend."
+								"zh": "事件节点更像一面镜子，会先读当前牌组倾向，再决定是翻出 `路书对照` 去压深 / 补短 / 存势、端出 `静室师言` 去删牌或留一手预案，还是拿 `抄手交易` 让你押重手、净污或用代价换一笔 Gold。",
+								"en": "Event nodes act more like mirrors: they read the current deck lean first, then either surface a `Route Ledger` to deepen / patch / bank tempo, a `Tutor In Silence` to trim or bank a safer fallback, or a `Copyist Bargain` that trades HP, Smudge, and Gold for a sharper bend."
 							},
 							"focus_tags": [
 								{"zh": "deck-read", "en": "Deck read"},
+								{"zh": "静室师言", "en": "Tutor In Silence"},
 								{"zh": "抄手交易", "en": "Copyist Bargain"}
 							],
 							"linked_preview_kind": "route_ledger",
@@ -2673,6 +2674,115 @@ const CANGJIE_PORTAL_SECTIONS := [
 			"footnote": {
 				"zh": "Godot 这里先展示一份代表性的 route-ledger 样张，不假装已经在本仓库里接通真实 deck 分析与事件分支。",
 				"en": "Godot shows a representative route-ledger sample here first, without pretending this repository already has real deck analysis or live event branching wired in."
+			}
+		},
+		"tutor_preview": {
+			"title": {"zh": "静室师言预览", "en": "Tutor In Silence Preview"},
+			"summary": {
+				"zh": "source 的事件房不只会让你压深或赌代价。`静室师言 / Tutor In Silence` 会直接追问哪一段牌组已经偏离当前路线，再把回应落成删牌或一份更稳的后手预案。",
+				"en": "Source event rooms do not only press greedier lines or risky bargains. `Tutor In Silence` asks which slice of the deck already drifted off-route, then converts that answer into a trim or a steadier backup plan."
+			},
+			"hint": {
+				"zh": "点按下面任一教案样张，预览 source 事件怎样把“该删什么”与“该稳什么”压成一拍更清楚的 deck 判断。",
+				"en": "Tap either tutor sample below to preview how the source event compresses “what should leave” and “what should stabilize” into one cleaner deck judgment."
+			},
+			"options": [
+				{
+					"id": "trim",
+					"glyph": "删",
+					"title": {"zh": "删去一张", "en": "Trim A Card"},
+					"subtitle": {"zh": "先把不再贴线的那页拿掉", "en": "Cut the page that no longer fits"},
+					"summary": {
+						"zh": "这份样张把事件直接改成一次立刻删改：如果当前 deck 已经够厚，或夹进了拖节奏的边角牌，这里会先把抽牌顺序救回来。",
+						"en": "This sample turns the event into an immediate trim. If the current deck is already thick or padded with tempo-dragging filler, this is where the draw order gets rescued first."
+					},
+					"tone": Color(0.82, 0.72, 0.48, 1.0),
+					"result_group": {
+						"title": {"zh": "静室师言 · 立刻修薄", "en": "Tutor In Silence · Thin The Deck Now"},
+						"summary": {
+							"zh": "这类回应强调 source 事件也会把“先别再拿东西”变成正收益，让删牌本身就是一拍明确的路线回正。",
+							"en": "This response shows that source events can turn “do not take anything else yet” into positive progress, making a trim itself a clear route correction."
+						},
+						"cards": [
+							{
+								"glyph": "删",
+								"title": {"zh": "立刻删 1 张", "en": "Trim 1 Card Now"},
+								"subtitle": {"zh": "把不贴线的页先抽掉", "en": "Remove the off-line page first"},
+								"body": {
+									"zh": "不是等到下一间 archive 才补救，而是直接把这次事件转成一次牌组修薄，让后面的抽牌、商店和战后拿牌都重新站回更干净的判断线。",
+									"en": "Instead of waiting for the next archive room, the event becomes a deck-thinning pass immediately so later draws, shops, and reward picks all stand on a cleaner judgment line."
+								},
+								"tags": [
+									{"zh": "修薄", "en": "Thin"},
+									{"zh": "抽牌质量", "en": "Draw quality"}
+								]
+							},
+							{
+								"glyph": "清",
+								"title": {"zh": "把路线噪音压下去", "en": "Lower The Route Noise"},
+								"subtitle": {"zh": "让主线再读得清楚一点", "en": "Make the main line readable again"},
+								"body": {
+									"zh": "删去那张已经不服务当前路线的牌之后，这份样张会把后面的战后三选一、商店预算和路书读法一起重新拉直。",
+									"en": "Once the card that no longer serves the current route leaves, the sample straightens later reward drafts, shop budgeting, and ledger reads all at once."
+								},
+								"tags": [
+									{"zh": "去噪", "en": "Noise cut"},
+									{"zh": "路线回正", "en": "Route reset"}
+								]
+							}
+						]
+					}
+				},
+				{
+					"id": "study",
+					"glyph": "学",
+					"title": {"zh": "留一手预案", "en": "Hold A Backup Plan"},
+					"subtitle": {"zh": "拿一页稳线，再回 8 点气", "en": "Take Script and recover 8 HP"},
+					"summary": {
+						"zh": "source 的另一种回应不是立刻删牌，而是给一张 `学` 再顺手回一口气，让半稳不稳的 run 先把底板抬起来。",
+						"en": "The other source response does not trim right away. It grants `Script` and an HP top-up so a half-stable run can raise its floor before pushing harder again."
+					},
+					"tone": Color(0.56, 0.84, 0.8, 1.0),
+					"result_group": {
+						"title": {"zh": "静室师言 · 留一手预案", "en": "Tutor In Silence · Keep A Backup Plan"},
+						"summary": {
+							"zh": "这类教案把事件节点从“继续拿什么”改成“先让 run 别塌”，提醒 source 也会把事件当成稳定整副牌的转折点。",
+							"en": "This style of lesson turns the event node from “what do I add next” into “how do I stop the run from slipping first,” reinforcing that the source uses events as stabilization pivots too."
+						},
+						"cards": [
+							{
+								"glyph": "学",
+								"title": {"zh": "学 · 留后手", "en": "Script · Keep The Fallback"},
+								"subtitle": {"zh": "把稳线页先塞进牌组", "en": "Add a steadier page first"},
+								"body": {
+									"zh": "`学` 会把这次事件改成更温和的补件：不是继续压大，而是给 deck 一张能把起手和续接都托稳的后手页。",
+									"en": "`Script` turns the event into a calmer patch. Instead of pressing greedier, it gives the deck a fallback page that steadies both the opener and the follow-through."
+								},
+								"tags": [
+									{"zh": "稳线", "en": "Stabilize"},
+									{"zh": "后手", "en": "Fallback"}
+								]
+							},
+							{
+								"glyph": "气",
+								"title": {"zh": "回气 8", "en": "Restore 8 HP"},
+								"subtitle": {"zh": "把容错先抬回来", "en": "Lift the margin back up"},
+								"body": {
+									"zh": "额外的 8 点生命说明这类事件不是纸面修补，而是会把下一层的容错一起带回来，适合血线和底板都摇晃的爬塔段。",
+									"en": "The extra 8 HP shows that this event is not only a theoretical patch. It restores next-floor margin too, fitting stretches where both HP and the deck floor are wobbling."
+								},
+								"tags": [
+									{"zh": "回血", "en": "HP"},
+									{"zh": "容错", "en": "Margin"}
+								]
+							}
+						]
+					}
+				}
+			],
+			"footnote": {
+				"zh": "Godot 这里先把 `静室师言` 作为第三种代表性事件样张挂回 portal，不假装已经接通 live archive 删改与真实 deck 诊断。",
+				"en": "Godot now brings `Tutor In Silence` back into the portal as a third representative event sample without pretending live archive trims or real deck diagnosis already exist here."
 			}
 		},
 		"broker_preview": {
