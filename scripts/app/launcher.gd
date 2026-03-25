@@ -1300,6 +1300,66 @@ func _make_cangjie_deck_preview_panel(preview: Dictionary, accent: Color) -> Pan
 	return panel
 
 
+func _make_cangjie_route_shell_carry_panel(config: Dictionary, preview: Dictionary, selected_node: Dictionary, accent: Color) -> PanelContainer:
+	var shell_preview := _get_cangjie_run_shell_preview_config()
+	if shell_preview.is_empty():
+		return _make_cangjie_run_shell_preview(config, accent)
+
+	shell_preview["title"] = config.get("title", shell_preview.get("title", ""))
+	shell_preview["summary"] = config.get("summary", shell_preview.get("summary", ""))
+
+	var status_pills_variant: Variant = shell_preview.get("status_pills", [])
+	var status_pills: Array = status_pills_variant as Array if status_pills_variant is Array else []
+	shell_preview["status_pills"] = _build_cangjie_route_shell_status_pills(status_pills, preview, selected_node)
+	return _make_cangjie_run_shell_preview(shell_preview, accent)
+
+
+func _get_cangjie_run_shell_preview_config() -> Dictionary:
+	var sections := FrontEndContent.cangjie_portal_sections()
+	for section_variant in sections:
+		if not (section_variant is Dictionary):
+			continue
+		var section := section_variant as Dictionary
+		if String(section.get("id", "")) != "run_controls":
+			continue
+		var preview_variant: Variant = section.get("run_shell_preview", {})
+		if preview_variant is Dictionary and not (preview_variant as Dictionary).is_empty():
+			return (preview_variant as Dictionary).duplicate(true)
+	return {}
+
+
+func _build_cangjie_route_shell_status_pills(base_status_pills: Array, preview: Dictionary, selected_node: Dictionary) -> Array:
+	var status_pills: Array = []
+	var floor_value: Variant = ""
+	var has_floor_value := false
+	var selected_id := String(selected_node.get("id", ""))
+	if not selected_id.is_empty():
+		var route_index := _build_cangjie_route_preview_index(preview)
+		var indexed_variant: Variant = route_index.get(selected_id, {})
+		if indexed_variant is Dictionary:
+			var indexed := indexed_variant as Dictionary
+			var floor_variant: Variant = indexed.get("floor", "")
+			if floor_variant is Dictionary:
+				var floor_dict := floor_variant as Dictionary
+				if not floor_dict.is_empty():
+					has_floor_value = true
+					floor_value = floor_dict
+			else:
+				var floor_text := String(floor_variant)
+				if not floor_text.is_empty():
+					has_floor_value = true
+					floor_value = floor_text
+
+	for pill_variant in base_status_pills:
+		if not (pill_variant is Dictionary):
+			continue
+		var pill := (pill_variant as Dictionary).duplicate(true)
+		if status_pills.is_empty() and has_floor_value:
+			pill["value"] = floor_value
+		status_pills.append(pill)
+	return status_pills
+
+
 func _make_cangjie_route_preview(preview: Dictionary, accent: Color) -> PanelContainer:
 	var panel := PanelContainer.new()
 	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.08, accent.g * 0.08, accent.b * 0.1, 0.78), Color(accent.r, accent.g, accent.b, 0.28)))
@@ -1339,6 +1399,8 @@ func _make_cangjie_route_preview(preview: Dictionary, accent: Color) -> PanelCon
 	var progress_stub: Dictionary = progress_stub_variant as Dictionary if progress_stub_variant is Dictionary else {}
 	var history_strip_variant: Variant = preview.get("history_strip", {})
 	var history_strip: Dictionary = history_strip_variant as Dictionary if history_strip_variant is Dictionary else {}
+	var shell_carry_variant: Variant = preview.get("shell_carry", {})
+	var shell_carry: Dictionary = shell_carry_variant as Dictionary if shell_carry_variant is Dictionary else {}
 	var next_row_handoff_variant: Variant = preview.get("next_row_handoff", {})
 	var next_row_handoff: Dictionary = next_row_handoff_variant as Dictionary if next_row_handoff_variant is Dictionary else {}
 	var progress_info := _build_cangjie_route_progress_info(preview, selected_node)
@@ -1346,6 +1408,9 @@ func _make_cangjie_route_preview(preview: Dictionary, accent: Color) -> PanelCon
 	var progress_states: Dictionary = progress_states_variant as Dictionary if progress_states_variant is Dictionary else {}
 	var node_details_variant: Variant = preview.get("node_details", {})
 	var node_details: Dictionary = node_details_variant as Dictionary if node_details_variant is Dictionary else {}
+
+	if not shell_carry.is_empty():
+		box.add_child(_make_cangjie_route_shell_carry_panel(shell_carry, preview, selected_node, accent))
 
 	var rows_variant: Variant = preview.get("rows", [])
 	if rows_variant is Array and not (rows_variant as Array).is_empty():

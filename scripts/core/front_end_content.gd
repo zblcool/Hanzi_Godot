@@ -1197,6 +1197,13 @@ const CANGJIE_PORTAL_SECTIONS := [
 					"en": "The sample trail is not readable yet. Tap a tower node first to hang the opening climb beats back onto the front layer."
 				}
 			},
+			"shell_carry": {
+				"title": {"zh": "塔图运行壳", "en": "Map-Side Run Shell"},
+				"summary": {
+					"zh": "source 真正爬塔时，塔图不会和顶栏操作 / 状态分开。Godot 这里先把 `重新开局 / 查看牌组 / 返回启动器` 与 `Floor / HP / Deck / Relics / Gold` 的轻量壳层压回塔图上方，并允许 `查看牌组` 在这一层直接展开，让读节点时也能保留同一层 run shell。",
+					"en": "In the live source climb, the tower map does not detach from the top actions and run state. Godot now carries a compact `Restart Run / Open Deck / Back To Launcher` plus `Floor / HP / Deck / Relics / Gold` shell above the route guide, and `Open Deck` can unfold right there so node reading stays inside the same run frame."
+				}
+			},
 			"next_row_handoff": {
 				"title": {"zh": "下一排接续", "en": "Next-Row Handoff"},
 				"summary": {
