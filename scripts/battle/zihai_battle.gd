@@ -20,6 +20,7 @@ const BattleEnvironmentSupport := preload("res://scripts/battle/battle_environme
 const BattleGuidanceSupport := preload("res://scripts/battle/battle_guidance_support.gd")
 const BattlePhraseGuardianSupport := preload("res://scripts/battle/battle_phrase_guardian_support.gd")
 const BattlePhraseEventSupport := preload("res://scripts/battle/battle_phrase_event_support.gd")
+const BattleRoomObjectivePresentationSupport := preload("res://scripts/battle/battle_room_objective_presentation_support.gd")
 const BattleRoomObjectiveRules := preload("res://scripts/battle/battle_room_objective_rules.gd")
 const BattleSupplyRules := preload("res://scripts/battle/battle_supply_rules.gd")
 const BattleWaveRules := preload("res://scripts/battle/battle_wave_rules.gd")
@@ -745,6 +746,7 @@ var battle_environment := BattleEnvironmentSupport.new()
 var battle_guidance_support := BattleGuidanceSupport.new()
 var battle_phrase_guardian_support := BattlePhraseGuardianSupport.new()
 var battle_phrase_event_support := BattlePhraseEventSupport.new()
+var battle_room_objective_presentation := BattleRoomObjectivePresentationSupport.new()
 var battle_room_objective_rules := BattleRoomObjectiveRules.new()
 var battle_supply_rules := BattleSupplyRules.new()
 var battle_wave_rules := BattleWaveRules.new()
@@ -1394,43 +1396,14 @@ func _spawn_chamber_break_beacon() -> void:
 		_current_chamber_break_beacon_position(),
 		"beacon",
 		0.0,
-		{
-			"chamber_break_beacon": true,
-			"chamber_break_beacon_glyph": "奖"
-		}
+		battle_room_objective_presentation.build_break_beacon_spawn_meta()
 	)
-	if hud != null:
-		hud.show_banner(
-			_battle_guidance_text("reward_beacon_banner", "卷间奖印显形", "Reward Beacon Raised"),
-			accent,
-			1.8
-		)
-		hud.show_reveal(
-			_battle_guidance_text("reward_beacon_reveal_title", "卷间奖印", "Reward Beacon"),
-			_current_chamber_name(),
-			_battle_guidance_text(
-				"reward_beacon_reveal_body",
-				"卷间抉择已经显在附近。先走到这枚奖印前，才能真正定下下一条路。",
-				"The chamber break is nearby now. Reach the reward beacon to resolve one between-chambers choice."
-			),
-			accent,
-			"奖",
-			2.5
-		)
-		hud.set_tip(
-			_battle_guidance_text(
-				"reward_beacon_tip",
-				"卷间奖印已经亮起。先亲自走到奖印前，卷间抉择才会真正打开。",
-				"The chamber reward beacon is now active. Walk to it before the next chamber choice can resolve."
-			)
-		)
-	_log_battle_event(
-		_battle_guidance_text(
-			"reward_beacon_log",
-			"卷间奖印 · 靠近后再定下一路",
-			"Reward Beacon · Reach the chamber prize"
-		),
-		accent
+	battle_room_objective_presentation.present_break_beacon(
+		hud,
+		accent,
+		_current_chamber_name(),
+		Callable(self, "_battle_guidance_text"),
+		Callable(self, "_log_battle_event")
 	)
 
 
@@ -1458,34 +1431,17 @@ func _try_start_chamber_exit_objective() -> bool:
 			0.0,
 			pickup_definition.get("meta", {})
 		)
-	if hud != null:
-		hud.show_banner(
-			_battle_guidance_format(
-				"room_objective_banner_format",
-				"房间目标  %s",
-				"Room Objective  %s",
-				[_localized_room_objective_name(objective)]
-			),
-			accent,
-			1.9
-		)
-		hud.show_reveal(
-			_battle_guidance_text("room_objective_reveal_title", "房间目标", "Room Objective"),
-			_localized_room_objective_name(objective),
-			_room_objective_status_text(objective, room_objective_remaining),
-			accent,
-			glyph,
-			2.6
-		)
-		hud.set_tip(_room_objective_status_text(objective, room_objective_remaining))
-	_log_battle_event(
-		_battle_guidance_format(
-			"room_objective_log_format",
-			"房间目标 · %s",
-			"Room Objective · %s",
-			[_localized_room_objective_name(objective)]
-		),
-		accent
+	var objective_name := _localized_room_objective_name(objective)
+	var status_text := _room_objective_status_text(objective, room_objective_remaining)
+	battle_room_objective_presentation.present_objective_start(
+		hud,
+		objective_name,
+		status_text,
+		accent,
+		glyph,
+		Callable(self, "_battle_guidance_text"),
+		Callable(self, "_battle_guidance_format"),
+		Callable(self, "_log_battle_event")
 	)
 	return true
 
@@ -1512,98 +1468,57 @@ func _advance_room_objective(pickup_ref, tint: Color) -> bool:
 		if gatekeeper_name.is_empty():
 			_complete_room_objective(objective, accent)
 			return true
-		if hud != null:
-			hud.show_banner(
-				_battle_guidance_format(
-					"room_objective_gatekeeper_banner_format",
-					"%s  守关现身",
-					"%s  Gatekeeper waiting",
-					[objective_name]
-				),
-				accent,
-				1.9
-			)
-			hud.show_reveal(
-				_battle_guidance_text(
-					"room_objective_gatekeeper_reveal_title",
-					"封门守魁",
-					"Seal Warden"
-				),
-				gatekeeper_name,
-				_battle_guidance_format(
-					"room_objective_gatekeeper_reveal_body_format",
-					"击败%s后，卷间奖印才会真正解封。",
-					"Defeat %s to unseal the reward beacon.",
-					[gatekeeper_name]
-				),
-				accent,
-				String(pickup_ref.get_meta("room_objective_glyph", objective.get("glyph", "封"))),
-				2.8
-			)
-			hud.set_tip(_room_objective_status_text(objective, room_objective_remaining))
-			_log_battle_event(
-				_battle_guidance_format(
-					"room_objective_gatekeeper_log_format",
-					"%s · %s拦路",
-					"%s · %s emerges",
-					[objective_name, gatekeeper_name]
-				),
-				accent
-			)
-			return true
+		battle_room_objective_presentation.present_gatekeeper_waiting(
+			hud,
+			objective_name,
+			gatekeeper_name,
+			_room_objective_status_text(objective, room_objective_remaining),
+			accent,
+			String(pickup_ref.get_meta("room_objective_glyph", objective.get("glyph", "封"))),
+			Callable(self, "_battle_guidance_text"),
+			Callable(self, "_battle_guidance_format"),
+			Callable(self, "_log_battle_event")
+		)
+		return true
 	if mode == "remaining" and room_objective_remaining > 0:
-		if hud != null:
-			hud.show_banner(
-				_battle_guidance_format(
-					"room_objective_seals_remaining_banner_format",
-					"%s  还差 %d 枚",
-					"%s  %d seals remain",
-					[objective_name, room_objective_remaining]
-				),
-				accent,
-				1.45
-			)
-			hud.set_tip(_room_objective_status_text(objective, room_objective_remaining))
-			_log_battle_event(
-				_battle_guidance_format(
-					"room_objective_seals_remaining_log_format",
-					"%s · 尚余 %d 枚封印",
-					"%s · %d seals remain",
-					[objective_name, room_objective_remaining]
-				),
-				accent
-			)
-			return true
+		battle_room_objective_presentation.present_remaining_seals(
+			hud,
+			objective_name,
+			room_objective_remaining,
+			_room_objective_status_text(objective, room_objective_remaining),
+			accent,
+			Callable(self, "_battle_guidance_format"),
+			Callable(self, "_log_battle_event")
+		)
+		return true
 
 	_complete_room_objective(objective, accent)
 	return true
 
 
 func _spawn_room_objective_gatekeeper(objective: Dictionary, beacon_position: Vector3) -> String:
+	if not is_instance_valid(player):
+		return ""
 	var gatekeeper_variant: Variant = objective.get("gatekeeper", {})
-	if not (gatekeeper_variant is Dictionary) or not is_instance_valid(player):
+	if not (gatekeeper_variant is Dictionary):
 		return ""
 	var gatekeeper := gatekeeper_variant as Dictionary
-	var gatekeeper_id := String(gatekeeper.get("id", ""))
-	if gatekeeper_id.is_empty():
-		gatekeeper_id = "%s_gatekeeper" % String(objective.get("id", "room_objective"))
-	gatekeeper["id"] = gatekeeper_id
+	var spawn_plan: Dictionary = battle_room_objective_presentation.build_gatekeeper_spawn_plan(
+		objective,
+		beacon_position,
+		elapsed_time
+	)
+	if spawn_plan.is_empty():
+		return ""
+	gatekeeper["id"] = String(spawn_plan.get("id", ""))
 	var enemy = ENEMY_SCENE.instantiate()
-	var gatekeeper_type := String(gatekeeper.get("type", "elite"))
-	var spawn_direction := Vector3.ZERO - beacon_position
-	spawn_direction.y = 0.0
-	if spawn_direction.length_squared() <= 0.001:
-		spawn_direction = Vector3.BACK
-	else:
-		spawn_direction = spawn_direction.normalized()
-	enemy.position = beacon_position + spawn_direction * 3.8
-	enemy.position.y = 0.0
-	enemy.configure(gatekeeper_type, 1.1 + elapsed_time / 76.0, player)
+	enemy.position = spawn_plan.get("position", Vector3.ZERO)
+	enemy.configure(String(spawn_plan.get("type", "elite")), float(spawn_plan.get("power_scale", 1.0)), player)
 	var gatekeeper_copy := _battle_room_gatekeeper_entry(objective, gatekeeper)
 	enemy.enemy_name = _front_end_text(gatekeeper_copy, "name", "守关魁首", "Gatekeeper")
-	enemy.glyph = String(gatekeeper.get("glyph", "魁"))
-	enemy.tint = Color(gatekeeper.get("tint", Color(0.82, 0.54, 0.34, 1.0)))
-	enemy.max_health *= maxf(float(gatekeeper.get("health_scale", 1.0)), 0.35)
+	enemy.glyph = String(spawn_plan.get("glyph", "魁"))
+	enemy.tint = Color(spawn_plan.get("tint", Color(0.82, 0.54, 0.34, 1.0)))
+	enemy.max_health *= float(spawn_plan.get("health_scale", 1.0))
 	enemy.health = enemy.max_health
 	enemy.display_health = enemy.health
 	if enemy.has_method("set_health_bar_visible"):
@@ -1613,7 +1528,7 @@ func _spawn_room_objective_gatekeeper(objective: Dictionary, beacon_position: Ve
 	enemy.defeated.connect(_on_enemy_defeated)
 	if enemy.has_signal("damaged"):
 		enemy.damaged.connect(_on_enemy_damaged)
-	enemy.defeated.connect(Callable(self, "_on_room_objective_gatekeeper_defeated").bind(gatekeeper_id))
+	enemy.defeated.connect(Callable(self, "_on_room_objective_gatekeeper_defeated").bind(String(spawn_plan.get("id", ""))))
 	enemy.request_hazard.connect(_on_enemy_request_hazard)
 	enemy.request_line_hazard.connect(_on_enemy_request_line_hazard)
 	enemy.request_projectile.connect(_on_enemy_request_projectile)
@@ -1621,27 +1536,22 @@ func _spawn_room_objective_gatekeeper(objective: Dictionary, beacon_position: Ve
 	_apply_room_objective_state(
 		battle_room_objective_rules.with_gatekeeper_id(
 			_room_objective_state_snapshot(),
-			gatekeeper_id
+			String(spawn_plan.get("id", ""))
 		)
 	)
-	var taunt := _front_end_text(gatekeeper_copy, "taunt", "", "")
-	if not taunt.is_empty():
+	var gatekeeper_callout: Dictionary = battle_room_objective_presentation.build_gatekeeper_callout(
+		gatekeeper_copy,
+		enemy.enemy_name,
+		Color(enemy.tint),
+		Callable(self, "_battle_guidance_format")
+	)
+	if not gatekeeper_callout.is_empty():
 		_show_battle_callout(
-			_battle_guidance_format(
-				"room_objective_gatekeeper_callout_title_format",
-				"%s拦路",
-				"%s Challenges You",
-				[enemy.enemy_name]
-			),
-			taunt,
-			Color(enemy.tint),
-			_battle_guidance_format(
-				"room_objective_gatekeeper_callout_source_format",
-				"%s：",
-				"%s: ",
-				[enemy.enemy_name]
-			),
-			3.0
+			String(gatekeeper_callout.get("title", "")),
+			String(gatekeeper_callout.get("text", "")),
+			Color(gatekeeper_callout.get("accent", Color(enemy.tint))),
+			String(gatekeeper_callout.get("log_prefix", "")),
+			float(gatekeeper_callout.get("duration", 3.0))
 		)
 	_spawn_wave_effect(enemy.global_position, 3.9, Color(enemy.tint), String(enemy.glyph))
 	return String(enemy.enemy_name)
@@ -1659,32 +1569,13 @@ func _on_room_objective_gatekeeper_defeated(_world_position: Vector3, _enemy_typ
 func _complete_room_objective(objective: Dictionary, accent: Color) -> void:
 	var objective_name := _localized_room_objective_name(objective)
 	_clear_room_objective_state()
-	if hud != null:
-		hud.show_banner(
-			_battle_guidance_format(
-				"room_objective_complete_banner_format",
-				"%s  奖印显形",
-				"%s  Reward beacon raised",
-				[objective_name]
-			),
-			accent,
-			1.7
-		)
-		hud.set_tip(
-			_battle_guidance_text(
-				"reward_beacon_tip",
-				"卷间奖印已经亮起。先亲自走到奖印前，卷间抉择才会真正打开。",
-				"The chamber reward beacon is now active. Walk to it before the next chamber choice can resolve."
-			)
-		)
-	_log_battle_event(
-		_battle_guidance_format(
-			"room_objective_complete_log_format",
-			"%s完成 · 奖印显形",
-			"%s complete · Reward beacon raised",
-			[objective_name]
-		),
-		accent
+	battle_room_objective_presentation.present_objective_complete(
+		hud,
+		objective_name,
+		accent,
+		Callable(self, "_battle_guidance_text"),
+		Callable(self, "_battle_guidance_format"),
+		Callable(self, "_log_battle_event")
 	)
 	_spawn_chamber_break_beacon()
 
