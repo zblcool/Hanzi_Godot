@@ -1207,8 +1207,8 @@ const CANGJIE_PORTAL_SECTIONS := [
 			"next_row_handoff": {
 				"title": {"zh": "下一排接续", "en": "Next-Row Handoff"},
 				"summary": {
-					"zh": "source 真正点下一个节点后，亮起的下一排不会只剩状态颜色，而会立刻变成新的路线问题。Godot 这里先把当前聚焦节点真正会点亮的房间抽成一组接续卡，并补上它们更像接战后拿牌、路书事件、稳线修整还是遗物偏转的提示；现在每张卡还会直接带出一小条节点节拍与一枚 `路线读法 / Route Read` cue，先读这一格最常见的 `节点 -> 关键决策 -> 跟进`，以及它更像压深、补短、存势还是保薄兑现，并且也能直接点按把主聚焦和联动预览切到那一格。",
-					"en": "After the live source map locks a room in, the newly lit row is not just a state color. It immediately becomes the next route question. Godot now pulls the rooms the current focus would actually unlock into a handoff strip, spells out whether they lean toward post-battle drafting, route-ledger pressure, stabilizing resets, or relic bends, exposes both a compact `node -> decision -> follow-through` beat strip and a `Route Read` cue for each unlocked card, and now lets those cards retarget the main focus and linked preview directly."
+					"zh": "source 真正点下一个节点后，亮起的下一排不会只剩状态颜色，而会立刻变成新的路线问题。Godot 这里先把当前聚焦节点真正会点亮的房间抽成一组接续卡，并补上它们更像接战后拿牌、路书事件、稳线修整还是遗物偏转的提示；现在每张卡还会直接带出一小条节点节拍、一枚 `路线读法 / Route Read` cue，以及一条紧凑 `估值偏转 / Value Shift` 提示，先读这一格最常见的 `节点 -> 关键决策 -> 跟进`，它更像压深、补短、存势还是保薄兑现，也顺手预览样张里的 deck / relic / Gold 重估，并且也能直接点按把主聚焦和联动预览切到那一格。",
+					"en": "After the live source map locks a room in, the newly lit row is not just a state color. It immediately becomes the next route question. Godot now pulls the rooms the current focus would actually unlock into a handoff strip, spells out whether they lean toward post-battle drafting, route-ledger pressure, stabilizing resets, or relic bends, exposes a compact `node -> decision -> follow-through` beat strip plus both a `Route Read` cue and a tight `Value Shift` hint for each unlocked card, previews that room's sample deck / relic / Gold repricing in place, and now lets those cards retarget the main focus and linked preview directly."
 				},
 				"action_hint": {
 					"zh": "点按任一接续卡，会把主聚焦、路线丝带和联动预览一起切到那一格。",
