@@ -123,7 +123,8 @@ const HERO_EN := {
 	}
 }
 const RADICAL_EN := {
-	"亻": {"name": "person radical", "description": "Combine with `木` into `休`, leaning toward sustain and recovery."},
+	"亻": {"name": "person radical", "description": "Combine with `木` into `休`; after two human picks it can also reveal the hidden `夋` radical for `俊`."},
+	"夋": {"name": "secret stride radical", "description": "A hidden radical revealed after two `亻` picks. Pair it with `亻` to form `俊` and enter a timed water dance."},
 	"木": {"name": "wood radical", "description": "Completes `休`, and two woods can also line up into `林` for a forward control lane."},
 	"日": {"name": "sun radical", "description": "Combine with `月` into `明`, or stack a second `日` into `昌` for a straighter chase line."},
 	"月": {"name": "moon radical", "description": "Advances the `明` route and pushes the weapon toward phrase arts sooner."},
@@ -147,6 +148,7 @@ const RECIPE_EN := {
 	"lei": {"title": "Falling Thunder", "description": "Locks onto the nearest cluster and slams the mid-field with lightning."},
 	"rock": {"title": "Falling Crag", "description": "Marks the nearest enemy cluster with an engraved impact and leaves a short shock zone."},
 	"qiu": {"title": "Prison Array", "description": "Periodically drops a prison field around the nearest enemy cluster, pinning feet and dealing steady damage."},
+	"jun": {"title": "Graceful Current", "description": "After the secret radical appears, `俊` enters a timed water-dance state that sprays around you and sustains the run."},
 	"ren": {"title": "Endurance Instinct", "description": "Below half health, gain attack speed, damage, and move speed together."},
 	"qin": {"title": "Soothing Wave", "description": "Periodically sends a forward healing wave that slows and threads through the crowd."},
 	"yan": {"title": "Flame Surge", "description": "Periodically sprays flame glyph volleys in all directions to burn open space."}

@@ -712,6 +712,8 @@ var room_objective_gatekeeper_id: String = ""
 var chamber_break_beacon_active := false
 
 var radical_counts: Dictionary = {}
+var radical_pick_counts: Dictionary = {}
+var revealed_secret_radicals: Dictionary = {}
 var skill_levels: Dictionary = {}
 var word_skill_levels: Dictionary = {}
 var word_progress: Dictionary = {}
@@ -1912,6 +1914,8 @@ func _ready() -> void:
 	battle_intro = Session.consume_battle_intro()
 	battle_settings = Session.get_battle_settings()
 	radical_counts = Session.build_empty_radicals()
+	radical_pick_counts = Session.build_empty_radicals()
+	revealed_secret_radicals = {}
 	skill_levels = Session.build_empty_recipe_levels()
 	word_skill_levels = Session.build_empty_word_levels()
 	word_progress = Session.build_empty_word_progress()
@@ -3026,6 +3030,8 @@ func _build_radical_choices() -> Array[Dictionary]:
 	var weights: Dictionary = {}
 	for radical_variant in Session.RADICAL_ORDER:
 		var radical := String(radical_variant)
+		if not _is_radical_choice_available(radical):
+			continue
 		candidates.append(radical)
 		weights[radical] = _score_radical_choice(radical)
 
@@ -3053,6 +3059,13 @@ func _build_radical_choices() -> Array[Dictionary]:
 		var radical := String(radical_variant)
 		choices.append(_build_choice_data(radical))
 	return choices
+
+
+func _is_radical_choice_available(radical: String) -> bool:
+	var radical_data: Dictionary = Session.get_radical_data(radical)
+	if not bool(radical_data.get("hidden", false)):
+		return true
+	return bool(revealed_secret_radicals.get(radical, false))
 
 
 func _score_radical_choice(radical: String) -> float:
@@ -3200,6 +3213,7 @@ func _on_radical_choice_selected(radical: String) -> void:
 
 func _apply_radical_choice(radical: String) -> void:
 	if radical == "刂":
+		_record_radical_pick(radical)
 		radical_counts[radical] = int(radical_counts.get(radical, 0)) + 1
 		player.apply_blade_upgrade()
 		hud.show_banner(
@@ -3211,6 +3225,7 @@ func _apply_radical_choice(radical: String) -> void:
 		_sync_hud()
 		return
 
+	_record_radical_pick(radical)
 	radical_counts[radical] = int(radical_counts.get(radical, 0)) + 1
 	hud.show_banner(
 		_battle_state_format("radical_attuned_banner_format", "领悟 %s", "Attuned %s", [radical]),
@@ -3219,6 +3234,45 @@ func _apply_radical_choice(radical: String) -> void:
 	)
 	_resolve_growth_chains()
 	_sync_hud()
+
+
+func _record_radical_pick(radical: String, silent: bool = false) -> void:
+	radical_pick_counts[radical] = int(radical_pick_counts.get(radical, 0)) + 1
+	_reveal_secret_radicals_for(radical, silent)
+
+
+func _reveal_secret_radicals_for(radical: String, silent: bool = false) -> void:
+	if radical != "亻":
+		return
+	if int(radical_pick_counts.get(radical, 0)) < 2:
+		return
+	if bool(revealed_secret_radicals.get("夋", false)):
+		return
+	revealed_secret_radicals["夋"] = true
+	if silent or not is_instance_valid(hud):
+		return
+	var secret_color: Color = Color(Session.RADICAL_COLORS.get("夋", Color(0.68, 0.88, 1.0, 1.0)))
+	hud.show_banner(
+		_battle_state_format("secret_radical_reveal_banner_format", "秘旁现形  %s", "Secret Radical  %s", ["夋"]),
+		secret_color,
+		1.9
+	)
+	hud.set_tip(
+		_battle_guidance_text(
+			"secret_radical_reveal_tip",
+			"两次人势后，秘旁「夋」已经现形；再补一枚「亻」就能继续合成「俊」。",
+			"After two human picks, the hidden radical `夋` is now revealed; pair it with another `亻` to form `俊`."
+		)
+	)
+	_log_battle_event(
+		_battle_state_format(
+			"secret_radical_reveal_log_format",
+			"秘旁现形 · %s · 现可暗合「%s」",
+			"Secret radical revealed · %s · `%s` is now craftable",
+			["夋", "俊"]
+		),
+		secret_color
+	)
 
 
 func _resolve_growth_chains() -> void:
@@ -3885,6 +3939,9 @@ func _apply_intro_preset() -> void:
 
 	for radical in radical_counts.keys():
 		radical_counts[radical] = 0
+	for radical in radical_pick_counts.keys():
+		radical_pick_counts[radical] = 0
+	revealed_secret_radicals.clear()
 	var preset_radicals: Dictionary = preset.get("radicals", {})
 	for radical_variant in preset_radicals.keys():
 		var radical := String(radical_variant)
@@ -3893,6 +3950,10 @@ func _apply_intro_preset() -> void:
 		radical_counts[radical] = int(radical_counts.get(radical, 0)) + 1
 		if radical == "刂":
 			player.apply_blade_upgrade()
+	for radical_variant in Session.RADICAL_ORDER:
+		var radical := String(radical_variant)
+		radical_pick_counts[radical] = int(radical_counts.get(radical, 0))
+		_reveal_secret_radicals_for(radical, true)
 
 	for recipe_id in skill_levels.keys():
 		skill_levels[recipe_id] = 0

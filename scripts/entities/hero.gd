@@ -30,6 +30,7 @@ var max_health: float = 100.0
 var health: float = 100.0
 var attack_range: float = 12.0
 var collect_radius: float = 4.0
+var base_collect_radius: float = 4.0
 var base_projectile_speed: float = 20.0
 var projectile_speed: float = 20.0
 
@@ -54,6 +55,7 @@ var thunder_level: int = 0
 var thunder_word_level: int = 0
 var rock_level: int = 0
 var qiu_level: int = 0
+var jun_level: int = 0
 var resolve_level: int = 0
 var resolve_word_level: int = 0
 var flame_level: int = 0
@@ -75,6 +77,9 @@ var bright_timer: float = 0.0
 var thunder_timer: float = 0.0
 var rock_timer: float = 0.0
 var qiu_timer: float = 0.0
+var jun_mode_time: float = 0.0
+var jun_mode_cooldown: float = 0.0
+var jun_burst_timer: float = 0.0
 var flame_timer: float = 0.0
 var resolve_pulse_timer: float = 0.0
 var stealth_time: float = 0.0
@@ -138,7 +143,8 @@ func configure(hero_data: Dictionary) -> void:
 	attack_range = float(hero_data["attack_range"])
 	base_projectile_speed = float(hero_data["projectile_speed"])
 	projectile_speed = base_projectile_speed
-	collect_radius = float(hero_data["collect_radius"])
+	base_collect_radius = float(hero_data["collect_radius"])
+	collect_radius = base_collect_radius
 	base_attack_interval = float(hero_data["attack_interval"])
 	base_attack_damage = float(hero_data["attack_damage"])
 	current_attack_interval = base_attack_interval
@@ -174,6 +180,8 @@ func _physics_process(delta: float) -> void:
 	var effective_move_speed: float = move_speed + (BRUSH_HASTE_SPEED_BONUS if brush_haste_time > 0.0 else 0.0)
 	if fury_time > 0.0:
 		effective_move_speed *= FURY_HASTE_SPEED_MULTIPLIER
+	if jun_mode_time > 0.0:
+		effective_move_speed += 0.7 + float(jun_level) * 0.12
 	global_position += move_vector * effective_move_speed * delta
 	global_position.y = ground_height
 
@@ -187,6 +195,9 @@ func _physics_process(delta: float) -> void:
 	slash_anim_time = max(slash_anim_time - delta, 0.0)
 	stun_time = max(stun_time - delta, 0.0)
 	chang_echo_timer = max(chang_echo_timer - delta, 0.0)
+	jun_mode_time = max(jun_mode_time - delta, 0.0)
+	jun_mode_cooldown = max(jun_mode_cooldown - delta, 0.0)
+	jun_burst_timer = max(jun_burst_timer - delta, 0.0)
 
 	_handle_passives(delta)
 	if stun_time <= 0.0:
@@ -364,6 +375,14 @@ func _handle_passives(delta: float) -> void:
 			_trigger_qiu_prison()
 			qiu_timer = max(2.8, 5.4 - float(qiu_level) * 0.42)
 
+	if jun_level > 0:
+		if jun_mode_time > 0.0:
+			if jun_burst_timer <= 0.0:
+				_trigger_jun_burst()
+				jun_burst_timer = max(0.42, 0.78 - float(jun_level) * 0.08)
+		elif jun_mode_cooldown <= 0.0:
+			_activate_jun_mode()
+
 	if flame_level > 0:
 		flame_timer -= delta
 		if flame_timer <= 0.0:
@@ -538,6 +557,31 @@ func _trigger_qiu_prison() -> void:
 	request_prison.emit(prison_origin, radius, 0.34, active_time, damage, Session.RECIPES["qiu"]["color"], "囚", root_duration, 0.44)
 
 
+func _activate_jun_mode() -> void:
+	if jun_level <= 0 or is_dead:
+		return
+	jun_mode_time = 15.0
+	jun_mode_cooldown = max(16.0, 23.0 - float(jun_level) * 0.7)
+	jun_burst_timer = 0.05
+	heal(1.0 + float(jun_level) * 0.55)
+	_update_visual_state()
+
+
+func _trigger_jun_burst() -> void:
+	var origin := global_position + Vector3(0.0, 1.0, 0.0)
+	var projectile_count: int = 6 + mini(2, jun_level)
+	var speed: float = max(11.2, projectile_speed + 1.2 + float(jun_level) * 0.35)
+	var damage: float = 4.2 + current_attack_damage * (0.42 + float(jun_level) * 0.04)
+	var tint: Color = Session.RECIPES["jun"]["color"]
+	var phase: float = motion_time * 0.55
+	heal(0.65 + float(jun_level) * 0.28)
+	for index in range(projectile_count):
+		var angle: float = phase + TAU * float(index) / float(projectile_count)
+		var direction := Vector3(cos(angle), 0.0, sin(angle)).normalized()
+		var glyph := "俊" if index % 3 == 0 else "水"
+		fire_projectile.emit(origin + direction * 0.9, direction, damage, speed, glyph, tint)
+
+
 func _trigger_resolve_activation() -> void:
 	if resolve_word_level > 0:
 		heal(2.8 + float(resolve_word_level) * 1.8)
@@ -669,6 +713,7 @@ func _apply_skill_levels() -> void:
 	var lei_level: int = int(skill_levels.get("lei", 0))
 	var rock_recipe_level: int = int(skill_levels.get("rock", 0))
 	var qiu_recipe_level: int = int(skill_levels.get("qiu", 0))
+	var jun_recipe_level: int = int(skill_levels.get("jun", 0))
 	var ren_level: int = int(skill_levels.get("ren", 0))
 	var qin_recipe_level: int = int(skill_levels.get("qin", 0))
 	var yan_level: int = int(skill_levels.get("yan", 0))
@@ -694,6 +739,7 @@ func _apply_skill_levels() -> void:
 	thunder_word_level = lei_word_level
 	rock_level = rock_recipe_level
 	qiu_level = qiu_recipe_level
+	jun_level = jun_recipe_level
 	resolve_level = ren_level
 	resolve_word_level = ren_word_level
 	flame_level = yan_level
@@ -710,7 +756,8 @@ func _apply_skill_levels() -> void:
 		resolve_active = should_resolve
 	elif not should_resolve:
 		resolve_pulse_timer = 0.0
-	move_speed = base_move_speed
+	move_speed = base_move_speed + float(jun_level) * 0.18
+	collect_radius = base_collect_radius + float(jun_level) * 0.38
 	projectile_speed = base_projectile_speed + float(blade_level) * 0.8 + float(ming_word_level) * 1.0
 
 	current_attack_damage = base_attack_damage + float(ming_level) * 2.4 + float(wave_level) * 1.2 + float(ming_word_level) * 4.0 + float(lei_level) * 1.1 + float(rock_level) * 0.9 + float(yan_level) * 1.0
@@ -726,7 +773,7 @@ func _apply_skill_levels() -> void:
 		current_attack_interval = max(0.34, current_attack_interval - float(blade_level) * 0.015)
 
 	if resolve_active:
-		move_speed = base_move_speed + 0.55 + float(resolve_level) * 0.34 + float(resolve_word_level) * 0.2
+		move_speed = base_move_speed + float(jun_level) * 0.18 + 0.55 + float(resolve_level) * 0.34 + float(resolve_word_level) * 0.2
 		current_attack_damage *= 1.0 + float(resolve_level) * 0.16 + float(resolve_word_level) * 0.08
 		current_attack_interval = max(0.22 if role == "ranged" else 0.28, current_attack_interval - float(resolve_level) * 0.045 - float(resolve_word_level) * 0.03)
 
@@ -750,6 +797,8 @@ func _apply_skill_levels() -> void:
 		rock_timer = max(3.0, 5.6 - float(rock_level) * 0.38)
 	if qiu_level > 0 and qiu_timer <= 0.0:
 		qiu_timer = max(2.8, 5.4 - float(qiu_level) * 0.42)
+	if jun_level > 0 and jun_mode_time <= 0.0 and jun_mode_cooldown <= 0.0:
+		_activate_jun_mode()
 	if flame_level > 0 and flame_timer <= 0.0:
 		flame_timer = max(2.4, 5.1 - float(flame_level) * 0.36 - float(flame_word_level) * 0.42)
 	if resolve_active and resolve_word_level > 0 and resolve_pulse_timer <= 0.0:
@@ -884,6 +933,10 @@ func _update_visual_state() -> void:
 	elif fury_time > 0.0:
 		current_accent = current_accent.lerp(Color(1.0, 0.68, 0.42, 1.0), 0.36)
 		current_trim = current_trim.lerp(Color(1.0, 0.9, 0.82, 1.0), 0.24)
+	elif jun_mode_time > 0.0:
+		current_body = current_body.lerp(Color(0.86, 0.96, 1.0, 1.0), 0.14)
+		current_accent = current_accent.lerp(Session.RECIPES["jun"]["color"], 0.52)
+		current_trim = current_trim.lerp(Color(0.94, 0.98, 1.0, 1.0), 0.28)
 	elif brush_haste_time > 0.0:
 		current_accent = current_accent.lightened(0.16)
 		current_trim = current_trim.lightened(0.08)

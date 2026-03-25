@@ -256,7 +256,7 @@ func _ensure_input_action(action_name: StringName, keycodes: Array) -> void:
 			event.physical_keycode = keycode
 			InputMap.action_add_event(action_name, event)
 
-const RECIPE_ORDER := ["ming", "chang", "xiu", "forest", "hai", "lei", "rock", "qiu", "ren", "qin", "yan"]
+const RECIPE_ORDER := ["ming", "chang", "xiu", "forest", "hai", "lei", "rock", "qiu", "jun", "ren", "qin", "yan"]
 const RECIPES := {
 	"ming": {
 		"id": "ming",
@@ -335,6 +335,16 @@ const RECIPES := {
 		"title": "困阵成字",
 		"description": "周期在最近敌群周围落下囚阵，锁脚并持续伤敌。",
 		"color": Color(0.94, 0.8, 0.48, 1.0),
+		"max_level": 3,
+		"word_id": ""
+	},
+	"jun": {
+		"id": "jun",
+		"display": "俊",
+		"radicals": ["亻", "夋"],
+		"title": "俊游成字",
+		"description": "秘旁现形后可写成 15 秒俊字水舞，围绕自身连续喷水并牵动回复。",
+		"color": Color(0.7, 0.9, 1.0, 1.0),
 		"max_level": 3,
 		"word_id": ""
 	},
@@ -539,9 +549,10 @@ const ENEMIES := {
 	}
 }
 
-const RADICAL_ORDER := ["亻", "木", "日", "月", "石", "山", "氵", "每", "雨", "田", "囗", "心", "火", "刂"]
+const RADICAL_ORDER := ["亻", "夋", "木", "日", "月", "石", "山", "氵", "每", "雨", "田", "囗", "心", "火", "刂"]
 const RADICAL_COLORS := {
 	"亻": Color(0.88, 0.71, 0.55, 1.0),
+	"夋": Color(0.68, 0.88, 1.0, 1.0),
 	"木": Color(0.49, 0.82, 0.56, 1.0),
 	"日": Color(1.0, 0.78, 0.32, 1.0),
 	"月": Color(0.68, 0.79, 1.0, 1.0),
@@ -560,8 +571,15 @@ const RADICALS := {
 	"亻": {
 		"display": "亻",
 		"name": "单人旁",
-		"description": "和 `木` 一起合成「休」，偏向续航与回复。",
+		"description": "和 `木` 一起合成「休」，累计两次人势后还会显出秘旁「夋」，继续暗合成「俊」。",
 		"recipe_id": "xiu"
+	},
+	"夋": {
+		"display": "夋",
+		"name": "俊骨",
+		"description": "秘旁。两次人势后现形，再与 `亻` 暗合成「俊」，进入 15 秒俊字水舞。",
+		"recipe_id": "jun",
+		"hidden": true
 	},
 	"木": {
 		"display": "木",
