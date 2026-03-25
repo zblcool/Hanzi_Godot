@@ -1311,6 +1311,43 @@ const CANGJIE_PORTAL_SECTIONS := [
 						"zh": "普通战斗会先结算 Gold，再给三选一奖励牌或跳过保薄，是最稳定的路线读法。",
 						"en": "Regular battles settle Gold first, then offer a three-card reward or a lean skip, making them the steadiest route read."
 					},
+					"valuation_group": {
+						"title": {"zh": "估值偏转 · 战后怎么看", "en": "Value Shift · How Rewards Reprice"},
+						"summary": {
+							"zh": "source 的战后奖池不会把每张牌当成等值补充。当前 deck 倾向与已持遗物，会一起决定这场战斗之后什么最值。",
+							"en": "The source post-battle pool does not treat every card as an equal add-on. The current deck lean and owned relics jointly decide what is most valuable after this fight."
+						},
+						"cards": [
+							{
+								"glyph": "向",
+								"title": {"zh": "当前倾向会改写奖池", "en": "Current Lean Reweights The Pool"},
+								"subtitle": {"zh": "墨 / 合 / 守 / 控 / 攻", "en": "Ink / fusion / guard / control / attack"},
+								"body": {
+									"zh": "source 会先读当前牌组里的墨、合字、防守、控制与爆发标签，再把更贴近这条线的奖励牌抬高权重，所以普通战斗最适合拿来确认这一趟 climb 正在写哪条主线。",
+									"en": "The source first reads the deck's Ink, fusion, guard, control, and burst tags, then boosts the weight of rewards that fit that line, making normal battles the cleanest place to confirm which spine this climb is actually writing."
+								},
+								"tags": [
+									{"zh": "路线读牌", "en": "Route-aware draft"},
+									{"zh": "当前主线", "en": "Current spine"},
+									{"zh": "奖励加权", "en": "Reward weighting"}
+								]
+							},
+							{
+								"glyph": "契",
+								"title": {"zh": "遗物也会继续拉偏", "en": "Relics Keep Pulling Value"},
+								"subtitle": {"zh": "砚 / 线 / 灯 / 镜", "en": "Inkstone / Thread / Lantern / Mirror Slip"},
+								"body": {
+									"zh": "像 `砚 / Inkstone`、`线 / Red Thread`、`灯 / Tower Lantern`、`镜 / Mirror Slip` 这类遗物，会继续把对应牌型抬得更值，让一次普通战斗后的拿牌也带着 relic 余波。",
+									"en": "Relics such as `Inkstone`, `Red Thread`, `Tower Lantern`, and `Mirror Slip` keep lifting the value of their matching card families, so even a routine reward pick still carries relic aftershock."
+								},
+								"tags": [
+									{"zh": "遗物余波", "en": "Relic aftershock"},
+									{"zh": "奖池再偏转", "en": "Pool bends again"},
+									{"zh": "不是平抽", "en": "Not a flat draft"}
+								]
+							}
+						]
+					},
 					"route_ribbon": {
 						"title": {"zh": "节点节拍带", "en": "Node Beat Ribbon"},
 						"summary": {
@@ -1401,6 +1438,43 @@ const CANGJIE_PORTAL_SECTIONS := [
 					"summary": {
 						"zh": "事件节点会像 `路书对照`、讲师提问或破页掮客那样，让短期收益和长期结构直接撞在一起。",
 						"en": "Event nodes act more like `Route Ledger`, the tutor prompt, or the page broker, colliding short-term gain with long-term structure."
+					},
+					"valuation_group": {
+						"title": {"zh": "估值偏转 · 路书怎么看你", "en": "Value Shift · How The Ledger Reads You"},
+						"summary": {
+							"zh": "source 的事件房不是随机赠品。它会先读现在这副牌最像哪条路，再决定压深、补短还是存势谁更值。",
+							"en": "Source event rooms are not random freebies. They first read which route the deck most resembles, then decide whether deepen, patch, or tempo banking is the more valuable answer."
+						},
+						"cards": [
+							{
+								"glyph": "路",
+								"title": {"zh": "先判主线，再给回应", "en": "Judge The Line First, Then Answer"},
+								"subtitle": {"zh": "墨守 / 合字 / 守势 / 控场 / 爆发", "en": "Ink / fusion / guard / control / burst"},
+								"body": {
+									"zh": "`Route Ledger` 会先读当前 deck 更偏墨、合字、防守、控制还是爆发，再给一组更贴线的双牌包，所以事件房最像把当前主线直接摊到桌面上。",
+									"en": "`Route Ledger` first reads whether the deck currently leans more toward Ink, fusion, guard, control, or burst, then offers a matching two-card package, so event rooms feel like laying the active route directly on the table."
+								},
+								"tags": [
+									{"zh": "主线判读", "en": "Line read"},
+									{"zh": "双牌包", "en": "Two-card package"},
+									{"zh": "事件不是随机", "en": "Events are not random"}
+								]
+							},
+							{
+								"glyph": "补",
+								"title": {"zh": "补短板也看缺口类型", "en": "Patch Value Depends On The Gap"},
+								"subtitle": {"zh": "格挡 / 引擎 / 抽牌 / 血线", "en": "Block / engine / draw / HP"},
+								"body": {
+									"zh": "补短选项也不是固定答案。source 会按当前牌组缺少格挡、引擎、抽牌还是续航来变更补件，所以同一个事件在不同 run 里会值不同的东西。",
+									"en": "The patch option is not fixed either. Source changes the repair piece based on whether the current deck is missing block, engine, draw, or sustain, so the same event is worth different things in different runs."
+								},
+								"tags": [
+									{"zh": "按缺口补件", "en": "Patch the real gap"},
+									{"zh": "血线也入账", "en": "HP also counts"},
+									{"zh": "不是标准答案", "en": "No one default answer"}
+								]
+							}
+						]
 					},
 					"route_ribbon": {
 						"title": {"zh": "节点节拍带", "en": "Node Beat Ribbon"},
@@ -1493,6 +1567,29 @@ const CANGJIE_PORTAL_SECTIONS := [
 						"zh": "歇息点不是单纯回血，而是在 `回气 18` 与 `回气 8 + 下场 +1 Energy / +1 Ink` 之间做低风险准备。",
 						"en": "Rest stops are not pure healing. They split between `heal 18` and `heal 8 + next battle +1 Energy / +1 Ink`."
 					},
+					"valuation_group": {
+						"title": {"zh": "估值偏转 · 稳线还是抢起手", "en": "Value Shift · Stabilize Or Frontload"},
+						"summary": {
+							"zh": "source 的歇息房会把血线与下场起手一起计价，所以它值不值，不只看你掉了多少血，也看下一拍想不想抢节奏。",
+							"en": "Source rest rooms price HP and the next opener together, so their value is not only about how much life was lost but also whether the next beat wants a tempo jump."
+						},
+						"cards": [
+							{
+								"glyph": "启",
+								"title": {"zh": "安全血线会抬高备战值", "en": "Safer HP Raises Prepare Value"},
+								"subtitle": {"zh": "+1 Energy / +1 Ink 更像节奏垫片", "en": "+1 Energy / +1 Ink as a tempo pad"},
+								"body": {
+									"zh": "当当前血线还稳得住时，`回气 8 + 下场 +1 Energy / +1 Ink` 往往会比纯回血更值，因为它能把更重的开场或墨耗线提前半拍压出来。",
+									"en": "When current HP is still stable enough, `heal 8 + next battle +1 Energy / +1 Ink` often becomes more valuable than pure healing because it pulls heavier openings or Ink lines half a beat earlier."
+								},
+								"tags": [
+									{"zh": "安全血线", "en": "Safe HP"},
+									{"zh": "下场起手", "en": "Next-battle opener"},
+									{"zh": "节奏垫片", "en": "Tempo pad"}
+								]
+							}
+						]
+					},
 					"route_ribbon": {
 						"title": {"zh": "节点节拍带", "en": "Node Beat Ribbon"},
 						"summary": {
@@ -1583,6 +1680,43 @@ const CANGJIE_PORTAL_SECTIONS := [
 					"summary": {
 						"zh": "商店会同时卖牌和遗物，还支持 restock 与花 Gold 删牌，是整条 climb 里最显性的资源重配节点。",
 						"en": "Shops sell both cards and relics while also supporting restocks and paid deck trims, making them the clearest resource-reallocation node in the climb."
+					},
+					"valuation_group": {
+						"title": {"zh": "估值偏转 · Gold 怎么花最值", "en": "Value Shift · Where Gold Matters Most"},
+						"summary": {
+							"zh": "source 商店不是看见更大数字就买。当前 deck 厚薄、前面保薄收益，以及特定经济 relic，都会改写哪一侧货架更值。",
+							"en": "Source shops are not about buying the biggest number in sight. Current deck thickness, earlier lean-deck gains, and specific economy relics all change which side of the shelf is actually worth the Gold."
+						},
+						"cards": [
+							{
+								"glyph": "金",
+								"title": {"zh": "厚牌时删牌可能比买牌更值", "en": "A Thick Deck Can Make Purge Worth More"},
+								"subtitle": {"zh": "买牌 / 删牌 / restock 是同一笔预算", "en": "Buy / purge / restock share one budget"},
+								"body": {
+									"zh": "如果前面已经拿了不少牌，商店的价值常常先落在删牌或 restock，而不是继续加厚；Gold 在这里真正开始被拿去修整整副牌的形状。",
+									"en": "If earlier floors already added plenty of cards, the shop's value often lands on purging or restocking before taking yet another pickup; this is where Gold starts reshaping the entire deck instead of simply enlarging it."
+								},
+								"tags": [
+									{"zh": "牌组厚薄", "en": "Deck thickness"},
+									{"zh": "删牌优先", "en": "Purge first"},
+									{"zh": "重洗货架", "en": "Restock"}
+								]
+							},
+							{
+								"glyph": "契",
+								"title": {"zh": "经济 relic 会抬高商店爆发", "en": "Economy Relics Spike Shop Value"},
+								"subtitle": {"zh": "契 / Broker Seal 与 算盘 / Lean Ledger", "en": "Broker Seal and Lean Ledger"},
+								"body": {
+									"zh": "`契 / Broker Seal` 会把牌和遗物都压价，`算盘 / Lean Ledger` 则会把前面跳过奖励换来的 Gold 兑现出来，所以有这些 relic 时，商店节点会突然比普通战斗更像主线推进点。",
+									"en": "`Broker Seal` discounts both cards and relics, while `Lean Ledger` cashes in the Gold earned from earlier reward skips, so once those relics are live the shop can abruptly become a stronger progression beat than another routine battle."
+								},
+								"tags": [
+									{"zh": "经济 relic", "en": "Economy relics"},
+									{"zh": "Gold 爆发", "en": "Gold spike"},
+									{"zh": "主线推进点", "en": "Major progression beat"}
+								]
+							}
+						]
 					},
 					"route_ribbon": {
 						"title": {"zh": "节点节拍带", "en": "Node Beat Ribbon"},
@@ -1675,6 +1809,29 @@ const CANGJIE_PORTAL_SECTIONS := [
 						"zh": "精英不只更痛，它还会把战后流程往后推一层：先打高压意图，再接遗物跟进，让路线被二次偏转。",
 						"en": "Elites are not only harder. They push the post-battle flow one layer deeper: survive heavier intents, then take a relic follow-up that bends the route again."
 					},
+					"valuation_group": {
+						"title": {"zh": "估值偏转 · 这份压力值不值", "en": "Value Shift · Is This Pressure Worth It"},
+						"summary": {
+							"zh": "source 的精英房会把风险和回报绑得更紧。要不要走这格，取决于当前牌组能否顶住更重的 intent，换到一次真正改路的 relic 跟进。",
+							"en": "Source elite rooms bind risk and payoff more tightly. Whether this node is worth taking depends on whether the current deck can survive heavier intents in exchange for a truly route-defining relic follow-up."
+						},
+						"cards": [
+							{
+								"glyph": "压",
+								"title": {"zh": "先问能不能扛住 intent 组合", "en": "First Ask If The Deck Survives The Intent Mix"},
+								"subtitle": {"zh": "multi / hex / guardAttack", "en": "multi / hex / guardAttack"},
+								"body": {
+									"zh": "精英常把 `multi`、`hex`、`guardAttack` 之类更重的 intent 串在一起，所以它的价值不只是 relic 更好，而是这副牌有没有资格用这段压力去换更重的路线改写。",
+									"en": "Elites often chain heavier intents such as `multi`, `hex`, and `guardAttack`, so their value is not only that the relic is better, but whether the deck has earned the right to trade this pressure for a stronger route rewrite."
+								},
+								"tags": [
+									{"zh": "高压资格", "en": "Pressure gate"},
+									{"zh": "敌意图考试", "en": "Intent exam"},
+									{"zh": "遗物换方向", "en": "Relic for direction"}
+								]
+							}
+						]
+					},
 					"route_ribbon": {
 						"title": {"zh": "节点节拍带", "en": "Node Beat Ribbon"},
 						"summary": {
@@ -1765,6 +1922,43 @@ const CANGJIE_PORTAL_SECTIONS := [
 					"summary": {
 						"zh": "删改房不是单一删牌口。source 会在 `删 1 张` 与 `复制 1 张非 Smudge 牌` 之间切换，让牌组形状同时可收可放。",
 						"en": "Archive rooms are not trim-only. The source switches between `remove 1 card` and `copy 1 non-Smudge card`, so deck shape can tighten or widen on purpose."
+					},
+					"valuation_group": {
+						"title": {"zh": "估值偏转 · 修薄还是复制", "en": "Value Shift · Trim Or Duplicate"},
+						"summary": {
+							"zh": "source 的 archive 房不会默认删牌。牌组里累积的厚度、Smudge 和关键件稀缺度，会一起决定修薄还是复制更值。",
+							"en": "Source archive rooms do not default to trimming. Accumulated deck thickness, Smudge load, and key-piece scarcity jointly decide whether trimming or duplication is worth more."
+						},
+						"cards": [
+							{
+								"glyph": "删",
+								"title": {"zh": "厚牌或 Smudge 多时，修薄更值", "en": "Thickness Or Smudge Makes Trim Worth More"},
+								"subtitle": {"zh": "把拖节奏的页先拿掉", "en": "Cut the pages that drag the pace"},
+								"body": {
+									"zh": "如果 run 前面已经加厚很多，或被事件 / 敌人塞进了多余的 Smudge，archive 的修薄会比再拿一张普通奖励更像直接给整副牌回气。",
+									"en": "If the run already grew too thick earlier or events and enemies stuffed extra Smudges into the deck, an archive trim acts more like direct recovery for the whole draw engine than another routine reward would."
+								},
+								"tags": [
+									{"zh": "牌组回气", "en": "Deck recovery"},
+									{"zh": "Smudge 清理", "en": "Smudge cleanup"},
+									{"zh": "抽牌质量", "en": "Draw quality"}
+								]
+							},
+							{
+								"glyph": "拓",
+								"title": {"zh": "关键件太稀少时，复制更值", "en": "When The Key Piece Is Scarce, Copy Wins"},
+								"subtitle": {"zh": "复制 1 张非 Smudge 牌", "en": "Copy 1 non-Smudge card"},
+								"body": {
+									"zh": "如果当前主线已经找到了真正贴线的核心牌，但抽到它的频率还不够高，archive 的复制模式就会比继续删牌更值，因为它能把正确的重复写进牌组。",
+									"en": "If the current line has already found its real core piece but still sees it too rarely, archive's copy mode becomes more valuable than further trimming because it writes the right repetition into the deck."
+								},
+								"tags": [
+									{"zh": "关键件复制", "en": "Copy the key piece"},
+									{"zh": "不是只求少", "en": "Not only fewer cards"},
+									{"zh": "正确重复", "en": "Cleaner repetition"}
+								]
+							}
+						]
 					},
 					"route_ribbon": {
 						"title": {"zh": "节点节拍带", "en": "Node Beat Ribbon"},
@@ -1857,6 +2051,43 @@ const CANGJIE_PORTAL_SECTIONS := [
 						"zh": "遗物房会把几件可见 relic 摊在面前，让你直接挑那件最能偏转当前路线的东西，而不是只吃随机宝箱。",
 						"en": "Treasure rooms lay several visible relics in front of you so you can choose the one that best bends the current route instead of taking a blind chest roll."
 					},
+					"valuation_group": {
+						"title": {"zh": "估值偏转 · 哪件 relic 会扭整张图", "en": "Value Shift · Which Relic Twists The Whole Map"},
+						"summary": {
+							"zh": "source 的 treasure 房不是看哪件遗物描述更花。真正的问题是，这一件会不会把后面奖励、商店与节点估值一起带偏。",
+							"en": "Source treasure rooms are not about whichever relic reads flashier. The real question is whether a given relic will drag later rewards, shops, and node values along with it."
+						},
+						"cards": [
+							{
+								"glyph": "择",
+								"title": {"zh": "先挑会改奖池的那件", "en": "Pick The Relic That Reprices The Reward Pool"},
+								"subtitle": {"zh": "砚 / 线 / 灯 / 镜 会继续拉偏", "en": "Inkstone / Thread / Lantern / Mirror Slip keep pulling"},
+								"body": {
+									"zh": "像 `砚 / Inkstone`、`线 / Red Thread`、`灯 / Tower Lantern`、`镜 / Mirror Slip` 这类 relic，一拿到手就会让后面的拿牌权重继续偏向对应牌型，所以 treasure 房的价值常常先看哪件会最深地改奖池。",
+									"en": "Relics such as `Inkstone`, `Red Thread`, `Tower Lantern`, and `Mirror Slip` immediately keep bending later reward weights toward their matching card families, so treasure rooms are often best judged by which pick will reprice the reward pool the hardest."
+								},
+								"tags": [
+									{"zh": "奖池偏转", "en": "Reward bend"},
+									{"zh": "后续拿牌改价", "en": "Later drafts repriced"},
+									{"zh": "先看长期", "en": "Look at the long tail"}
+								]
+							},
+							{
+								"glyph": "肆",
+								"title": {"zh": "也要看它会不会抬高商店", "en": "Also Ask Whether It Spikes Shops"},
+								"subtitle": {"zh": "契 / Broker Seal 与 算盘 / Lean Ledger", "en": "Broker Seal and Lean Ledger"},
+								"body": {
+									"zh": "`契 / Broker Seal` 会把商店牌与遗物都压价，`算盘 / Lean Ledger` 会把跳过奖励换来的 Gold 放大，所以某些 relic 的价值不只在战斗里，而是在后面的商店节点突然一起变值。",
+									"en": "`Broker Seal` discounts both shop cards and relics, while `Lean Ledger` amplifies the Gold earned through reward skips, so some relics matter not only in battle but because later shop nodes all become more valuable at once."
+								},
+								"tags": [
+									{"zh": "商店抬价", "en": "Shop spike"},
+									{"zh": "Gold 回流", "en": "Gold flow-back"},
+									{"zh": "节点也跟着变值", "en": "Nodes shift too"}
+								]
+							}
+						]
+					},
 					"route_ribbon": {
 						"title": {"zh": "节点节拍带", "en": "Node Beat Ribbon"},
 						"summary": {
@@ -1947,6 +2178,29 @@ const CANGJIE_PORTAL_SECTIONS := [
 					"summary": {
 						"zh": "Boss 是整副牌的总检验。此时路线、遗物、Gold 重配与事件取舍都会一起压到最后一场问答里。",
 						"en": "The boss is the full-build exam. By then the route, relics, Gold reallocation, and event tradeoffs all collapse into one final question."
+					},
+					"valuation_group": {
+						"title": {"zh": "估值偏转 · 前面所有判断在这结算", "en": "Value Shift · Every Earlier Judgment Settles Here"},
+						"summary": {
+							"zh": "source 的塔顶不是最后再拿一张牌那么简单。它会把前面每次压深、补短、存势、修薄与 relic 偏转一起结算，告诉你这些估值判断到底有没有站住。",
+							"en": "The source summit is not as simple as one last card reward. It settles every earlier deepen, patch, tempo-bank, trim, and relic bend together to show whether those valuation calls truly held."
+						},
+						"cards": [
+							{
+								"glyph": "判",
+								"title": {"zh": "Boss relic 像最后一次路线定稿", "en": "The Boss Relic Works Like A Final Verdict"},
+								"subtitle": {"zh": "不是补数值，而是看整条线能否闭环", "en": "Not bigger numbers, but whether the line closes"},
+								"body": {
+									"zh": "塔顶之后的 relic 更像给整次 climb 盖最后一个判章: 如果前面战后拿牌、事件补件、商店 Gold 与删改判断都写对了，这里会显得顺手；写歪了，Boss 就会把那份代价一起放大。",
+									"en": "The summit relic acts more like the climb's last seal of judgment: if earlier drafts, event patches, shop Gold, and archive calls were written correctly, it feels natural here; if they were off-line, the boss magnifies that cost all at once."
+								},
+								"tags": [
+									{"zh": "路线判章", "en": "Route seal"},
+									{"zh": "总检验", "en": "Final exam"},
+									{"zh": "整趟 climb 的结算", "en": "Whole-climb settlement"}
+								]
+							}
+						]
 					},
 					"route_ribbon": {
 						"title": {"zh": "节点节拍带", "en": "Node Beat Ribbon"},
