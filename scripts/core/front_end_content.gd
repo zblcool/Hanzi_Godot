@@ -2437,8 +2437,8 @@ const CANGJIE_PORTAL_SECTIONS := [
 								{"zh": "精简", "en": "Trim"},
 								{"zh": "保薄", "en": "Stay lean"}
 							],
-							"linked_preview_kind": "reward_chain",
-							"linked_preview_option": "skip",
+							"linked_preview_kind": "archive",
+							"linked_preview_option": "trim",
 							"connections": ["summit_boss"],
 							"tone": Color(0.86, 0.8, 0.56, 1.0),
 							"state": "option"
@@ -2519,6 +2519,115 @@ const CANGJIE_PORTAL_SECTIONS := [
 			"footnote": {
 				"zh": "这只是 source 三路线塔图的前台壳预览，不假装已经接通真正的 Godot 节点逻辑。",
 				"en": "This is only a front-shell preview of the source three-lane tower board, not a claim that Godot already has the real node logic wired up."
+			}
+		},
+		"archive_preview": {
+			"title": {"zh": "删改抉择预览", "en": "Archive Edit Preview"},
+			"summary": {
+				"zh": "source 的 archive 房不是固定删牌按钮。它会在 `删去杂音 / Trim Noise` 与 `誊抄笔路 / Transcribe A Line` 之间切换，让牌组形状在保薄与复制关键件之间重新定稿。",
+				"en": "The source archive room is not a fixed trim button. It switches between `Trim Noise` and `Transcribe A Line`, letting deck shape settle between staying lean and duplicating the key page."
+			},
+			"hint": {
+				"zh": "点按下面任一删改模式，预览 source 的 archive 房怎样把 `移除 1 张` 与 `复制 1 张非污牌` 压成一拍真正的牌组判断。",
+				"en": "Tap either archive mode below to preview how the source room compresses `remove 1 card` and `copy 1 non-Smudge card` into one real deck judgment."
+			},
+			"options": [
+				{
+					"id": "trim",
+					"glyph": "删",
+					"title": {"zh": "删去杂音", "en": "Trim Noise"},
+					"subtitle": {"zh": "移除 1 张牌，让抽牌更稳", "en": "Remove 1 card for steadier draws"},
+					"summary": {
+						"zh": "当 deck 已经被 `污` 或离线路线的边角页拖厚时，source 的 archive 会先把最脏的那张拔掉，让后面的抽牌、商店和战后拿牌都重新站回干净的判断线。",
+						"en": "When the deck has been thickened by `Smudge` or off-route filler, the source archive first pulls the dirtiest page out so later draws, shops, and reward drafts all stand on a cleaner judgment line."
+					},
+					"tone": Color(0.82, 0.72, 0.48, 1.0),
+					"result_group": {
+						"title": {"zh": "删改样张 · 先修薄", "en": "Archive Sample · Thin First"},
+						"summary": {
+							"zh": "这类删改会先承认当前最值的不是再拿东西，而是把拖节奏的页直接从牌组里拿掉，让抽牌顺序先回正。",
+							"en": "This style of archive pass admits that the best gain is not another pickup, but removing the page that drags the pace so the draw order can straighten first."
+						},
+						"cards": [
+							{
+								"glyph": "污",
+								"title": {"zh": "污 · 2x -> 1x", "en": "Smudge · 2x -> 1x"},
+								"subtitle": {"zh": "先把最脏的阻滞页拔掉", "en": "Pull the dirtiest clog first"},
+								"body": {
+									"zh": "如果这局已经被事件或敌人塞进了多张 `污`，archive 的第一刀往往就是先清掉其中一张，让后面的抽牌不再频繁空转。",
+									"en": "If events or enemies already stuffed several `Smudge` pages into the run, the archive's first cut is often one of them so later draws stop spinning their wheels."
+								},
+								"tags": [
+									{"zh": "去污", "en": "Cleanse"},
+									{"zh": "抽牌回气", "en": "Draw recovery"}
+								]
+							},
+							{
+								"glyph": "边",
+								"title": {"zh": "边 · 1x -> 0x", "en": "Margin · 1x -> 0x"},
+								"subtitle": {"zh": "把离线厚牌裁掉", "en": "Cut the off-line thickener"},
+								"body": {
+									"zh": "若路线已经不再需要更厚的中盘延伸，archive 也会把像 `边 / Margin` 这种当前不再贴线的页直接裁掉，换回更清楚的主线抽牌。",
+									"en": "If the route no longer wants extra midgame bulk, the archive can also cut a page such as `Margin` outright and trade it for clearer main-line draws."
+								},
+								"tags": [
+									{"zh": "离线页", "en": "Off-route page"},
+									{"zh": "路线回正", "en": "Route reset"}
+								]
+							}
+						]
+					}
+				},
+				{
+					"id": "copy",
+					"glyph": "抄",
+					"title": {"zh": "誊抄笔路", "en": "Transcribe A Line"},
+					"subtitle": {"zh": "复制 1 张非污牌", "en": "Copy 1 non-Smudge card"},
+					"summary": {
+						"zh": "当主线已经清楚、但关键件还太稀时，source 的 archive 不会只想到删牌，而会把真正贴线的那页再抄一遍，让抽到核心牌的频率真正抬上来。",
+						"en": "When the route is already clear but the key piece is still too rare, the source archive does not think only about trimming. It transcribes the page that truly fits so the core shows up more often."
+					},
+					"tone": Color(0.58, 0.82, 0.78, 1.0),
+					"result_group": {
+						"title": {"zh": "删改样张 · 誊抄关键件", "en": "Archive Sample · Copy The Key Piece"},
+						"summary": {
+							"zh": "这类删改强调 deck 质量不只靠少，也可能靠更准确的重复，所以 archive 也会把真正贴线的页从 `1x` 抬成 `2x`。",
+							"en": "This style of archive pass shows that deck quality is not only about being smaller. It can also come from cleaner repetition, turning the truly aligned page from `1x` into `2x`."
+						},
+						"cards": [
+							{
+								"glyph": "明",
+								"title": {"zh": "明 · 1x -> 2x", "en": "Bright · 1x -> 2x"},
+								"subtitle": {"zh": "把节奏成字再写深一点", "en": "Deepen the tempo fusion line"},
+								"body": {
+									"zh": "如果这局已经围着 `日 / 月 -> 明` 建起主线，archive 的复制模式就会更像把正确的回合爆点重新写回牌组，而不是单纯再拿一张新牌。",
+									"en": "If the run already orbits around `Sun / Moon -> Bright`, archive copy mode acts more like writing the correct spike back into the deck than merely taking another new page."
+								},
+								"tags": [
+									{"zh": "关键件", "en": "Key piece"},
+									{"zh": "重复更准", "en": "Cleaner repeat"}
+								]
+							},
+							{
+								"glyph": "学",
+								"title": {"zh": "学 · 1x -> 2x", "en": "Script · 1x -> 2x"},
+								"subtitle": {"zh": "把抽墨引擎抄稳", "en": "Stabilize the draw-and-Ink engine"},
+								"body": {
+									"zh": "若真正稀缺的是 `学 / Script` 这种会托住整条路线运转的引擎牌，archive 复制它会比继续修薄更值，因为它把整副牌的稳定主线写得更密。",
+									"en": "If the scarce page is an engine such as `Script`, copying it can beat further trimming because it writes the deck's stable main line more densely."
+								},
+								"tags": [
+									{"zh": "引擎件", "en": "Engine piece"},
+									{"zh": "不是只求少", "en": "Not only lean"}
+								]
+							}
+						]
+					}
+				}
+			],
+			"footnote": {
+				"zh": "Godot 这里先把 source 的 archive 模式切换与代表性 deck 结果挂回 portal，不假装已经在本仓库里接通 live deck 改写。",
+				"en": "Godot stages the source archive mode switch and representative deck outcomes back into the portal first without pretending live deck rewrites already exist in this repository."
 			}
 		},
 		"shop_preview": {
