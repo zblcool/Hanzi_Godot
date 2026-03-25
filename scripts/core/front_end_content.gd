@@ -3808,6 +3808,19 @@ const CANGJIE_PORTAL_SECTIONS := [
 							"zh": "source 的 `channel` 不是立刻出伤，而是先把下一拍会变重的压力存进敌意里，所以它会提前改写你这回合该不该抢节奏。",
 							"en": "In the source run, `channel` does not hit immediately. It banks the next beat's heavier pressure inside the intent, so it changes whether this turn should race or prepare."
 						},
+						"answer_strip": {
+							"label": {"zh": "敌意 -> 解法", "en": "Intent -> Answer"},
+							"title": {"zh": "先替下一拍留后手", "en": "Leave a buffer for the next beat"},
+							"summary": {
+								"zh": "更值的是能留出挡伤、Ink 或提前爆发余量的牌；如果当前 climb 还接不住那记加重后的后手，休息或事件转笔会先比硬冲精英更稳。",
+								"en": "Cards that still leave block, Ink, or burst headroom for the charged follow-up gain value first. If the climb cannot answer that heavier next beat yet, rest or event pivots outrank forcing an elite."
+							},
+							"tags": [
+								{"zh": "留后手", "en": "Leave follow-up"},
+								{"zh": "休息 / 事件升值", "en": "Rest / event rise"}
+							],
+							"tone": Color(0.86, 0.72, 0.48, 1.0)
+						},
 						"tags": [
 							{"zh": "先蓄势", "en": "Bank first"},
 							{"zh": "后手变重", "en": "Heavier next beat"}
@@ -3820,6 +3833,19 @@ const CANGJIE_PORTAL_SECTIONS := [
 						"body": {
 							"zh": "`multi` 会把伤害拆成多段，让格挡、抽牌和续手能力一起上场；它考的是整回合能不能站稳，而不是单次减伤够不够大。",
 							"en": "`multi` splits the pressure into repeated hits, bringing block, draw, and hand continuity into the same exam instead of testing one giant shield alone."
+						},
+						"answer_strip": {
+							"label": {"zh": "敌意 -> 解法", "en": "Intent -> Answer"},
+							"title": {"zh": "答案是整回合续手", "en": "Answer with whole-turn continuity"},
+							"summary": {
+								"zh": "这类题更想要连续挡伤、抽牌和续手，而不是只赌一张大盾；路线上也会更抬高修薄、稳线和常规战斗，再决定什么时候吃精英。",
+								"en": "This pressure wants repeated block, draw, and hand continuity instead of one giant shield. On the map it also raises trim, stabilizing, and normal battle lines before deciding when elites become worth it."
+							},
+							"tags": [
+								{"zh": "挡 + 抽 + 续手", "en": "Block + draw + flow"},
+								{"zh": "先稳后冲精英", "en": "Stabilize before elites"}
+							],
+							"tone": Color(0.74, 0.7, 0.92, 1.0)
 						},
 						"tags": [
 							{"zh": "多段攻击", "en": "Multi-hit"},
@@ -3834,6 +3860,19 @@ const CANGJIE_PORTAL_SECTIONS := [
 							"zh": "`hex` 会把即时伤害和污页一起塞进同一拍，让短期掉血与后续抽牌质量一起结算，是 source 很典型的脏牌压力。",
 							"en": "`hex` bundles immediate damage with Smudge, pricing current HP loss and later draw quality inside the same beat. It is one of the source prototype's clearest dirty-deck pressures."
 						},
+						"answer_strip": {
+							"label": {"zh": "敌意 -> 解法", "en": "Intent -> Answer"},
+							"title": {"zh": "先保住抽牌质量", "en": "Protect draw quality first"},
+							"summary": {
+								"zh": "快杀、修薄或能处理污页的控制都会一起升值，因为它们同时在救当前血线和后续抽牌；路线上 archive、shop purge 和更干净的奖励链路也会更香。",
+								"en": "Fast kill, trimming, or control that limits Smudge all rise together because they protect both current HP and future draws. That also makes archive rooms, shop purges, and cleaner reward lines more attractive."
+							},
+							"tags": [
+								{"zh": "保抽牌质量", "en": "Protect draws"},
+								{"zh": "修薄 / 清污", "en": "Trim / cleanse"}
+							],
+							"tone": Color(0.88, 0.62, 0.66, 1.0)
+						},
 						"tags": [
 							{"zh": "污页压力", "en": "Smudge pressure"},
 							{"zh": "抽牌变脏", "en": "Dirty draws"}
@@ -3846,6 +3885,19 @@ const CANGJIE_PORTAL_SECTIONS := [
 						"body": {
 							"zh": "`guardAttack` 会先垫一层护盾，再把伤害一起推出去，所以它不只是在考生存，还会考这一回合值不值得把输出硬塞进护盾里。",
 							"en": "`guardAttack` pads in block before pushing the hit through, so it tests more than survival. It asks whether spending damage into fresh block is worth the turn at all."
+						},
+						"answer_strip": {
+							"label": {"zh": "敌意 -> 解法", "en": "Intent -> Answer"},
+							"title": {"zh": "别把整回合砸进护盾里", "en": "Do not dump the turn into block"},
+							"summary": {
+								"zh": "更想要能先拆盾、延拍或顺手保命的牌，而不是把全部输出硬塞进刚立起的盾里；只有在这种护攻同拍也能站稳时，精英和高压分支才真正划算。",
+								"en": "Favor tools that break block efficiently, delay the beat, or keep defense up instead of shoving the whole turn into fresh block. Elites and other high-pressure pivots only pay off once those guard-attack turns are already answerable."
+							},
+							"tags": [
+								{"zh": "拆盾效率", "en": "Pierce block"},
+								{"zh": "高压分支门槛", "en": "High-pressure threshold"}
+							],
+							"tone": Color(0.62, 0.82, 0.8, 1.0)
 						},
 						"tags": [
 							{"zh": "护攻同拍", "en": "Guard-attack"},
