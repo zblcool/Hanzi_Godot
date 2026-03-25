@@ -1003,6 +1003,10 @@ func _build_cangjie_overlay() -> void:
 	theme_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	footer_row.add_child(theme_button)
 
+	var language_button := _make_language_toggle_button(_v(0.0, 52.0))
+	language_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	footer_row.add_child(language_button)
+
 	var close_button := Button.new()
 	close_button.text = _localize_text("返回游戏选择")
 	close_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
