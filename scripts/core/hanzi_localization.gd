@@ -129,11 +129,11 @@ const RADICAL_EN := {
 	"月": {"name": "moon radical", "description": "Advances the `明` route and pushes the weapon toward phrase arts sooner."},
 	"石": {"name": "stone radical", "description": "Combine with `山` into `岩` for targeted impacts and short shock zones."},
 	"山": {"name": "mountain radical", "description": "Completes `岩` and turns the nearest enemy cluster into a crushed impact zone."},
-	"氵": {"name": "water radical", "description": "Combine with `每` into `海` for wave-based crowd clear."},
+	"氵": {"name": "water radical", "description": "Combine with `每` into `海`, or with `心` into `沁` for a calmer healing-wave route."},
 	"每": {"name": "every base", "description": "Completes `海` and helps refine it into stronger sea phrase arts."},
 	"雨": {"name": "rain radical", "description": "Combine with `田` into `雷` for lock-on lightning and mid-field control."},
 	"田": {"name": "field frame", "description": "Completes `雷` and later refines into a lightning-rain field."},
-	"心": {"name": "heart radical", "description": "Combine with `刂` into `忍` and trade low health for fiercer pressure."},
+	"心": {"name": "heart radical", "description": "Combine with `刂` into `忍`, or with `氵` into `沁` for forward healing waves."},
 	"火": {"name": "fire radical", "description": "Two fires form `炎`, turning the area around you into a ring of flame shots."},
 	"刂": {"name": "blade radical", "description": "Both sharpens your weapon and combines with `心` into `忍`."}
 }
@@ -145,6 +145,7 @@ const RECIPE_EN := {
 	"lei": {"title": "Falling Thunder", "description": "Locks onto the nearest cluster and slams the mid-field with lightning."},
 	"rock": {"title": "Falling Crag", "description": "Marks the nearest enemy cluster with an engraved impact and leaves a short shock zone."},
 	"ren": {"title": "Endurance Instinct", "description": "Below half health, gain attack speed, damage, and move speed together."},
+	"qin": {"title": "Soothing Wave", "description": "Periodically sends a forward healing wave that slows and threads through the crowd."},
 	"yan": {"title": "Flame Surge", "description": "Periodically sprays flame glyph volleys in all directions to burn open space."}
 }
 const WORD_EN := {

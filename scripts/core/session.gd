@@ -256,7 +256,7 @@ func _ensure_input_action(action_name: StringName, keycodes: Array) -> void:
 			event.physical_keycode = keycode
 			InputMap.action_add_event(action_name, event)
 
-const RECIPE_ORDER := ["ming", "xiu", "forest", "hai", "lei", "rock", "ren", "yan"]
+const RECIPE_ORDER := ["ming", "xiu", "forest", "hai", "lei", "rock", "ren", "qin", "yan"]
 const RECIPES := {
 	"ming": {
 		"id": "ming",
@@ -327,6 +327,16 @@ const RECIPES := {
 		"color": Color(0.96, 0.58, 0.7, 1.0),
 		"max_level": 3,
 		"word_id": "ren_xin"
+	},
+	"qin": {
+		"id": "qin",
+		"display": "沁",
+		"radicals": ["氵", "心"],
+		"title": "沁波成字",
+		"description": "周期朝前荡出沁字水波，减速并穿透敌群，同时回一小段气。",
+		"color": Color(0.62, 0.86, 0.96, 1.0),
+		"max_level": 3,
+		"word_id": ""
 	},
 	"yan": {
 		"id": "yan",
@@ -555,7 +565,8 @@ const RADICALS := {
 	"氵": {
 		"display": "氵",
 		"name": "三点水",
-		"description": "和 `每` 合成「海」，走范围波纹与清场路线。",
+		"description": "和 `每` 合成「海」，与 `心` 合成「沁」，在范围墨浪之外多一条回气水波线。",
+		"recipe_ids": ["hai", "qin"],
 		"recipe_id": "hai"
 	},
 	"每": {
@@ -579,7 +590,8 @@ const RADICALS := {
 	"心": {
 		"display": "心",
 		"name": "心字底",
-		"description": "与 `刂` 合成「忍」，把残血换成更凶的压阵节奏。",
+		"description": "与 `刂` 合成「忍」，也能与 `氵` 合成「沁」，在残血压阵外再补一层安神水波。",
+		"recipe_ids": ["ren", "qin"],
 		"recipe_id": "ren"
 	},
 	"火": {
@@ -811,9 +823,28 @@ func get_radical_data(radical: String) -> Dictionary:
 
 
 func get_recipe_id_for_radical(radical: String) -> String:
-	if RADICALS.has(radical):
-		return String(RADICALS[radical]["recipe_id"])
+	var recipe_ids := get_recipe_ids_for_radical(radical)
+	if not recipe_ids.is_empty():
+		return String(recipe_ids[0])
 	return ""
+
+
+func get_recipe_ids_for_radical(radical: String) -> Array[String]:
+	var recipe_ids: Array[String] = []
+	if not RADICALS.has(radical):
+		return recipe_ids
+	var radical_data: Dictionary = RADICALS[radical]
+	var recipe_ids_variant: Variant = radical_data.get("recipe_ids", [])
+	if recipe_ids_variant is Array and not (recipe_ids_variant as Array).is_empty():
+		for recipe_id_variant in recipe_ids_variant:
+			var recipe_id := String(recipe_id_variant)
+			if not recipe_id.is_empty():
+				recipe_ids.append(recipe_id)
+		return recipe_ids
+	var recipe_id := String(radical_data.get("recipe_id", ""))
+	if not recipe_id.is_empty():
+		recipe_ids.append(recipe_id)
+	return recipe_ids
 
 
 func build_empty_radicals() -> Dictionary:

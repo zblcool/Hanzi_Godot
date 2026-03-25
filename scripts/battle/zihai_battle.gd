@@ -3099,6 +3099,8 @@ func _on_player_fire_projectile(origin: Vector3, direction: Vector3, damage: flo
 		_play_attack_sfx("flame_burst", 1.0 + damage / 28.0)
 	elif glyph == "月" or glyph == "日":
 		_play_attack_sfx("bright_volley", 0.9 + damage / 30.0)
+	elif glyph == "沁" or glyph == "水" or glyph == "心":
+		_play_attack_sfx("sea_wave", 0.92 + damage / 34.0)
 	else:
 		_play_attack_sfx("scholar_shot", 0.92 + speed / 28.0)
 
@@ -3594,34 +3596,11 @@ func _score_radical_choice(radical: String) -> float:
 		score += min(0.75, float(player.blade_level) * 0.08)
 	score += _interlude_draft_lean_bonus(radical)
 
-	var recipe_id: String = Session.get_recipe_id_for_radical(radical)
+	var recipe_id: String = _preferred_recipe_id_for_radical(radical)
 	if recipe_id.is_empty():
 		return score
 
-	var recipe: Dictionary = Session.get_recipe_data(recipe_id)
-	var current_level: int = int(skill_levels.get(recipe_id, 0))
-	var max_level: int = int(recipe["max_level"])
-	if current_level <= 0:
-		var partner_radical: String = _get_partner_radical(recipe_id, radical)
-		if int(radical_counts.get(partner_radical, 0)) > 0:
-			score += 3.0
-		else:
-			score += 1.35
-	elif current_level < max_level:
-		score += 2.2 - float(current_level) * 0.28
-	else:
-		var word_id: String = String(recipe.get("word_id", ""))
-		if word_id.is_empty():
-			score -= 0.8
-		else:
-			var word: Dictionary = Session.get_word_data(word_id)
-			var word_level: int = int(word_skill_levels.get(word_id, 0))
-			if word_level <= 0:
-				score += 1.8 + float(word_progress.get(word_id, 0)) * 0.45
-			elif word_level < int(word["max_level"]):
-				score += 1.25 - float(word_level) * 0.1
-			else:
-				score += 0.4
+	score += _score_recipe_focus(recipe_id, radical)
 	return score
 
 
@@ -3629,8 +3608,8 @@ func _build_choice_data(radical: String) -> Dictionary:
 	var radical_data: Dictionary = _localized_radical_data(radical)
 	var color: Color = Session.RADICAL_COLORS[radical]
 	var headline: String = String(radical_data["description"])
-	if radical != "刂" or not Session.get_recipe_id_for_radical(radical).is_empty():
-		var recipe_id: String = Session.get_recipe_id_for_radical(radical)
+	if radical != "刂" or not _preferred_recipe_id_for_radical(radical).is_empty():
+		var recipe_id: String = _preferred_recipe_id_for_radical(radical)
 		if not recipe_id.is_empty():
 			var recipe: Dictionary = _localized_recipe_data(recipe_id)
 			var level_value: int = int(skill_levels.get(recipe_id, 0))
@@ -3702,6 +3681,41 @@ func _build_choice_data(radical: String) -> Dictionary:
 		"description": String(radical_data["description"]),
 		"color": color
 	}
+
+
+func _preferred_recipe_id_for_radical(radical: String) -> String:
+	var recipe_ids: Array[String] = Session.get_recipe_ids_for_radical(radical)
+	var preferred_recipe_id := ""
+	var best_score := -INF
+	for recipe_id in recipe_ids:
+		var candidate_score := _score_recipe_focus(recipe_id, radical)
+		if preferred_recipe_id.is_empty() or candidate_score > best_score:
+			best_score = candidate_score
+			preferred_recipe_id = recipe_id
+	return preferred_recipe_id
+
+
+func _score_recipe_focus(recipe_id: String, radical: String) -> float:
+	var recipe: Dictionary = Session.get_recipe_data(recipe_id)
+	var current_level: int = int(skill_levels.get(recipe_id, 0))
+	var max_level: int = int(recipe["max_level"])
+	if current_level <= 0:
+		var partner_radical: String = _get_partner_radical(recipe_id, radical)
+		if int(radical_counts.get(partner_radical, 0)) > 0:
+			return 3.0
+		return 1.35
+	if current_level < max_level:
+		return 2.2 - float(current_level) * 0.28
+	var word_id: String = String(recipe.get("word_id", ""))
+	if word_id.is_empty():
+		return -0.8
+	var word: Dictionary = Session.get_word_data(word_id)
+	var word_level: int = int(word_skill_levels.get(word_id, 0))
+	if word_level <= 0:
+		return 1.8 + float(word_progress.get(word_id, 0)) * 0.45
+	if word_level < int(word["max_level"]):
+		return 1.25 - float(word_level) * 0.1
+	return 0.4
 
 
 func _on_radical_choice_selected(radical: String) -> void:
