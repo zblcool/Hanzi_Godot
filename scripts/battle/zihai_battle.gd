@@ -16,6 +16,7 @@ const TOUCH_CONTROLS_OVERLAY := preload("res://scripts/ui/touch_controls_overlay
 const BattleAudio := preload("res://scripts/core/battle_audio.gd")
 const BattleEnvironmentSupport := preload("res://scripts/battle/battle_environment_support.gd")
 const BattleSupplyRules := preload("res://scripts/battle/battle_supply_rules.gd")
+const BattleWaveRules := preload("res://scripts/battle/battle_wave_rules.gd")
 const CJKFont := preload("res://scripts/core/cjk_font.gd")
 const FrontEndContent := preload("res://scripts/core/front_end_content.gd")
 const HanziLocalization := preload("res://scripts/core/hanzi_localization.gd")
@@ -734,6 +735,7 @@ var current_soundtrack_id: String = ""
 var current_soundtrack_cue: String = ""
 var battle_environment := BattleEnvironmentSupport.new()
 var battle_supply_rules := BattleSupplyRules.new()
+var battle_wave_rules := BattleWaveRules.new()
 var health_potion_drop_meter: float = 0.0
 var enemy_detail_refresh_timer: float = 0.0
 var callout_history: Dictionary = {}
@@ -2393,15 +2395,24 @@ func _process(delta: float) -> void:
 			_spawn_chamber_break_beacon()
 			return
 
-	if not chamber_break_pending:
-		spawn_timer -= delta
-		var enemy_cap := _enemy_cap()
-		if spawn_timer <= 0.0 and _enemy_count() < enemy_cap:
-			var available_slots: int = max(enemy_cap - _enemy_count(), 0)
-			for _index in range(min(_spawn_batch_size(), available_slots)):
-				_spawn_enemy()
-			spawn_interval = _current_spawn_interval()
-			spawn_timer = spawn_interval
+		if not chamber_break_pending:
+			spawn_timer -= delta
+			var boss_active: bool = is_instance_valid(active_boss) and not active_boss.is_queued_for_deletion()
+			var big_wave: bool = _is_big_wave()
+			var enemy_cap: int = battle_wave_rules.enemy_cap(
+				threat_level,
+				BASE_ENEMY_CAP,
+				MAX_REGULAR_ENEMY_CAP,
+				BIG_WAVE_ENEMY_CAP,
+				big_wave,
+				boss_active
+			)
+			if spawn_timer <= 0.0 and _enemy_count() < enemy_cap:
+				var available_slots: int = max(enemy_cap - _enemy_count(), 0)
+				for _index in range(mini(battle_wave_rules.spawn_batch_size(threat_level, elapsed_time, big_wave), available_slots)):
+					_spawn_enemy()
+				spawn_interval = battle_wave_rules.current_spawn_interval(elapsed_time, big_wave, boss_active)
+				spawn_timer = spawn_interval
 
 	enemy_detail_refresh_timer = max(enemy_detail_refresh_timer - delta, 0.0)
 	if enemy_detail_refresh_timer <= 0.0:
@@ -2732,7 +2743,7 @@ func _spawn_enemy() -> void:
 	var distance: float = rng.randf_range(18.0, 26.0)
 	var offset := Vector3(cos(angle), 0.0, sin(angle)) * distance
 	enemy.position = player.global_position + offset
-	var enemy_type: String = _pick_enemy_type()
+	var enemy_type: String = battle_wave_rules.pick_enemy_type(rng, elapsed_time)
 	enemy.configure(enemy_type, 1.0 + elapsed_time / 75.0, player)
 	if enemy.has_method("set_health_bar_visible"):
 		enemy.set_health_bar_visible(bool(battle_settings.get("enemy_health_bars", true)))
@@ -2975,90 +2986,7 @@ func _performance_mode() -> String:
 
 
 func _is_big_wave(wave_index: int = threat_level) -> bool:
-	return wave_index > 0 and wave_index % BIG_WAVE_INTERVAL == 0
-
-
-func _enemy_cap() -> int:
-	var cap := BASE_ENEMY_CAP + maxi(threat_level - 1, 0) * 2
-	cap = min(cap, BIG_WAVE_ENEMY_CAP if _is_big_wave() else MAX_REGULAR_ENEMY_CAP)
-	if is_instance_valid(active_boss) and not active_boss.is_queued_for_deletion():
-		cap = min(cap, 24)
-	return cap
-
-
-func _spawn_batch_size() -> int:
-	var batch := 1
-	if threat_level >= 3:
-		batch += 1
-	if elapsed_time > 90.0:
-		batch += 1
-	if _is_big_wave():
-		batch += 2
-	return batch
-
-
-func _current_spawn_interval() -> float:
-	var interval: float = max(0.46, 1.35 - elapsed_time * 0.012)
-	if _is_big_wave():
-		interval *= 0.72
-	if is_instance_valid(active_boss) and not active_boss.is_queued_for_deletion():
-		interval *= 1.12
-	return max(interval, 0.3)
-
-
-func _pick_enemy_type() -> String:
-	var roll: float = rng.randf()
-	if elapsed_time < 18.0:
-		return "basic" if roll < 0.72 else "swift"
-	if elapsed_time < 36.0:
-		if roll < 0.38:
-			return "basic"
-		if roll < 0.62:
-			return "swift"
-		if roll < 0.82:
-			return "tank"
-		return "archer"
-	if elapsed_time < 64.0:
-		if roll < 0.24:
-			return "basic"
-		if roll < 0.42:
-			return "swift"
-		if roll < 0.58:
-			return "tank"
-		if roll < 0.74:
-			return "archer"
-		if roll < 0.89:
-			return "assassin"
-		return "ritualist"
-	if elapsed_time < 95.0:
-		if roll < 0.16:
-			return "basic"
-		if roll < 0.3:
-			return "swift"
-		if roll < 0.44:
-			return "tank"
-		if roll < 0.58:
-			return "archer"
-		if roll < 0.73:
-			return "assassin"
-		if roll < 0.88:
-			return "ritualist"
-		return "cavalry"
-	if roll < 0.12:
-		return "basic"
-	if roll < 0.23:
-		return "swift"
-	if roll < 0.35:
-		return "tank"
-	if roll < 0.49:
-		return "archer"
-	if roll < 0.64:
-		return "assassin"
-	if roll < 0.78:
-		return "ritualist"
-	if roll < 0.93:
-		return "cavalry"
-	return "elite"
+	return battle_wave_rules.is_big_wave(wave_index, BIG_WAVE_INTERVAL)
 
 
 func _update_boss_flow() -> void:
@@ -4319,7 +4247,7 @@ func _apply_intro_preset() -> void:
 	experience_target = maxi(1, int(preset.get("experience_target", experience_target)))
 	threat_level = maxi(1, int(preset.get("start_wave", 1)))
 	last_announced_threat_level = threat_level
-	boss_spawn_index = _boss_spawn_index_for_elapsed(preset_elapsed)
+	boss_spawn_index = battle_wave_rules.boss_spawn_index_for_elapsed(preset_elapsed, BOSS_SPAWN_TIMES)
 	var skipped_bosses := mini(boss_spawn_index, BOSS_SPAWN_TIMES.size())
 	Session.chapter_progress["completed_bosses"] = skipped_bosses
 	Session.chapter_progress["chapter_complete"] = skipped_bosses >= BOSS_SPAWN_TIMES.size()
@@ -4365,14 +4293,6 @@ func _apply_intro_preset() -> void:
 
 	player.health = player.max_health
 	player.health_changed.emit(player.health, player.max_health)
-
-
-func _boss_spawn_index_for_elapsed(time_value: float) -> int:
-	var next_index := 0
-	for spawn_time in BOSS_SPAWN_TIMES:
-		if time_value >= float(spawn_time):
-			next_index += 1
-	return next_index
 
 
 func _start_opening_sequence() -> void:
