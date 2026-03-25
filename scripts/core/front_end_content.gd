@@ -2459,8 +2459,8 @@ const CANGJIE_PORTAL_SECTIONS := [
 								{"zh": "遗物", "en": "Relic"},
 								{"zh": "后续偏转", "en": "Future bend"}
 							],
-							"linked_preview_kind": "reward_chain",
-							"linked_preview_option": "relic",
+							"linked_preview_kind": "treasure",
+							"linked_preview_option": "inkstone",
 							"connections": ["summit_boss"],
 							"tone": Color(0.52, 0.84, 0.8, 1.0),
 							"state": "path"
@@ -2628,6 +2628,161 @@ const CANGJIE_PORTAL_SECTIONS := [
 			"footnote": {
 				"zh": "Godot 这里先把 source 的 archive 模式切换与代表性 deck 结果挂回 portal，不假装已经在本仓库里接通 live deck 改写。",
 				"en": "Godot stages the source archive mode switch and representative deck outcomes back into the portal first without pretending live deck rewrites already exist in this repository."
+			}
+		},
+		"treasure_preview": {
+			"title": {"zh": "可见遗物预览", "en": "Visible Relic Preview"},
+			"summary": {
+				"zh": "source 的 treasure 房不是盲开宝箱，而是会把几件 relic 摊在面前，让你挑那件最会改写后续拿牌、商店和节点估值的东西。",
+				"en": "Source treasure rooms are not blind chest rolls. They lay several relics out in front of you so you can choose the one that most rewrites later drafts, shops, and node values."
+			},
+			"hint": {
+				"zh": "点按下面任一 relic 样张，预览 source 的 treasure 房怎样把可见三选一直接压成一次路线偏转判断。",
+				"en": "Tap any relic sample below to preview how the source treasure room compresses a visible three-way choice into a direct route-bend judgment."
+			},
+			"options": [
+				{
+					"id": "inkstone",
+					"glyph": "砚",
+					"title": {"zh": "砚 · 开局多抽", "en": "Inkstone · Opening Draw"},
+					"subtitle": {"zh": "让慢线更早碰到关键页", "en": "Help slower lines reach key pages sooner"},
+					"summary": {
+						"zh": "如果这局还在等 `明 / 学` 这类关键页稳定出现，`砚 / Inkstone` 会把 treasure 房直接读成一次起手提速，让慢线更快碰到真正的引擎。",
+						"en": "If the run still needs key pages such as `Bright / Script` to show up more reliably, `Inkstone` turns the treasure room into an opener-speed boost so slower lines touch their real engine sooner."
+					},
+					"tone": Color(0.58, 0.82, 0.78, 1.0),
+					"result_group": {
+						"title": {"zh": "可见遗物 · 起手提速", "en": "Visible Relic · Opening Speed"},
+						"summary": {
+							"zh": "`砚 / Inkstone` 不是只多一张牌，而是让后面的起手、拿牌节拍和成字窗口都往前推一拍。",
+							"en": "`Inkstone` is not just one extra card. It pushes later openers, draft pacing, and fusion windows one beat earlier together."
+						},
+						"cards": [
+							{
+								"glyph": "砚",
+								"title": {"zh": "战斗开局多抽 1", "en": "Draw 1 Extra At Battle Start"},
+								"subtitle": {"zh": "慢线更快摸到核心页", "en": "Slower lines find their core sooner"},
+								"body": {
+									"zh": "对还在找第一批关键成字 / 引擎件的 run 来说，这件 relic 会比单纯再拿一张牌更稳定地把整局节奏往前推。",
+									"en": "For runs still hunting their first fusion or engine pieces, this relic pushes the whole run forward more reliably than simply taking one more page."
+								},
+								"tags": [
+									{"zh": "起手", "en": "Opener"},
+									{"zh": "节奏提速", "en": "Tempo boost"}
+								]
+							},
+							{
+								"glyph": "明",
+								"title": {"zh": "后续拿牌会更偏向早成型", "en": "Later Drafts Lean Toward Early Payoffs"},
+								"subtitle": {"zh": "更早兑现成字节拍", "en": "Cash fusion tempo in sooner"},
+								"body": {
+									"zh": "一旦开局更快摸到关键页，后面的 reward 与 event 判断也会更愿意继续压深这条已经提速的主线。",
+									"en": "Once the opener reaches key pages faster, later reward and event reads also become more willing to deepen that accelerated main line."
+								},
+								"tags": [
+									{"zh": "奖池偏转", "en": "Reward bend"},
+									{"zh": "提速主线", "en": "Accelerate the line"}
+								]
+							}
+						]
+					}
+				},
+				{
+					"id": "mirror",
+					"glyph": "镜",
+					"title": {"zh": "镜 · 重复返抽", "en": "Mirror Slip · Repeat Draw"},
+					"subtitle": {"zh": "把重复材料改成资源", "en": "Turn repeated material into resources"},
+					"summary": {
+						"zh": "如果当前 run 已经在围着重复偏旁或重复成字塑形，`镜 / Mirror Slip` 会把 treasure 房读成一次重复利用偏转，让后面的 duplicate、reward 与 event 价值一起升高。",
+						"en": "If the current run is already shaping itself around repeated radicals or repeated fusions, `Mirror Slip` makes the treasure room a repeat-value bend that lifts later duplicate, reward, and event value together."
+					},
+					"tone": Color(0.72, 0.62, 0.94, 1.0),
+					"result_group": {
+						"title": {"zh": "可见遗物 · 重复返抽", "en": "Visible Relic · Repeat Draw"},
+						"summary": {
+							"zh": "`镜 / Mirror Slip` 会把重复材料从“可能卡手”改写成“值得再拿”的资源，所以整条路线都会更愿意接受准确重复。",
+							"en": "`Mirror Slip` rewrites repeated material from “might clog the hand” into “worth taking again”, so the whole route becomes more willing to accept cleaner repetition."
+						},
+						"cards": [
+							{
+								"glyph": "镜",
+								"title": {"zh": "每回合首个重复偏旁抽 1", "en": "First Repeated Radical Draws 1"},
+								"subtitle": {"zh": "重复件开始自带回气", "en": "Repeated pieces start refunding themselves"},
+								"body": {
+									"zh": "这件 relic 会直接改写你对重复页的判断，让本来可能担心太厚的那部分材料开始变成抽牌引擎的一环。",
+									"en": "This relic directly rewrites how duplicate pages are judged, turning material that might have felt too thick into part of the draw engine instead."
+								},
+								"tags": [
+									{"zh": "重复利用", "en": "Repeat use"},
+									{"zh": "抽牌", "en": "Draw"}
+								]
+							},
+							{
+								"glyph": "抄",
+								"title": {"zh": "连 archive 的复制都会更值", "en": "Even Archive Copy Starts Paying More"},
+								"subtitle": {"zh": "不是只看保薄", "en": "Not only lean-deck discipline"},
+								"body": {
+									"zh": "一旦 `镜 / Mirror Slip` 在手，后面的 archive 誊抄关键件、战后拿重复页，甚至某些 event 都会被重新估值成更自然的路线推进。",
+									"en": "Once `Mirror Slip` is in play, later archive transcription, reward duplicates, and even some events are repriced into a more natural route push."
+								},
+								"tags": [
+									{"zh": "archive 联动", "en": "Archive synergy"},
+									{"zh": "重复更值", "en": "Duplicates pay off"}
+								]
+							}
+						]
+					}
+				},
+				{
+					"id": "broker",
+					"glyph": "契",
+					"title": {"zh": "契 · 商店折扣", "en": "Broker Seal · Shop Cut"},
+					"subtitle": {"zh": "让 Gold 和后续商店一起升值", "en": "Make Gold and later shops worth more"},
+					"summary": {
+						"zh": "如果路线准备把后面的 Gold 预算真正花在商店节点上，`契 / Broker Seal` 会让 treasure 房像一次经济转向，让同一笔 Gold 同时更靠近买牌、补货与删牌线。",
+						"en": "If the route plans to spend its later Gold budgets through shop nodes, `Broker Seal` makes the treasure room behave like an economy pivot, bringing the same Gold closer to buys, restocks, and purge windows at once."
+					},
+					"tone": Color(0.96, 0.82, 0.46, 1.0),
+					"result_group": {
+						"title": {"zh": "可见遗物 · 商店改价", "en": "Visible Relic · Shop Repricing"},
+						"summary": {
+							"zh": "`契 / Broker Seal` 会把 treasure 房的价值直接延伸到后面的商店节点，让这次拿 relic 像一次长期预算重配。",
+							"en": "`Broker Seal` extends the treasure room's value straight into later shop nodes, turning this relic pick into a long-tail budget rewrite."
+						},
+						"cards": [
+							{
+								"glyph": "契",
+								"title": {"zh": "牌 / 遗物 / 补货 / 删牌一起降价", "en": "Cards / Relics / Restock / Purge All Get Cheaper"},
+								"subtitle": {"zh": "把商店从单点消费改成连续预算", "en": "Turn shops into continuous budgets"},
+								"body": {
+									"zh": "这件 relic 不只让下一次买牌更容易，而是会让后面的商店同时更像“买一件，再看一次，再接近删牌线”的连续判断。",
+									"en": "This relic does more than make the next purchase easier. It turns later shops into continuous calls such as “buy once, look again, and still stay near purge range.”"
+								},
+								"tags": [
+									{"zh": "商店", "en": "Shop"},
+									{"zh": "连续预算", "en": "Continuous budget"}
+								]
+							},
+							{
+								"glyph": "金",
+								"title": {"zh": "后面的 Gold 全部升值", "en": "All Later Gold Gets Repriced"},
+								"subtitle": {"zh": "战后和跳过奖励都会更值", "en": "Post-battle Gold and skips both rise"},
+								"body": {
+									"zh": "一旦 `契 / Broker Seal` 入手，后面的 `Gold +18`、跳过奖励保薄、甚至某些 event 给的预算，都会被重新看成更接近关键商店窗口的一拍。",
+									"en": "Once `Broker Seal` is live, later `Gold +18`, reward skips, and even some event budgets are all re-read as steps toward the next real shop window."
+								},
+								"tags": [
+									{"zh": "Gold 回流", "en": "Gold flow-back"},
+									{"zh": "商店窗口", "en": "Shop window"}
+								]
+							}
+						]
+					}
+				}
+			],
+			"footnote": {
+				"zh": "Godot 这里先把 source 的 treasure 可见遗物选择挂回 Tower Guide，不假装已经接通 live 遗物掉落或真实 relic 持有状态。",
+				"en": "Godot stages the source treasure room's visible relic choice back into the Tower Guide first without pretending live relic drops or real ownership state already exist here."
 			}
 		},
 		"shop_preview": {
