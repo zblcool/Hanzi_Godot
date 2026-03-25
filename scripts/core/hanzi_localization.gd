@@ -124,7 +124,7 @@ const HERO_EN := {
 }
 const RADICAL_EN := {
 	"亻": {"name": "person radical", "description": "Combine with `木` into `休`, leaning toward sustain and recovery."},
-	"木": {"name": "wood radical", "description": "The other half of `休`, and the route that keeps healing lines climbing."},
+	"木": {"name": "wood radical", "description": "Completes `休`, and two woods can also line up into `林` for a forward control lane."},
 	"日": {"name": "sun radical", "description": "Combine with `月` into `明` to strengthen your main damage tempo."},
 	"月": {"name": "moon radical", "description": "Advances the `明` route and pushes the weapon toward phrase arts sooner."},
 	"石": {"name": "stone radical", "description": "Combine with `山` into `岩` for targeted impacts and short shock zones."},
@@ -140,6 +140,7 @@ const RADICAL_EN := {
 const RECIPE_EN := {
 	"ming": {"title": "Sun-Moon Wheels", "description": "Strengthens your main attack rhythm and periodically releases twin pursuit wheels."},
 	"xiu": {"title": "Forest Rest", "description": "Heals over time and knocks back nearby enemies to stretch survivability."},
+	"forest": {"title": "Grove Array", "description": "Periodically lays a forest-glyph lane forward, tangling enemies along one path."},
 	"hai": {"title": "Sea Tide", "description": "Detonates ink-wave ripples on a timer to clear nearby swarms."},
 	"lei": {"title": "Falling Thunder", "description": "Locks onto the nearest cluster and slams the mid-field with lightning."},
 	"rock": {"title": "Falling Crag", "description": "Marks the nearest enemy cluster with an engraved impact and leaves a short shock zone."},
@@ -149,6 +150,7 @@ const RECIPE_EN := {
 const WORD_EN := {
 	"ming_guang": {"title": "Moonbright Verse", "description": "Twin wheels add a moon-chasing volley and lift the main weapon with them."},
 	"xiu_yang": {"title": "Restful Phrase", "description": "Turns healing into stable sustain and raises the margin for mistakes."},
+	"lin_hai": {"title": "Forest Sea Scroll", "description": "The grove lane branches sideways as well, writing a wider control corridor through the crowd."},
 	"hai_xiao": {"title": "Sea Howl", "description": "Refines the tide into a fiercer ink wave with shorter cycles and larger reach."},
 	"lei_yu": {"title": "Rain of Thunder", "description": "Lightning impacts spread into a rain field, turning burst into control."},
 	"ren_xin": {"title": "Ruthless Heart", "description": "When endurance triggers, recover health and cut out periodic aftershocks."},

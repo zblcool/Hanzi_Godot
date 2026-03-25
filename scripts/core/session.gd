@@ -256,7 +256,7 @@ func _ensure_input_action(action_name: StringName, keycodes: Array) -> void:
 			event.physical_keycode = keycode
 			InputMap.action_add_event(action_name, event)
 
-const RECIPE_ORDER := ["ming", "xiu", "hai", "lei", "rock", "ren", "yan"]
+const RECIPE_ORDER := ["ming", "xiu", "forest", "hai", "lei", "rock", "ren", "yan"]
 const RECIPES := {
 	"ming": {
 		"id": "ming",
@@ -277,6 +277,16 @@ const RECIPES := {
 		"color": Color(0.56, 0.9, 0.68, 1.0),
 		"max_level": 3,
 		"word_id": "xiu_yang"
+	},
+	"forest": {
+		"id": "forest",
+		"display": "林",
+		"radicals": ["木", "木"],
+		"title": "林阵成字",
+		"description": "周期沿前方铺开林字木潮，持续缠住一条通路上的怪群。",
+		"color": Color(0.4, 0.78, 0.48, 1.0),
+		"max_level": 3,
+		"word_id": "lin_hai"
 	},
 	"hai": {
 		"id": "hai",
@@ -330,7 +340,7 @@ const RECIPES := {
 	}
 }
 
-const WORD_ORDER := ["ming_guang", "xiu_yang", "hai_xiao", "lei_yu", "ren_xin", "yan_chao"]
+const WORD_ORDER := ["ming_guang", "xiu_yang", "lin_hai", "hai_xiao", "lei_yu", "ren_xin", "yan_chao"]
 const WORDS := {
 	"ming_guang": {
 		"id": "ming_guang",
@@ -351,6 +361,16 @@ const WORDS := {
 		"unlock_cost": 2,
 		"max_level": 2,
 		"color": Color(0.68, 1.0, 0.76, 1.0)
+	},
+	"lin_hai": {
+		"id": "lin_hai",
+		"display": "林海",
+		"title": "林海卷",
+		"description": "林字木潮会再向两翼分叉，把前场走位一起写成更宽的木阵。",
+		"recipe_id": "forest",
+		"unlock_cost": 2,
+		"max_level": 2,
+		"color": Color(0.58, 0.94, 0.68, 1.0)
 	},
 	"hai_xiao": {
 		"id": "hai_xiao",
@@ -505,7 +525,7 @@ const RADICALS := {
 	"木": {
 		"display": "木",
 		"name": "木字旁",
-		"description": "补足「休」的另一半，也能继续抬升休养系。",
+		"description": "既能补足「休」的另一半，也能双木并列写成一条「林」阵。",
 		"recipe_id": "xiu"
 	},
 	"日": {

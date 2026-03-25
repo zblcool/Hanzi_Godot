@@ -42,6 +42,8 @@ var slash_radius_bonus: float = 0.0
 var blade_level: int = 0
 var heal_level: int = 0
 var wave_level: int = 0
+var forest_level: int = 0
+var forest_word_level: int = 0
 var bright_volley_level: int = 0
 var bright_word_level: int = 0
 var thunder_level: int = 0
@@ -60,6 +62,7 @@ var attack_cooldown: float = 0.0
 var invulnerability_time: float = 0.0
 var heal_timer: float = 0.0
 var wave_timer: float = 0.0
+var forest_timer: float = 0.0
 var bright_timer: float = 0.0
 var thunder_timer: float = 0.0
 var rock_timer: float = 0.0
@@ -303,6 +306,12 @@ func _handle_passives(delta: float) -> void:
 			request_wave.emit(global_position, wave_radius, wave_damage, Session.RECIPES["hai"]["color"], "海")
 			wave_timer = max(6.8 - float(wave_level) * 0.55, 2.8)
 
+	if forest_level > 0:
+		forest_timer -= delta
+		if forest_timer <= 0.0:
+			_trigger_forest_lane()
+			forest_timer = max(3.1, 6.2 - float(forest_level) * 0.42 - float(forest_word_level) * 0.48)
+
 	if bright_volley_level > 0:
 		bright_timer -= delta
 		if bright_timer <= 0.0:
@@ -368,6 +377,37 @@ func _trigger_flame_burst() -> void:
 		var angle: float = TAU * float(index) / float(projectile_count)
 		var direction := Vector3(cos(angle), 0.0, sin(angle)).normalized()
 		fire_projectile.emit(global_position + Vector3(0.0, 1.0, 0.0) + direction * 1.0, direction, damage, speed, "炎", tint)
+
+
+func _trigger_forest_lane() -> void:
+	var direction := look_direction
+	direction.y = 0.0
+	if direction.length_squared() < 0.001:
+		direction = Vector3.FORWARD
+	direction = direction.normalized()
+
+	var tint: Color = Session.RECIPES["forest"]["color"]
+	var main_radius: float = 1.28 + float(forest_level) * 0.16 + float(forest_word_level) * 0.1
+	var main_damage: float = 4.6 + current_attack_damage * 0.18 + float(forest_level) * 1.35 + float(forest_word_level) * 1.05
+	var main_segments: int = 3 + mini(1, forest_word_level)
+	var spacing: float = 1.55 + float(forest_level) * 0.08
+
+	for index in range(main_segments):
+		var distance: float = 1.35 + spacing * float(index)
+		var origin := global_position + direction * distance
+		request_wave.emit(origin, main_radius, main_damage, tint, "林")
+
+	if forest_word_level <= 0:
+		return
+
+	var branch_radius: float = main_radius * 0.88
+	var branch_damage: float = main_damage * (0.62 + float(forest_word_level) * 0.08)
+	var branch_origin_offset: float = 2.15 + float(forest_word_level) * 0.18
+	for angle in [-0.42, 0.42]:
+		var branch_direction := direction.rotated(Vector3.UP, angle).normalized()
+		for branch_index in range(2):
+			var origin := global_position + direction * branch_origin_offset + branch_direction * (1.2 + float(branch_index) * 1.45)
+			request_wave.emit(origin, branch_radius, branch_damage, tint, "林")
 
 
 func _trigger_resolve_activation() -> void:
@@ -475,6 +515,7 @@ func _find_closest_enemy():
 func _apply_skill_levels() -> void:
 	var ming_level: int = int(skill_levels.get("ming", 0))
 	var xiu_level: int = int(skill_levels.get("xiu", 0))
+	var forest_recipe_level: int = int(skill_levels.get("forest", 0))
 	var hai_level: int = int(skill_levels.get("hai", 0))
 	var lei_level: int = int(skill_levels.get("lei", 0))
 	var rock_recipe_level: int = int(skill_levels.get("rock", 0))
@@ -482,6 +523,7 @@ func _apply_skill_levels() -> void:
 	var yan_level: int = int(skill_levels.get("yan", 0))
 	var ming_word_level: int = int(word_skill_levels.get("ming_guang", 0))
 	var xiu_word_level: int = int(word_skill_levels.get("xiu_yang", 0))
+	var forest_word_recipe_level: int = int(word_skill_levels.get("lin_hai", 0))
 	var hai_word_level: int = int(word_skill_levels.get("hai_xiao", 0))
 	var lei_word_level: int = int(word_skill_levels.get("lei_yu", 0))
 	var ren_word_level: int = int(word_skill_levels.get("ren_xin", 0))
@@ -489,6 +531,8 @@ func _apply_skill_levels() -> void:
 
 	heal_level = xiu_level + xiu_word_level
 	wave_level = hai_level + hai_word_level * 2
+	forest_level = forest_recipe_level
+	forest_word_level = forest_word_recipe_level
 	bright_volley_level = ming_level
 	bright_word_level = ming_word_level
 	thunder_level = lei_level
@@ -534,6 +578,8 @@ func _apply_skill_levels() -> void:
 		heal_timer = max(5.4 - float(heal_level) * 0.45 - float(xiu_word_level) * 0.22, 1.9)
 	if wave_timer <= 0.0:
 		wave_timer = max(6.8 - float(wave_level) * 0.55 - float(hai_word_level) * 0.45, 2.1)
+	if forest_level > 0 and forest_timer <= 0.0:
+		forest_timer = max(3.1, 6.2 - float(forest_level) * 0.42 - float(forest_word_level) * 0.48)
 	if bright_volley_level > 0 and bright_timer <= 0.0:
 		bright_timer = max(1.8, 5.0 - float(bright_volley_level) * 0.45 - float(bright_word_level) * 0.6)
 	if thunder_level > 0 and thunder_timer <= 0.0:
