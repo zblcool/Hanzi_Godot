@@ -138,6 +138,7 @@ var cangjie_section := "start_climb"
 var cangjie_stage_fx_enabled := true
 var cangjie_run_shell_open := false
 var cangjie_reward_chain_choice := "draft"
+var cangjie_rest_choice := "prepare"
 var cangjie_archive_choice := "trim"
 var cangjie_treasure_choice := "inkstone"
 var cangjie_shop_choice := "restock"
@@ -1069,6 +1070,9 @@ func _refresh_cangjie_portal() -> void:
 	var route_preview_variant: Variant = active_section.get("route_preview", {})
 	if route_preview_variant is Dictionary and not (route_preview_variant as Dictionary).is_empty():
 		cangjie_section_content_box.add_child(_make_cangjie_route_preview(route_preview_variant as Dictionary, accent))
+	var rest_preview_variant: Variant = active_section.get("rest_preview", {})
+	if rest_preview_variant is Dictionary and not (rest_preview_variant as Dictionary).is_empty():
+		cangjie_section_content_box.add_child(_make_cangjie_rest_preview(rest_preview_variant as Dictionary, accent))
 	var archive_preview_variant: Variant = active_section.get("archive_preview", {})
 	if archive_preview_variant is Dictionary and not (archive_preview_variant as Dictionary).is_empty():
 		cangjie_section_content_box.add_child(_make_cangjie_archive_preview(archive_preview_variant as Dictionary, accent))
@@ -2667,6 +2671,77 @@ func _make_cangjie_reward_chain_preview(preview: Dictionary, accent: Color) -> P
 	return panel
 
 
+func _make_cangjie_rest_preview(preview: Dictionary, accent: Color) -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.08, accent.g * 0.08, accent.b * 0.1, 0.78), Color(accent.r, accent.g, accent.b, 0.28)))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", _i(18))
+	margin.add_theme_constant_override("margin_top", _i(16))
+	margin.add_theme_constant_override("margin_right", _i(18))
+	margin.add_theme_constant_override("margin_bottom", _i(16))
+	panel.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", _i(10))
+	margin.add_child(box)
+	box.add_child(_make_label(_localize_cangjie_text(preview.get("title", "")), 20, Color(1.0, 0.95, 0.86, 1.0)))
+
+	var summary_text := _localize_cangjie_text(preview.get("summary", ""))
+	if not summary_text.is_empty():
+		box.add_child(_make_label(summary_text, 16, Color(0.88, 0.92, 0.96, 0.92)))
+
+	var hint_text := _localize_cangjie_text(preview.get("hint", ""))
+	if not hint_text.is_empty():
+		box.add_child(_make_label(hint_text, 14, Color(0.82, 0.9, 0.96, 0.86)))
+
+	var options_variant: Variant = preview.get("options", [])
+	var selected_option: Dictionary = {}
+	if options_variant is Array and not (options_variant as Array).is_empty():
+		var options := options_variant as Array
+		var option_row: Container
+		if _is_portrait_layout():
+			var option_grid := GridContainer.new()
+			option_grid.columns = 1
+			option_grid.add_theme_constant_override("h_separation", _i(10))
+			option_grid.add_theme_constant_override("v_separation", _i(10))
+			option_row = option_grid
+		else:
+			var option_box := HBoxContainer.new()
+			option_box.add_theme_constant_override("separation", _i(10))
+			option_row = option_box
+		box.add_child(option_row)
+
+		var first_option := {}
+		for option_variant in options:
+			if option_variant is Dictionary:
+				var option := option_variant as Dictionary
+				if first_option.is_empty():
+					first_option = option
+				option_row.add_child(_make_cangjie_rest_option_button(option, accent))
+				if String(option.get("id", "")) == cangjie_rest_choice:
+					selected_option = option
+		if selected_option.is_empty() and not first_option.is_empty():
+			selected_option = first_option
+			cangjie_rest_choice = String(first_option.get("id", cangjie_rest_choice))
+
+	if not selected_option.is_empty():
+		var selected_tone: Color = selected_option.get("tone", accent)
+		var selected_summary := _localize_cangjie_text(selected_option.get("summary", ""))
+		if not selected_summary.is_empty():
+			box.add_child(_make_label(selected_summary, 15, Color(0.94, 0.92, 0.88, 0.94)))
+
+		var result_group_variant: Variant = selected_option.get("result_group", {})
+		if result_group_variant is Dictionary and not (result_group_variant as Dictionary).is_empty():
+			box.add_child(_make_cangjie_group_panel(result_group_variant as Dictionary, selected_tone))
+
+	var footnote_text := _localize_cangjie_text(preview.get("footnote", ""))
+	if not footnote_text.is_empty():
+		box.add_child(_make_label(footnote_text, 14, Color(0.82, 0.9, 0.96, 0.82)))
+
+	return panel
+
+
 func _make_cangjie_archive_preview(preview: Dictionary, accent: Color) -> PanelContainer:
 	var panel := PanelContainer.new()
 	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.08, accent.g * 0.08, accent.b * 0.1, 0.78), Color(accent.r, accent.g, accent.b, 0.28)))
@@ -2949,6 +3024,69 @@ func _make_cangjie_broker_preview(preview: Dictionary, accent: Color) -> PanelCo
 		box.add_child(_make_label(footnote_text, 14, Color(0.82, 0.9, 0.96, 0.82)))
 
 	return panel
+
+
+func _make_cangjie_rest_option_button(option: Dictionary, accent: Color) -> Button:
+	var option_id := String(option.get("id", ""))
+	var tone: Color = option.get("tone", accent)
+	var active := option_id == cangjie_rest_choice
+
+	var button := Button.new()
+	button.text = ""
+	button.flat = true
+	button.clip_contents = false
+	button.focus_mode = Control.FOCUS_ALL
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.custom_minimum_size = _v(0.0, 136.0)
+
+	var border_strength := 0.42 if active else 0.22
+	button.add_theme_stylebox_override("normal", _make_panel_style(Color(tone.r * 0.16, tone.g * 0.16, tone.b * 0.18, 0.8), Color(tone.r, tone.g, tone.b, border_strength)))
+	button.add_theme_stylebox_override("hover", _make_panel_style(Color(tone.r * 0.18, tone.g * 0.18, tone.b * 0.2, 0.88), Color(tone.r, tone.g, tone.b, 0.5 if active else 0.3)))
+	button.add_theme_stylebox_override("pressed", _make_panel_style(Color(tone.r * 0.2, tone.g * 0.2, tone.b * 0.22, 0.92), Color(tone.r, tone.g, tone.b, 0.58 if active else 0.36)))
+
+	var margin := MarginContainer.new()
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left", _i(14))
+	margin.add_theme_constant_override("margin_top", _i(12))
+	margin.add_theme_constant_override("margin_right", _i(14))
+	margin.add_theme_constant_override("margin_bottom", _i(12))
+	button.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", _i(8))
+	margin.add_child(box)
+
+	var header := HBoxContainer.new()
+	header.add_theme_constant_override("separation", _i(10))
+	box.add_child(header)
+
+	var glyph_panel := PanelContainer.new()
+	glyph_panel.custom_minimum_size = _v(46.0, 46.0)
+	glyph_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(tone.r * 0.22, tone.g * 0.18, tone.b * 0.16, 0.92), Color(tone.r, tone.g, tone.b, 0.3)))
+	header.add_child(glyph_panel)
+
+	var glyph_label := _make_label(String(option.get("glyph", "")), 22, Color(1.0, 0.95, 0.86, 1.0))
+	glyph_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	glyph_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	glyph_label.set_anchors_preset(Control.PRESET_FULL_RECT)
+	glyph_panel.add_child(glyph_label)
+
+	var heading_box := VBoxContainer.new()
+	heading_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	heading_box.add_theme_constant_override("separation", _i(3))
+	header.add_child(heading_box)
+	heading_box.add_child(_make_label(_localize_cangjie_text(option.get("title", "")), 16, Color(1.0, 0.95, 0.86, 1.0)))
+
+	var subtitle_text := _localize_cangjie_text(option.get("subtitle", ""))
+	if not subtitle_text.is_empty():
+		heading_box.add_child(_make_label(subtitle_text, 13, Color(0.86, 0.9, 0.98, 0.84)))
+
+	if active:
+		box.add_child(_make_tag("当前模式" if not _is_english() else "Active Mode", Color(tone.r * 0.18, tone.g * 0.18, tone.b * 0.2, 0.9), Color(0.98, 0.94, 0.88, 0.96)))
+
+	button.pressed.connect(Callable(self, "_on_select_cangjie_rest_option").bind(option_id))
+	return button
 
 
 func _make_cangjie_archive_option_button(option: Dictionary, accent: Color) -> Button:
@@ -4633,6 +4771,8 @@ func _on_select_cangjie_route_preview_node(node_id: String, preview_kind: String
 	cangjie_route_preview_node_id = node_id
 	if preview_kind == "reward_chain" and not option_id.is_empty():
 		cangjie_reward_chain_choice = option_id
+	elif preview_kind == "rest" and not option_id.is_empty():
+		cangjie_rest_choice = option_id
 	elif preview_kind == "archive" and not option_id.is_empty():
 		cangjie_archive_choice = option_id
 	elif preview_kind == "treasure" and not option_id.is_empty():
@@ -4647,6 +4787,11 @@ func _on_select_cangjie_route_preview_node(node_id: String, preview_kind: String
 		cangjie_broker_choice = option_id
 	elif preview_kind == "margin" and not option_id.is_empty():
 		cangjie_margin_choice = option_id
+	_refresh_cangjie_portal()
+
+
+func _on_select_cangjie_rest_option(option_id: String) -> void:
+	cangjie_rest_choice = option_id
 	_refresh_cangjie_portal()
 
 
@@ -4767,6 +4912,7 @@ func _show_cangjie_portal() -> void:
 		_hide_profile()
 		cangjie_run_shell_open = false
 		cangjie_reward_chain_choice = "draft"
+		cangjie_rest_choice = "prepare"
 		cangjie_archive_choice = "trim"
 		cangjie_treasure_choice = "inkstone"
 		cangjie_shop_choice = "restock"

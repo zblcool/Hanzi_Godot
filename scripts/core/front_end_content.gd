@@ -2358,8 +2358,8 @@ const CANGJIE_PORTAL_SECTIONS := [
 								{"zh": "续航", "en": "Sustain"},
 								{"zh": "补短板", "en": "Patch first"}
 							],
-							"linked_preview_kind": "route_ledger",
-							"linked_preview_option": "patch",
+							"linked_preview_kind": "rest",
+							"linked_preview_option": "prepare",
 							"connections": ["shop_node", "elite_node"],
 							"tone": Color(0.54, 0.82, 0.88, 1.0),
 							"state": "option"
@@ -2538,6 +2538,115 @@ const CANGJIE_PORTAL_SECTIONS := [
 			"footnote": {
 				"zh": "这只是 source 三路线塔图的前台壳预览，不假装已经接通真正的 Godot 节点逻辑。",
 				"en": "This is only a front-shell preview of the source three-lane tower board, not a claim that Godot already has the real node logic wired up."
+			}
+		},
+		"rest_preview": {
+			"title": {"zh": "歇息小站预览", "en": "Quiet Stop Preview"},
+			"summary": {
+				"zh": "source 的歇息房不是纯回血站。它会在 `静养 / Recover` 与 `蓄势 / Prepare` 之间切换，把血线修补和下一场起手加速压成同一拍判断。",
+				"en": "Source rest rooms are not pure heal stations. They switch between `Recover` and `Prepare`, compressing HP recovery and next-battle acceleration into the same decision beat."
+			},
+			"hint": {
+				"zh": "点按下面任一歇息模式，预览 source 的 rest 节点怎样在回气 `18` 与 `回气 8 + 下场 +1 Energy / +1 Ink` 之间真正改写下一拍的路线判断。",
+				"en": "Tap either rest mode below to preview how the source node rewrites the next beat through `heal 18` or `heal 8 + next battle +1 Energy / +1 Ink`."
+			},
+			"options": [
+				{
+					"id": "heal",
+					"glyph": "养",
+					"title": {"zh": "静养", "en": "Recover"},
+					"subtitle": {"zh": "回复 18 点生命，再继续上路", "en": "Restore 18 HP, then keep moving"},
+					"summary": {
+						"zh": "当血线已经被上一段战斗压低时，source 的歇息房会直接承认最值的是把容错补回来，而不是勉强继续抢节奏。",
+						"en": "When the last stretch pushed HP low, the source rest room openly admits that the most valuable move is rebuilding margin instead of forcing another tempo spike."
+					},
+					"tone": Color(0.56, 0.84, 0.8, 1.0),
+					"result_group": {
+						"title": {"zh": "歇息样张 · 先把血线补回", "en": "Quiet Stop Sample · Rebuild The HP Floor"},
+						"summary": {
+							"zh": "这类歇息会先把 run 从危险线拉回来，让后面的战后拿牌、商店或事件判断不再被残血硬推着走。",
+							"en": "This style of stop pulls the run back off the danger line first so later reward, shop, and event calls are no longer forced by low HP alone."
+						},
+						"cards": [
+							{
+								"glyph": "气",
+								"title": {"zh": "回气 18", "en": "Restore 18 HP"},
+								"subtitle": {"zh": "把容错先垫回来", "en": "Pad the margin back first"},
+								"body": {
+									"zh": "不是为了拖一回合，而是为了让接下来的战斗、删改和商店线重新回到可谈判的范围内。",
+									"en": "The point is not merely surviving one more turn, but bringing the next battle, archive, and shop lines back into a negotiable range."
+								},
+								"tags": [
+									{"zh": "回血", "en": "Healing"},
+									{"zh": "容错", "en": "Margin"}
+								]
+							},
+							{
+								"glyph": "稳",
+								"title": {"zh": "先把底板稳住", "en": "Steady The Floor First"},
+								"subtitle": {"zh": "让后手判断不再被残血绑架", "en": "Stop later choices from being held hostage by HP"},
+								"body": {
+									"zh": "一旦血线被补回，后面的 reward skip、商店删牌和事件存势才会重新变成能主动选择的路线判断。",
+									"en": "Once HP is rebuilt, later reward skips, shop purges, and event tempo-banking become route choices again instead of panic responses."
+								},
+								"tags": [
+									{"zh": "稳线", "en": "Stabilize"},
+									{"zh": "后手判断", "en": "Follow-through read"}
+								]
+							}
+						]
+					}
+				},
+				{
+					"id": "prepare",
+					"glyph": "势",
+					"title": {"zh": "蓄势", "en": "Prepare"},
+					"subtitle": {"zh": "回复 8 点生命；下场 +1 Energy / +1 Ink", "en": "Heal 8; next battle +1 Energy / +1 Ink"},
+					"summary": {
+						"zh": "当当前血线还站得住时，source 的歇息房也会把价值转到下场起手，把较小的回血换成一次更早兑现的开场节拍。",
+						"en": "When current HP can still hold, the source rest room can shift its value into the next opener, trading the smaller heal for an earlier tempo spike."
+					},
+					"tone": Color(0.94, 0.74, 0.42, 1.0),
+					"result_group": {
+						"title": {"zh": "歇息样张 · 把起手往前拽", "en": "Quiet Stop Sample · Pull The Opener Forward"},
+						"summary": {
+							"zh": "这类歇息不是继续贪牌，而是把 `+1 Energy / +1 Ink` 先塞进下一场，让更重的开场或引擎线提前半拍兑现。",
+							"en": "This version of rest does not greed for more pages. It banks `+1 Energy / +1 Ink` into the next fight so heavier openings or engine lines cash in half a beat earlier."
+						},
+						"cards": [
+							{
+								"glyph": "启",
+								"title": {"zh": "下场 +1 Energy / +1 Ink", "en": "Next battle +1 Energy / +1 Ink"},
+								"subtitle": {"zh": "把起手爆点直接抬前", "en": "Move the opener spike up directly"},
+								"body": {
+									"zh": "这让 `明 / 学` 这类需要更快起手的路线更容易立住，也让下一场普通战斗更像一次主动压深而不是被动续命。",
+									"en": "That makes lines such as `Bright / Script` easier to stand up sooner, and turns the next normal battle into a proactive deepen instead of a reactive survival check."
+								},
+								"tags": [
+									{"zh": "起手势能", "en": "Opening tempo"},
+									{"zh": "明 / 学", "en": "Bright / Script"}
+								]
+							},
+							{
+								"glyph": "抢",
+								"title": {"zh": "小回血换更早兑现", "en": "Smaller Heal For Earlier Payoff"},
+								"subtitle": {"zh": "站得住时就不必只做回血站", "en": "Safe HP no longer means heal-only"},
+								"body": {
+									"zh": "这一步强调 rest 节点的价值不只看掉了多少血，也要看 deck 有没有条件把那一点起手优势立刻滚成路线推进。",
+									"en": "This underscores that a rest node is not priced only by missing HP, but also by whether the deck can immediately roll that opener edge into route progress."
+								},
+								"tags": [
+									{"zh": "节奏前拉", "en": "Tempo pull-forward"},
+									{"zh": "不是纯回血", "en": "Not heal-only"}
+								]
+							}
+						]
+					}
+				}
+			],
+			"footnote": {
+				"zh": "Godot 这里先把 source 的 `歇息小站 / Quiet Stop` 模式切换挂回 Tower Guide，不假装已经接通 live rest 结算或真正的下场起手增益。",
+				"en": "Godot now hangs the source `Quiet Stop` mode switch back into the Tower Guide first without pretending live rest resolution or real next-battle opener buffs already exist here."
 			}
 		},
 		"archive_preview": {
