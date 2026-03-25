@@ -173,13 +173,13 @@ func _process(delta: float) -> void:
 	var viewport_size: Vector2 = get_viewport_rect().size
 	for symbol in floating_symbols:
 		var velocity: Vector2 = symbol["velocity"]
-		var position: Vector2 = symbol["position"]
-		position += velocity * delta
-		if position.x > viewport_size.x + 90.0:
-			position.x = -90.0
-		if position.y > viewport_size.y + 80.0:
-			position.y = -80.0
-		symbol["position"] = position
+		var symbol_position: Vector2 = symbol["position"]
+		symbol_position += velocity * delta
+		if symbol_position.x > viewport_size.x + 90.0:
+			symbol_position.x = -90.0
+		if symbol_position.y > viewport_size.y + 80.0:
+			symbol_position.y = -80.0
+		symbol["position"] = symbol_position
 
 	for motif in preview_motifs:
 		var phase: float = float(motif["phase"]) + delta * float(motif["speed"])
@@ -220,26 +220,26 @@ func _draw() -> void:
 		draw_line(Vector2(x, 0.0), Vector2(x - 120.0, rect.size.y), palette["line"], 1.0)
 
 	for index in range(6):
-		var size := 72.0 + float(index) * 20.0
+		var diamond_size := 72.0 + float(index) * 20.0
 		var center := Vector2(
 			rect.size.x * (0.07 + float(index) * 0.16),
 			rect.size.y * (0.14 + float(index % 3) * 0.24)
 		)
 		var diamond := PackedVector2Array([
-			center + Vector2(0.0, -size),
-			center + Vector2(size * 0.72, 0.0),
-			center + Vector2(0.0, size),
-			center + Vector2(-size * 0.72, 0.0),
-			center + Vector2(0.0, -size)
+			center + Vector2(0.0, -diamond_size),
+			center + Vector2(diamond_size * 0.72, 0.0),
+			center + Vector2(0.0, diamond_size),
+			center + Vector2(-diamond_size * 0.72, 0.0),
+			center + Vector2(0.0, -diamond_size)
 		])
 		draw_polyline(diamond, palette["diamond"], 2.0)
 
 	for symbol in floating_symbols:
-		var position: Vector2 = symbol["position"]
+		var draw_position: Vector2 = symbol["position"]
 		var color: Color = _resolve_symbol_color(symbol["color"])
 		draw_string(
 			title_font,
-			position,
+			draw_position,
 			String(symbol["glyph"]),
 			HORIZONTAL_ALIGNMENT_LEFT,
 			-1.0,
@@ -308,6 +308,12 @@ func _compute_ui_scale() -> float:
 func _is_portrait_layout() -> bool:
 	var viewport_size := get_viewport_rect().size
 	return viewport_size.x <= viewport_size.y
+
+
+func _make_responsive_box_container(portrait_layout: bool) -> BoxContainer:
+	if portrait_layout:
+		return VBoxContainer.new()
+	return HBoxContainer.new()
 
 
 func _is_web_platform() -> bool:
@@ -453,14 +459,14 @@ func _resolve_symbol_color(color: Color) -> Color:
 	return themed
 
 
-func _make_theme_toggle_button(size: Vector2) -> Button:
-	var button := _make_pill_button(_get_theme_toggle_label(), size, Callable(self, "_on_toggle_theme_pressed"))
+func _make_theme_toggle_button(control_size: Vector2) -> Button:
+	var button := _make_pill_button(_get_theme_toggle_label(), control_size, Callable(self, "_on_toggle_theme_pressed"))
 	button.tooltip_text = _get_theme_toggle_tooltip()
 	return button
 
 
-func _make_language_toggle_button(size: Vector2) -> Button:
-	var button := _make_pill_button(_get_language_toggle_label(), size, Callable(self, "_on_toggle_language_pressed"))
+func _make_language_toggle_button(control_size: Vector2) -> Button:
+	var button := _make_pill_button(_get_language_toggle_label(), control_size, Callable(self, "_on_toggle_language_pressed"))
 	button.tooltip_text = _get_language_toggle_tooltip()
 	return button
 
@@ -482,16 +488,16 @@ func _resolve_launcher_action(action_id: String) -> Callable:
 
 
 func _make_launcher_top_button(button_data: Dictionary) -> Button:
-	var size: Vector2 = button_data.get("size", Vector2(0.0, 54.0))
+	var button_size: Vector2 = button_data.get("size", Vector2(0.0, 54.0))
 	match String(button_data.get("kind", "action")):
 		"theme_toggle":
-			return _make_theme_toggle_button(size)
+			return _make_theme_toggle_button(button_size)
 		"language_toggle":
-			return _make_language_toggle_button(size)
+			return _make_language_toggle_button(button_size)
 		_:
 			return _make_pill_button(
 				String(button_data.get("title", "")),
-				size,
+				button_size,
 				_resolve_launcher_action(String(button_data.get("action", "")))
 			)
 
@@ -566,7 +572,7 @@ func _build_ui() -> void:
 	header_box.add_child(_make_label("汉字游戏启动器", 72, Color(1.0, 0.95, 0.86, 1.0)))
 	header_box.add_child(_make_label("从字形、部件到战斗系统，把汉字本身做成游戏的核心机制。", 18, Color(0.9, 0.92, 0.96, 0.94)))
 
-	var mobile_row: BoxContainer = VBoxContainer.new() if portrait_layout else HBoxContainer.new()
+	var mobile_row := _make_responsive_box_container(portrait_layout)
 	mobile_row.add_theme_constant_override("separation", _i(18))
 	layout.add_child(mobile_row)
 
@@ -578,7 +584,7 @@ func _build_ui() -> void:
 			info_accent
 		))
 
-	var main_row: BoxContainer = VBoxContainer.new() if portrait_layout else HBoxContainer.new()
+	var main_row := _make_responsive_box_container(portrait_layout)
 	main_row.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	main_row.add_theme_constant_override("separation", _i(20))
 	layout.add_child(main_row)
@@ -599,7 +605,7 @@ func _build_ui() -> void:
 
 	layout.add_child(_make_update_spotlight_panel())
 
-	var roadmap_row: BoxContainer = VBoxContainer.new() if portrait_layout else HBoxContainer.new()
+	var roadmap_row := _make_responsive_box_container(portrait_layout)
 	roadmap_row.add_theme_constant_override("separation", _i(18))
 	layout.add_child(roadmap_row)
 
@@ -893,7 +899,7 @@ func _build_about_overlay() -> void:
 			note_accent
 		))
 
-	var footer_row: BoxContainer = VBoxContainer.new() if portrait_layout else HBoxContainer.new()
+	var footer_row := _make_responsive_box_container(portrait_layout)
 	footer_row.add_theme_constant_override("separation", _i(10))
 	box.add_child(footer_row)
 
@@ -1002,7 +1008,7 @@ func _build_cangjie_overlay() -> void:
 	cangjie_section_content_box.add_theme_constant_override("separation", _i(12))
 	scroll.add_child(cangjie_section_content_box)
 
-	var footer_row: BoxContainer = VBoxContainer.new() if portrait_layout else HBoxContainer.new()
+	var footer_row := _make_responsive_box_container(portrait_layout)
 	footer_row.add_theme_constant_override("separation", _i(10))
 	box.add_child(footer_row)
 
@@ -1153,7 +1159,7 @@ func _make_cangjie_duel_preview(preview: Dictionary, accent: Color) -> PanelCont
 	if not summary_text.is_empty():
 		box.add_child(_make_label(summary_text, 16, Color(0.88, 0.92, 0.96, 0.92)))
 
-	var action_row: BoxContainer = VBoxContainer.new() if _is_portrait_layout() else HBoxContainer.new()
+	var action_row := _make_responsive_box_container(_is_portrait_layout())
 	action_row.add_theme_constant_override("separation", _i(10))
 	box.add_child(action_row)
 
@@ -1166,7 +1172,7 @@ func _make_cangjie_duel_preview(preview: Dictionary, accent: Color) -> PanelCont
 	fx_state.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	action_row.add_child(fx_state)
 
-	var duel_row: BoxContainer = VBoxContainer.new() if _is_portrait_layout() else HBoxContainer.new()
+	var duel_row := _make_responsive_box_container(_is_portrait_layout())
 	duel_row.add_theme_constant_override("separation", _i(10))
 	box.add_child(duel_row)
 
@@ -1257,9 +1263,9 @@ func _make_cangjie_run_action_control(action: Dictionary, accent: Color) -> Cont
 	return _make_cangjie_shell_pill(_localize_cangjie_text(action.get("label", "")), tone, _v(170.0 if _is_portrait_layout() else 184.0, 46.0), 18)
 
 
-func _make_cangjie_shell_pill(text: String, tone: Color, size: Vector2, font_size: int) -> PanelContainer:
+func _make_cangjie_shell_pill(text: String, tone: Color, control_size: Vector2, font_size: int) -> PanelContainer:
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size = size
+	panel.custom_minimum_size = control_size
 	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(tone.r * 0.14, tone.g * 0.14, tone.b * 0.16, 0.88), Color(tone.r, tone.g, tone.b, 0.24)))
 
 	var label := _make_label(text, font_size, Color(0.98, 0.94, 0.88, 0.98))
@@ -2161,17 +2167,17 @@ func _make_cangjie_route_next_row_beat_strip(node_detail: Dictionary, accent: Co
 	if not (steps_variant is Array) or (steps_variant as Array).is_empty():
 		return null
 
-	var wrap := VBoxContainer.new()
-	wrap.add_theme_constant_override("separation", _i(6))
+	var ribbon_box := VBoxContainer.new()
+	ribbon_box.add_theme_constant_override("separation", _i(6))
 
 	var title_text := _localize_cangjie_text(route_ribbon.get("title", ""))
 	if not title_text.is_empty():
-		wrap.add_child(_make_label(title_text, 12, Color(0.82, 0.9, 0.98, 0.78)))
+		ribbon_box.add_child(_make_label(title_text, 12, Color(0.82, 0.9, 0.98, 0.78)))
 
 	var beat_flow := HFlowContainer.new()
 	beat_flow.add_theme_constant_override("h_separation", _i(6))
 	beat_flow.add_theme_constant_override("v_separation", _i(6))
-	wrap.add_child(beat_flow)
+	ribbon_box.add_child(beat_flow)
 
 	var steps := steps_variant as Array
 	for step_index in range(steps.size()):
@@ -2182,7 +2188,7 @@ func _make_cangjie_route_next_row_beat_strip(node_detail: Dictionary, accent: Co
 		if step_index < steps.size() - 1:
 			beat_flow.add_child(_make_label("→", 14, Color(accent.r, accent.g, accent.b, 0.72)))
 
-	return wrap
+	return ribbon_box
 
 
 func _make_cangjie_route_next_row_beat_chip(step: Dictionary, accent: Color) -> PanelContainer:
@@ -2378,7 +2384,7 @@ func _make_cangjie_route_ribbon_panel(preview_ribbon: Dictionary, node_ribbon: D
 
 	var explicit_steps_variant: Variant = node_ribbon.get("steps", [])
 	if explicit_steps_variant is Array and not (explicit_steps_variant as Array).is_empty():
-		var beat_flow: BoxContainer = VBoxContainer.new() if _is_portrait_layout() else HBoxContainer.new()
+		var beat_flow := _make_responsive_box_container(_is_portrait_layout())
 		beat_flow.add_theme_constant_override("separation", _i(10))
 		box.add_child(beat_flow)
 
@@ -2395,7 +2401,7 @@ func _make_cangjie_route_ribbon_panel(preview_ribbon: Dictionary, node_ribbon: D
 	if steps.is_empty():
 		return panel
 
-	var ribbon_flow: BoxContainer = VBoxContainer.new() if _is_portrait_layout() else HBoxContainer.new()
+	var ribbon_flow := _make_responsive_box_container(_is_portrait_layout())
 	ribbon_flow.add_theme_constant_override("separation", _i(10))
 	box.add_child(ribbon_flow)
 
@@ -4308,7 +4314,7 @@ func _build_changelog_overlay() -> void:
 	for entry_index in range(changelog_history.size()):
 		content.add_child(_make_changelog_entry_card(changelog_history[entry_index], entry_index == 0))
 
-	var footer_row: BoxContainer = VBoxContainer.new() if portrait_layout else HBoxContainer.new()
+	var footer_row := _make_responsive_box_container(portrait_layout)
 	footer_row.add_theme_constant_override("separation", _i(10))
 	box.add_child(footer_row)
 
@@ -4365,7 +4371,7 @@ func _build_profile_overlay() -> void:
 	box.add_child(_make_label(String(profile_content.get("title", "")), 40, Color(1.0, 0.95, 0.86, 1.0)))
 	box.add_child(_make_label(String(profile_content.get("summary", "")), 18, Color(0.9, 0.92, 0.96, 0.95)))
 
-	var content_row: BoxContainer = VBoxContainer.new() if portrait_layout else HBoxContainer.new()
+	var content_row := _make_responsive_box_container(portrait_layout)
 	content_row.add_theme_constant_override("separation", _i(16))
 	box.add_child(content_row)
 
@@ -4440,7 +4446,7 @@ func _build_profile_overlay() -> void:
 	profile_hint_label = _make_label("", 16, Color(0.88, 0.92, 0.96, 0.92))
 	editor_box.add_child(profile_hint_label)
 
-	var action_row: BoxContainer = VBoxContainer.new() if portrait_layout else HBoxContainer.new()
+	var action_row := _make_responsive_box_container(portrait_layout)
 	action_row.add_theme_constant_override("separation", _i(10))
 	editor_box.add_child(action_row)
 
@@ -4461,7 +4467,7 @@ func _build_profile_overlay() -> void:
 	save_button.pressed.connect(_on_profile_save_pressed)
 	action_row.add_child(save_button)
 
-	var footer_row: BoxContainer = VBoxContainer.new() if portrait_layout else HBoxContainer.new()
+	var footer_row := _make_responsive_box_container(portrait_layout)
 	footer_row.add_theme_constant_override("separation", _i(10))
 	box.add_child(footer_row)
 
@@ -4673,10 +4679,10 @@ func _make_button_style(fill_color: Color, radius: int) -> StyleBoxFlat:
 	return style
 
 
-func _make_pill_button(text: String, size: Vector2, callback: Callable) -> Button:
+func _make_pill_button(text: String, control_size: Vector2, callback: Callable) -> Button:
 	var button := Button.new()
 	button.text = _localize_text(text)
-	button.custom_minimum_size = size
+	button.custom_minimum_size = control_size
 	button.add_theme_font_override("font", title_font)
 	button.add_theme_font_size_override("font_size", _i(20))
 	button.add_theme_color_override("font_color", _resolve_label_color(Color(0.98, 0.92, 0.82, 0.98)))
@@ -4687,9 +4693,9 @@ func _make_pill_button(text: String, size: Vector2, callback: Callable) -> Butto
 	return button
 
 
-func _make_static_pill(text: String, size: Vector2) -> PanelContainer:
+func _make_static_pill(text: String, control_size: Vector2) -> PanelContainer:
 	var pill := PanelContainer.new()
-	pill.custom_minimum_size = size
+	pill.custom_minimum_size = control_size
 	pill.add_theme_stylebox_override("panel", _make_panel_style(Color(0.04, 0.06, 0.08, 0.76), Color(0.2, 0.26, 0.32, 0.56)))
 	var label := _make_label(_localize_text(text), 20, Color(0.98, 0.92, 0.82, 0.98))
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -4714,11 +4720,11 @@ func _make_tag(text: String, fill_color: Color, text_color: Color) -> PanelConta
 	return tag
 
 
-func _set_mouse_filter_recursive(control: Control, mouse_filter: int) -> void:
-	control.mouse_filter = mouse_filter
+func _set_mouse_filter_recursive(control: Control, filter_mode: Control.MouseFilter) -> void:
+	control.mouse_filter = filter_mode
 	for child in control.get_children():
 		if child is Control:
-			_set_mouse_filter_recursive(child as Control, mouse_filter)
+			_set_mouse_filter_recursive(child as Control, filter_mode)
 
 
 func _build_floating_symbols() -> void:
@@ -5020,8 +5026,8 @@ func _on_profile_reset_pressed() -> void:
 	_refresh_profile_overlay("Restored device default alias: %s" % resolved_name if _is_english() else "已恢复设备默认侠名：%s" % resolved_name)
 
 
-func _get_profile_monogram(name: String) -> String:
-	var trimmed_name := name.strip_edges()
+func _get_profile_monogram(profile_name: String) -> String:
+	var trimmed_name := profile_name.strip_edges()
 	if trimmed_name.is_empty():
 		return "侠"
 	return trimmed_name.substr(0, 1)

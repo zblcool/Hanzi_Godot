@@ -858,9 +858,9 @@ func get_recipe_ids_for_radical(radical: String) -> Array[String]:
 	var recipe_ids_variant: Variant = radical_data.get("recipe_ids", [])
 	if recipe_ids_variant is Array and not (recipe_ids_variant as Array).is_empty():
 		for recipe_id_variant in recipe_ids_variant:
-			var recipe_id := String(recipe_id_variant)
-			if not recipe_id.is_empty():
-				recipe_ids.append(recipe_id)
+			var recipe_id_text := String(recipe_id_variant)
+			if not recipe_id_text.is_empty():
+				recipe_ids.append(recipe_id_text)
 		return recipe_ids
 	var recipe_id := String(radical_data.get("recipe_id", ""))
 	if not recipe_id.is_empty():
@@ -1421,9 +1421,10 @@ func _format_utc_offset_label(raw_offset: Variant) -> String:
 		return ""
 
 	var total_minutes := int(normalized_offset)
-	var sign := "+" if total_minutes >= 0 else "-"
+	var offset_sign := "+" if total_minutes >= 0 else "-"
 	var absolute_minutes: int = abs(total_minutes)
-	return "UTC%s%02d:%02d" % [sign, absolute_minutes / 60, absolute_minutes % 60]
+	var offset_hours := floori(float(absolute_minutes) / 60.0)
+	return "UTC%s%02d:%02d" % [offset_sign, offset_hours, absolute_minutes % 60]
 
 
 func _normalize_run_counts(raw_counts: Variant, order: Array) -> Dictionary:
