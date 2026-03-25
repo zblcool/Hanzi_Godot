@@ -14,6 +14,7 @@ const TREASURE_CHEST_SCENE := preload("res://scenes/entities/treasure_chest.tscn
 const BATTLE_HUD_SCENE := preload("res://scenes/ui/battle_hud.tscn")
 const TOUCH_CONTROLS_OVERLAY := preload("res://scripts/ui/touch_controls_overlay.gd")
 const BattleAudio := preload("res://scripts/core/battle_audio.gd")
+const BattleChamberCatalog := preload("res://scripts/battle/battle_chamber_catalog.gd")
 const BattleChamberRules := preload("res://scripts/battle/battle_chamber_rules.gd")
 const BattleEnvironmentSupport := preload("res://scripts/battle/battle_environment_support.gd")
 const BattleSupplyRules := preload("res://scripts/battle/battle_supply_rules.gd")
@@ -734,6 +735,7 @@ var field_phase_stamp_root: Node3D
 var field_phase_stamp_entries: Array[Dictionary] = []
 var current_soundtrack_id: String = ""
 var current_soundtrack_cue: String = ""
+var battle_chamber_catalog := BattleChamberCatalog.new()
 var battle_chamber_rules := BattleChamberRules.new()
 var battle_environment := BattleEnvironmentSupport.new()
 var battle_supply_rules := BattleSupplyRules.new()
@@ -1157,16 +1159,7 @@ func _short_rest_modifier_active() -> bool:
 
 
 func _intro_override_chamber_id() -> String:
-	if battle_intro.is_empty():
-		return ""
-	var preset_variant: Variant = battle_intro.get("start_preset", {})
-	if not (preset_variant is Dictionary):
-		return ""
-	var preset := preset_variant as Dictionary
-	var chamber_id := String(preset.get("start_chamber_id", ""))
-	if chamber_id.is_empty() or not CHAMBER_LAYOUTS.has(chamber_id):
-		return ""
-	return chamber_id
+	return battle_chamber_catalog.intro_override_chamber_id(battle_intro, CHAMBER_LAYOUTS)
 
 
 func _chamber_id_for_completed_bosses(completed_bosses: int) -> String:
@@ -1174,39 +1167,28 @@ func _chamber_id_for_completed_bosses(completed_bosses: int) -> String:
 
 
 func _current_chamber_data() -> Dictionary:
-	var chamber_variant: Variant = CHAMBER_LAYOUTS.get(current_chamber_id, CHAMBER_LAYOUTS.get(String(CHAMBER_ORDER[0]), {}))
-	if chamber_variant is Dictionary:
-		return chamber_variant as Dictionary
-	return {}
+	return battle_chamber_catalog.current_chamber_data(current_chamber_id, CHAMBER_LAYOUTS, CHAMBER_ORDER)
 
 
 func _battle_chamber_entry(chamber_id: String) -> Dictionary:
-	var chamber_collection_variant: Variant = FrontEndContent.battle_chamber_content().get("chambers", {})
-	if chamber_collection_variant is Dictionary:
-		var chamber_variant: Variant = (chamber_collection_variant as Dictionary).get(chamber_id, {})
-		if chamber_variant is Dictionary:
-			return chamber_variant as Dictionary
-	return {}
+	return battle_chamber_catalog.battle_chamber_entry(chamber_id, FrontEndContent.battle_chamber_content())
 
 
 func _battle_room_objective_entry(objective: Dictionary) -> Dictionary:
-	var chamber_entry := _battle_chamber_entry(String(objective.get("chamber_id", current_chamber_id)))
-	var objective_collection_variant: Variant = chamber_entry.get("objectives", {})
-	if objective_collection_variant is Dictionary:
-		var objective_variant: Variant = (objective_collection_variant as Dictionary).get(String(objective.get("id", "")), {})
-		if objective_variant is Dictionary:
-			return objective_variant as Dictionary
-	return {}
+	return battle_chamber_catalog.battle_room_objective_entry(
+		objective,
+		current_chamber_id,
+		FrontEndContent.battle_chamber_content()
+	)
 
 
 func _battle_room_gatekeeper_entry(objective: Dictionary, gatekeeper: Dictionary) -> Dictionary:
-	var objective_entry := _battle_room_objective_entry(objective)
-	var gatekeeper_collection_variant: Variant = objective_entry.get("gatekeepers", {})
-	if gatekeeper_collection_variant is Dictionary:
-		var gatekeeper_variant: Variant = (gatekeeper_collection_variant as Dictionary).get(String(gatekeeper.get("id", "")), {})
-		if gatekeeper_variant is Dictionary:
-			return gatekeeper_variant as Dictionary
-	return {}
+	return battle_chamber_catalog.battle_room_gatekeeper_entry(
+		objective,
+		gatekeeper,
+		current_chamber_id,
+		FrontEndContent.battle_chamber_content()
+	)
 
 
 func _localized_chamber_name(chamber_id: String) -> String:
@@ -1223,49 +1205,42 @@ func _current_chamber_tip() -> String:
 
 
 func _current_chamber_accent() -> Color:
-	var chamber_data := _current_chamber_data()
-	return Color(chamber_data.get("accent", Color(0.96, 0.82, 0.54, 1.0)))
+	return battle_chamber_catalog.current_chamber_accent(
+		current_chamber_id,
+		CHAMBER_LAYOUTS,
+		CHAMBER_ORDER,
+		Color(0.96, 0.82, 0.54, 1.0)
+	)
 
 
 func _current_chamber_glyph() -> String:
-	var chamber_data := _current_chamber_data()
-	return String(chamber_data.get("glyph", "界"))
+	return battle_chamber_catalog.current_chamber_glyph(current_chamber_id, CHAMBER_LAYOUTS, CHAMBER_ORDER, "界")
 
 
 func _current_chamber_exit_objective() -> Dictionary:
-	if not room_objective_data.is_empty():
-		return room_objective_data
-	var available_objectives := _available_chamber_exit_objectives()
-	if not available_objectives.is_empty():
-		return available_objectives[0]
-	return {}
+	return battle_chamber_catalog.current_chamber_exit_objective(
+		room_objective_data,
+		current_chamber_id,
+		CHAMBER_LAYOUTS,
+		CHAMBER_ORDER
+	)
 
 
 func _available_chamber_exit_objectives() -> Array[Dictionary]:
-	var chamber_data := _current_chamber_data()
-	var objectives: Array[Dictionary] = []
-	var objectives_variant: Variant = chamber_data.get("exit_objectives", [])
-	if objectives_variant is Array:
-		for objective_variant in objectives_variant:
-			if objective_variant is Dictionary:
-				var objective_copy := (objective_variant as Dictionary).duplicate(true)
-				objective_copy["chamber_id"] = current_chamber_id
-				objectives.append(objective_copy)
-	if not objectives.is_empty():
-		return objectives
-	var objective_variant: Variant = chamber_data.get("exit_objective", {})
-	if objective_variant is Dictionary:
-		var objective_copy := (objective_variant as Dictionary).duplicate(true)
-		objective_copy["chamber_id"] = current_chamber_id
-		objectives.append(objective_copy)
-	return objectives
+	return battle_chamber_catalog.available_chamber_exit_objectives(
+		current_chamber_id,
+		CHAMBER_LAYOUTS,
+		CHAMBER_ORDER
+	)
 
 
 func _pick_chamber_exit_objective() -> Dictionary:
-	var candidates := _available_chamber_exit_objectives()
-	if candidates.is_empty():
-		return {}
-	return candidates[rng.randi_range(0, candidates.size() - 1)]
+	return battle_chamber_catalog.pick_chamber_exit_objective(
+		rng,
+		current_chamber_id,
+		CHAMBER_LAYOUTS,
+		CHAMBER_ORDER
+	)
 
 
 func _localized_room_objective_name(objective: Dictionary) -> String:
@@ -1331,11 +1306,11 @@ func _clear_chamber_break_beacon_state() -> void:
 
 
 func _current_chamber_break_beacon_position() -> Vector3:
-	var chamber_data := _current_chamber_data()
-	var beacon_position_variant: Variant = chamber_data.get("break_beacon_position", Vector3.ZERO)
-	if beacon_position_variant is Vector3:
-		return beacon_position_variant
-	return Vector3.ZERO
+	return battle_chamber_catalog.current_chamber_break_beacon_position(
+		current_chamber_id,
+		CHAMBER_LAYOUTS,
+		CHAMBER_ORDER
+	)
 
 
 func _active_pickups_for_meta(meta_key: String, meta_value: Variant) -> Array:
