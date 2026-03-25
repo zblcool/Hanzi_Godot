@@ -276,7 +276,7 @@ const RECIPES := {
 		"description": "周期朝前写出并列昌轮，顺着同偏旁直线继续压出追击火力。",
 		"color": Color(0.98, 0.78, 0.34, 1.0),
 		"max_level": 3,
-		"word_id": ""
+		"word_id": "chang_ming"
 	},
 	"xiu": {
 		"id": "xiu",
@@ -360,7 +360,7 @@ const RECIPES := {
 	}
 }
 
-const WORD_ORDER := ["ming_guang", "xiu_yang", "lin_hai", "hai_xiao", "lei_yu", "ren_xin", "yan_chao"]
+const WORD_ORDER := ["ming_guang", "chang_ming", "xiu_yang", "lin_hai", "hai_xiao", "lei_yu", "ren_xin", "yan_chao"]
 const WORDS := {
 	"ming_guang": {
 		"id": "ming_guang",
@@ -371,6 +371,16 @@ const WORDS := {
 		"unlock_cost": 2,
 		"max_level": 2,
 		"color": Color(1.0, 0.9, 0.58, 1.0)
+	},
+	"chang_ming": {
+		"id": "chang_ming",
+		"display": "昌明",
+		"title": "昌明轮",
+		"description": "双日追轮会追加明光追击，基础攻击也会周期带出一轮昌明补击。",
+		"recipe_id": "chang",
+		"unlock_cost": 2,
+		"max_level": 2,
+		"color": Color(1.0, 0.86, 0.54, 1.0)
 	},
 	"xiu_yang": {
 		"id": "xiu_yang",

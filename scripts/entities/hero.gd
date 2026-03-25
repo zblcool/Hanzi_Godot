@@ -43,6 +43,7 @@ var blade_level: int = 0
 var heal_level: int = 0
 var wave_level: int = 0
 var chang_level: int = 0
+var chang_word_level: int = 0
 var qin_level: int = 0
 var forest_level: int = 0
 var forest_word_level: int = 0
@@ -65,6 +66,7 @@ var invulnerability_time: float = 0.0
 var heal_timer: float = 0.0
 var wave_timer: float = 0.0
 var chang_timer: float = 0.0
+var chang_echo_timer: float = 0.0
 var qin_timer: float = 0.0
 var forest_timer: float = 0.0
 var bright_timer: float = 0.0
@@ -181,6 +183,7 @@ func _physics_process(delta: float) -> void:
 	paper_ward_time = max(paper_ward_time - delta, 0.0)
 	slash_anim_time = max(slash_anim_time - delta, 0.0)
 	stun_time = max(stun_time - delta, 0.0)
+	chang_echo_timer = max(chang_echo_timer - delta, 0.0)
 
 	_handle_passives(delta)
 	if stun_time <= 0.0:
@@ -314,7 +317,7 @@ func _handle_passives(delta: float) -> void:
 		chang_timer -= delta
 		if chang_timer <= 0.0:
 			_trigger_chang_volley()
-			chang_timer = max(2.5, 4.9 - float(chang_level) * 0.34)
+			chang_timer = max(2.35, 4.9 - float(chang_level) * 0.34 - float(chang_word_level) * 0.18)
 
 	if qin_level > 0:
 		qin_timer -= delta
@@ -411,6 +414,8 @@ func _trigger_chang_volley() -> void:
 		var offset: float = float(index) - float(projectile_count - 1) * 0.5
 		var direction := base_direction.rotated(Vector3.UP, offset * 0.16)
 		fire_projectile.emit(global_position + Vector3(0.0, 1.0, 0.0) + direction * 1.12, direction, damage, speed, "昌", tint)
+	if chang_word_level > 0:
+		_trigger_changming_followup(global_position + Vector3(0.0, 1.0, 0.0), false)
 
 
 func _trigger_qin_wave() -> void:
@@ -438,6 +443,34 @@ func _trigger_qin_wave() -> void:
 		elif projectile_count > 1 and index > int(projectile_count / 2):
 			glyph = "心"
 		fire_projectile.emit(cast_origin, projectile_direction, damage, speed, glyph, tint)
+
+
+func _trigger_changming_followup(origin: Vector3, include_chang_echo: bool) -> void:
+	var targets := _find_closest_enemies(2)
+	if targets.is_empty():
+		return
+
+	var tint: Color = Session.WORDS["chang_ming"]["color"]
+	var speed: float = max(13.4, projectile_speed + 3.4 + float(chang_word_level) * 0.45)
+	for index in range(targets.size()):
+		var enemy: Node3D = targets[index]
+		var direction: Vector3 = enemy.global_position - origin
+		direction.y = 0.0
+		if direction.length_squared() <= 0.001:
+			continue
+		direction = direction.normalized()
+		var glyph := "明"
+		if include_chang_echo and index == 1:
+			glyph = "昌"
+		var damage: float = 3.6 + current_attack_damage * (0.36 + float(chang_word_level) * 0.05)
+		fire_projectile.emit(origin + direction * 0.9, direction, damage, speed, glyph, tint)
+
+
+func _trigger_chang_attack_echo(origin: Vector3) -> void:
+	if chang_word_level <= 0 or chang_echo_timer > 0.0:
+		return
+	chang_echo_timer = max(0.34, 0.48 - float(chang_word_level) * 0.04)
+	_trigger_changming_followup(origin, true)
 
 
 func _trigger_forest_lane() -> void:
@@ -539,6 +572,7 @@ func _try_attack() -> void:
 		attack_cooldown = _get_attack_interval()
 		slash_anim_time = 0.18
 		request_slash.emit(global_position, look_direction, melee_range, current_attack_damage, 0.3, accent_color, "斩")
+		_trigger_chang_attack_echo(global_position + Vector3(0.0, 1.0, 0.0))
 		return
 
 	if distance > attack_range:
@@ -551,6 +585,7 @@ func _try_attack() -> void:
 		var direction := (target_position - global_position).normalized()
 		direction = direction.rotated(Vector3.UP, offset * 0.1)
 		fire_projectile.emit(global_position + Vector3(0.0, 1.0, 0.0) + direction * 1.2, direction, current_attack_damage, projectile_speed, "墨", accent_color)
+	_trigger_chang_attack_echo(global_position + Vector3(0.0, 1.0, 0.0))
 
 
 func _get_attack_interval() -> float:
@@ -573,6 +608,24 @@ func _find_closest_enemy():
 	return nearest_enemy
 
 
+func _find_closest_enemies(limit: int) -> Array:
+	var pairs: Array = []
+	for node in get_tree().get_nodes_in_group("enemy"):
+		if not is_instance_valid(node) or node.is_queued_for_deletion():
+			continue
+		pairs.append({
+			"node": node,
+			"distance": global_position.distance_squared_to(node.global_position)
+		})
+	pairs.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return float(a.get("distance", INF)) < float(b.get("distance", INF))
+	)
+	var result: Array = []
+	for index in range(mini(limit, pairs.size())):
+		result.append(pairs[index]["node"])
+	return result
+
+
 func _apply_skill_levels() -> void:
 	var ming_level: int = int(skill_levels.get("ming", 0))
 	var chang_recipe_level: int = int(skill_levels.get("chang", 0))
@@ -585,6 +638,7 @@ func _apply_skill_levels() -> void:
 	var qin_recipe_level: int = int(skill_levels.get("qin", 0))
 	var yan_level: int = int(skill_levels.get("yan", 0))
 	var ming_word_level: int = int(word_skill_levels.get("ming_guang", 0))
+	var chang_word_recipe_level: int = int(word_skill_levels.get("chang_ming", 0))
 	var xiu_word_level: int = int(word_skill_levels.get("xiu_yang", 0))
 	var forest_word_recipe_level: int = int(word_skill_levels.get("lin_hai", 0))
 	var hai_word_level: int = int(word_skill_levels.get("hai_xiao", 0))
@@ -595,6 +649,7 @@ func _apply_skill_levels() -> void:
 	heal_level = xiu_level + xiu_word_level
 	wave_level = hai_level + hai_word_level * 2
 	chang_level = chang_recipe_level
+	chang_word_level = chang_word_recipe_level
 	qin_level = qin_recipe_level
 	forest_level = forest_recipe_level
 	forest_word_level = forest_word_recipe_level
@@ -644,7 +699,9 @@ func _apply_skill_levels() -> void:
 	if wave_timer <= 0.0:
 		wave_timer = max(6.8 - float(wave_level) * 0.55 - float(hai_word_level) * 0.45, 2.1)
 	if chang_level > 0 and chang_timer <= 0.0:
-		chang_timer = max(2.5, 4.9 - float(chang_level) * 0.34)
+		chang_timer = max(2.35, 4.9 - float(chang_level) * 0.34 - float(chang_word_level) * 0.18)
+	if chang_word_level <= 0:
+		chang_echo_timer = 0.0
 	if qin_level > 0 and qin_timer <= 0.0:
 		qin_timer = max(2.9, 5.3 - float(qin_level) * 0.4)
 	if forest_level > 0 and forest_timer <= 0.0:

@@ -3099,7 +3099,7 @@ func _on_player_fire_projectile(origin: Vector3, direction: Vector3, damage: flo
 		_play_attack_sfx("flame_burst", 1.0 + damage / 28.0)
 	elif glyph == "昌":
 		_play_attack_sfx("prosper_volley", 0.94 + damage / 30.0)
-	elif glyph == "月" or glyph == "日":
+	elif glyph == "明" or glyph == "月" or glyph == "日":
 		_play_attack_sfx("bright_volley", 0.9 + damage / 30.0)
 	elif glyph == "沁" or glyph == "水" or glyph == "心":
 		_play_attack_sfx("sea_wave", 0.92 + damage / 34.0)

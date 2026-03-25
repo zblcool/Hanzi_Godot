@@ -151,6 +151,7 @@ const RECIPE_EN := {
 }
 const WORD_EN := {
 	"ming_guang": {"title": "Moonbright Verse", "description": "Twin wheels add a moon-chasing volley and lift the main weapon with them."},
+	"chang_ming": {"title": "Radiant Prosper Wheel", "description": "Twin-sun volleys add bright follow-ups, and your main attacks periodically kick off a small light echo."},
 	"xiu_yang": {"title": "Restful Phrase", "description": "Turns healing into stable sustain and raises the margin for mistakes."},
 	"lin_hai": {"title": "Forest Sea Scroll", "description": "The grove lane branches sideways as well, writing a wider control corridor through the crowd."},
 	"hai_xiao": {"title": "Sea Howl", "description": "Refines the tide into a fiercer ink wave with shorter cycles and larger reach."},
