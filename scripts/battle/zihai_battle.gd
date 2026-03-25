@@ -17,6 +17,7 @@ const BattleAudio := preload("res://scripts/core/battle_audio.gd")
 const BattleChamberCatalog := preload("res://scripts/battle/battle_chamber_catalog.gd")
 const BattleChamberRules := preload("res://scripts/battle/battle_chamber_rules.gd")
 const BattleEnvironmentSupport := preload("res://scripts/battle/battle_environment_support.gd")
+const BattleRoomObjectiveRules := preload("res://scripts/battle/battle_room_objective_rules.gd")
 const BattleSupplyRules := preload("res://scripts/battle/battle_supply_rules.gd")
 const BattleWaveRules := preload("res://scripts/battle/battle_wave_rules.gd")
 const CJKFont := preload("res://scripts/core/cjk_font.gd")
@@ -738,6 +739,7 @@ var current_soundtrack_cue: String = ""
 var battle_chamber_catalog := BattleChamberCatalog.new()
 var battle_chamber_rules := BattleChamberRules.new()
 var battle_environment := BattleEnvironmentSupport.new()
+var battle_room_objective_rules := BattleRoomObjectiveRules.new()
 var battle_supply_rules := BattleSupplyRules.new()
 var battle_wave_rules := BattleWaveRules.new()
 var health_potion_drop_meter: float = 0.0
@@ -1262,7 +1264,7 @@ func _room_objective_gatekeeper_name(objective: Dictionary) -> String:
 
 
 func _room_objective_active() -> bool:
-	return not room_objective_id.is_empty() and (room_objective_remaining > 0 or room_objective_gatekeeper_active)
+	return battle_room_objective_rules.is_active(_room_objective_state_snapshot())
 
 
 func _room_objective_status_text(objective: Dictionary, remaining: int) -> String:
@@ -1293,12 +1295,7 @@ func _room_objective_status_text(objective: Dictionary, remaining: int) -> Strin
 
 
 func _clear_room_objective_state() -> void:
-	room_objective_id = ""
-	room_objective_data = {}
-	room_objective_total = 0
-	room_objective_remaining = 0
-	room_objective_gatekeeper_active = false
-	room_objective_gatekeeper_id = ""
+	_apply_room_objective_state(battle_room_objective_rules.blank_state())
 
 
 func _clear_chamber_break_beacon_state() -> void:
@@ -1469,33 +1466,24 @@ func _try_start_chamber_exit_objective() -> bool:
 	if room_objective_data.is_empty():
 		room_objective_data = _pick_chamber_exit_objective()
 	var objective := _current_chamber_exit_objective()
-	var objective_id := String(objective.get("id", ""))
-	var pickup_positions: Array = objective.get("pickup_positions", [])
-	if objective_id.is_empty() or pickup_positions.is_empty():
+	var objective_plan: Dictionary = battle_room_objective_rules.begin_objective(objective)
+	if objective_plan.is_empty():
 		return false
-	room_objective_id = objective_id
-	room_objective_total = pickup_positions.size()
-	room_objective_remaining = room_objective_total
+	var initial_state_variant: Variant = objective_plan.get("state", {})
+	if initial_state_variant is Dictionary:
+		_apply_room_objective_state(initial_state_variant as Dictionary)
 	var accent := _current_chamber_accent()
 	var glyph := String(objective.get("glyph", "封"))
-	for position_variant in pickup_positions:
-		if position_variant is Vector3:
-			var pickup_supply_id := "seal"
-			var pickup_meta := {
-				"room_objective_id": objective_id,
-				"room_objective_glyph": glyph
-			}
-			if objective_id == "seal_gatekeeper":
-				pickup_supply_id = "beacon"
-				pickup_meta["pickup_label"] = glyph
-				pickup_meta["pickup_tint"] = objective.get("seal_tint", Color(0.94, 0.44, 0.34, 1.0))
-				pickup_meta["pickup_glow"] = objective.get("seal_glow", Color(1.0, 0.82, 0.66, 1.0))
-			_spawn_world_supply_pickup(
-				position_variant,
-				pickup_supply_id,
-				0.0,
-				pickup_meta
-			)
+	for pickup_definition_variant in objective_plan.get("pickups", []):
+		if not (pickup_definition_variant is Dictionary):
+			continue
+		var pickup_definition := pickup_definition_variant as Dictionary
+		_spawn_world_supply_pickup(
+			pickup_definition.get("world_position", Vector3.ZERO),
+			String(pickup_definition.get("supply_id", "seal")),
+			0.0,
+			pickup_definition.get("meta", {})
+		)
 	if hud != null:
 		hud.show_banner(
 			_battle_guidance_format(
@@ -1532,18 +1520,24 @@ func _advance_room_objective(pickup_ref, tint: Color) -> bool:
 	if pickup_ref == null or not is_instance_valid(pickup_ref):
 		return false
 	var objective_id := String(pickup_ref.get_meta("room_objective_id", ""))
-	if objective_id.is_empty() or objective_id != room_objective_id:
+	var advance_result: Dictionary = battle_room_objective_rules.advance_on_pickup(
+		_room_objective_state_snapshot(),
+		objective_id
+	)
+	if not bool(advance_result.get("handled", false)):
 		return false
 	var objective := _current_chamber_exit_objective()
 	var objective_name := _localized_room_objective_name(objective)
 	var accent := _current_chamber_accent().lerp(tint, 0.4)
-	if objective_id == "seal_gatekeeper":
-		room_objective_remaining = 0
+	var next_state_variant: Variant = advance_result.get("state", {})
+	if next_state_variant is Dictionary:
+		_apply_room_objective_state(next_state_variant as Dictionary)
+	var mode: String = String(advance_result.get("mode", ""))
+	if mode == "gatekeeper":
 		var gatekeeper_name := _spawn_room_objective_gatekeeper(objective, pickup_ref.global_position if pickup_ref != null else Vector3.ZERO)
 		if gatekeeper_name.is_empty():
 			_complete_room_objective(objective, accent)
 			return true
-		room_objective_gatekeeper_active = true
 		if hud != null:
 			hud.show_banner(
 				_battle_guidance_format(
@@ -1573,18 +1567,17 @@ func _advance_room_objective(pickup_ref, tint: Color) -> bool:
 				2.8
 			)
 			hud.set_tip(_room_objective_status_text(objective, room_objective_remaining))
-		_log_battle_event(
-			_battle_guidance_format(
-				"room_objective_gatekeeper_log_format",
-				"%s · %s拦路",
-				"%s · %s emerges",
-				[objective_name, gatekeeper_name]
-			),
-			accent
-		)
-		return true
-	room_objective_remaining = max(room_objective_remaining - 1, 0)
-	if room_objective_remaining > 0:
+			_log_battle_event(
+				_battle_guidance_format(
+					"room_objective_gatekeeper_log_format",
+					"%s · %s拦路",
+					"%s · %s emerges",
+					[objective_name, gatekeeper_name]
+				),
+				accent
+			)
+			return true
+	if mode == "remaining" and room_objective_remaining > 0:
 		if hud != null:
 			hud.show_banner(
 				_battle_guidance_format(
@@ -1597,16 +1590,16 @@ func _advance_room_objective(pickup_ref, tint: Color) -> bool:
 				1.45
 			)
 			hud.set_tip(_room_objective_status_text(objective, room_objective_remaining))
-		_log_battle_event(
-			_battle_guidance_format(
-				"room_objective_seals_remaining_log_format",
-				"%s · 尚余 %d 枚封印",
-				"%s · %d seals remain",
-				[objective_name, room_objective_remaining]
-			),
-			accent
-		)
-		return true
+			_log_battle_event(
+				_battle_guidance_format(
+					"room_objective_seals_remaining_log_format",
+					"%s · 尚余 %d 枚封印",
+					"%s · %d seals remain",
+					[objective_name, room_objective_remaining]
+				),
+				accent
+			)
+			return true
 
 	_complete_room_objective(objective, accent)
 	return true
@@ -1651,7 +1644,12 @@ func _spawn_room_objective_gatekeeper(objective: Dictionary, beacon_position: Ve
 	enemy.request_line_hazard.connect(_on_enemy_request_line_hazard)
 	enemy.request_projectile.connect(_on_enemy_request_projectile)
 	enemies_root.add_child(enemy)
-	room_objective_gatekeeper_id = gatekeeper_id
+	_apply_room_objective_state(
+		battle_room_objective_rules.with_gatekeeper_id(
+			_room_objective_state_snapshot(),
+			gatekeeper_id
+		)
+	)
 	var taunt := _front_end_text(gatekeeper_copy, "taunt", "", "")
 	if not taunt.is_empty():
 		_show_battle_callout(
@@ -1680,7 +1678,7 @@ func _on_room_objective_gatekeeper_defeated(_world_position: Vector3, _enemy_typ
 		return
 	var objective := _current_chamber_exit_objective()
 	var accent := Color(objective.get("seal_tint", _current_chamber_accent()))
-	room_objective_gatekeeper_active = false
+	_apply_room_objective_state(battle_room_objective_rules.clear_gatekeeper(_room_objective_state_snapshot()))
 	_complete_room_objective(objective, accent)
 
 
@@ -1715,6 +1713,27 @@ func _complete_room_objective(objective: Dictionary, accent: Color) -> void:
 		accent
 	)
 	_spawn_chamber_break_beacon()
+
+
+func _room_objective_state_snapshot() -> Dictionary:
+	return {
+		"id": room_objective_id,
+		"data": room_objective_data,
+		"total": room_objective_total,
+		"remaining": room_objective_remaining,
+		"gatekeeper_active": room_objective_gatekeeper_active,
+		"gatekeeper_id": room_objective_gatekeeper_id
+	}
+
+
+func _apply_room_objective_state(state: Dictionary) -> void:
+	room_objective_id = String(state.get("id", ""))
+	var data_variant: Variant = state.get("data", {})
+	room_objective_data = data_variant as Dictionary if data_variant is Dictionary else {}
+	room_objective_total = int(state.get("total", 0))
+	room_objective_remaining = int(state.get("remaining", 0))
+	room_objective_gatekeeper_active = bool(state.get("gatekeeper_active", false))
+	room_objective_gatekeeper_id = String(state.get("gatekeeper_id", ""))
 
 
 func _setup_phrase_events() -> void:
