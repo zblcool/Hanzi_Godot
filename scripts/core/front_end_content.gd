@@ -1335,6 +1335,29 @@ const CANGJIE_PORTAL_SECTIONS := [
 							}
 						]
 					},
+					"valuation_group": {
+						"title": {"zh": "样张估值 · 战斗", "en": "Valuation Lens · Battle"},
+						"summary": {
+							"zh": "source 不会把战斗节点当成孤立奖励点，而会先看当前这副牌有多厚、已持 relic 正在放大什么，再决定这格值不值得继续拿牌。",
+							"en": "The source does not treat battle nodes as isolated reward dots. It first asks how thick the current deck is and which relics are already amplifying it before deciding whether the room is worth another card."
+						},
+						"cards": [
+							{
+								"glyph": "衡",
+								"title": {"zh": "Deck 10 / Relics 2 / Gold 40", "en": "Deck 10 / Relics 2 / Gold 40"},
+								"subtitle": {"zh": "继续拿牌还是保薄", "en": "Draft deeper or stay lean"},
+								"body": {
+									"zh": "这份样张里的 `明 / 学` 线还有继续压深的空间，但 `砚 / 镜` 已经在放大起手抽牌与重复偏旁，所以只有真的更贴线的奖励才值得把牌组继续加厚。",
+									"en": "The sample `明 / 学` line can still deepen, but `Inkstone / Mirror Slip` already amplify opening draw and repeated radicals, so only rewards that fit that line cleanly deserve to thicken the deck further."
+								},
+								"tags": [
+									{"zh": "Deck 10", "en": "Deck 10"},
+									{"zh": "砚 / 镜", "en": "Inkstone / Mirror Slip"},
+									{"zh": "保薄仍成立", "en": "Lean skip still live"}
+								]
+							}
+						]
+					},
 					"group": {
 						"title": {"zh": "节点聚焦 · 战斗", "en": "Node Focus · Battle"},
 						"summary": {
@@ -1400,6 +1423,29 @@ const CANGJIE_PORTAL_SECTIONS := [
 								"glyph": "势",
 								"title": {"zh": "回应三选一", "en": "Choose A Response"},
 								"subtitle": {"zh": "压深 / 补短 / 存势", "en": "Deepen / patch / tempo"}
+							}
+						]
+					},
+					"valuation_group": {
+						"title": {"zh": "样张估值 · 事件", "en": "Valuation Lens · Event"},
+						"summary": {
+							"zh": "source 事件先读这一副牌已经往哪边倾，再决定要不要继续压深、补齐短板，还是直接把节奏存给下一场。",
+							"en": "Source events first read where this exact deck is already leaning, then decide whether to deepen it, patch the weak point, or bank tempo for the next fight."
+						},
+						"cards": [
+							{
+								"glyph": "路",
+								"title": {"zh": "明 / 学 倾向 · Deck 10", "en": "明 / 学 Lean · Deck 10"},
+								"subtitle": {"zh": "先读现在这副牌", "en": "Read the deck before the answer"},
+								"body": {
+									"zh": "对这份样张来说，路书事件值不值，取决于它是继续补 `明 / 学` 的节奏抽墨线、补上一张稳线牌，还是干脆不增牌只把下场起手往前推。",
+									"en": "For this sample, a ledger event is valuable only if it either deepens the `明 / 学` tempo-and-Ink line, patches it with a steadier page, or skips extra cards and pushes the next opener forward."
+								},
+								"tags": [
+									{"zh": "Deck read", "en": "Deck read"},
+									{"zh": "压深 / 补短 / 存势", "en": "Deepen / patch / tempo"},
+									{"zh": "明 / 学", "en": "明 / 学"}
+								]
 							}
 						]
 					},
@@ -1471,6 +1517,29 @@ const CANGJIE_PORTAL_SECTIONS := [
 							}
 						]
 					},
+					"valuation_group": {
+						"title": {"zh": "样张估值 · 歇息", "en": "Valuation Lens · Rest"},
+						"summary": {
+							"zh": "歇息点的价值不只看房型本身，还要看当前血线、格挡底板以及起手 relic 会不会把 `备战` 选项放大。",
+							"en": "The value of a rest stop is not about the icon alone. It depends on current HP, the build's defensive floor, and whether opener relics will amplify the `prepare` branch."
+						},
+						"cards": [
+							{
+								"glyph": "气",
+								"title": {"zh": "72 / 72 时更像备战", "en": "At 72 / 72 this leans toward prepare"},
+								"subtitle": {"zh": "满血不等于浪费歇息", "en": "Full HP does not waste the room"},
+								"body": {
+									"zh": "这份样张如果还维持 `72 / 72`，歇息的估值就会从单纯回血转向下场起手准备；`砚` 这类起手 relic 也会让 `+1 Energy / +1 Ink` 的分支更值得拿。",
+									"en": "If this sample still sits at `72 / 72`, the room's value shifts away from raw healing and toward next-battle setup, and opener relics like `Inkstone` make the `+1 Energy / +1 Ink` branch even more valuable."
+								},
+								"tags": [
+									{"zh": "72 / 72", "en": "72 / 72"},
+									{"zh": "下场起手", "en": "Next opener"},
+									{"zh": "砚", "en": "Inkstone"}
+								]
+							}
+						]
+					},
 					"group": {
 						"title": {"zh": "节点聚焦 · 歇息", "en": "Node Focus · Rest"},
 						"summary": {
@@ -1536,6 +1605,29 @@ const CANGJIE_PORTAL_SECTIONS := [
 								"glyph": "刷",
 								"title": {"zh": "补货 / 删牌", "en": "Restock / Purge"},
 								"subtitle": {"zh": "重洗或修薄", "en": "Reroll or thin the deck"}
+							}
+						]
+					},
+					"valuation_group": {
+						"title": {"zh": "样张估值 · 商店", "en": "Valuation Lens · Shop"},
+						"summary": {
+							"zh": "商店节点真正问的是当前这笔 Gold 该买对路的牌、刷货架、还是干脆先把牌组修薄，而不是默认把预算一次花光。",
+							"en": "A shop node really asks whether the current Gold should buy an aligned card, reroll the shelf, or simply thin the deck first instead of being spent automatically."
+						},
+						"cards": [
+							{
+								"glyph": "金",
+								"title": {"zh": "Gold 40 先决定删还是买", "en": "Gold 40 decides purge versus shelf first"},
+								"subtitle": {"zh": "预算本身就是路线问题", "en": "Budget is already a route question"},
+								"body": {
+									"zh": "样张 run shell 里的 `Gold 40` 还不够把所有东西一起拿走，所以这格的估值会先落在 `删牌 / restock / 等下一件贴线 relic` 之间，而不是无脑买最大数字。",
+									"en": "The sample run shell's `Gold 40` is not enough to take everything at once, so this room is valued first through `purge / restock / wait for the next aligned relic` rather than blindly buying the biggest number."
+								},
+								"tags": [
+									{"zh": "Gold 40", "en": "Gold 40"},
+									{"zh": "restock", "en": "Restock"},
+									{"zh": "删牌", "en": "Purge"}
+								]
 							}
 						]
 					},
@@ -1607,6 +1699,29 @@ const CANGJIE_PORTAL_SECTIONS := [
 							}
 						]
 					},
+					"valuation_group": {
+						"title": {"zh": "样张估值 · 精英", "en": "Valuation Lens · Elite"},
+						"summary": {
+							"zh": "精英的价值只有在当前 build 先扛得住压力时才成立，因为真正的回报不是本场数字，而是战后遗物会把后面整段 climb 一起扭向新方向。",
+							"en": "An elite is only valuable if the current build can survive the pressure first, because the real reward is not this fight's number but the post-battle relic bending the whole later climb."
+						},
+						"cards": [
+							{
+								"glyph": "魁",
+								"title": {"zh": "先过压力，再谈遗物", "en": "Survive first, then talk relics"},
+								"subtitle": {"zh": "高压只为更重的后手", "en": "The pressure pays only for a heavier follow-through"},
+								"body": {
+									"zh": "这份样张只有在当前牌组已经能回答 charge / 多段 / 护盾压力时，精英节点才值得走；一旦过关，遗物后续会一次性重估后面的拿牌、商店和路线偏转。",
+									"en": "This sample only wants an elite once the deck can already answer charge, multi-hit, and block pressure; once it passes, the relic follow-through revalues later drafts, shops, and route bends in one shot."
+								},
+								"tags": [
+									{"zh": "压力检定", "en": "Pressure check"},
+									{"zh": "战后遗物", "en": "Post-battle relic"},
+									{"zh": "大偏转", "en": "Hard bend"}
+								]
+							}
+						]
+					},
 					"group": {
 						"title": {"zh": "节点聚焦 · 精英", "en": "Node Focus · Elite"},
 						"summary": {
@@ -1672,6 +1787,29 @@ const CANGJIE_PORTAL_SECTIONS := [
 								"glyph": "形",
 								"title": {"zh": "牌组形状改写", "en": "Deck Shape Rewrite"},
 								"subtitle": {"zh": "把抽牌质量往回拉", "en": "Pull draw quality back"}
+							}
+						]
+					},
+					"valuation_group": {
+						"title": {"zh": "样张估值 · 删改", "en": "Valuation Lens · Archive"},
+						"summary": {
+							"zh": "archive 房不会默认只做 `删 1 张`，而会先看这副牌是已经过厚，还是关键件还太稀，连重复利用的 relic 也会一起改写这格的价值。",
+							"en": "An archive room does not default to `remove 1 card`. It first checks whether the deck is already bloated or whether key pages are still too rare, and even repeat-leaning relics can rewrite the room's value."
+						},
+						"cards": [
+							{
+								"glyph": "形",
+								"title": {"zh": "删还是抄，先看牌组形状", "en": "Trim or copy starts with deck shape"},
+								"subtitle": {"zh": "保薄与重复件都要估值", "en": "Lean deck and repeat pieces both matter"},
+								"body": {
+									"zh": "如果样张牌组开始发虚，这格就偏向删掉拖节奏的页；若 `明 / 学` 这种关键件还不够常见，`镜` 或更偏重复的 source relic 也会让复制一张真正贴线的牌更值。",
+									"en": "If the sample deck starts to wobble, this room leans toward cutting the page that drags the pace; if key pieces such as `明 / 学` are still too rare, `Mirror Slip` or other repeat-leaning source relics can make copying the aligned card more valuable instead."
+								},
+								"tags": [
+									{"zh": "牌组形状", "en": "Deck shape"},
+									{"zh": "删或抄", "en": "Trim or copy"},
+									{"zh": "镜 / 线", "en": "Mirror / Thread"}
+								]
 							}
 						]
 					},
@@ -1743,6 +1881,29 @@ const CANGJIE_PORTAL_SECTIONS := [
 							}
 						]
 					},
+					"valuation_group": {
+						"title": {"zh": "样张估值 · 遗物", "en": "Valuation Lens · Treasure"},
+						"summary": {
+							"zh": "遗物房最重要的不是多拿一件道具，而是这件 relic 会不会把后面的拿牌、商店消费、奖励跳过和节点优先级一起改写。",
+							"en": "The key question in a treasure room is not simply taking one more item, but whether that relic rewrites later drafts, shop spends, reward skips, and node priorities all at once."
+						},
+						"cards": [
+							{
+								"glyph": "宝",
+								"title": {"zh": "Relics 2 之后仍有一次大偏转", "en": "Relics 2 still leaves room for a hard bend"},
+								"subtitle": {"zh": "可见 relic 要能改写后手", "en": "A visible relic should rewrite the follow-through"},
+								"body": {
+									"zh": "对这份 `Deck 10 / Relics 2` 的样张来说，遗物房值不值，取决于它能否重估后面的保薄、商店预算、偏旁 / 成字 pick 权重，而不是只多一个被动数字。",
+									"en": "For this `Deck 10 / Relics 2` sample, a treasure room is valuable only if it revalues later lean skips, shop budgets, and radical or fusion pick weights instead of adding one more passive number."
+								},
+								"tags": [
+									{"zh": "Relics 2", "en": "Relics 2"},
+									{"zh": "可见三选一", "en": "Visible pick"},
+									{"zh": "后手重估", "en": "Revalue later"}
+								]
+							}
+						]
+					},
 					"group": {
 						"title": {"zh": "节点聚焦 · 遗物", "en": "Node Focus · Treasure"},
 						"summary": {
@@ -1808,6 +1969,29 @@ const CANGJIE_PORTAL_SECTIONS := [
 								"glyph": "定",
 								"title": {"zh": "路线定稿", "en": "Route Verdict"},
 								"subtitle": {"zh": "看这条线是否站稳", "en": "See whether the line truly holds"}
+							}
+						]
+					},
+					"valuation_group": {
+						"title": {"zh": "样张估值 · Boss", "en": "Valuation Lens · Boss"},
+						"summary": {
+							"zh": "塔顶不会只看这一拍能不能过，而会把整副牌的厚度、relic 偏转、Gold 重配和前面每次修补一起算进最终 verdict。",
+							"en": "The summit does not judge only whether this turn survives. It folds deck thickness, relic bends, Gold reallocation, and every earlier patch into the final verdict."
+						},
+						"cards": [
+							{
+								"glyph": "判",
+								"title": {"zh": "终局不会只看这一拍", "en": "The summit does not grade one turn"},
+								"subtitle": {"zh": "路线定稿要经得起全卷复核", "en": "The line verdict has to survive a full reread"},
+								"body": {
+									"zh": "到了 Boss，这份样张的估值已经不再分房间，而是要一起检查之前的拿牌、删改、事件补件和 relic 偏转有没有把这条线真正写稳；就连最后的战后抉择也要看这副牌是否已经定稿。",
+									"en": "By the boss, this sample is no longer valued room by room. It checks whether earlier drafts, archive edits, event patches, and relic bends truly stabilized the line together, and even the final reward choice depends on whether the build already feels finished."
+								},
+								"tags": [
+									{"zh": "总检验", "en": "Final exam"},
+									{"zh": "路线定稿", "en": "Route verdict"},
+									{"zh": "最后抉择", "en": "Final choice"}
+								]
 							}
 						]
 					},

@@ -1476,6 +1476,10 @@ func _make_cangjie_route_preview(preview: Dictionary, accent: Color) -> PanelCon
 			if not detail_summary.is_empty():
 				box.add_child(_make_label(detail_summary, 15, Color(0.94, 0.92, 0.88, 0.94)))
 
+			var valuation_group_variant: Variant = node_detail.get("valuation_group", {})
+			if valuation_group_variant is Dictionary and not (valuation_group_variant as Dictionary).is_empty():
+				box.add_child(_make_cangjie_group_panel(valuation_group_variant as Dictionary, selected_tone))
+
 			var preview_route_ribbon_variant: Variant = preview.get("route_ribbon", {})
 			var preview_route_ribbon: Dictionary = preview_route_ribbon_variant as Dictionary if preview_route_ribbon_variant is Dictionary else {}
 			var node_route_ribbon_variant: Variant = node_detail.get("route_ribbon", {})
