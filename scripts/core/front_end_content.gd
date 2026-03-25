@@ -3757,6 +3757,19 @@ const CANGJIE_PORTAL_SECTIONS := [
 						]
 					},
 					{
+						"glyph": "魁",
+						"title": {"zh": "魁卷卫", "en": "Scroll Elite Guard"},
+						"subtitle": {"zh": "护盾 / 护攻压拍", "en": "Block / guard-attack pressure"},
+						"body": {
+							"zh": "会把立盾和输出绑进同一拍，逼你先回答护攻同回合的资源分配，而不是只盯着下一次大伤害。",
+							"en": "Binds block and damage into the same beat, forcing the deck to answer guard-attack turns instead of reading only the next big hit."
+						},
+						"tags": [
+							{"zh": "精英层", "en": "Elite floor"},
+							{"zh": "护攻同拍", "en": "Guard-attack"}
+						]
+					},
+					{
 						"glyph": "劫",
 						"title": {"zh": "劫文兽", "en": "Calamity Script Beast"},
 						"subtitle": {"zh": "吸血 / 污染 / 爆发", "en": "Drain / smudge / burst"},
@@ -3780,6 +3793,63 @@ const CANGJIE_PORTAL_SECTIONS := [
 						"tags": [
 							{"zh": "Boss", "en": "Boss"},
 							{"zh": "综合检验", "en": "Full build check"}
+						]
+					}
+				]
+			},
+			{
+				"title": {"zh": "敌意读法", "en": "Intent Read"},
+				"cards": [
+					{
+						"glyph": "蓄",
+						"title": {"zh": "channel · 先蓄后打", "en": "channel · bank before striking"},
+						"subtitle": {"zh": "把后手重拍先存起来", "en": "Store the later hit first"},
+						"body": {
+							"zh": "source 的 `channel` 不是立刻出伤，而是先把下一拍会变重的压力存进敌意里，所以它会提前改写你这回合该不该抢节奏。",
+							"en": "In the source run, `channel` does not hit immediately. It banks the next beat's heavier pressure inside the intent, so it changes whether this turn should race or prepare."
+						},
+						"tags": [
+							{"zh": "先蓄势", "en": "Bank first"},
+							{"zh": "后手变重", "en": "Heavier next beat"}
+						]
+					},
+					{
+						"glyph": "连",
+						"title": {"zh": "multi · 连段试压", "en": "multi · repeated pressure"},
+						"subtitle": {"zh": "不是一拳，而是多段问答", "en": "Not one hit, but several checks"},
+						"body": {
+							"zh": "`multi` 会把伤害拆成多段，让格挡、抽牌和续手能力一起上场；它考的是整回合能不能站稳，而不是单次减伤够不够大。",
+							"en": "`multi` splits the pressure into repeated hits, bringing block, draw, and hand continuity into the same exam instead of testing one giant shield alone."
+						},
+						"tags": [
+							{"zh": "多段攻击", "en": "Multi-hit"},
+							{"zh": "整回合检定", "en": "Whole-turn test"}
+						]
+					},
+					{
+						"glyph": "污",
+						"title": {"zh": "hex · 伤害加污页", "en": "hex · damage plus Smudge"},
+						"subtitle": {"zh": "这回合掉血，下回合掉抽牌", "en": "Lose HP now, lose draw later"},
+						"body": {
+							"zh": "`hex` 会把即时伤害和污页一起塞进同一拍，让短期掉血与后续抽牌质量一起结算，是 source 很典型的脏牌压力。",
+							"en": "`hex` bundles immediate damage with Smudge, pricing current HP loss and later draw quality inside the same beat. It is one of the source prototype's clearest dirty-deck pressures."
+						},
+						"tags": [
+							{"zh": "污页压力", "en": "Smudge pressure"},
+							{"zh": "抽牌变脏", "en": "Dirty draws"}
+						]
+					},
+					{
+						"glyph": "护",
+						"title": {"zh": "guardAttack · 先护再压", "en": "guardAttack · brace and strike"},
+						"subtitle": {"zh": "护盾与输出绑进同一拍", "en": "Block and damage in one beat"},
+						"body": {
+							"zh": "`guardAttack` 会先垫一层护盾，再把伤害一起推出去，所以它不只是在考生存，还会考这一回合值不值得把输出硬塞进护盾里。",
+							"en": "`guardAttack` pads in block before pushing the hit through, so it tests more than survival. It asks whether spending damage into fresh block is worth the turn at all."
+						},
+						"tags": [
+							{"zh": "护攻同拍", "en": "Guard-attack"},
+							{"zh": "资源换算", "en": "Resource trade"}
 						]
 					}
 				]
