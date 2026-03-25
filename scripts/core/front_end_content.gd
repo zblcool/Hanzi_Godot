@@ -3905,6 +3905,71 @@ const CANGJIE_PORTAL_SECTIONS := [
 						]
 					}
 				]
+			},
+			{
+				"title": {"zh": "敌意 -> 回应", "en": "Intent -> Answer"},
+				"summary": {
+					"zh": "source《仓颉之路》真正开打时，敌意不是只负责报招，它还会立刻反问这副牌该用什么方式回答。Godot 现在先把这层“读到什么 intent，就该想到哪类 deck answer”样张挂回 `Tower Guide`，让 glossary 不再停在术语本身。",
+					"en": "In the live source climb, intents do more than announce attacks. They immediately ask what kind of deck answer is needed. Godot now stages that `read the intent, imagine the answer` layer back into the Tower Guide so the glossary stops short of jargon alone."
+				},
+				"cards": [
+					{
+						"glyph": "应",
+						"title": {"zh": "channel -> 先稳住后手", "en": "channel -> stabilize the next beat"},
+						"subtitle": {"zh": "蓄势拍要么抢先压，要么先把防线写好", "en": "Either race the charge or set the shield first"},
+						"body": {
+							"zh": "读到 `channel` 时，source 常在问你这回合能不能先把护盾、续航或下一拍的爆发预埋好。像 `人 / Quick Step`、`木 / Rest Root`、`休 / Quiet Breath` 这类偏稳线的答法，会让下一次重击不至于直接把手牌节奏掀翻。",
+							"en": "When the source shows `channel`, it often asks whether this turn can preload block, sustain, or next-beat payoff before the heavier hit lands. Steadier answers such as `人 / Quick Step`, `木 / Rest Root`, or `休 / Quiet Breath` keep the charged follow-up from flipping the whole hand cadence."
+						},
+						"tags": [
+							{"zh": "先备后手", "en": "Preload the follow-up"},
+							{"zh": "休 / 稳线", "en": "Rest / steady line"},
+							{"zh": "别空过这拍", "en": "Do not blank this turn"}
+						]
+					},
+					{
+						"glyph": "续",
+						"title": {"zh": "multi -> 要连续站住", "en": "multi -> survive the whole chain"},
+						"subtitle": {"zh": "格挡、抽牌、续手要一起够", "en": "Block, draw, and hand flow together"},
+						"body": {
+							"zh": "`multi` 在 source 里最常问的不是单次减伤，而是这一整回合能不能持续站稳。所以更像 `人` 的抽牌护盾、`月 / Moon Guard` 的挡伤，或 `林 / Forest Margin` 这类能把盾量和续航缝在一起的路线会更值。",
+							"en": "`multi` usually asks for more than one large shield in the source run. It asks whether the deck can stay upright through the whole turn. That pushes value toward answers like `人` draw-plus-block, `月 / Moon Guard`, or `林 / Forest Margin` lines that stitch shielding and sustain together."
+						},
+						"tags": [
+							{"zh": "整回合站桩", "en": "Stand through the turn"},
+							{"zh": "抽牌 + 格挡", "en": "Draw + block"},
+							{"zh": "林 / 厚守", "en": "Forest / thick guard"}
+						]
+					},
+					{
+						"glyph": "净",
+						"title": {"zh": "hex -> 先管脏牌与底板", "en": "hex -> protect draws and floor"},
+						"subtitle": {"zh": "掉血和污页会一起追债", "en": "HP loss and Smudge debt land together"},
+						"body": {
+							"zh": "`hex` 不是只看眼前掉多少血，它还在追问这副牌能不能承受后续抽牌质量变脏。source 里更好的回应通常是 `学 / Study Thread`、`边 / Margin Read` 这类把抽牌、控场或墨流补回来的牌，或干脆靠 `Route Ledger` / `Archive` 提前修薄一层。",
+							"en": "`hex` does not only price immediate damage. It also asks whether the deck can afford dirtier draws afterward. Better source answers often look like `学 / Study Thread`, `边 / Margin Read`, or other lines that restore draw quality, control, or Ink flow, or even a pre-emptive trim through `Route Ledger` or `Archive`."
+						},
+						"tags": [
+							{"zh": "抽牌修复", "en": "Repair the draw"},
+							{"zh": "学 / 边", "en": "Study / Margin"},
+							{"zh": "别让污页滚大", "en": "Stop the Smudge snowball"}
+						]
+					},
+					{
+						"glyph": "断",
+						"title": {"zh": "guardAttack -> 别把输出硬塞进护盾", "en": "guardAttack -> do not jam damage into fresh block"},
+						"subtitle": {"zh": "先拆拍，再谈兑现", "en": "Crack the beat before cashing in"},
+						"body": {
+							"zh": "看到 `guardAttack` 时，source 常在问这回合值不值得先拆盾、补控或干脆改成保守回合。像 `雨 / Rain Mark`、`心 / Focus Knot`、`令 / Binding Edict` 这类先挂控制、再谈重击的答法，往往比把纯爆发直接撞进护盾里更赚。",
+							"en": "When `guardAttack` shows up, the source usually asks whether this turn should break block first, add control, or even downshift into a steadier beat. Answers like `雨 / Rain Mark`, `心 / Focus Knot`, or `令 / Binding Edict` that set control before cashing in often outperform ramming pure burst straight into fresh block."
+						},
+						"tags": [
+							{"zh": "先拆盾", "en": "Break block first"},
+							{"zh": "控制接兑现", "en": "Control into payoff"},
+							{"zh": "别硬撞护盾", "en": "Do not slam into block"}
+						]
+					}
+				]
 			}
 		]
 	}
