@@ -15,6 +15,7 @@ const BATTLE_HUD_SCENE := preload("res://scenes/ui/battle_hud.tscn")
 const TOUCH_CONTROLS_OVERLAY := preload("res://scripts/ui/touch_controls_overlay.gd")
 const BattleAudio := preload("res://scripts/core/battle_audio.gd")
 const BattleEnvironmentSupport := preload("res://scripts/battle/battle_environment_support.gd")
+const BattleSupplyRules := preload("res://scripts/battle/battle_supply_rules.gd")
 const CJKFont := preload("res://scripts/core/cjk_font.gd")
 const FrontEndContent := preload("res://scripts/core/front_end_content.gd")
 const HanziLocalization := preload("res://scripts/core/hanzi_localization.gd")
@@ -732,6 +733,7 @@ var field_phase_stamp_entries: Array[Dictionary] = []
 var current_soundtrack_id: String = ""
 var current_soundtrack_cue: String = ""
 var battle_environment := BattleEnvironmentSupport.new()
+var battle_supply_rules := BattleSupplyRules.new()
 var health_potion_drop_meter: float = 0.0
 var enemy_detail_refresh_timer: float = 0.0
 var callout_history: Dictionary = {}
@@ -2188,7 +2190,7 @@ func _consume_pending_chamber_transition() -> bool:
 	return true
 
 
-func _chamber_interlude_body(next_wave: int) -> String:
+func _chamber_interlude_body(_next_wave: int) -> String:
 	var reward_radical := String(chamber_interlude_offer.get("reward_radical", "日"))
 	var reserve_radical := String(chamber_interlude_offer.get("reserve_radical", reward_radical))
 	var next_chamber_id := _chamber_interlude_next_chamber_id()
@@ -3299,130 +3301,31 @@ func _spawn_supply_bundle(world_position: Vector3, drops: Dictionary) -> void:
 
 
 func _build_supply_drops(enemy_type: String) -> Dictionary:
-	var drops := {
-		"paper": 0.0,
-		"ink": 0.0,
-		"seal": 0.0,
-		"magnet": 0.0,
-		"fury": 0.0,
-		"potion": 0.0
-	}
-
-	match enemy_type:
-		"swift":
-			if rng.randf() < 0.12:
-				_add_supply_drop(drops, "paper", 2.0)
-		"tank":
-			if rng.randf() < 0.28:
-				_add_supply_drop(drops, "ink", 15.0)
-		"archer":
-			if rng.randf() < 0.24:
-				_add_supply_drop(drops, "paper", 3.0)
-		"assassin":
-			if rng.randf() < 0.18:
-				_add_supply_drop(drops, "paper", 3.0)
-			if rng.randf() < 0.12:
-				_add_supply_drop(drops, "seal", 1.0)
-		"cavalry":
-			if rng.randf() < 0.26:
-				_add_supply_drop(drops, "paper", 4.0)
-			if rng.randf() < 0.2:
-				_add_supply_drop(drops, "seal", 1.0)
-		"ritualist":
-			if rng.randf() < 0.24:
-				_add_supply_drop(drops, "paper", 3.0)
-			if rng.randf() < 0.16:
-				_add_supply_drop(drops, "ink", 14.0)
-		"elite":
-			_add_supply_drop(drops, "paper", 6.0)
-			_add_supply_drop(drops, "seal", 1.0)
-			_add_supply_drop(drops, "ink", 22.0)
-		"boss":
-			_add_supply_drop(drops, "paper", 10.0)
-			_add_supply_drop(drops, "seal", 2.0)
-			_add_supply_drop(drops, "ink", 34.0)
-		_:
-			if rng.randf() < 0.1:
-				_add_supply_drop(drops, "paper", 2.0)
-
-	if kills > 0 and kills % 12 == 0:
-		_add_supply_drop(drops, "paper", 3.0)
-	if kills > 0 and kills % 21 == 0:
-		_add_supply_drop(drops, "ink", 16.0)
-
-	_apply_chamber_modifier_supply_drops(enemy_type, drops)
-	_add_enemy_utility_drop(drops, enemy_type)
-	_add_health_potion_drop(drops)
-	return drops
+	var drop_result := battle_supply_rules.build_supply_drops(
+		enemy_type,
+		kills,
+		rng,
+		health_potion_drop_meter,
+		_count_pickups_with_supply_ids(["magnet", "fury"]),
+		_count_pickups_with_supply_ids(["fury"]),
+		_count_pickups_with_supply_ids(["potion"]),
+		_reward_supply_modifier_active(),
+		_scroll_echo_modifier_active(),
+		{
+			"enemy_utility_active_limit": ENEMY_UTILITY_ACTIVE_LIMIT,
+			"enemy_potion_active_limit": ENEMY_POTION_ACTIVE_LIMIT,
+			"health_potion_drop_meter_step": HEALTH_POTION_DROP_METER_STEP,
+			"health_potion_heal_ratio": HEALTH_POTION_HEAL_RATIO,
+			"scroll_echo_fury_drop_duration": CHAMBER_SCROLL_ECHO_FURY_DROP_DURATION,
+			"scroll_echo_pressure_paper_chance": CHAMBER_SCROLL_ECHO_PRESSURE_PAPER_CHANCE,
+			"scroll_echo_basic_paper_chance": CHAMBER_SCROLL_ECHO_BASIC_PAPER_CHANCE
+		}
+	)
+	health_potion_drop_meter = float(drop_result.get("health_potion_drop_meter", health_potion_drop_meter))
+	return drop_result.get("drops", {})
 
 
-func _apply_chamber_modifier_supply_drops(enemy_type: String, drops: Dictionary) -> void:
-	if _reward_supply_modifier_active():
-		match enemy_type:
-			"elite":
-				_add_supply_drop(drops, "paper", 2.0)
-				_add_supply_drop(drops, "seal", 1.0)
-			"boss":
-				_add_supply_drop(drops, "paper", 4.0)
-				_add_supply_drop(drops, "seal", 1.0)
-			_:
-				if rng.randf() < 0.16:
-					_add_supply_drop(drops, "paper", 1.0)
-
-	if not _scroll_echo_modifier_active() or enemy_type == "boss":
-		return
-
-	var pressure_enemy: bool = enemy_type in ["archer", "assassin", "cavalry", "ritualist"]
-	if enemy_type == "elite":
-		_add_supply_drop(drops, "paper", 2.0)
-		if _count_active_supply_pickups(["fury"]) < ENEMY_UTILITY_ACTIVE_LIMIT and float(drops.get("fury", 0.0)) <= 0.0:
-			_add_supply_drop(drops, "fury", CHAMBER_SCROLL_ECHO_FURY_DROP_DURATION)
-		return
-
-	if pressure_enemy:
-		if rng.randf() < CHAMBER_SCROLL_ECHO_PRESSURE_PAPER_CHANCE:
-			_add_supply_drop(drops, "paper", 2.0)
-	elif rng.randf() < CHAMBER_SCROLL_ECHO_BASIC_PAPER_CHANCE:
-		_add_supply_drop(drops, "paper", 1.0)
-
-
-func _add_supply_drop(drops: Dictionary, supply_id: String, amount: float) -> void:
-	drops[supply_id] = float(drops.get(supply_id, 0.0)) + amount
-
-
-func _add_enemy_utility_drop(drops: Dictionary, enemy_type: String) -> void:
-	if enemy_type == "boss":
-		_add_supply_drop(drops, "magnet", 1.0)
-		_add_supply_drop(drops, "fury", 10.0)
-		return
-
-	if _count_active_supply_pickups(["magnet", "fury"]) >= ENEMY_UTILITY_ACTIVE_LIMIT:
-		return
-
-	var pickup_id := "magnet" if rng.randf() < 0.5 else "fury"
-	var pickup_amount := 1.0 if pickup_id == "magnet" else 10.0
-	if enemy_type == "elite":
-		if rng.randf() < 0.7:
-			_add_supply_drop(drops, pickup_id, pickup_amount)
-		return
-
-	if rng.randf() < 0.035:
-		_add_supply_drop(drops, pickup_id, pickup_amount)
-
-
-func _add_health_potion_drop(drops: Dictionary) -> void:
-	if _count_active_supply_pickups(["potion"]) >= ENEMY_POTION_ACTIVE_LIMIT:
-		return
-
-	health_potion_drop_meter = min(1.0, health_potion_drop_meter + HEALTH_POTION_DROP_METER_STEP)
-	if rng.randf() >= health_potion_drop_meter:
-		return
-
-	_add_supply_drop(drops, "potion", HEALTH_POTION_HEAL_RATIO)
-	health_potion_drop_meter = max(0.0, health_potion_drop_meter - 1.0)
-
-
-func _count_active_supply_pickups(supply_ids: Array[String]) -> int:
+func _count_pickups_with_supply_ids(supply_ids: Array[String]) -> int:
 	var total := 0
 	for pickup in pickups_root.get_children():
 		if not is_instance_valid(pickup) or pickup.is_queued_for_deletion():
@@ -4786,11 +4689,11 @@ func _field_phase_stamp_position() -> Vector3:
 		forward = Vector3(0.0, 0.0, -1.0)
 	forward = forward.normalized()
 	var side := Vector3.UP.cross(forward).normalized()
-	var position: Vector3 = player.global_position + forward * 2.4 + side * 0.42
-	position.x = clamp(position.x, -MAP_WORLD_RADIUS + 3.2, MAP_WORLD_RADIUS - 3.2)
-	position.z = clamp(position.z, -MAP_WORLD_RADIUS + 3.2, MAP_WORLD_RADIUS - 3.2)
-	position.y = 0.05
-	return position
+	var stamp_position: Vector3 = player.global_position + forward * 2.4 + side * 0.42
+	stamp_position.x = clamp(stamp_position.x, -MAP_WORLD_RADIUS + 3.2, MAP_WORLD_RADIUS - 3.2)
+	stamp_position.z = clamp(stamp_position.z, -MAP_WORLD_RADIUS + 3.2, MAP_WORLD_RADIUS - 3.2)
+	stamp_position.y = 0.05
+	return stamp_position
 
 
 func _spawn_field_phase_stamp(world_position: Vector3, glyph_text: String, theme: Dictionary) -> void:
@@ -5693,10 +5596,10 @@ func _build_ground() -> void:
 	backdrop_material_entries.clear()
 	field_phase_stamp_entries.clear()
 	ground_ripple_focus = Vector3.ZERO
-	var floor := MeshInstance3D.new()
+	var floor_mesh_instance := MeshInstance3D.new()
 	var plane := PlaneMesh.new()
 	plane.size = Vector2(180.0, 180.0)
-	floor.mesh = plane
+	floor_mesh_instance.mesh = plane
 	var floor_material := _make_ground_material(
 		Color(0.28, 0.25, 0.2, 1.0),
 		Color(0.42, 0.5, 0.43, 1.0),
@@ -5706,8 +5609,8 @@ func _build_ground() -> void:
 		0.16,
 		0.0
 	)
-	floor.material_override = floor_material
-	ground_root.add_child(floor)
+	floor_mesh_instance.material_override = floor_material
+	ground_root.add_child(floor_mesh_instance)
 
 	for index in range(18):
 		var mound := MeshInstance3D.new()
@@ -5882,9 +5785,9 @@ func _build_shanshui_backdrop() -> void:
 	backdrop_root.add_child(mist_disc)
 
 
-func _create_tree(position: Vector3) -> void:
+func _create_tree(world_position: Vector3) -> void:
 	var tree_root := Node3D.new()
-	tree_root.position = position
+	tree_root.position = world_position
 	tree_root.add_to_group("map_tree")
 	props_root.add_child(tree_root)
 
@@ -6034,9 +5937,9 @@ func _create_phrase_stela(phrase_event: Dictionary) -> void:
 	stela_root.add_child(badge_label)
 
 
-func _create_stela(position: Vector3, glyph: String, tint: Color) -> Node3D:
+func _create_stela(world_position: Vector3, glyph: String, tint: Color) -> Node3D:
 	var stela_root := Node3D.new()
-	stela_root.position = position
+	stela_root.position = world_position
 	stela_root.add_to_group("map_stela")
 	props_root.add_child(stela_root)
 
@@ -6136,9 +6039,9 @@ func _create_stela(position: Vector3, glyph: String, tint: Color) -> Node3D:
 	return stela_root
 
 
-func _create_scroll_rack(position: Vector3, yaw: float) -> void:
+func _create_scroll_rack(world_position: Vector3, yaw: float) -> void:
 	var rack_root := Node3D.new()
-	rack_root.position = position
+	rack_root.position = world_position
 	rack_root.rotation_degrees.y = yaw
 	rack_root.add_to_group("map_scroll_rack")
 	props_root.add_child(rack_root)
@@ -6204,9 +6107,9 @@ func _create_scroll_rack(position: Vector3, yaw: float) -> void:
 	sway_tween.tween_property(tag_root, "rotation_degrees:z", -8.0, 1.4)
 
 
-func _create_ink_pool(position: Vector3, radius: float, tint: Color) -> void:
+func _create_ink_pool(world_position: Vector3, radius: float, tint: Color) -> void:
 	var pool_root := Node3D.new()
-	pool_root.position = position
+	pool_root.position = world_position
 	pool_root.add_to_group("map_ink_pool")
 	props_root.add_child(pool_root)
 
@@ -6289,5 +6192,5 @@ func _ensure_action(action_name: StringName, keycodes: Array[int]) -> void:
 	if InputMap.action_get_events(action_name).is_empty():
 		for keycode in keycodes:
 			var event := InputEventKey.new()
-			event.physical_keycode = keycode
+			event.physical_keycode = keycode as Key
 			InputMap.action_add_event(action_name, event)
