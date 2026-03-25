@@ -316,6 +316,11 @@ func play_attack(kind: String, intensity: float = 1.0) -> void:
 				return
 			_push_voice({"waveform": "triangle", "start_freq": 620.0, "end_freq": 760.0, "amplitude": 0.12 * power, "duration": 0.11, "release": 0.15, "pan": _small_pan()})
 			_push_voice({"waveform": "sine", "start_freq": 920.0, "end_freq": 1100.0, "amplitude": 0.055 * power, "duration": 0.08, "release": 0.11, "delay": 0.014, "pan": _small_pan()})
+		"prosper_volley":
+			if not _can_play(kind, 0.08):
+				return
+			_push_voice({"waveform": "triangle", "start_freq": 540.0, "end_freq": 700.0, "amplitude": 0.115 * power, "duration": 0.12, "release": 0.16, "pan": _small_pan()})
+			_push_voice({"waveform": "sine", "start_freq": 820.0, "end_freq": 960.0, "amplitude": 0.052 * power, "duration": 0.09, "release": 0.11, "delay": 0.016, "pan": _small_pan()})
 		"rest_wave":
 			if not _can_play(kind, 0.14):
 				return
