@@ -1185,8 +1185,8 @@ const CANGJIE_PORTAL_SECTIONS := [
 			"next_row_handoff": {
 				"title": {"zh": "下一排接续", "en": "Next-Row Handoff"},
 				"summary": {
-					"zh": "source 真正点下一个节点后，亮起的下一排不会只剩状态颜色，而会立刻变成新的路线问题。Godot 这里先把当前聚焦节点真正会点亮的房间抽成一组接续卡，并补上它们更像接战后拿牌、路书事件、稳线修整还是遗物偏转的提示；现在每张卡还会直接带出一小条节点节拍，先读这一格最常见的 `节点 -> 关键决策 -> 跟进`。",
-					"en": "After the live source map locks a room in, the newly lit row is not just a state color. It immediately becomes the next route question. Godot now pulls the rooms the current focus would actually unlock into a handoff strip, spells out whether they lean toward post-battle drafting, route-ledger pressure, stabilizing resets, or relic bends, and now also exposes a compact `node -> decision -> follow-through` beat strip on each unlocked card."
+					"zh": "source 真正点下一个节点后，亮起的下一排不会只剩状态颜色，而会立刻变成新的路线问题。Godot 这里先把当前聚焦节点真正会点亮的房间抽成一组接续卡，并补上它们更像接战后拿牌、路书事件、稳线修整还是遗物偏转的提示；现在每张卡还会直接带出一小条节点节拍与一枚 `路线读法 / Route Read` cue，先读这一格最常见的 `节点 -> 关键决策 -> 跟进`，以及它更像压深、补短、存势还是保薄兑现。",
+					"en": "After the live source map locks a room in, the newly lit row is not just a state color. It immediately becomes the next route question. Godot now pulls the rooms the current focus would actually unlock into a handoff strip, spells out whether they lean toward post-battle drafting, route-ledger pressure, stabilizing resets, or relic bends, and now also exposes both a compact `node -> decision -> follow-through` beat strip and a `Route Read` cue so each unlocked card says whether it behaves more like deepen, patch, tempo bank, or lean-deck cash-in."
 				},
 				"open_count_format": {
 					"zh": "%s · 已开 %d 个节点",
@@ -1265,6 +1265,14 @@ const CANGJIE_PORTAL_SECTIONS := [
 			},
 			"node_details": {
 				"battle": {
+					"route_read": {
+						"title": {"zh": "主线加深", "en": "Main-Line Deepen"},
+						"summary": {
+							"zh": "Gold 加上三选一奖励，让这类房间最适合继续把当前主线写厚；若牌组已经够稳，也会顺手提醒你保薄仍是选项。",
+							"en": "Gold plus the three-card reward makes this the cleanest room for thickening the current spine, while still reminding you that staying lean remains an option once the deck already runs well."
+						},
+						"tone": Color(0.94, 0.74, 0.42, 1.0)
+					},
 					"follow_through": {
 						"label": {"zh": "联动预览 · 战后抉择", "en": "Linked Preview · Post-Battle Flow"},
 						"tags": [
@@ -1325,6 +1333,14 @@ const CANGJIE_PORTAL_SECTIONS := [
 					}
 				},
 				"event": {
+					"route_read": {
+						"title": {"zh": "顺势压深", "en": "Press The Current Lean"},
+						"summary": {
+							"zh": "事件房会先读当前牌组倾向，所以它最像顺着已经冒头的那条线再压一拍，而不是给一份不看上下文的平面奖励。",
+							"en": "Event rooms read the current deck lean first, so they behave most like pressing the line that is already surfacing instead of handing out a flat reward with no context."
+						},
+						"tone": Color(0.94, 0.74, 0.42, 1.0)
+					},
 					"follow_through": {
 						"label": {"zh": "联动预览 · 路书对照", "en": "Linked Preview · Route Ledger"},
 						"tags": [
@@ -1385,6 +1401,14 @@ const CANGJIE_PORTAL_SECTIONS := [
 					}
 				},
 				"rest": {
+					"route_read": {
+						"title": {"zh": "补齐短板", "en": "Patch The Weak Point"},
+						"summary": {
+							"zh": "这类节点先把血线、格挡或起手容错拉回来，所以更像给当前 deck 补底板，而不是继续贪主线厚度。",
+							"en": "This node restores HP, defense, or opening margin first, so it reads more like raising the deck's floor than greedily thickening the main line again."
+						},
+						"tone": Color(0.56, 0.84, 0.8, 1.0)
+					},
 					"follow_through": {
 						"label": {"zh": "联动预览 · 稳线节拍", "en": "Linked Preview · Stabilize Beat"},
 						"tags": [
@@ -1445,6 +1469,14 @@ const CANGJIE_PORTAL_SECTIONS := [
 					}
 				},
 				"shop": {
+					"route_read": {
+						"title": {"zh": "先存节奏", "en": "Bank Tempo First"},
+						"summary": {
+							"zh": "商店会把 Gold 变成补货、删牌和货架取舍，所以它更像先把下一段预算与起手势能握稳，而不一定立刻再拿一张牌。",
+							"en": "Shops turn Gold into restocks, purges, and shelf tradeoffs, so they read more like banking the next stretch's budget and opener tempo than immediately taking another card."
+						},
+						"tone": Color(0.72, 0.62, 0.94, 1.0)
+					},
 					"follow_through": {
 						"label": {"zh": "联动预览 · Gold 重配", "en": "Linked Preview · Gold Reallocation"},
 						"tags": [
@@ -1505,6 +1537,14 @@ const CANGJIE_PORTAL_SECTIONS := [
 					}
 				},
 				"elite": {
+					"route_read": {
+						"title": {"zh": "高压换方向", "en": "Risk For Direction"},
+						"summary": {
+							"zh": "精英的压力更高，但战后还会继续接遗物偏转，所以它最像用一拍高风险换一次更重的路线改写。",
+							"en": "Elites bring more pressure, but the post-fight relic bend keeps going afterward, so they read most like trading one high-risk beat for a heavier route rewrite."
+						},
+						"tone": Color(0.72, 0.62, 0.94, 1.0)
+					},
 					"follow_through": {
 						"label": {"zh": "联动预览 · 战后遗物", "en": "Linked Preview · Post-Elite Relic"},
 						"tags": [
@@ -1565,6 +1605,14 @@ const CANGJIE_PORTAL_SECTIONS := [
 					}
 				},
 				"archive": {
+					"route_read": {
+						"title": {"zh": "保薄兑现", "en": "Cash In Lean Deck"},
+						"summary": {
+							"zh": "删改房会把前面保薄或修线的判断真正兑现成更干净的抽牌质量，所以它更像把已有克制换成稳定收益。",
+							"en": "Archive rooms cash earlier lean-deck or route-tuning choices into cleaner draws, so they behave like turning existing discipline into steadier value."
+						},
+						"tone": Color(0.58, 0.82, 0.78, 1.0)
+					},
 					"follow_through": {
 						"label": {"zh": "联动预览 · 修薄 / 复制", "en": "Linked Preview · Trim / Duplicate"},
 						"tags": [
@@ -1625,6 +1673,14 @@ const CANGJIE_PORTAL_SECTIONS := [
 					}
 				},
 				"treasure": {
+					"route_read": {
+						"title": {"zh": "遗物偏转", "en": "Relic Bend"},
+						"summary": {
+							"zh": "可见遗物会直接改写你对后续牌、商店和节点的估值，所以这类分支最像把整条 climb 的判断口径一起扭向新方向。",
+							"en": "Visible relics directly rewrite how later cards, shops, and nodes are valued, so this branch behaves like twisting the climb's judgment scale toward a new direction at once."
+						},
+						"tone": Color(0.72, 0.62, 0.94, 1.0)
+					},
 					"follow_through": {
 						"label": {"zh": "联动预览 · 可见遗物", "en": "Linked Preview · Visible Relic"},
 						"tags": [
@@ -1685,6 +1741,14 @@ const CANGJIE_PORTAL_SECTIONS := [
 					}
 				},
 				"boss": {
+					"route_read": {
+						"title": {"zh": "终局定稿", "en": "Final Verdict"},
+						"summary": {
+							"zh": "塔顶会把前面所有压深、补漏、存势和遗物偏转一起检验完，所以这一步更像整副牌的最终定稿，而不是单个节点奖励。",
+							"en": "The summit tests every earlier deepen, patch, tempo-bank, and relic bend together, so this step reads more like the build's final verdict than a single-node reward."
+						},
+						"tone": Color(0.86, 0.68, 0.96, 1.0)
+					},
 					"follow_through": {
 						"label": {"zh": "联动预览 · 塔顶定稿", "en": "Linked Preview · Summit Verdict"},
 						"tags": [
