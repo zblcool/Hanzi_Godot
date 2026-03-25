@@ -18,6 +18,7 @@ const BattleChamberCatalog := preload("res://scripts/battle/battle_chamber_catal
 const BattleChamberRules := preload("res://scripts/battle/battle_chamber_rules.gd")
 const BattleEnvironmentSupport := preload("res://scripts/battle/battle_environment_support.gd")
 const BattleGuidanceSupport := preload("res://scripts/battle/battle_guidance_support.gd")
+const BattlePhraseEventSupport := preload("res://scripts/battle/battle_phrase_event_support.gd")
 const BattleRoomObjectiveRules := preload("res://scripts/battle/battle_room_objective_rules.gd")
 const BattleSupplyRules := preload("res://scripts/battle/battle_supply_rules.gd")
 const BattleWaveRules := preload("res://scripts/battle/battle_wave_rules.gd")
@@ -741,6 +742,7 @@ var battle_chamber_catalog := BattleChamberCatalog.new()
 var battle_chamber_rules := BattleChamberRules.new()
 var battle_environment := BattleEnvironmentSupport.new()
 var battle_guidance_support := BattleGuidanceSupport.new()
+var battle_phrase_event_support := BattlePhraseEventSupport.new()
 var battle_room_objective_rules := BattleRoomObjectiveRules.new()
 var battle_supply_rules := BattleSupplyRules.new()
 var battle_wave_rules := BattleWaveRules.new()
@@ -1707,84 +1709,27 @@ func _apply_room_objective_state(state: Dictionary) -> void:
 
 
 func _setup_phrase_events() -> void:
-	phrase_events.clear()
-	for chamber_id_variant in CHAMBER_ORDER:
-		var chamber_id := String(chamber_id_variant)
-		var chamber_variant: Variant = CHAMBER_LAYOUTS.get(chamber_id, {})
-		if not (chamber_variant is Dictionary):
-			continue
-		var chamber_data := chamber_variant as Dictionary
-		var chamber_phrase_events: Array = chamber_data.get("phrase_events", [])
-		for event_variant in chamber_phrase_events:
-			if not (event_variant is Dictionary):
-				continue
-			var phrase_event := (event_variant as Dictionary).duplicate(true)
-			phrase_event["chamber_id"] = chamber_id
-			phrase_event["discovered"] = false
-			phrase_event["guardian_spawned"] = false
-			phrase_event["guardian_defeated"] = false
-			phrase_event["reward_granted"] = false
-			phrase_events.append(phrase_event)
+	phrase_events = battle_phrase_event_support.build_phrase_events(CHAMBER_ORDER, CHAMBER_LAYOUTS)
 
 
 func _phrase_events_for_chamber(chamber_id: String = "") -> Array[Dictionary]:
-	var chamber_events: Array[Dictionary] = []
-	var target_chamber := current_chamber_id if chamber_id.is_empty() else chamber_id
-	for phrase_event in phrase_events:
-		if String(phrase_event.get("chamber_id", "")) == target_chamber:
-			chamber_events.append(phrase_event)
-	return chamber_events
+	return battle_phrase_event_support.events_for_chamber(phrase_events, current_chamber_id, chamber_id)
 
 
 func _find_phrase_event(event_id: String) -> Dictionary:
-	for phrase_event in phrase_events:
-		if String(phrase_event.get("id", "")) == event_id:
-			return phrase_event
-	return {}
+	return battle_phrase_event_support.find_event(phrase_events, event_id)
 
 
 func _phrase_event_display_text(phrase_event: Dictionary) -> String:
-	return String(phrase_event.get("english_text" if _is_english() else "text", phrase_event.get("text", "")))
+	return battle_phrase_event_support.display_text(phrase_event, _is_english())
 
 
 func _phrase_event_reward_copy(phrase_event: Dictionary) -> String:
-	var reward_type := String(phrase_event.get("reward_type", "heal"))
-	var reward_amount := int(round(float(phrase_event.get("reward_amount", 0.0))))
-	match reward_type:
-		"heal":
-			return _battle_guidance_format(
-				"phrase_reward_heal_format",
-				"回复 %d 点气血",
-				"restore %d vitality",
-				[reward_amount]
-			)
-		"xp":
-			return _battle_guidance_format(
-				"phrase_reward_xp_format",
-				"获得 %d 点字墨",
-				"gain %d ink",
-				[reward_amount]
-			)
-		"reveal":
-			return _battle_guidance_text(
-				"phrase_reward_reveal",
-				"扩开附近迷雾显形",
-				"widen nearby fog reveal"
-			)
-		"radical":
-			var reward_radical := String(phrase_event.get("reward_radical", "日"))
-			return _battle_guidance_format(
-				"phrase_reward_radical_format",
-				"获得偏旁「%s」",
-				"gain radical %s",
-				[reward_radical]
-			)
-		_:
-			return _battle_guidance_text(
-				"phrase_reward_default",
-				"领取句阵赏赐",
-				"claim the sentence reward"
-			)
+	return battle_phrase_event_support.reward_copy(
+		phrase_event,
+		Callable(self, "_battle_guidance_format"),
+		Callable(self, "_battle_guidance_text")
+	)
 
 
 func _update_phrase_events() -> void:
