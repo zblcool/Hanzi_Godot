@@ -3802,9 +3802,18 @@ const LAUNCHER_PROFILE_CONTENT := {
 	"summary": "像 web 原型那样，为这台设备保存默认排行榜署名。结算页里留空时，后续战绩会直接复用这里的名字。",
 	"preview_title": "当前署名",
 	"name_field_title": "默认排行榜署名",
+	"input_placeholder": "输入想显示的名字",
+	"random_text": "随机侠名",
+	"default_copy": "当前仍使用设备默认侠名；保存自定义署名后，后续战绩会覆盖成这个名字。",
+	"default_hint_format": "如果不另外保存自定义署名，系统会继续使用本机默认侠名：%s",
+	"saved_copy": "当前默认署名会直接复用到之后的本地排行榜记录里。",
+	"saved_hint_format": "清空或恢复默认后，会重新回退到本机默认侠名：%s",
+	"status_saved_format": "已保存默认署名：%s",
+	"status_restored_format": "已恢复设备默认侠名：%s",
 	"save_text": "保存署名",
 	"reset_text": "恢复默认",
-	"close_text": "返回启动器"
+	"close_text": "返回启动器",
+	"fallback_glyph": "侠"
 }
 
 const MENU_PAGE_CONTENT := {

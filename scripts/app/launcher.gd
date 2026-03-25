@@ -95,6 +95,12 @@ const EN_TEXT := {
 	"默认排行榜署名": "Default Leaderboard Alias",
 	"输入想显示的名字": "Enter the name you want to show",
 	"随机侠名": "Random Wuxia Name",
+	"当前仍使用设备默认侠名；保存自定义署名后，后续战绩会覆盖成这个名字。": "The device is still using its default wuxia alias. Saving a custom alias will replace later records with this name.",
+	"如果不另外保存自定义署名，系统会继续使用本机默认侠名：%s": "If you do not save a custom alias, the system will keep using this device default: %s",
+	"当前默认署名会直接复用到之后的本地排行榜记录里。": "The saved alias will be reused automatically for later local leaderboard entries.",
+	"清空或恢复默认后，会重新回退到本机默认侠名：%s": "Clear or reset it to fall back to the device default again: %s",
+	"已保存默认署名：%s": "Saved default alias: %s",
+	"已恢复设备默认侠名：%s": "Restored device default alias: %s",
 	"保存署名": "Save Alias",
 	"恢复默认": "Restore Default",
 	"夜墨": "Night Ink",
@@ -4368,8 +4374,8 @@ func _build_profile_overlay() -> void:
 	margin.add_child(box)
 
 	box.add_child(_make_tag(String(profile_content.get("tag", "")), Color(0.12, 0.18, 0.24, 0.88), Color(0.96, 0.82, 0.56, 0.96)))
-	box.add_child(_make_label(String(profile_content.get("title", "")), 40, Color(1.0, 0.95, 0.86, 1.0)))
-	box.add_child(_make_label(String(profile_content.get("summary", "")), 18, Color(0.9, 0.92, 0.96, 0.95)))
+	box.add_child(_make_label(_localize_text(String(profile_content.get("title", ""))), 40, Color(1.0, 0.95, 0.86, 1.0)))
+	box.add_child(_make_label(_localize_text(String(profile_content.get("summary", ""))), 18, Color(0.9, 0.92, 0.96, 0.95)))
 
 	var content_row := _make_responsive_box_container(portrait_layout)
 	content_row.add_theme_constant_override("separation", _i(16))
@@ -4392,14 +4398,14 @@ func _build_profile_overlay() -> void:
 	var preview_box := VBoxContainer.new()
 	preview_box.add_theme_constant_override("separation", _i(10))
 	preview_margin.add_child(preview_box)
-	preview_box.add_child(_make_label(String(profile_content.get("preview_title", "")), 18, Color(0.96, 0.82, 0.54, 0.94)))
+	preview_box.add_child(_make_label(_localize_text(String(profile_content.get("preview_title", ""))), 18, Color(0.96, 0.82, 0.54, 0.94)))
 
 	var avatar_panel := PanelContainer.new()
 	avatar_panel.custom_minimum_size = _v(0.0, 112.0)
 	avatar_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.1, 0.14, 0.18, 0.86), Color(0.52, 0.8, 1.0, 0.28)))
 	preview_box.add_child(avatar_panel)
 
-	profile_preview_glyph_label = _make_label("侠", 48, Color(1.0, 0.95, 0.86, 1.0))
+	profile_preview_glyph_label = _make_label(String(profile_content.get("fallback_glyph", "侠")), 48, Color(1.0, 0.95, 0.86, 1.0))
 	profile_preview_glyph_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	profile_preview_glyph_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	profile_preview_glyph_label.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -4428,13 +4434,13 @@ func _build_profile_overlay() -> void:
 	var editor_box := VBoxContainer.new()
 	editor_box.add_theme_constant_override("separation", _i(10))
 	editor_margin.add_child(editor_box)
-	editor_box.add_child(_make_label(String(profile_content.get("name_field_title", "")), 22, Color(1.0, 0.92, 0.8, 1.0)))
+	editor_box.add_child(_make_label(_localize_text(String(profile_content.get("name_field_title", ""))), 22, Color(1.0, 0.92, 0.8, 1.0)))
 
 	profile_status_label = _make_label("", 15, Color(0.82, 0.9, 1.0, 0.92))
 	profile_status_label.visible = false
 	editor_box.add_child(profile_status_label)
 
-	profile_name_input = _make_text_input("输入想显示的名字")
+	profile_name_input = _make_text_input(_localize_text(String(profile_content.get("input_placeholder", "输入想显示的名字"))))
 	profile_name_input.text_changed.connect(func(_text: String) -> void:
 		_refresh_profile_preview_from_input()
 	)
@@ -4450,7 +4456,7 @@ func _build_profile_overlay() -> void:
 	action_row.add_theme_constant_override("separation", _i(10))
 	editor_box.add_child(action_row)
 
-	var random_button := _make_pill_button("随机侠名", _v(0.0, 48.0), Callable(self, "_on_profile_random_pressed"))
+	var random_button := _make_pill_button(_localize_text(String(profile_content.get("random_text", "随机侠名"))), _v(0.0, 48.0), Callable(self, "_on_profile_random_pressed"))
 	random_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	action_row.add_child(random_button)
 
@@ -4471,11 +4477,11 @@ func _build_profile_overlay() -> void:
 	footer_row.add_theme_constant_override("separation", _i(10))
 	box.add_child(footer_row)
 
-	var reset_button := _make_pill_button(String(profile_content.get("reset_text", "恢复默认")), _v(0.0, 50.0), Callable(self, "_on_profile_reset_pressed"))
+	var reset_button := _make_pill_button(_localize_text(String(profile_content.get("reset_text", "恢复默认"))), _v(0.0, 50.0), Callable(self, "_on_profile_reset_pressed"))
 	reset_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	footer_row.add_child(reset_button)
 
-	var close_button := _make_pill_button(String(profile_content.get("close_text", "返回启动器")), _v(0.0, 50.0), Callable(self, "_hide_profile"))
+	var close_button := _make_pill_button(_localize_text(String(profile_content.get("close_text", "返回启动器"))), _v(0.0, 50.0), Callable(self, "_hide_profile"))
 	close_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	footer_row.add_child(close_button)
 
@@ -4981,23 +4987,16 @@ func _refresh_profile_preview_from_input() -> void:
 	var identity: Dictionary = Session.get_leaderboard_identity()
 	var custom_name := String(identity.get("custom_name", ""))
 	var device_alias := Session.get_leaderboard_device_alias()
+	var profile_content := FrontEndContent.launcher_profile_content()
 	var preview_name := draft_name if not draft_name.is_empty() else (custom_name if not custom_name.is_empty() else device_alias)
 	profile_preview_name_label.text = preview_name
 	profile_preview_glyph_label.text = _get_profile_monogram(preview_name)
 	if custom_name.is_empty():
-		if _is_english():
-			profile_preview_copy_label.text = "The device is still using its default wuxia alias. Saving a custom alias will replace later records with this name."
-			profile_hint_label.text = "If you do not save a custom alias, the system will keep using this device default: %s" % device_alias
-		else:
-			profile_preview_copy_label.text = "当前仍使用设备默认侠名；保存自定义署名后，后续战绩会覆盖成这个名字。"
-			profile_hint_label.text = "如果不另外保存自定义署名，系统会继续使用本机默认侠名：%s" % device_alias
+		profile_preview_copy_label.text = _localize_text(String(profile_content.get("default_copy", "当前仍使用设备默认侠名；保存自定义署名后，后续战绩会覆盖成这个名字。")))
+		profile_hint_label.text = _localize_text(String(profile_content.get("default_hint_format", "如果不另外保存自定义署名，系统会继续使用本机默认侠名：%s"))) % device_alias
 	else:
-		if _is_english():
-			profile_preview_copy_label.text = "The saved alias will be reused automatically for later local leaderboard entries."
-			profile_hint_label.text = "Clear or reset it to fall back to the device default again: %s" % device_alias
-		else:
-			profile_preview_copy_label.text = "当前默认署名会直接复用到之后的本地排行榜记录里。"
-			profile_hint_label.text = "清空或恢复默认后，会重新回退到本机默认侠名：%s" % device_alias
+		profile_preview_copy_label.text = _localize_text(String(profile_content.get("saved_copy", "当前默认署名会直接复用到之后的本地排行榜记录里。")))
+		profile_hint_label.text = _localize_text(String(profile_content.get("saved_hint_format", "清空或恢复默认后，会重新回退到本机默认侠名：%s"))) % device_alias
 
 
 func _on_profile_random_pressed() -> void:
@@ -5012,10 +5011,11 @@ func _on_profile_save_pressed() -> void:
 		return
 	var resolved_name := Session.set_preferred_leaderboard_name(profile_name_input.text)
 	var identity: Dictionary = Session.get_leaderboard_identity()
+	var profile_content := FrontEndContent.launcher_profile_content()
 	profile_name_input.text = String(identity.get("custom_name", ""))
-	var status_text := "Saved default alias: %s" % resolved_name if _is_english() else "已保存默认署名：%s" % resolved_name
+	var status_text := _localize_text(String(profile_content.get("status_saved_format", "已保存默认署名：%s"))) % resolved_name
 	if String(identity.get("custom_name", "")).is_empty():
-		status_text = "Restored device default alias: %s" % resolved_name if _is_english() else "已恢复设备默认侠名：%s" % resolved_name
+		status_text = _localize_text(String(profile_content.get("status_restored_format", "已恢复设备默认侠名：%s"))) % resolved_name
 	_refresh_profile_overlay(status_text)
 
 
@@ -5023,13 +5023,14 @@ func _on_profile_reset_pressed() -> void:
 	if profile_name_input != null:
 		profile_name_input.text = ""
 	var resolved_name := Session.clear_preferred_leaderboard_name()
-	_refresh_profile_overlay("Restored device default alias: %s" % resolved_name if _is_english() else "已恢复设备默认侠名：%s" % resolved_name)
+	var profile_content := FrontEndContent.launcher_profile_content()
+	_refresh_profile_overlay(_localize_text(String(profile_content.get("status_restored_format", "已恢复设备默认侠名：%s"))) % resolved_name)
 
 
 func _get_profile_monogram(profile_name: String) -> String:
 	var trimmed_name := profile_name.strip_edges()
 	if trimmed_name.is_empty():
-		return "侠"
+		return String(FrontEndContent.launcher_profile_content().get("fallback_glyph", "侠"))
 	return trimmed_name.substr(0, 1)
 
 
