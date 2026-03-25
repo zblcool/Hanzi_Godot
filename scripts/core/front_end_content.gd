@@ -1182,6 +1182,21 @@ const CANGJIE_PORTAL_SECTIONS := [
 					"en": "Current sample basis: %s. Tapping another node rewrites the completed and available states around that stop."
 				}
 			},
+			"history_strip": {
+				"title": {"zh": "已走笔迹", "en": "Path Trail"},
+				"summary": {
+					"zh": "source 真正点进下一排后，刚走过的几格不会立刻从脑中消失，而会继续作为这次 climb 的已走脉络留在塔图里。Godot 这里先把当前样张的已走节点串成一条紧凑笔迹，让接续卡把焦点往前推时，刚压过的路线仍然留在前台。",
+					"en": "After the live source map steps into the next row, the rooms just taken still remain readable as one continuous climb. Godot now keeps the sampled completed nodes stitched into a compact trail so the just-pressed path stays visible while handoff cards push the focus forward."
+				},
+				"count_format": {
+					"zh": "样张已走 %d 个节点",
+					"en": "%d sample rooms completed"
+				},
+				"empty_body": {
+					"zh": "当前样张还没形成可读链路，先点按塔图节点把第一段 climb 笔迹挂回前台。",
+					"en": "The sample trail is not readable yet. Tap a tower node first to hang the opening climb beats back onto the front layer."
+				}
+			},
 			"next_row_handoff": {
 				"title": {"zh": "下一排接续", "en": "Next-Row Handoff"},
 				"summary": {

@@ -1337,6 +1337,8 @@ func _make_cangjie_route_preview(preview: Dictionary, accent: Color) -> PanelCon
 	var state_legend: Dictionary = state_legend_variant as Dictionary if state_legend_variant is Dictionary else {}
 	var progress_stub_variant: Variant = preview.get("progress_stub", {})
 	var progress_stub: Dictionary = progress_stub_variant as Dictionary if progress_stub_variant is Dictionary else {}
+	var history_strip_variant: Variant = preview.get("history_strip", {})
+	var history_strip: Dictionary = history_strip_variant as Dictionary if history_strip_variant is Dictionary else {}
 	var next_row_handoff_variant: Variant = preview.get("next_row_handoff", {})
 	var next_row_handoff: Dictionary = next_row_handoff_variant as Dictionary if next_row_handoff_variant is Dictionary else {}
 	var progress_info := _build_cangjie_route_progress_info(preview, selected_node)
@@ -1377,6 +1379,8 @@ func _make_cangjie_route_preview(preview: Dictionary, accent: Color) -> PanelCon
 		box.add_child(_make_cangjie_route_state_legend(state_legend, selected_node, accent))
 	if not progress_stub.is_empty():
 		box.add_child(_make_cangjie_route_progress_stub_panel(progress_stub, progress_info, selected_node, accent))
+	if not history_strip.is_empty():
+		box.add_child(_make_cangjie_route_history_strip_panel(history_strip, preview, progress_info, accent))
 	if not next_row_handoff.is_empty():
 		box.add_child(_make_cangjie_route_next_row_panel(next_row_handoff, preview, selected_node, progress_info, node_details, accent))
 
@@ -1621,6 +1625,144 @@ func _make_cangjie_route_progress_stub_card(item: Dictionary, count: int, accent
 	var body_text := _localize_cangjie_text(item.get("body", ""))
 	if not body_text.is_empty():
 		box.add_child(_make_label(body_text, 13, Color(0.84, 0.9, 0.98, 0.84)))
+
+	return panel
+
+
+func _make_cangjie_route_history_strip_panel(config: Dictionary, preview: Dictionary, progress_info: Dictionary, accent: Color) -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.08, accent.g * 0.08, accent.b * 0.1, 0.74), Color(accent.r, accent.g, accent.b, 0.28)))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", _i(18))
+	margin.add_theme_constant_override("margin_top", _i(16))
+	margin.add_theme_constant_override("margin_right", _i(18))
+	margin.add_theme_constant_override("margin_bottom", _i(16))
+	panel.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", _i(10))
+	margin.add_child(box)
+
+	var title_text := _localize_cangjie_text(config.get("title", ""))
+	if not title_text.is_empty():
+		box.add_child(_make_label(title_text, 18, Color(1.0, 0.95, 0.86, 1.0)))
+
+	var summary_text := _localize_cangjie_text(config.get("summary", ""))
+	if not summary_text.is_empty():
+		box.add_child(_make_label(summary_text, 14, Color(0.86, 0.9, 0.98, 0.88)))
+
+	var steps := _build_cangjie_route_history_steps(preview, progress_info)
+	if steps.is_empty():
+		var empty_body := _localize_cangjie_text(config.get("empty_body", ""))
+		if not empty_body.is_empty():
+			box.add_child(_make_label(empty_body, 13, Color(0.84, 0.9, 0.98, 0.84)))
+		return panel
+
+	var count_format := _localize_cangjie_text(config.get("count_format", ""))
+	if not count_format.is_empty():
+		box.add_child(_make_tag(count_format % steps.size(), Color(accent.r * 0.18, accent.g * 0.18, accent.b * 0.22, 0.9), Color(0.98, 0.94, 0.88, 0.96)))
+
+	var trail_flow := HFlowContainer.new()
+	trail_flow.add_theme_constant_override("h_separation", _i(8))
+	trail_flow.add_theme_constant_override("v_separation", _i(8))
+	box.add_child(trail_flow)
+
+	for step_index in range(steps.size()):
+		var step := steps[step_index]
+		trail_flow.add_child(_make_cangjie_route_history_step(step, accent))
+		if step_index < steps.size() - 1:
+			var connector_tone: Color = step.get("tone", accent)
+			trail_flow.add_child(_make_label("→", 16, Color(connector_tone.r, connector_tone.g, connector_tone.b, 0.72)))
+
+	return panel
+
+
+func _build_cangjie_route_history_steps(preview: Dictionary, progress_info: Dictionary) -> Array[Dictionary]:
+	var completed_ids_variant: Variant = progress_info.get("completed_ids", [])
+	if not (completed_ids_variant is Array) or (completed_ids_variant as Array).is_empty():
+		return []
+
+	var selected_id := String(progress_info.get("selected_id", ""))
+	var route_index := _build_cangjie_route_preview_index(preview)
+	var steps: Array[Dictionary] = []
+	for completed_id_variant in completed_ids_variant:
+		var completed_id := String(completed_id_variant)
+		var indexed_variant: Variant = route_index.get(completed_id, {})
+		if not (indexed_variant is Dictionary):
+			continue
+		var indexed := indexed_variant as Dictionary
+		var node_variant: Variant = indexed.get("node", {})
+		if not (node_variant is Dictionary):
+			continue
+		var node := node_variant as Dictionary
+		if node.is_empty():
+			continue
+		steps.append({
+			"id": completed_id,
+			"floor": indexed.get("floor", {}),
+			"glyph": node.get("glyph", ""),
+			"label": node.get("label", ""),
+			"note": node.get("note", ""),
+			"tone": node.get("tone", Color.WHITE),
+			"active": completed_id == selected_id
+		})
+
+	return steps
+
+
+func _make_cangjie_route_history_step(step: Dictionary, accent: Color) -> PanelContainer:
+	var tone: Color = step.get("tone", accent)
+	var active := bool(step.get("active", false))
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = _v(164.0, 0.0)
+	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(tone.r * 0.16, tone.g * 0.16, tone.b * 0.18, 0.8), Color(tone.r, tone.g, tone.b, 0.4 if active else 0.24)))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", _i(12))
+	margin.add_theme_constant_override("margin_top", _i(10))
+	margin.add_theme_constant_override("margin_right", _i(12))
+	margin.add_theme_constant_override("margin_bottom", _i(10))
+	panel.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", _i(6))
+	margin.add_child(box)
+
+	var badge_row := HFlowContainer.new()
+	badge_row.add_theme_constant_override("h_separation", _i(6))
+	badge_row.add_theme_constant_override("v_separation", _i(6))
+	box.add_child(badge_row)
+
+	var floor_text := _localize_cangjie_text(step.get("floor", {}))
+	if not floor_text.is_empty():
+		badge_row.add_child(_make_tag(floor_text, Color(tone.r * 0.18, tone.g * 0.18, tone.b * 0.22, 0.88), Color(0.98, 0.94, 0.88, 0.94)))
+	badge_row.add_child(_make_tag("Current Focus" if _is_english() and active else ("当前焦点" if active else _get_cangjie_route_progress_badge_text("completed")), Color(tone.r * 0.22, tone.g * 0.18, tone.b * 0.16, 0.88), Color(0.98, 0.94, 0.88, 0.94)))
+
+	var header := HBoxContainer.new()
+	header.add_theme_constant_override("separation", _i(10))
+	box.add_child(header)
+
+	var glyph_panel := PanelContainer.new()
+	glyph_panel.custom_minimum_size = _v(38.0, 38.0)
+	glyph_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(tone.r * 0.22, tone.g * 0.18, tone.b * 0.16, 0.92), Color(tone.r, tone.g, tone.b, 0.28)))
+	header.add_child(glyph_panel)
+
+	var glyph_label := _make_label(String(step.get("glyph", "")), 18, Color(1.0, 0.95, 0.86, 1.0))
+	glyph_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	glyph_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	glyph_label.set_anchors_preset(Control.PRESET_FULL_RECT)
+	glyph_panel.add_child(glyph_label)
+
+	var text_box := VBoxContainer.new()
+	text_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	text_box.add_theme_constant_override("separation", _i(2))
+	header.add_child(text_box)
+	text_box.add_child(_make_label(_localize_cangjie_text(step.get("label", "")), 14, Color(1.0, 0.95, 0.86, 1.0)))
+
+	var note_text := _localize_cangjie_text(step.get("note", ""))
+	if not note_text.is_empty():
+		box.add_child(_make_label(note_text, 12, Color(0.84, 0.9, 0.98, 0.82)))
 
 	return panel
 
@@ -1960,9 +2102,10 @@ func _format_cangjie_route_progress_count(count: int) -> String:
 func _build_cangjie_route_progress_info(preview: Dictionary, selected_node: Dictionary) -> Dictionary:
 	var node_states := {}
 	var counts := {"completed": 0, "available": 0, "locked": 0}
+	var completed_ids: Array[String] = []
 	var rows_variant: Variant = preview.get("rows", [])
 	if not (rows_variant is Array):
-		return {"node_states": node_states, "counts": counts}
+		return {"node_states": node_states, "counts": counts, "completed_ids": completed_ids, "selected_id": ""}
 
 	var node_lookup := {}
 	var predecessors := {}
@@ -2009,7 +2152,8 @@ func _build_cangjie_route_progress_info(preview: Dictionary, selected_node: Dict
 
 	var selected_id := String(selected_node.get("id", ""))
 	if not selected_id.is_empty():
-		for completed_id in _build_cangjie_route_completed_ids(selected_id, node_lookup, predecessors):
+		completed_ids = _build_cangjie_route_completed_ids(selected_id, node_lookup, predecessors)
+		for completed_id in completed_ids:
 			node_states[completed_id] = "completed"
 
 		var selected_connections_variant: Variant = selected_node.get("connections", [])
@@ -2023,7 +2167,7 @@ func _build_cangjie_route_progress_info(preview: Dictionary, selected_node: Dict
 		var progress_state := String(progress_state_variant)
 		counts[progress_state] = int(counts.get(progress_state, 0)) + 1
 
-	return {"node_states": node_states, "counts": counts}
+	return {"node_states": node_states, "counts": counts, "completed_ids": completed_ids, "selected_id": selected_id}
 
 
 func _build_cangjie_route_completed_ids(selected_id: String, node_lookup: Dictionary, predecessors: Dictionary) -> Array[String]:
