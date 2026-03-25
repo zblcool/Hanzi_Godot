@@ -2327,11 +2327,12 @@ const CANGJIE_PORTAL_SECTIONS := [
 							"note": {"zh": "短期换长期", "en": "Short vs long"},
 							"focus_title": {"zh": "事件节点 · 回写路线", "en": "Event Node · Write Back The Route"},
 							"focus_body": {
-								"zh": "事件节点更像一面镜子，会先读当前牌组倾向，再决定是翻出 `路书对照` 去压深 / 补短 / 存势、端出 `静室师言` 去删牌或留一手预案，还是拿 `抄手交易` 让你押重手、净污或用代价换一笔 Gold。",
-								"en": "Event nodes act more like mirrors: they read the current deck lean first, then either surface a `Route Ledger` to deepen / patch / bank tempo, a `Tutor In Silence` to trim or bank a safer fallback, or a `Copyist Bargain` that trades HP, Smudge, and Gold for a sharper bend."
+								"zh": "事件节点更像一面镜子，会先读当前牌组倾向，再决定是翻出 `路书对照` 去压深 / 补短 / 存势、端出 `静室师言` 去删牌或留一手预案、拿 `抄手交易` 让你押重手 / 净污 / 用代价换一笔 Gold，还是抛出 `边注赌约` 逼你在厚钱袋与更干净的节奏之间马上站队。",
+								"en": "Event nodes act more like mirrors: they read the current deck lean first, then either surface a `Route Ledger` to deepen / patch / bank tempo, a `Tutor In Silence` to trim or bank a safer fallback, a `Copyist Bargain` that trades HP, Smudge, and Gold for a sharper bend, or a `Margin Wager` that forces an immediate choice between the heavier purse and the cleaner line."
 							},
 							"focus_tags": [
 								{"zh": "deck-read", "en": "Deck read"},
+								{"zh": "边注赌约", "en": "Margin Wager"},
 								{"zh": "静室师言", "en": "Tutor In Silence"},
 								{"zh": "抄手交易", "en": "Copyist Bargain"}
 							],
@@ -3381,6 +3382,115 @@ const CANGJIE_PORTAL_SECTIONS := [
 			"footnote": {
 				"zh": "Godot 这里先把 `抄手交易` 作为第二种代表性事件样张挂回 portal，不假装已经接通真实 deck 检查、污牌管理与 live 事件落点。",
 				"en": "Godot brings `Copyist Bargain` back into the portal as a second representative event sample without pretending the live deck checks, Smudge handling, or real event routing already exist here."
+			}
+		},
+		"margin_preview": {
+			"title": {"zh": "边注赌约预览", "en": "Margin Wager Preview"},
+			"summary": {
+				"zh": "source 的事件房还可能翻出 `边注赌约 / Margin Wager`：要么吞下两张 `污` 换一大笔 Gold，要么拿一张 `笔 / Brush` 再顺手垫高预算，让“更厚的钱袋还是更干净的节奏”直接变成当前路线判断。",
+				"en": "Source event rooms can also surface `Margin Wager`: either swallow two `Smudge` for a much heavier purse or take `Brush` plus a smaller Gold bump, turning “bigger budget or cleaner line” into the immediate route question."
+			},
+			"hint": {
+				"zh": "点按下面任一赌约样张，预览 source 事件怎样把预算抬升、污牌代价与更干净的节奏一起压成同一拍。",
+				"en": "Tap either wager below to preview how the source event folds budget spikes, Smudge debt, and cleaner tempo into the same decision beat."
+			},
+			"options": [
+				{
+					"id": "greed",
+					"glyph": "赌",
+					"title": {"zh": "吞下风险", "en": "Swallow The Risk"},
+					"subtitle": {"zh": "Gold +85，但牌组吃进 2 张污", "en": "Gold +85, but eat 2 Smudges"},
+					"summary": {
+						"zh": "这份赌约把短期预算一下子拉高，却会立刻把两张 `污` 塞回牌组，逼你之后继续在抽牌质量、商店删牌和事件容错上为这笔 Gold 还债。",
+						"en": "This wager spikes the short-term budget immediately, but stuffs two `Smudge` back into the deck so later draw quality, shop purges, and event margin all keep paying for that Gold."
+					},
+					"tone": Color(0.94, 0.58, 0.48, 1.0),
+					"result_group": {
+						"title": {"zh": "边注赌约 · 厚钱袋", "en": "Margin Wager · Heavy Purse"},
+						"summary": {
+							"zh": "这类事件说明 source 并不把 Gold 当成纯奖励，而是会把预算拉升和牌组负担绑成同一个路线问题。",
+							"en": "This shows the source does not treat Gold as a free reward. It binds the budget spike and the deck burden into the same route question."
+						},
+						"cards": [
+							{
+								"glyph": "金",
+								"title": {"zh": "Gold +85", "en": "Gold +85"},
+								"subtitle": {"zh": "下一站预算一下子抬高", "en": "The next budget jumps immediately"},
+								"body": {
+									"zh": "更高的 Gold 会让商店、补货、删牌与部分 relic 一起变得值得看，但这份厚钱袋不是没有代价的顺风车。",
+									"en": "The bigger purse makes shops, restocks, purges, and some relic lines all worth checking, but it is not a free ride."
+								},
+								"tags": [
+									{"zh": "预算抬升", "en": "Budget spike"},
+									{"zh": "商店线", "en": "Shop line"}
+								]
+							},
+							{
+								"glyph": "污",
+								"title": {"zh": "污 x2", "en": "Smudge x2"},
+								"subtitle": {"zh": "后面还得把债慢慢还掉", "en": "You still have to pay the debt back"},
+								"body": {
+									"zh": "两张 `污` 会一起拖累起手和抽牌顺序，让这份短期预算在之后的删牌与事件判断里持续索债。",
+									"en": "Two `Smudge` cards drag both the opener and later draw order, so the short-term budget keeps collecting payment through later trims and event calls."
+								},
+								"tags": [
+									{"zh": "代价", "en": "Cost"},
+									{"zh": "抽牌质量", "en": "Draw quality"}
+								]
+							}
+						]
+					}
+				},
+				{
+					"id": "steady",
+					"glyph": "稳",
+					"title": {"zh": "拿走笔意", "en": "Take The Brushline"},
+					"subtitle": {"zh": "拿一张 `笔 / Brush`，再补 24 Gold", "en": "Gain `Brush` and 24 Gold"},
+					"summary": {
+						"zh": "source 的另一面不是继续贪更多预算，而是拿一张会稳住墨流与抽牌顺序的 `笔`，顺手再垫一点 Gold，让 run 继续贴着更干净的节奏往前写。",
+						"en": "The other face of the source event does not keep pressing for a larger purse. It takes `Brush` to steady Ink flow and draw order, then adds a smaller Gold pad so the run keeps moving on a cleaner line."
+					},
+					"tone": Color(0.56, 0.84, 0.8, 1.0),
+					"result_group": {
+						"title": {"zh": "边注赌约 · 更干净的节奏", "en": "Margin Wager · Cleaner Tempo"},
+						"summary": {
+							"zh": "这类回应提醒 source 事件不会只给更大数值，它也会把节奏更顺、起手更稳这类长期收益直接打包成选择。",
+							"en": "This response reinforces that source events do not only hand out larger numbers. They also package smoother tempo and steadier openers as direct choices."
+						},
+						"cards": [
+							{
+								"glyph": "笔",
+								"title": {"zh": "笔 · Load Ink", "en": "Brush · Load Ink"},
+								"subtitle": {"zh": "先把墨流和抽牌接稳", "en": "Steady Ink flow and draw first"},
+								"body": {
+									"zh": "`笔` 会把这次事件改成更干净的节奏补件：先把起手和续接拉顺，而不是再把牌组往更脏的高预算里推。",
+									"en": "`Brush` turns the event into a cleaner tempo patch, smoothing the opener and follow-through instead of pushing the deck into a dirtier high-budget line."
+								},
+								"tags": [
+									{"zh": "抽墨", "en": "Draw + Ink"},
+									{"zh": "稳线", "en": "Stabilize"}
+								]
+							},
+							{
+								"glyph": "金",
+								"title": {"zh": "Gold +24", "en": "Gold +24"},
+								"subtitle": {"zh": "顺手垫高下一站预算", "en": "Pad the next budget on the way"},
+								"body": {
+									"zh": "它仍会补一小笔 Gold，让后面的商店或战后选择更从容，但不会把 run 推进需要立刻还债的脏钱节拍。",
+									"en": "It still adds a small Gold bump so later shops or rewards are more comfortable, but without pushing the run into an immediate debt-heavy cadence."
+								},
+								"tags": [
+									{"zh": "轻预算", "en": "Light budget"},
+									{"zh": "更顺节奏", "en": "Smoother tempo"}
+								]
+							}
+						]
+					}
+				}
+			],
+			"footnote": {
+				"zh": "Godot 这里先把 `边注赌约` 作为第四种代表性事件样张挂回 portal，不假装已经接通真实预算结算、污牌管理与 live 事件分支。",
+				"en": "Godot now brings `Margin Wager` back into the portal as a fourth representative event sample without pretending real budget settlement, Smudge handling, or live event branching already exist here."
 			}
 		},
 		"sample_groups": [
