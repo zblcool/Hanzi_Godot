@@ -3764,6 +3764,19 @@ const CANGJIE_PORTAL_SECTIONS := [
 							"zh": "会把立盾和输出绑进同一拍，逼你先回答护攻同回合的资源分配，而不是只盯着下一次大伤害。",
 							"en": "Binds block and damage into the same beat, forcing the deck to answer guard-attack turns instead of reading only the next big hit."
 						},
+						"answer_strip": {
+							"label": {"zh": "敌意束 -> 门槛", "en": "Intent Bundle -> Gate"},
+							"title": {"zh": "先问这副牌够不够资格吃精英", "en": "Ask If The Deck Has Earned The Elite"},
+							"summary": {
+								"zh": "只有当 `guardAttack` 不再逼你把整回合砸进护盾、`multi` 也拆不散续手时，这种精英才值得换那次 relic 偏转；如果还要靠下一拍硬赌，先走休息、删改或普通战斗会更稳。",
+								"en": "This elite is worth trading for a relic bend only once `guardAttack` stops wasting the whole turn into block and `multi` no longer breaks hand flow. If the line still needs to high-roll the next beat, rest, archive, or normal fights are safer first."
+							},
+							"tags": [
+								{"zh": "精英资格", "en": "Elite gate"},
+								{"zh": "遗物偏转门槛", "en": "Relic-bend threshold"}
+							],
+							"tone": Color(0.74, 0.66, 0.94, 1.0)
+						},
 						"tags": [
 							{"zh": "精英层", "en": "Elite floor"},
 							{"zh": "护攻同拍", "en": "Guard-attack"}
@@ -3789,6 +3802,19 @@ const CANGJIE_PORTAL_SECTIONS := [
 						"body": {
 							"zh": "会把蓄势、连击、污染和重击串成塔顶总检验，要求整副牌都站得住。",
 							"en": "It chains charges, multi-hits, smudges, and heavy blows into a summit exam for the whole deck."
+						},
+						"answer_strip": {
+							"label": {"zh": "敌意束 -> 门槛", "en": "Intent Bundle -> Gate"},
+							"title": {"zh": "冲塔顶前先把四道题都答过", "en": "Answer All Four Exams Before The Summit"},
+							"summary": {
+								"zh": "`channel`、`multi`、`hex`、`guardAttack` 会在这里连成一张长卷，所以只有当后手、续手、抽牌质量和拆盾都已经成型时，这条 climb 才算真能冲顶；若还缺一环，路线价值会先回到补短和保稳。",
+								"en": "Here `channel`, `multi`, `hex`, and `guardAttack` become one long exam, so the climb is truly summit-ready only when follow-up buffer, whole-turn flow, draw quality, and block-breaking are all online. If one lane is still missing, route value swings back toward patching gaps and stabilizing first."
+							},
+							"tags": [
+								{"zh": "塔顶资格", "en": "Summit gate"},
+								{"zh": "四题合卷", "en": "Four-test exam"}
+							],
+							"tone": Color(0.9, 0.68, 0.62, 1.0)
 						},
 						"tags": [
 							{"zh": "Boss", "en": "Boss"},
