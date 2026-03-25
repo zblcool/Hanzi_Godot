@@ -1,7 +1,7 @@
 extends RefCounted
 
 const LAUNCHER_TOP_ACTIONS := [
-	{"kind": "action", "title": "玩家名帖", "size": Vector2(152.0, 54.0), "action": "show_profile"},
+	{"kind": "action", "title": "玩家名帖", "size": Vector2(224.0, 54.0), "action": "show_profile"},
 	{"kind": "action", "title": "关于字海", "size": Vector2(136.0, 54.0), "action": "show_about"},
 	{"kind": "theme_toggle", "size": Vector2(94.0, 54.0)},
 	{"kind": "language_toggle", "size": Vector2(78.0, 54.0)}
@@ -3800,6 +3800,7 @@ const LAUNCHER_PROFILE_CONTENT := {
 	"tag": "Player Sigil",
 	"title": "玩家名帖",
 	"summary": "像 web 原型那样，为这台设备保存默认排行榜署名。结算页里留空时，后续战绩会直接复用这里的名字。",
+	"button_title_format": {"zh": "玩家名帖：%s", "en": "Player Sigil: %s"},
 	"preview_title": "当前署名",
 	"name_field_title": "默认排行榜署名",
 	"input_placeholder": "输入想显示的名字",
