@@ -765,12 +765,12 @@ func _build_glyph_badge() -> void:
 	badge_root.visible = detail_visible
 
 
-func _add_box_part(size: Vector3, position: Vector3, material: Material) -> MeshInstance3D:
+func _add_box_part(size: Vector3, part_position: Vector3, material: Material) -> MeshInstance3D:
 	var mesh_instance := MeshInstance3D.new()
 	var mesh := BoxMesh.new()
 	mesh.size = size
 	mesh_instance.mesh = mesh
-	mesh_instance.position = position
+	mesh_instance.position = part_position
 	mesh_instance.material_override = material
 	visual_root.add_child(mesh_instance)
 	return mesh_instance

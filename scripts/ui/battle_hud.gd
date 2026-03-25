@@ -597,7 +597,7 @@ func set_progress(level: int, current: int, target: int) -> void:
 
 func set_status(elapsed: float, kills: int, threat: int) -> void:
 	var total_seconds: int = int(floor(elapsed))
-	var minutes: int = int(total_seconds / 60)
+	var minutes: int = int(total_seconds / 60.0)
 	var seconds: int = total_seconds % 60
 	status_label.text = _battle_state_text(
 		battle_hud_content,
@@ -1616,12 +1616,12 @@ func set_soundtrack(title: String, mood: String, cue: String, accent: Color, ann
 	soundtrack_toast_time = 3.0
 
 
-func show_boss(name: String, glyph: String, tint: Color, maximum: float) -> void:
+func show_boss(boss_name: String, glyph: String, tint: Color, maximum: float) -> void:
 	if boss_panel == null:
 		return
 	boss_panel.visible = true
 	boss_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(tint.r * 0.12, tint.g * 0.12, tint.b * 0.16, 0.96), Color(tint.r, tint.g, tint.b, 0.72), 24))
-	boss_name_label.text = "%s  %s" % [glyph, name]
+	boss_name_label.text = "%s  %s" % [glyph, boss_name]
 	boss_detail_label.text = _battle_state_text(battle_hud_content, "boss_descends", "卷主降阵", "Boss Descends")
 	boss_bar.add_theme_stylebox_override("fill", _make_fill_style(tint, 10))
 	boss_bar.max_value = max(1.0, maximum)
@@ -3980,7 +3980,7 @@ func _emit_return_menu() -> void:
 
 func _format_time(elapsed: float) -> String:
 	var total_seconds: int = int(floor(elapsed))
-	var minutes: int = total_seconds / 60
+	var minutes: int = int(total_seconds / 60.0)
 	var seconds: int = total_seconds % 60
 	return "%02d:%02d" % [minutes, seconds]
 

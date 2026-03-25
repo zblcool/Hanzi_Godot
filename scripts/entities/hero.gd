@@ -433,14 +433,15 @@ func _trigger_qin_wave() -> void:
 	var projectile_count: int = 3 + mini(2, qin_level)
 	var damage: float = 4.0 + current_attack_damage * (0.58 + float(qin_level) * 0.05)
 	var speed: float = max(11.8, projectile_speed + 0.5 + float(qin_level) * 0.32)
+	var center_index: int = int(floor(float(projectile_count) / 2.0))
 	heal(2.0 + float(qin_level) * 1.4)
 	for index in range(projectile_count):
 		var offset: float = float(index) - float(projectile_count - 1) * 0.5
 		var projectile_direction := direction.rotated(Vector3.UP, offset * 0.18)
 		var glyph := "沁"
-		if index < int(projectile_count / 2):
+		if index < center_index:
 			glyph = "水"
-		elif projectile_count > 1 and index > int(projectile_count / 2):
+		elif projectile_count > 1 and index > center_index:
 			glyph = "心"
 		fire_projectile.emit(cast_origin, projectile_direction, damage, speed, glyph, tint)
 
@@ -681,7 +682,7 @@ func _apply_skill_levels() -> void:
 	current_attack_interval = max(0.28, base_attack_interval - float(ming_level) * 0.03 - float(ming_word_level) * 0.04)
 
 	if role == "ranged":
-		extra_projectiles = ming_level + ming_word_level + int(blade_level / 3)
+		extra_projectiles = ming_level + ming_word_level + int(floor(float(blade_level) / 3.0))
 		slash_radius_bonus = 0.0
 	else:
 		extra_projectiles = 0
