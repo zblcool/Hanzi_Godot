@@ -636,8 +636,8 @@ const CANGJIE_PORTAL_SECTIONS := [
 						"pinyin": "ri",
 						"gloss": "sun radical",
 						"body": {
-							"zh": "先用直白伤害起手，并把「明」这条线写进牌库。",
-							"en": "Open with clean damage and seed the 明 line into the deck early."
+							"zh": "先用直白伤害起手，再看这局是把「明」稳成节奏线，还是沿双日把「昌」压成直线追击。",
+							"en": "Open with clean damage, then decide whether the run steadies into 明 or doubles down into 昌 as a straight chase line."
 						},
 						"tags": [
 							{"zh": "偏旁", "en": "Radical"},
@@ -733,6 +733,21 @@ const CANGJIE_PORTAL_SECTIONS := [
 						"tags": [
 							{"zh": "控制", "en": "Control"},
 							{"zh": "爆发", "en": "Burst"}
+						]
+					},
+					{
+						"glyph": "昌",
+						"title": {"zh": "昌 · 双日直线", "en": "Chang · Twin Suns"},
+						"subtitle": {"zh": "日 + 日", "en": "Sun + sun"},
+						"pinyin": "chang",
+						"gloss": "prosper",
+						"body": {
+							"zh": "不走护盾和抽墨，而是把重复的日字旁直接压成并列追击，让太阳线在「明」之外再分出一条纯前压的直线。",
+							"en": "Instead of turning into shields or Ink flow, repeated suns compress into a parallel chase lane that gives the sun package a straight pressure branch beside 明."
+						},
+						"tags": [
+							{"zh": "直线压深", "en": "Straight deepen"},
+							{"zh": "追击", "en": "Chase"}
 						]
 					},
 					{

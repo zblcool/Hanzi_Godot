@@ -3758,31 +3758,45 @@ func _apply_radical_choice(radical: String) -> void:
 func _resolve_growth_chains() -> void:
 	var changed: bool = true
 	while changed:
-		changed = false
-		for recipe_id_variant in Session.RECIPE_ORDER:
-			var recipe_id := String(recipe_id_variant)
-			var recipe: Dictionary = Session.get_recipe_data(recipe_id)
-			var recipe_level: int = int(skill_levels.get(recipe_id, 0))
-			var recipe_radicals: Array = recipe["radicals"]
-			var max_level: int = int(recipe["max_level"])
+		changed = _try_unlock_new_recipe()
+		if changed:
+			continue
+		changed = _try_upgrade_existing_recipe()
 
-			if recipe_level <= 0 and _has_recipe_parts(recipe_radicals):
-				for radical_variant in recipe_radicals:
-					var radical := String(radical_variant)
-					radical_counts[radical] = int(radical_counts.get(radical, 0)) - 1
-				_set_recipe_level(recipe_id, 1)
-				changed = true
-				break
 
-			var stored_radical: String = _find_available_recipe_radical(recipe_radicals)
-			if stored_radical.is_empty():
-				continue
+func _try_unlock_new_recipe() -> bool:
+	for recipe_id_variant in Session.RECIPE_ORDER:
+		var recipe_id := String(recipe_id_variant)
+		var recipe: Dictionary = Session.get_recipe_data(recipe_id)
+		var recipe_level: int = int(skill_levels.get(recipe_id, 0))
+		if recipe_level > 0:
+			continue
+		var recipe_radicals: Array = recipe["radicals"]
+		if not _has_recipe_parts(recipe_radicals):
+			continue
+		for radical_variant in recipe_radicals:
+			var radical := String(radical_variant)
+			radical_counts[radical] = int(radical_counts.get(radical, 0)) - 1
+		_set_recipe_level(recipe_id, 1)
+		return true
+	return false
 
-			if recipe_level > 0 and recipe_level < max_level:
-				radical_counts[stored_radical] = int(radical_counts.get(stored_radical, 0)) - 1
-				_set_recipe_level(recipe_id, recipe_level + 1)
-				changed = true
-				break
+
+func _try_upgrade_existing_recipe() -> bool:
+	for recipe_id_variant in Session.RECIPE_ORDER:
+		var recipe_id := String(recipe_id_variant)
+		var recipe: Dictionary = Session.get_recipe_data(recipe_id)
+		var recipe_level: int = int(skill_levels.get(recipe_id, 0))
+		var max_level: int = int(recipe["max_level"])
+		if recipe_level <= 0 or recipe_level >= max_level:
+			continue
+		var stored_radical: String = _find_available_recipe_radical(recipe["radicals"])
+		if stored_radical.is_empty():
+			continue
+		radical_counts[stored_radical] = int(radical_counts.get(stored_radical, 0)) - 1
+		_set_recipe_level(recipe_id, recipe_level + 1)
+		return true
+	return false
 
 
 func _set_recipe_level(recipe_id: String, new_level: int) -> void:

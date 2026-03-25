@@ -256,7 +256,7 @@ func _ensure_input_action(action_name: StringName, keycodes: Array) -> void:
 			event.physical_keycode = keycode
 			InputMap.action_add_event(action_name, event)
 
-const RECIPE_ORDER := ["ming", "xiu", "forest", "hai", "lei", "rock", "ren", "qin", "yan"]
+const RECIPE_ORDER := ["ming", "chang", "xiu", "forest", "hai", "lei", "rock", "ren", "qin", "yan"]
 const RECIPES := {
 	"ming": {
 		"id": "ming",
@@ -267,6 +267,16 @@ const RECIPES := {
 		"color": Color(1.0, 0.84, 0.4, 1.0),
 		"max_level": 3,
 		"word_id": "ming_guang"
+	},
+	"chang": {
+		"id": "chang",
+		"display": "昌",
+		"radicals": ["日", "日"],
+		"title": "双日成字",
+		"description": "周期朝前写出并列昌轮，顺着同偏旁直线继续压出追击火力。",
+		"color": Color(0.98, 0.78, 0.34, 1.0),
+		"max_level": 3,
+		"word_id": ""
 	},
 	"xiu": {
 		"id": "xiu",
@@ -541,7 +551,8 @@ const RADICALS := {
 	"日": {
 		"display": "日",
 		"name": "日字旁",
-		"description": "和 `月` 组成「明」，主攻输出节奏。",
+		"description": "和 `月` 组成「明」，双日也能压成「昌」，主攻输出节奏或直线追击。",
+		"recipe_ids": ["ming", "chang"],
 		"recipe_id": "ming"
 	},
 	"月": {

@@ -125,7 +125,7 @@ const HERO_EN := {
 const RADICAL_EN := {
 	"亻": {"name": "person radical", "description": "Combine with `木` into `休`, leaning toward sustain and recovery."},
 	"木": {"name": "wood radical", "description": "Completes `休`, and two woods can also line up into `林` for a forward control lane."},
-	"日": {"name": "sun radical", "description": "Combine with `月` into `明` to strengthen your main damage tempo."},
+	"日": {"name": "sun radical", "description": "Combine with `月` into `明`, or stack a second `日` into `昌` for a straighter chase line."},
 	"月": {"name": "moon radical", "description": "Advances the `明` route and pushes the weapon toward phrase arts sooner."},
 	"石": {"name": "stone radical", "description": "Combine with `山` into `岩` for targeted impacts and short shock zones."},
 	"山": {"name": "mountain radical", "description": "Completes `岩` and turns the nearest enemy cluster into a crushed impact zone."},
@@ -139,6 +139,7 @@ const RADICAL_EN := {
 }
 const RECIPE_EN := {
 	"ming": {"title": "Sun-Moon Wheels", "description": "Strengthens your main attack rhythm and periodically releases twin pursuit wheels."},
+	"chang": {"title": "Twin Suns", "description": "Periodically writes parallel sun wheels straight ahead, turning repeated suns into direct chase pressure."},
 	"xiu": {"title": "Forest Rest", "description": "Heals over time and knocks back nearby enemies to stretch survivability."},
 	"forest": {"title": "Grove Array", "description": "Periodically lays a forest-glyph lane forward, tangling enemies along one path."},
 	"hai": {"title": "Sea Tide", "description": "Detonates ink-wave ripples on a timer to clear nearby swarms."},

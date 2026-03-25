@@ -42,6 +42,7 @@ var slash_radius_bonus: float = 0.0
 var blade_level: int = 0
 var heal_level: int = 0
 var wave_level: int = 0
+var chang_level: int = 0
 var qin_level: int = 0
 var forest_level: int = 0
 var forest_word_level: int = 0
@@ -63,6 +64,7 @@ var attack_cooldown: float = 0.0
 var invulnerability_time: float = 0.0
 var heal_timer: float = 0.0
 var wave_timer: float = 0.0
+var chang_timer: float = 0.0
 var qin_timer: float = 0.0
 var forest_timer: float = 0.0
 var bright_timer: float = 0.0
@@ -308,6 +310,12 @@ func _handle_passives(delta: float) -> void:
 			request_wave.emit(global_position, wave_radius, wave_damage, Session.RECIPES["hai"]["color"], "海")
 			wave_timer = max(6.8 - float(wave_level) * 0.55, 2.8)
 
+	if chang_level > 0:
+		chang_timer -= delta
+		if chang_timer <= 0.0:
+			_trigger_chang_volley()
+			chang_timer = max(2.5, 4.9 - float(chang_level) * 0.34)
+
 	if qin_level > 0:
 		qin_timer -= delta
 		if qin_timer <= 0.0:
@@ -385,6 +393,24 @@ func _trigger_flame_burst() -> void:
 		var angle: float = TAU * float(index) / float(projectile_count)
 		var direction := Vector3(cos(angle), 0.0, sin(angle)).normalized()
 		fire_projectile.emit(global_position + Vector3(0.0, 1.0, 0.0) + direction * 1.0, direction, damage, speed, "炎", tint)
+
+
+func _trigger_chang_volley() -> void:
+	var closest_enemy = _find_closest_enemy()
+	if closest_enemy == null:
+		return
+
+	var target_position: Vector3 = closest_enemy.global_position
+	target_position.y = ground_height
+	var base_direction := (target_position - global_position).normalized()
+	var projectile_count: int = 2 + mini(2, maxi(0, chang_level - 1))
+	var damage: float = base_attack_damage * 0.5 + current_attack_damage * 0.18 + float(chang_level) * 2.4
+	var speed: float = max(12.6, projectile_speed + 3.0 + float(chang_level) * 0.35)
+	var tint: Color = Session.RECIPES["chang"]["color"]
+	for index in range(projectile_count):
+		var offset: float = float(index) - float(projectile_count - 1) * 0.5
+		var direction := base_direction.rotated(Vector3.UP, offset * 0.16)
+		fire_projectile.emit(global_position + Vector3(0.0, 1.0, 0.0) + direction * 1.12, direction, damage, speed, "昌", tint)
 
 
 func _trigger_qin_wave() -> void:
@@ -549,6 +575,7 @@ func _find_closest_enemy():
 
 func _apply_skill_levels() -> void:
 	var ming_level: int = int(skill_levels.get("ming", 0))
+	var chang_recipe_level: int = int(skill_levels.get("chang", 0))
 	var xiu_level: int = int(skill_levels.get("xiu", 0))
 	var forest_recipe_level: int = int(skill_levels.get("forest", 0))
 	var hai_level: int = int(skill_levels.get("hai", 0))
@@ -567,6 +594,7 @@ func _apply_skill_levels() -> void:
 
 	heal_level = xiu_level + xiu_word_level
 	wave_level = hai_level + hai_word_level * 2
+	chang_level = chang_recipe_level
 	qin_level = qin_recipe_level
 	forest_level = forest_recipe_level
 	forest_word_level = forest_word_recipe_level
@@ -615,6 +643,8 @@ func _apply_skill_levels() -> void:
 		heal_timer = max(5.4 - float(heal_level) * 0.45 - float(xiu_word_level) * 0.22, 1.9)
 	if wave_timer <= 0.0:
 		wave_timer = max(6.8 - float(wave_level) * 0.55 - float(hai_word_level) * 0.45, 2.1)
+	if chang_level > 0 and chang_timer <= 0.0:
+		chang_timer = max(2.5, 4.9 - float(chang_level) * 0.34)
 	if qin_level > 0 and qin_timer <= 0.0:
 		qin_timer = max(2.9, 5.3 - float(qin_level) * 0.4)
 	if forest_level > 0 and forest_timer <= 0.0:
