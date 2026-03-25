@@ -133,6 +133,7 @@ const RADICAL_EN := {
 	"每": {"name": "every base", "description": "Completes `海` and helps refine it into stronger sea phrase arts."},
 	"雨": {"name": "rain radical", "description": "Combine with `田` into `雷` for lock-on lightning and mid-field control."},
 	"田": {"name": "field frame", "description": "Completes `雷` and later refines into a lightning-rain field."},
+	"囗": {"name": "enclosure radical", "description": "Combine with `亻` into `囚` and write a prison field around the nearest cluster."},
 	"心": {"name": "heart radical", "description": "Combine with `刂` into `忍`, or with `氵` into `沁` for forward healing waves."},
 	"火": {"name": "fire radical", "description": "Two fires form `炎`, turning the area around you into a ring of flame shots."},
 	"刂": {"name": "blade radical", "description": "Both sharpens your weapon and combines with `心` into `忍`."}
@@ -145,6 +146,7 @@ const RECIPE_EN := {
 	"hai": {"title": "Sea Tide", "description": "Detonates ink-wave ripples on a timer to clear nearby swarms."},
 	"lei": {"title": "Falling Thunder", "description": "Locks onto the nearest cluster and slams the mid-field with lightning."},
 	"rock": {"title": "Falling Crag", "description": "Marks the nearest enemy cluster with an engraved impact and leaves a short shock zone."},
+	"qiu": {"title": "Prison Array", "description": "Periodically drops a prison field around the nearest enemy cluster, pinning feet and dealing steady damage."},
 	"ren": {"title": "Endurance Instinct", "description": "Below half health, gain attack speed, damage, and move speed together."},
 	"qin": {"title": "Soothing Wave", "description": "Periodically sends a forward healing wave that slows and threads through the crowd."},
 	"yan": {"title": "Flame Surge", "description": "Periodically sprays flame glyph volleys in all directions to burn open space."}

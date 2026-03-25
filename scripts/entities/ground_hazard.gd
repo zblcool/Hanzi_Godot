@@ -11,6 +11,9 @@ var active_time: float = 2.4
 var damage: float = 8.0
 var tint: Color = Color(0.62, 0.26, 0.88, 1.0)
 var label: String = "阵"
+var target_mode: String = "player"
+var root_duration: float = 0.0
+var tick_interval: float = 0.55
 
 var elapsed: float = 0.0
 var tick_timer: float = 0.0
@@ -33,6 +36,23 @@ func configure(player_ref, origin: Vector3, hazard_radius: float, warning: float
 	damage = damage_value
 	tint = tint_value
 	label = label_value
+	target_mode = "player"
+	root_duration = 0.0
+	tick_interval = 0.55
+
+
+func configure_for_enemies(origin: Vector3, hazard_radius: float, warning: float, active_duration: float, damage_value: float, tint_value: Color, label_value: String, root_duration_value: float = 0.0, tick_interval_value: float = 0.55) -> void:
+	player = null
+	position = Vector3(origin.x, 0.03, origin.z)
+	radius = hazard_radius
+	warning_time = warning
+	active_time = active_duration
+	damage = damage_value
+	tint = tint_value
+	label = label_value
+	target_mode = "enemy"
+	root_duration = root_duration_value
+	tick_interval = tick_interval_value
 
 
 func _ready() -> void:
@@ -74,15 +94,33 @@ func _physics_process(delta: float) -> void:
 	tick_timer -= delta
 	if tick_timer > 0.0:
 		return
-	tick_timer = 0.55
+	tick_timer = tick_interval
+
+	var hazard_position: Vector3 = global_position
+	hazard_position.y = 0.0
+
+	if target_mode == "enemy":
+		for node in get_tree().get_nodes_in_group("enemy"):
+			if not is_instance_valid(node) or node.is_queued_for_deletion():
+				continue
+			var target_position: Vector3 = node.global_position
+			target_position.y = 0.0
+			var target_radius: float = 1.0
+			if node.has_method("get_hit_radius"):
+				target_radius = float(node.get_hit_radius())
+			if target_position.distance_to(hazard_position) > radius + target_radius:
+				continue
+			if node.has_method("take_damage"):
+				node.take_damage(damage)
+			if root_duration > 0.0 and node.has_method("apply_root"):
+				node.apply_root(root_duration)
+		return
 
 	if not is_instance_valid(player):
 		return
 
 	var player_position: Vector3 = player.global_position
 	player_position.y = 0.0
-	var hazard_position: Vector3 = global_position
-	hazard_position.y = 0.0
 	if player_position.distance_to(hazard_position) <= radius:
 		if player.has_method("receive_damage"):
 			player.receive_damage(damage)

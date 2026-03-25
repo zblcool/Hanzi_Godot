@@ -256,7 +256,7 @@ func _ensure_input_action(action_name: StringName, keycodes: Array) -> void:
 			event.physical_keycode = keycode
 			InputMap.action_add_event(action_name, event)
 
-const RECIPE_ORDER := ["ming", "chang", "xiu", "forest", "hai", "lei", "rock", "ren", "qin", "yan"]
+const RECIPE_ORDER := ["ming", "chang", "xiu", "forest", "hai", "lei", "rock", "qiu", "ren", "qin", "yan"]
 const RECIPES := {
 	"ming": {
 		"id": "ming",
@@ -325,6 +325,16 @@ const RECIPES := {
 		"title": "岩坠成字",
 		"description": "周期在最近敌群脚下写下岩印，砸出短暂震域。",
 		"color": Color(0.8, 0.77, 0.71, 1.0),
+		"max_level": 3,
+		"word_id": ""
+	},
+	"qiu": {
+		"id": "qiu",
+		"display": "囚",
+		"radicals": ["囗", "亻"],
+		"title": "困阵成字",
+		"description": "周期在最近敌群周围落下囚阵，锁脚并持续伤敌。",
+		"color": Color(0.94, 0.8, 0.48, 1.0),
 		"max_level": 3,
 		"word_id": ""
 	},
@@ -529,7 +539,7 @@ const ENEMIES := {
 	}
 }
 
-const RADICAL_ORDER := ["亻", "木", "日", "月", "石", "山", "氵", "每", "雨", "田", "心", "火", "刂"]
+const RADICAL_ORDER := ["亻", "木", "日", "月", "石", "山", "氵", "每", "雨", "田", "囗", "心", "火", "刂"]
 const RADICAL_COLORS := {
 	"亻": Color(0.88, 0.71, 0.55, 1.0),
 	"木": Color(0.49, 0.82, 0.56, 1.0),
@@ -541,6 +551,7 @@ const RADICAL_COLORS := {
 	"每": Color(0.86, 0.56, 1.0, 1.0),
 	"雨": Color(0.72, 0.9, 1.0, 1.0),
 	"田": Color(0.74, 0.82, 0.62, 1.0),
+	"囗": Color(0.94, 0.78, 0.48, 1.0),
 	"心": Color(1.0, 0.58, 0.72, 1.0),
 	"火": Color(1.0, 0.48, 0.28, 1.0),
 	"刂": Color(1.0, 0.45, 0.38, 1.0)
@@ -607,6 +618,12 @@ const RADICALS := {
 		"name": "田字格",
 		"description": "补齐「雷」的地格，也能继续磨成雷雨场。",
 		"recipe_id": "lei"
+	},
+	"囗": {
+		"display": "囗",
+		"name": "围字框",
+		"description": "和 `亻` 合成「囚」，在最近敌群外侧写下困阵，稳住追兵的脚步。",
+		"recipe_id": "qiu"
 	},
 	"心": {
 		"display": "心",

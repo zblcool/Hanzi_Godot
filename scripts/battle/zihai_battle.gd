@@ -2092,6 +2092,7 @@ func _spawn_player() -> void:
 	player.request_wave.connect(_on_player_request_wave)
 	player.request_slash.connect(_on_player_request_slash)
 	player.request_thunder.connect(_on_player_request_thunder)
+	player.request_prison.connect(_on_player_request_prison)
 	player.health_changed.connect(_on_player_health_changed)
 	player.defeated.connect(_on_player_defeated)
 
@@ -2714,6 +2715,18 @@ func _on_player_request_thunder(target_count: int, damage: float, splash_radius:
 		target.take_damage(damage)
 		if splash_radius > 0.0 and splash_damage > 0.0:
 			_damage_enemies_in_radius(target.global_position, splash_radius, splash_damage, target)
+
+
+func _on_player_request_prison(origin: Vector3, radius: float, warning_time: float, active_time: float, damage: float, tint: Color, label: String, root_duration: float, tick_interval: float) -> void:
+	_play_attack_sfx("rest_wave", 0.86 + radius / 8.0)
+	var hazard = GROUND_HAZARD_SCENE.instantiate()
+	hazard.configure_for_enemies(origin, radius, warning_time, active_time, damage, tint, label, root_duration, tick_interval)
+	hazard.activated.connect(_on_player_prison_activated)
+	effects_root.add_child(hazard)
+
+
+func _on_player_prison_activated(radius: float, _label: String) -> void:
+	_play_attack_sfx("resolve_guard", 0.9 + radius / 9.0)
 
 
 func _collect_nearest_enemies(max_count: int) -> Array:

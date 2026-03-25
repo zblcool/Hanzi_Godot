@@ -12,6 +12,7 @@ signal fire_projectile(origin: Vector3, direction: Vector3, damage: float, speed
 signal request_wave(origin: Vector3, radius: float, damage: float, tint: Color, label: String)
 signal request_slash(origin: Vector3, forward: Vector3, radius: float, damage: float, arc_dot: float, tint: Color, label: String)
 signal request_thunder(target_count: int, damage: float, splash_radius: float, splash_damage: float, tint: Color, label: String)
+signal request_prison(origin: Vector3, radius: float, warning_time: float, active_time: float, damage: float, tint: Color, label: String, root_duration: float, tick_interval: float)
 
 var hero_id: String = "scholar"
 var hero_name: String = "书生"
@@ -52,6 +53,7 @@ var bright_word_level: int = 0
 var thunder_level: int = 0
 var thunder_word_level: int = 0
 var rock_level: int = 0
+var qiu_level: int = 0
 var resolve_level: int = 0
 var resolve_word_level: int = 0
 var flame_level: int = 0
@@ -72,6 +74,7 @@ var forest_timer: float = 0.0
 var bright_timer: float = 0.0
 var thunder_timer: float = 0.0
 var rock_timer: float = 0.0
+var qiu_timer: float = 0.0
 var flame_timer: float = 0.0
 var resolve_pulse_timer: float = 0.0
 var stealth_time: float = 0.0
@@ -355,6 +358,12 @@ func _handle_passives(delta: float) -> void:
 			request_thunder.emit(1, impact_damage, splash_radius, splash_damage, Session.RECIPES["rock"]["color"], "岩")
 			rock_timer = max(3.0, 5.6 - float(rock_level) * 0.38)
 
+	if qiu_level > 0:
+		qiu_timer -= delta
+		if qiu_timer <= 0.0:
+			_trigger_qiu_prison()
+			qiu_timer = max(2.8, 5.4 - float(qiu_level) * 0.42)
+
 	if flame_level > 0:
 		flame_timer -= delta
 		if flame_timer <= 0.0:
@@ -505,6 +514,30 @@ func _trigger_forest_lane() -> void:
 			request_wave.emit(origin, branch_radius, branch_damage, tint, "林")
 
 
+func _trigger_qiu_prison() -> void:
+	var targets := _find_closest_enemies(3)
+	if targets.is_empty():
+		return
+
+	var prison_origin := Vector3.ZERO
+	var valid_count := 0
+	for target in targets:
+		if not is_instance_valid(target):
+			continue
+		prison_origin += target.global_position
+		valid_count += 1
+	if valid_count <= 0:
+		return
+
+	prison_origin /= float(valid_count)
+	prison_origin.y = ground_height
+	var radius: float = 2.05 + float(qiu_level) * 0.28
+	var active_time: float = 1.45 + float(qiu_level) * 0.28
+	var damage: float = 2.8 + current_attack_damage * 0.18 + float(qiu_level) * 1.35
+	var root_duration: float = 0.55 + float(qiu_level) * 0.08
+	request_prison.emit(prison_origin, radius, 0.34, active_time, damage, Session.RECIPES["qiu"]["color"], "囚", root_duration, 0.44)
+
+
 func _trigger_resolve_activation() -> void:
 	if resolve_word_level > 0:
 		heal(2.8 + float(resolve_word_level) * 1.8)
@@ -635,6 +668,7 @@ func _apply_skill_levels() -> void:
 	var hai_level: int = int(skill_levels.get("hai", 0))
 	var lei_level: int = int(skill_levels.get("lei", 0))
 	var rock_recipe_level: int = int(skill_levels.get("rock", 0))
+	var qiu_recipe_level: int = int(skill_levels.get("qiu", 0))
 	var ren_level: int = int(skill_levels.get("ren", 0))
 	var qin_recipe_level: int = int(skill_levels.get("qin", 0))
 	var yan_level: int = int(skill_levels.get("yan", 0))
@@ -659,6 +693,7 @@ func _apply_skill_levels() -> void:
 	thunder_level = lei_level
 	thunder_word_level = lei_word_level
 	rock_level = rock_recipe_level
+	qiu_level = qiu_recipe_level
 	resolve_level = ren_level
 	resolve_word_level = ren_word_level
 	flame_level = yan_level
@@ -713,6 +748,8 @@ func _apply_skill_levels() -> void:
 		thunder_timer = max(2.35, 4.1 - float(thunder_level) * 0.34 - float(thunder_word_level) * 0.38)
 	if rock_level > 0 and rock_timer <= 0.0:
 		rock_timer = max(3.0, 5.6 - float(rock_level) * 0.38)
+	if qiu_level > 0 and qiu_timer <= 0.0:
+		qiu_timer = max(2.8, 5.4 - float(qiu_level) * 0.42)
 	if flame_level > 0 and flame_timer <= 0.0:
 		flame_timer = max(2.4, 5.1 - float(flame_level) * 0.36 - float(flame_word_level) * 0.42)
 	if resolve_active and resolve_word_level > 0 and resolve_pulse_timer <= 0.0:

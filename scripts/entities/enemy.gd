@@ -39,6 +39,7 @@ var dash_speed_multiplier: float = 1.0
 var dash_damage: float = 0.0
 var dash_stun_time: float = 0.0
 var dash_hit_ready: bool = false
+var root_time: float = 0.0
 var strafe_sign: float = 1.0
 var elite_skill_index: int = 0
 var elite_spin_angle: float = 0.0
@@ -98,6 +99,7 @@ func _physics_process(delta: float) -> void:
 	dash_time = max(dash_time - delta, 0.0)
 	windup_time = max(windup_time - delta, 0.0)
 	hit_flash_time = max(hit_flash_time - delta, 0.0)
+	root_time = max(root_time - delta, 0.0)
 	drift_time += delta
 
 	if was_winding and windup_time <= 0.0 and not pending_action.is_empty():
@@ -125,8 +127,11 @@ func _physics_process(delta: float) -> void:
 		if pending_direction.length_squared() > 0.01:
 			_face_direction(pending_direction, delta)
 	elif not player_hidden:
-		motion = _compute_motion(direction, distance)
-		_handle_contact_attack(distance)
+		if root_time > 0.0:
+			_handle_contact_attack(distance)
+		else:
+			motion = _compute_motion(direction, distance)
+			_handle_contact_attack(distance)
 
 	global_position += motion * delta
 	global_position.y = ground_height
@@ -157,6 +162,12 @@ func take_damage(amount: float) -> void:
 
 func get_hit_radius() -> float:
 	return hit_radius
+
+
+func apply_root(duration: float) -> void:
+	if is_dead:
+		return
+	root_time = max(root_time, duration)
 
 
 func set_health_bar_visible(should_show: bool) -> void:
