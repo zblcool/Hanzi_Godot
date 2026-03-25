@@ -20,6 +20,7 @@ const BattleEnvironmentSupport := preload("res://scripts/battle/battle_environme
 const BattleGuidanceSupport := preload("res://scripts/battle/battle_guidance_support.gd")
 const BattlePhraseGuardianSupport := preload("res://scripts/battle/battle_phrase_guardian_support.gd")
 const BattlePhraseEventSupport := preload("res://scripts/battle/battle_phrase_event_support.gd")
+const BattlePhraseEventPresentationSupport := preload("res://scripts/battle/battle_phrase_event_presentation_support.gd")
 const BattleRoomObjectivePresentationSupport := preload("res://scripts/battle/battle_room_objective_presentation_support.gd")
 const BattleRoomObjectiveRules := preload("res://scripts/battle/battle_room_objective_rules.gd")
 const BattleSupplyRules := preload("res://scripts/battle/battle_supply_rules.gd")
@@ -746,6 +747,7 @@ var battle_environment := BattleEnvironmentSupport.new()
 var battle_guidance_support := BattleGuidanceSupport.new()
 var battle_phrase_guardian_support := BattlePhraseGuardianSupport.new()
 var battle_phrase_event_support := BattlePhraseEventSupport.new()
+var battle_phrase_event_presentation := BattlePhraseEventPresentationSupport.new()
 var battle_room_objective_presentation := BattleRoomObjectivePresentationSupport.new()
 var battle_room_objective_rules := BattleRoomObjectiveRules.new()
 var battle_supply_rules := BattleSupplyRules.new()
@@ -1646,46 +1648,15 @@ func _update_phrase_events() -> void:
 		var accent := Color(phrase_event.get("tint", Color(0.76, 0.86, 1.0, 1.0)))
 		var phrase_text := _phrase_event_display_text(phrase_event)
 		var reward_copy := _phrase_event_reward_copy(phrase_event)
-		if hud != null:
-			hud.show_banner(
-				_battle_guidance_format(
-					"phrase_guardian_banner_format",
-					"句阵守卫 · %s",
-					"Sentence Guardian · %s",
-					[phrase_text]
-				),
-				accent,
-				1.7
-			)
-			hud.show_reveal(
-				_battle_guidance_text("phrase_guardian_reveal_title", "守句现身", "Guarded Phrase"),
-				phrase_text,
-				_battle_guidance_format(
-					"phrase_guardian_reveal_body_format",
-					"击败守句魁首，即可%s。",
-					"Defeat the guardian to %s.",
-					[reward_copy]
-				),
-				accent,
-				String(phrase_event.get("guardian_glyph", phrase_event.get("glyph", "句"))),
-				2.8
-			)
-			hud.set_tip(
-				_battle_guidance_format(
-					"phrase_guardian_tip_format",
-					"这段房间里已经显出「%s」句阵。击败守句魁首后，就能%s。",
-					"The guarded phrase `%s` has surfaced in this chamber. Defeat its guardian to %s.",
-					[phrase_text, reward_copy]
-				)
-			)
-		_log_battle_event(
-			_battle_guidance_format(
-				"phrase_guardian_log_format",
-				"句阵守卫 · %s",
-				"Phrase Guardian · %s",
-				[phrase_text]
-			),
-			accent
+		battle_phrase_event_presentation.present_phrase_discovery(
+			hud,
+			accent,
+			phrase_text,
+			reward_copy,
+			String(phrase_event.get("guardian_glyph", phrase_event.get("glyph", "句"))),
+			Callable(self, "_battle_guidance_text"),
+			Callable(self, "_battle_guidance_format"),
+			Callable(self, "_log_battle_event")
 		)
 		_spawn_phrase_guardian(phrase_event)
 
@@ -1771,46 +1742,15 @@ func _grant_phrase_event_reward(phrase_event: Dictionary) -> void:
 		accent,
 		String(reward_resolution.get("phrase_glyph", "句"))
 	)
-	if hud != null:
-		hud.show_banner(
-			_battle_guidance_format(
-				"phrase_revealed_banner_format",
-				"句成异动 · %s",
-				"Phrase Revealed · %s",
-				[phrase_text]
-			),
-			accent,
-			1.9
-		)
-		hud.show_reveal(
-			_battle_guidance_text("phrase_revealed_reveal_title", "句成异动", "Verse Revealed"),
-			phrase_text,
-			_battle_guidance_format(
-				"phrase_revealed_reward_format",
-				"奖励 · %s",
-				"Reward · %s",
-				[reward_copy]
-			),
-			accent,
-			String(phrase_event.get("glyph", phrase_event.get("guardian_glyph", "句"))),
-			2.7
-		)
-		hud.set_tip(
-			_battle_guidance_format(
-				"phrase_revealed_tip_format",
-				"「%s」句阵已经显成，句阵赏赐会为你%s。",
-				"The guarded phrase `%s` is now yours. The sentence reward will %s.",
-				[phrase_text, reward_copy]
-			)
-		)
-	_log_battle_event(
-		_battle_guidance_format(
-			"phrase_revealed_log_format",
-			"句成异动 · %s · %s",
-			"Phrase Revealed · %s · %s",
-			[phrase_text, reward_copy]
-		),
-		accent
+	battle_phrase_event_presentation.present_phrase_reward(
+		hud,
+		accent,
+		phrase_text,
+		reward_copy,
+		String(phrase_event.get("glyph", phrase_event.get("guardian_glyph", "句"))),
+		Callable(self, "_battle_guidance_text"),
+		Callable(self, "_battle_guidance_format"),
+		Callable(self, "_log_battle_event")
 	)
 	_sync_hud()
 
