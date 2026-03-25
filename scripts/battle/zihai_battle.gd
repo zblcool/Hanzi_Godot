@@ -14,6 +14,7 @@ const TREASURE_CHEST_SCENE := preload("res://scenes/entities/treasure_chest.tscn
 const BATTLE_HUD_SCENE := preload("res://scenes/ui/battle_hud.tscn")
 const TOUCH_CONTROLS_OVERLAY := preload("res://scripts/ui/touch_controls_overlay.gd")
 const BattleAudio := preload("res://scripts/core/battle_audio.gd")
+const BattleChamberRules := preload("res://scripts/battle/battle_chamber_rules.gd")
 const BattleEnvironmentSupport := preload("res://scripts/battle/battle_environment_support.gd")
 const BattleSupplyRules := preload("res://scripts/battle/battle_supply_rules.gd")
 const BattleWaveRules := preload("res://scripts/battle/battle_wave_rules.gd")
@@ -733,6 +734,7 @@ var field_phase_stamp_root: Node3D
 var field_phase_stamp_entries: Array[Dictionary] = []
 var current_soundtrack_id: String = ""
 var current_soundtrack_cue: String = ""
+var battle_chamber_rules := BattleChamberRules.new()
 var battle_environment := BattleEnvironmentSupport.new()
 var battle_supply_rules := BattleSupplyRules.new()
 var battle_wave_rules := BattleWaveRules.new()
@@ -1041,28 +1043,11 @@ func _chamber_interlude_options() -> Array[Dictionary]:
 
 
 func _pick_chamber_interlude_radical() -> String:
-	return String(_pick_chamber_interlude_radicals(1)[0])
+	return battle_chamber_rules.pick_interlude_radical(rng, Session.RADICAL_ORDER)
 
 
 func _pick_chamber_interlude_radicals(count: int = 2) -> Array[String]:
-	var candidates: Array[String] = []
-	for radical_variant in Session.RADICAL_ORDER:
-		var radical := String(radical_variant)
-		if radical.is_empty():
-			continue
-		candidates.append(radical)
-	if candidates.is_empty():
-		return ["日"]
-	var requested_count := maxi(1, count)
-	var picks: Array[String] = []
-	var pool := candidates.duplicate()
-	while picks.size() < requested_count and not pool.is_empty():
-		var pick_index := rng.randi_range(0, pool.size() - 1)
-		picks.append(String(pool[pick_index]))
-		pool.remove_at(pick_index)
-	while picks.size() < requested_count:
-		picks.append(String(picks[0]))
-	return picks
+	return battle_chamber_rules.pick_interlude_radicals(rng, Session.RADICAL_ORDER, count)
 
 
 func _chamber_interlude_next_chamber_id() -> String:
@@ -1111,65 +1096,44 @@ func _clear_interlude_draft_lean() -> void:
 
 
 func _arm_interlude_draft_lean(lean_id: String, radicals: Array[String], label_zh: String, label_en: String) -> void:
-	var unique_radicals: Array[String] = []
-	for radical_variant in radicals:
-		var radical := String(radical_variant)
-		if radical.is_empty() or unique_radicals.has(radical):
-			continue
-		unique_radicals.append(radical)
-	if unique_radicals.is_empty():
+	interlude_draft_lean_data = battle_chamber_rules.build_draft_lean_data(
+		lean_id,
+		radicals,
+		label_zh,
+		label_en,
+		int(Session.chapter_progress.get("completed_bosses", 0))
+	)
+	if interlude_draft_lean_data.is_empty():
 		_clear_interlude_draft_lean()
 		return
-	interlude_draft_lean_data = {
-		"id": lean_id,
-		"radicals": unique_radicals,
-		"label": label_zh,
-		"english_label": label_en,
-		"expires_after_bosses": int(Session.chapter_progress.get("completed_bosses", 0)) + 1
-	}
 
 
 func _interlude_draft_lean_radicals() -> Array[String]:
-	var radicals: Array[String] = []
-	var radicals_variant: Variant = interlude_draft_lean_data.get("radicals", [])
-	if radicals_variant is Array:
-		for radical_variant in radicals_variant:
-			var radical := String(radical_variant)
-			if radical.is_empty() or radicals.has(radical):
-				continue
-			radicals.append(radical)
-	return radicals
+	return battle_chamber_rules.extract_draft_lean_radicals(interlude_draft_lean_data)
 
 
 func _interlude_draft_lean_text(radicals: Array[String] = []) -> String:
-	var lean_radicals := radicals if not radicals.is_empty() else _interlude_draft_lean_radicals()
-	if lean_radicals.is_empty():
-		return ""
-	return " / ".join(lean_radicals)
+	return battle_chamber_rules.draft_lean_text(interlude_draft_lean_data, radicals)
 
 
 func _interlude_draft_lean_bonus(radical: String) -> float:
-	var lean_radicals := _interlude_draft_lean_radicals()
-	if lean_radicals.is_empty() or not lean_radicals.has(radical):
-		return 0.0
-	return (
-		INTERLUDE_DRAFT_LEAN_FOCUSED_BONUS
-		if lean_radicals.size() <= 2
-		else INTERLUDE_DRAFT_LEAN_BASE_BONUS
+	return battle_chamber_rules.draft_lean_bonus(
+		interlude_draft_lean_data,
+		radical,
+		INTERLUDE_DRAFT_LEAN_FOCUSED_BONUS,
+		INTERLUDE_DRAFT_LEAN_BASE_BONUS
 	)
 
 
 func _append_interlude_draft_lean_copy(headline: String, radical: String) -> String:
-	if _interlude_draft_lean_bonus(radical) <= 0.0:
-		return headline
-	var lean_text := _interlude_draft_lean_text()
-	if lean_text.is_empty():
-		return headline
-	return (
-		"%s Chamber lean: %s."
-		if _is_english()
-		else "%s 卷间余势：%s。"
-	) % [headline, lean_text]
+	return battle_chamber_rules.append_draft_lean_copy(
+		headline,
+		radical,
+		interlude_draft_lean_data,
+		INTERLUDE_DRAFT_LEAN_FOCUSED_BONUS,
+		INTERLUDE_DRAFT_LEAN_BASE_BONUS,
+		_is_english()
+	)
 
 
 func _arm_scroll_echo_modifier() -> void:
@@ -1177,13 +1141,7 @@ func _arm_scroll_echo_modifier() -> void:
 
 
 func _build_chamber_carry_snapshot() -> Dictionary:
-	var snapshot: Dictionary = {}
-	if not chamber_modifier_id.is_empty():
-		snapshot["modifier_id"] = chamber_modifier_id
-	var lean_radicals := _interlude_draft_lean_radicals()
-	if not lean_radicals.is_empty():
-		snapshot["draft_radicals"] = lean_radicals
-	return snapshot
+	return battle_chamber_rules.build_chamber_carry_snapshot(chamber_modifier_id, interlude_draft_lean_data)
 
 
 func _scroll_echo_modifier_active() -> bool:
@@ -1212,8 +1170,7 @@ func _intro_override_chamber_id() -> String:
 
 
 func _chamber_id_for_completed_bosses(completed_bosses: int) -> String:
-	var chamber_index := mini(maxi(completed_bosses, 0), CHAMBER_ORDER.size() - 1)
-	return String(CHAMBER_ORDER[chamber_index])
+	return battle_chamber_rules.chamber_id_for_completed_bosses(completed_bosses, CHAMBER_ORDER)
 
 
 func _current_chamber_data() -> Dictionary:
@@ -2057,10 +2014,7 @@ func _grant_phrase_event_reward(phrase_event: Dictionary) -> void:
 
 
 func _next_chamber_id_after_interlude() -> String:
-	var current_index := CHAMBER_ORDER.find(current_chamber_id)
-	if current_index == -1:
-		return String(CHAMBER_ORDER[0])
-	return String(CHAMBER_ORDER[mini(current_index + 1, CHAMBER_ORDER.size() - 1)])
+	return battle_chamber_rules.next_chamber_id_after_interlude(current_chamber_id, CHAMBER_ORDER)
 
 
 func _chamber_preview_lines(next_chamber_id: String, next_wave: int) -> Array[String]:
