@@ -155,6 +155,7 @@ var cangjie_margin_choice := "greed"
 var cangjie_route_preview_node_id := ""
 var cangjie_duelist_line_indices := {}
 var changelog_overlay: Control
+var cangjie_profile_button: Button
 var profile_overlay: Control
 var profile_name_input: LineEdit
 var profile_status_label: Label
@@ -162,6 +163,7 @@ var profile_hint_label: Label
 var profile_preview_name_label: Label
 var profile_preview_glyph_label: Label
 var profile_preview_copy_label: Label
+var profile_return_overlay := ""
 
 
 func _ready() -> void:
@@ -269,6 +271,7 @@ func _rebuild_ui() -> void:
 	cangjie_section_title_label = null
 	cangjie_section_content_box = null
 	cangjie_nav_buttons.clear()
+	cangjie_profile_button = null
 	changelog_overlay = null
 	profile_overlay = null
 	profile_name_input = null
@@ -475,6 +478,35 @@ func _make_language_toggle_button(control_size: Vector2) -> Button:
 	var button := _make_pill_button(_get_language_toggle_label(), control_size, Callable(self, "_on_toggle_language_pressed"))
 	button.tooltip_text = _get_language_toggle_tooltip()
 	return button
+
+
+func _get_active_profile_name() -> String:
+	var identity: Dictionary = Session.get_leaderboard_identity()
+	var custom_name := String(identity.get("custom_name", "")).strip_edges()
+	if not custom_name.is_empty():
+		return custom_name
+	return Session.get_leaderboard_device_alias()
+
+
+func _truncate_profile_button_name(profile_name: String) -> String:
+	var limit := 12 if _is_english() else 6
+	if profile_name.length() <= limit:
+		return profile_name
+	return "%s..." % profile_name.substr(0, limit)
+
+
+func _get_cangjie_profile_button_text(full_text: bool = false) -> String:
+	var profile_name := _get_active_profile_name()
+	if not full_text:
+		profile_name = _truncate_profile_button_name(profile_name)
+	return "Player Sigil: %s" % profile_name if _is_english() else "玩家名帖：%s" % profile_name
+
+
+func _refresh_cangjie_profile_button() -> void:
+	if cangjie_profile_button == null:
+		return
+	cangjie_profile_button.text = _get_cangjie_profile_button_text()
+	cangjie_profile_button.tooltip_text = _get_cangjie_profile_button_text(true)
 
 
 func _resolve_launcher_action(action_id: String) -> Callable:
@@ -1026,9 +1058,10 @@ func _build_cangjie_overlay() -> void:
 	language_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	footer_row.add_child(language_button)
 
-	var profile_button := _make_pill_button("玩家名帖", _v(0.0, 52.0), Callable(self, "_show_profile"))
-	profile_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	footer_row.add_child(profile_button)
+	cangjie_profile_button = _make_pill_button("玩家名帖", _v(0.0, 52.0), Callable(self, "_show_profile"))
+	cangjie_profile_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	footer_row.add_child(cangjie_profile_button)
+	_refresh_cangjie_profile_button()
 
 	var close_button := Button.new()
 	close_button.text = _localize_text("返回游戏选择")
@@ -1049,6 +1082,7 @@ func _build_cangjie_overlay() -> void:
 func _refresh_cangjie_portal() -> void:
 	if cangjie_section_title_label == null or cangjie_section_content_box == null:
 		return
+	_refresh_cangjie_profile_button()
 
 	var sections := FrontEndContent.cangjie_portal_sections()
 	if sections.is_empty():
@@ -4955,6 +4989,13 @@ func _on_cangjie_section_pressed(section_id: String) -> void:
 func _show_profile() -> void:
 	if profile_overlay == null or profile_name_input == null:
 		return
+	profile_return_overlay = ""
+	if cangjie_overlay != null and cangjie_overlay.visible:
+		profile_return_overlay = "cangjie"
+	elif about_overlay != null and about_overlay.visible:
+		profile_return_overlay = "about"
+	elif changelog_overlay != null and changelog_overlay.visible:
+		profile_return_overlay = "changelog"
 	_hide_cangjie_portal()
 	_hide_about()
 	_hide_changelog()
@@ -4967,6 +5008,18 @@ func _show_profile() -> void:
 func _hide_profile() -> void:
 	if profile_overlay != null:
 		profile_overlay.visible = false
+	match profile_return_overlay:
+		"cangjie":
+			if cangjie_overlay != null:
+				cangjie_overlay.visible = true
+				_refresh_cangjie_portal()
+		"about":
+			if about_overlay != null:
+				about_overlay.visible = true
+		"changelog":
+			if changelog_overlay != null:
+				changelog_overlay.visible = true
+	profile_return_overlay = ""
 
 
 func _refresh_profile_overlay(status_text: String = "") -> void:
@@ -5017,6 +5070,7 @@ func _on_profile_save_pressed() -> void:
 	if String(identity.get("custom_name", "")).is_empty():
 		status_text = _localize_text(String(profile_content.get("status_restored_format", "已恢复设备默认侠名：%s"))) % resolved_name
 	_refresh_profile_overlay(status_text)
+	_refresh_cangjie_profile_button()
 
 
 func _on_profile_reset_pressed() -> void:
@@ -5025,6 +5079,7 @@ func _on_profile_reset_pressed() -> void:
 	var resolved_name := Session.clear_preferred_leaderboard_name()
 	var profile_content := FrontEndContent.launcher_profile_content()
 	_refresh_profile_overlay(_localize_text(String(profile_content.get("status_restored_format", "已恢复设备默认侠名：%s"))) % resolved_name)
+	_refresh_cangjie_profile_button()
 
 
 func _get_profile_monogram(profile_name: String) -> String:
