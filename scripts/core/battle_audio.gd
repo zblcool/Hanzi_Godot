@@ -484,6 +484,12 @@ func play_cue(kind: String, intensity: float = 1.0) -> void:
 				return
 			_push_voice({"waveform": "triangle", "start_freq": 300.0, "end_freq": 420.0, "amplitude": 0.12 * power, "duration": 0.22, "release": 0.26})
 			_push_voice({"waveform": "sine", "start_freq": 520.0, "end_freq": 690.0, "amplitude": 0.07 * power, "duration": 0.18, "release": 0.22, "delay": 0.03})
+		"chamber_shift":
+			if not _can_play(kind, 0.46):
+				return
+			_push_voice({"waveform": "triangle", "start_freq": 248.0, "end_freq": 388.0, "amplitude": 0.12 * power, "duration": 0.24, "release": 0.28})
+			_push_voice({"waveform": "square", "start_freq": 164.0, "end_freq": 92.0, "amplitude": 0.08 * power, "duration": 0.18, "release": 0.22, "delay": 0.01})
+			_push_voice({"waveform": "sine", "start_freq": 580.0, "end_freq": 860.0, "amplitude": 0.05 * power, "duration": 0.18, "release": 0.22, "delay": 0.04, "pan": _small_pan()})
 		"wave_step":
 			if not _can_play(kind, 0.18):
 				return
@@ -525,6 +531,12 @@ func play_cue(kind: String, intensity: float = 1.0) -> void:
 			_push_voice({"waveform": "saw", "start_freq": 260.0, "end_freq": 120.0, "amplitude": 0.16 * power, "duration": 0.24, "release": 0.3})
 			_push_voice({"waveform": "square", "start_freq": 460.0, "end_freq": 220.0, "amplitude": 0.08 * power, "duration": 0.18, "release": 0.22, "delay": 0.03})
 			_push_voice({"waveform": "noise", "start_freq": 420.0, "end_freq": 210.0, "amplitude": 0.04 * power, "duration": 0.08, "release": 0.1, "delay": 0.02})
+		"priority_target":
+			if not _can_play(kind, 0.38):
+				return
+			_push_voice({"waveform": "saw", "start_freq": 284.0, "end_freq": 152.0, "amplitude": 0.13 * power, "duration": 0.2, "release": 0.22})
+			_push_voice({"waveform": "triangle", "start_freq": 690.0, "end_freq": 940.0, "amplitude": 0.055 * power, "duration": 0.12, "release": 0.15, "delay": 0.02, "pan": _small_pan()})
+			_push_voice({"waveform": "noise", "start_freq": 540.0, "end_freq": 220.0, "amplitude": 0.032 * power, "duration": 0.05, "release": 0.07, "delay": 0.012, "pan": _small_pan()})
 		"boss_defeat":
 			if not _can_play(kind, 0.8):
 				return

@@ -1646,7 +1646,16 @@ func _spawn_room_objective_enemy(objective: Dictionary, beacon_position: Vector3
 			String(objective_enemy_callout.get("log_prefix", "")),
 			float(objective_enemy_callout.get("duration", 3.0))
 		)
-	_spawn_wave_effect(enemy.global_position, 3.9, Color(enemy.tint), String(enemy.glyph))
+	var entrance_radius := 4.7 if objective_mode == "hunt" else 3.9
+	_spawn_wave_effect(enemy.global_position, entrance_radius, Color(enemy.tint), String(enemy.glyph))
+	if objective_mode == "hunt":
+		_spawn_wave_effect(
+			beacon_position,
+			2.6,
+			Color(enemy.tint).lightened(0.08),
+			String(objective.get("glyph", "缉"))
+		)
+		_play_cue_sfx("priority_target", 1.0)
 	return String(enemy.enemy_name)
 
 
@@ -2444,6 +2453,9 @@ func _transition_to_chamber(next_chamber_id: String) -> void:
 			2.9
 		)
 		hud.set_tip(_current_chamber_tip())
+	if is_instance_valid(player):
+		_spawn_wave_effect(player.global_position, 5.0, chamber_accent, _current_chamber_glyph())
+	_play_cue_sfx("chamber_shift", 1.0)
 	_log_battle_event(
 		_battle_interlude_format("transition_log_format", "房间更替 · %s", "Chamber Shift · %s", [chamber_name]),
 		chamber_accent
