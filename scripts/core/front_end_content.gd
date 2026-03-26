@@ -4147,6 +4147,22 @@ const MENU_CHAMBER_ROUTE_META := {
 		{
 			"chamber_id": "entry_court",
 			"phase": {"zh": "第 1 房", "en": "Room 1"},
+			"cues": [
+				{
+					"label": {"zh": "出口节拍", "en": "Exit Beat"},
+					"body": {
+						"zh": "卷主退散后先收束前庭连锁印，再触碰启门印逼出砚门守魁，卷间奖印才会显形。",
+						"en": "After the scroll lord falls, collapse the courtyard relay seals first, then touch the gate seal to draw out the Ink Gate Warden before the reward beacon rises."
+					}
+				},
+				{
+					"label": {"zh": "开局落点", "en": "Run Landing"},
+					"body": {
+						"zh": "标准入卷会从这里起笔；想检查完整开卷 build 与主卷榜记录，仍以这一房为准。",
+						"en": "Standard runs still open here. If the goal is the full opening build curve and main-board record flow, this remains the true start."
+					}
+				}
+			],
 			"tags": [
 				{"zh": "标准入卷", "en": "Standard Start"},
 				{"zh": "宽场开卷", "en": "Wide Opening"}
@@ -4155,6 +4171,22 @@ const MENU_CHAMBER_ROUTE_META := {
 		{
 			"chamber_id": "slip_archive",
 			"phase": {"zh": "卷间一", "en": "Interlude I"},
+			"cues": [
+				{
+					"label": {"zh": "出口节拍", "en": "Exit Beat"},
+					"body": {
+						"zh": "简库卷主退散后会换成雷纹转钥封，要先逼出简雷守将，才会放出通往雷纹内库的奖印。",
+						"en": "Once the archive lord falls, the exit becomes the Storm Latch Seal. Draw out the Slip Storm Marshal before the reward beacon toward Thunder Vault appears."
+					}
+				},
+				{
+					"label": {"zh": "房间回报", "en": "Room Payoff"},
+					"body": {
+						"zh": "这一房开始接入句阵守卫和更密的卷架 / 碑刻读法，最适合检查卷间抉择有没有真的改写下一段。",
+						"en": "This is where phrase guardians and the denser rack-stela read first matter, making it the clearest check that interlude choices are truly reshaping the next push."
+					}
+				}
+			],
 			"tags": [
 				{"zh": "首次换房", "en": "First Chamber Swap"},
 				{"zh": "句阵守卫", "en": "Phrase Guardians"}
@@ -4163,6 +4195,22 @@ const MENU_CHAMBER_ROUTE_META := {
 		{
 			"chamber_id": "thunder_vault",
 			"phase": {"zh": "卷间二", "en": "Interlude II"},
+			"cues": [
+				{
+					"label": {"zh": "中段压线", "en": "Mid-Run Pressure"},
+					"body": {
+						"zh": "更冷更紧的中轴会把补给、雷碑与混编敌潮压到同一条读线里，房间节奏会比简库更收束。",
+						"en": "The colder central lane squeezes supplies, storm stelae, and mixed waves into one read, so the room cadence is tighter than Slip Archive."
+					}
+				},
+				{
+					"label": {"zh": "换房钩子", "en": "Swap Hook"},
+					"body": {
+						"zh": "这一层结束后就会进入终室三选一，是终局 build 最后一次明显改写落点。",
+						"en": "Clearing this room feeds directly into the final sanctum trio, making it the last obvious chance to bend the endgame build before the summit."
+					}
+				}
+			],
 			"tags": [
 				{"zh": "雷纹收束", "en": "Storm Compression"},
 				{"zh": "冷色中轴", "en": "Central Lane"}
@@ -4171,6 +4219,22 @@ const MENU_CHAMBER_ROUTE_META := {
 		{
 			"chamber_id": "abyss_sanctum",
 			"phase": {"zh": "终室", "en": "Final Room"},
+			"cues": [
+				{
+					"label": {"zh": "终室压读", "en": "Final Read"},
+					"body": {
+						"zh": "终室会把深墨卷架、压阵石碑与终盘补给围成更稳的终局读法，适合单独校对高压读图。",
+						"en": "The sanctum frames darker racks, sealing stelae, and final supplies into a steadier endgame read, making it the best place to review late-pressure room reading on its own."
+					}
+				},
+				{
+					"label": {"zh": "试阵落点", "en": "Shortcut Landing"},
+					"body": {
+						"zh": "第 20 波捷径会直接落在这里，专门用来检查终室敌潮、HUD 节奏与卷主压阵。",
+						"en": "The wave-20 shortcut lands here directly so final-room enemy pressure, HUD cadence, and scroll-lord staging can be checked in isolation."
+					}
+				}
+			],
 			"tags": [
 				{"zh": "卷渊压阵", "en": "Abyss Pressure"},
 				{"zh": "第 20 波压测", "en": "Wave 20 Shortcut"}

@@ -2503,6 +2503,44 @@ func _make_chamber_route_card(card: Dictionary, accent: Color) -> PanelContainer
 	if not description_text.is_empty():
 		box.add_child(_make_label(description_text, 15, Color(0.9, 0.92, 0.95, 0.95)))
 
+	var cues_variant: Variant = card.get("cues", [])
+	if cues_variant is Array and not (cues_variant as Array).is_empty():
+		var cues_box := VBoxContainer.new()
+		cues_box.add_theme_constant_override("separation", _i(8))
+		box.add_child(cues_box)
+		for cue_variant in cues_variant:
+			if cue_variant is Dictionary:
+				var cue := cue_variant as Dictionary
+				var cue_panel := PanelContainer.new()
+				cue_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				cue_panel.add_theme_stylebox_override(
+					"panel",
+					_make_panel_style(
+						Color(accent.r * 0.1, accent.g * 0.1, accent.b * 0.14, 0.66),
+						Color(accent.r, accent.g, accent.b, 0.18)
+					)
+				)
+				cues_box.add_child(cue_panel)
+
+				var cue_margin := MarginContainer.new()
+				cue_margin.add_theme_constant_override("margin_left", _i(12))
+				cue_margin.add_theme_constant_override("margin_top", _i(10))
+				cue_margin.add_theme_constant_override("margin_right", _i(12))
+				cue_margin.add_theme_constant_override("margin_bottom", _i(10))
+				cue_panel.add_child(cue_margin)
+
+				var cue_box := VBoxContainer.new()
+				cue_box.add_theme_constant_override("separation", _i(4))
+				cue_margin.add_child(cue_box)
+
+				var cue_label_text := _localize_content_value(cue.get("label", "")).strip_edges()
+				if not cue_label_text.is_empty():
+					cue_box.add_child(_make_label(cue_label_text, 13, Color(0.96, 0.82, 0.54, 0.92)))
+
+				var cue_body_text := _localize_content_value(cue.get("body", "")).strip_edges()
+				if not cue_body_text.is_empty():
+					cue_box.add_child(_make_label(cue_body_text, 14, Color(0.88, 0.92, 0.96, 0.92)))
+
 	var tags_variant: Variant = card.get("tags", [])
 	if tags_variant is Array and not (tags_variant as Array).is_empty():
 		var tag_row := HFlowContainer.new()
