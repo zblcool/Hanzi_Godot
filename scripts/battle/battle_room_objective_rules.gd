@@ -1,6 +1,17 @@
 extends RefCounted
 
 
+func _objective_mode(objective: Dictionary) -> String:
+	var mode := String(objective.get("mode", ""))
+	if not mode.is_empty():
+		return mode
+	if objective.has("target"):
+		return "hunt"
+	if objective.has("gatekeeper"):
+		return "gatekeeper"
+	return "relay"
+
+
 func blank_state() -> Dictionary:
 	return {
 		"id": "",
@@ -39,6 +50,7 @@ func begin_objective(objective: Dictionary) -> Dictionary:
 
 func pickup_definitions(objective: Dictionary) -> Array[Dictionary]:
 	var objective_id: String = String(objective.get("id", ""))
+	var objective_mode := _objective_mode(objective)
 	var glyph: String = String(objective.get("glyph", "封"))
 	var pickups: Array[Dictionary] = []
 	var pickup_positions_variant: Variant = objective.get("pickup_positions", [])
@@ -51,11 +63,15 @@ func pickup_definitions(objective: Dictionary) -> Array[Dictionary]:
 				"room_objective_id": objective_id,
 				"room_objective_glyph": glyph
 			}
-			if objective_id == "seal_gatekeeper":
+			if objective_mode == "gatekeeper" or objective_mode == "hunt":
 				pickup_supply_id = "beacon"
 				pickup_meta["pickup_label"] = glyph
-				pickup_meta["pickup_tint"] = objective.get("seal_tint", Color(0.94, 0.44, 0.34, 1.0))
-				pickup_meta["pickup_glow"] = objective.get("seal_glow", Color(1.0, 0.82, 0.66, 1.0))
+				var tint_key := "marker_tint" if objective_mode == "hunt" else "seal_tint"
+				var glow_key := "marker_glow" if objective_mode == "hunt" else "seal_glow"
+				var default_tint := Color(0.66, 0.78, 1.0, 1.0) if objective_mode == "hunt" else Color(0.94, 0.44, 0.34, 1.0)
+				var default_glow := Color(0.9, 0.96, 1.0, 1.0) if objective_mode == "hunt" else Color(1.0, 0.82, 0.66, 1.0)
+				pickup_meta["pickup_tint"] = objective.get(tint_key, default_tint)
+				pickup_meta["pickup_glow"] = objective.get(glow_key, default_glow)
 			pickups.append({
 				"world_position": position_variant,
 				"supply_id": pickup_supply_id,
@@ -66,6 +82,8 @@ func pickup_definitions(objective: Dictionary) -> Array[Dictionary]:
 
 func advance_on_pickup(state: Dictionary, pickup_objective_id: String) -> Dictionary:
 	var objective_id: String = String(state.get("id", ""))
+	var objective_variant: Variant = state.get("data", {})
+	var objective: Dictionary = objective_variant as Dictionary if objective_variant is Dictionary else {}
 	if objective_id.is_empty() or pickup_objective_id.is_empty() or pickup_objective_id != objective_id:
 		return {
 			"handled": false,
@@ -73,12 +91,13 @@ func advance_on_pickup(state: Dictionary, pickup_objective_id: String) -> Dictio
 		}
 
 	var next_state: Dictionary = state.duplicate(true)
-	if objective_id == "seal_gatekeeper":
+	var objective_mode := _objective_mode(objective)
+	if objective_mode == "gatekeeper" or objective_mode == "hunt":
 		next_state["remaining"] = 0
 		next_state["gatekeeper_active"] = true
 		return {
 			"handled": true,
-			"mode": "gatekeeper",
+			"mode": objective_mode,
 			"state": next_state
 		}
 

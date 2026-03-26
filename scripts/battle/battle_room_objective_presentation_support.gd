@@ -15,6 +15,15 @@ func _guidance_format(
 	return String(guidance_format.call(key, fallback_zh, fallback_en, values))
 
 
+func _objective_enemy_variant(objective: Dictionary) -> Dictionary:
+	var mode := String(objective.get("mode", ""))
+	var enemy_key := "target" if mode == "hunt" else "gatekeeper"
+	var enemy_variant: Variant = objective.get(enemy_key, {})
+	if enemy_variant is Dictionary:
+		return enemy_variant as Dictionary
+	return {}
+
+
 func build_break_beacon_spawn_meta() -> Dictionary:
 	return {
 		"chamber_break_beacon": true,
@@ -110,10 +119,11 @@ func present_objective_start(
 	)
 
 
-func present_gatekeeper_waiting(
+func present_objective_enemy_waiting(
 	hud,
+	objective_mode: String,
 	objective_name: String,
-	gatekeeper_name: String,
+	objective_enemy_name: String,
 	status_text: String,
 	accent: Color,
 	glyph: String,
@@ -121,13 +131,14 @@ func present_gatekeeper_waiting(
 	guidance_format: Callable,
 	log_battle_event: Callable
 ) -> void:
+	var is_hunt := objective_mode == "hunt"
 	if hud != null:
 		hud.show_banner(
 			_guidance_format(
 				guidance_format,
-				"room_objective_gatekeeper_banner_format",
-				"%s  守关现身",
-				"%s  Gatekeeper waiting",
+				"room_objective_priority_target_banner_format" if is_hunt else "room_objective_gatekeeper_banner_format",
+				"%s  首魁现身" if is_hunt else "%s  守关现身",
+				"%s  Priority target marked" if is_hunt else "%s  Gatekeeper waiting",
 				[objective_name]
 			),
 			accent,
@@ -136,17 +147,17 @@ func present_gatekeeper_waiting(
 		hud.show_reveal(
 			_guidance_text(
 				guidance_text,
-				"room_objective_gatekeeper_reveal_title",
-				"封门守魁",
-				"Seal Warden"
+				"room_objective_priority_target_reveal_title" if is_hunt else "room_objective_gatekeeper_reveal_title",
+				"缉卷首魁" if is_hunt else "封门守魁",
+				"Priority Target" if is_hunt else "Seal Warden"
 			),
-			gatekeeper_name,
+			objective_enemy_name,
 			_guidance_format(
 				guidance_format,
-				"room_objective_gatekeeper_reveal_body_format",
-				"击败%s后，卷间奖印才会真正解封。",
-				"Defeat %s to unseal the reward beacon.",
-				[gatekeeper_name]
+				"room_objective_priority_target_reveal_body_format" if is_hunt else "room_objective_gatekeeper_reveal_body_format",
+				"击败%s后，卷间奖印才会真正显形。" if is_hunt else "击败%s后，卷间奖印才会真正解封。",
+				"Defeat %s to raise the reward beacon." if is_hunt else "Defeat %s to unseal the reward beacon.",
+				[objective_enemy_name]
 			),
 			accent,
 			glyph,
@@ -156,10 +167,10 @@ func present_gatekeeper_waiting(
 	log_battle_event.call(
 		_guidance_format(
 			guidance_format,
-			"room_objective_gatekeeper_log_format",
-			"%s · %s拦路",
-			"%s · %s emerges",
-			[objective_name, gatekeeper_name]
+			"room_objective_priority_target_log_format" if is_hunt else "room_objective_gatekeeper_log_format",
+			"%s · %s现身" if is_hunt else "%s · %s拦路",
+			"%s · %s marked" if is_hunt else "%s · %s emerges",
+			[objective_name, objective_enemy_name]
 		),
 		accent
 	)
@@ -199,58 +210,61 @@ func present_remaining_seals(
 	)
 
 
-func build_gatekeeper_spawn_plan(objective: Dictionary, beacon_position: Vector3, elapsed_time: float) -> Dictionary:
-	var gatekeeper_variant: Variant = objective.get("gatekeeper", {})
-	if not (gatekeeper_variant is Dictionary):
+func build_objective_enemy_spawn_plan(objective: Dictionary, beacon_position: Vector3, elapsed_time: float) -> Dictionary:
+	var objective_mode := String(objective.get("mode", ""))
+	var enemy_data := _objective_enemy_variant(objective)
+	if enemy_data.is_empty():
 		return {}
-	var gatekeeper := gatekeeper_variant as Dictionary
-	var gatekeeper_id := String(gatekeeper.get("id", ""))
-	if gatekeeper_id.is_empty():
-		gatekeeper_id = "%s_gatekeeper" % String(objective.get("id", "room_objective"))
+	var objective_enemy_id := String(enemy_data.get("id", ""))
+	if objective_enemy_id.is_empty():
+		objective_enemy_id = "%s_enemy" % String(objective.get("id", "room_objective"))
 	var spawn_direction := Vector3.ZERO - beacon_position
 	spawn_direction.y = 0.0
 	if spawn_direction.length_squared() <= 0.001:
 		spawn_direction = Vector3.BACK
 	else:
 		spawn_direction = spawn_direction.normalized()
-	var spawn_position := beacon_position + spawn_direction * 3.8
+	var spawn_distance := 4.3 if objective_mode == "hunt" else 3.8
+	var spawn_position := beacon_position + spawn_direction * spawn_distance
 	spawn_position.y = 0.0
 	return {
-		"id": gatekeeper_id,
-		"type": String(gatekeeper.get("type", "elite")),
+		"id": objective_enemy_id,
+		"type": String(enemy_data.get("type", "elite")),
 		"position": spawn_position,
-		"power_scale": 1.1 + elapsed_time / 76.0,
-		"glyph": String(gatekeeper.get("glyph", "魁")),
-		"tint": Color(gatekeeper.get("tint", Color(0.82, 0.54, 0.34, 1.0))),
-		"health_scale": maxf(float(gatekeeper.get("health_scale", 1.0)), 0.35)
+		"power_scale": 1.18 + elapsed_time / 74.0 if objective_mode == "hunt" else 1.1 + elapsed_time / 76.0,
+		"glyph": String(enemy_data.get("glyph", "魁")),
+		"tint": Color(enemy_data.get("tint", Color(0.82, 0.54, 0.34, 1.0))),
+		"health_scale": maxf(float(enemy_data.get("health_scale", 1.0)), 0.35)
 	}
 
 
-func build_gatekeeper_callout(
-	gatekeeper_copy: Dictionary,
-	enemy_name: String,
+func build_objective_enemy_callout(
+	objective_mode: String,
+	objective_enemy_copy: Dictionary,
+	objective_enemy_name: String,
 	accent: Color,
 	guidance_format: Callable
 ) -> Dictionary:
-	var taunt := String(gatekeeper_copy.get("taunt", ""))
+	var is_hunt := objective_mode == "hunt"
+	var taunt := String(objective_enemy_copy.get("taunt", ""))
 	if taunt.is_empty():
 		return {}
 	return {
 		"title": _guidance_format(
 			guidance_format,
-			"room_objective_gatekeeper_callout_title_format",
-			"%s拦路",
-			"%s Challenges You",
-			[enemy_name]
+			"room_objective_priority_target_callout_title_format" if is_hunt else "room_objective_gatekeeper_callout_title_format",
+			"%s现身" if is_hunt else "%s拦路",
+			"%s Marked" if is_hunt else "%s Challenges You",
+			[objective_enemy_name]
 		),
 		"text": taunt,
 		"accent": accent,
 		"log_prefix": _guidance_format(
 			guidance_format,
-			"room_objective_gatekeeper_callout_source_format",
+			"room_objective_priority_target_callout_source_format" if is_hunt else "room_objective_gatekeeper_callout_source_format",
 			"%s：",
 			"%s: ",
-			[enemy_name]
+			[objective_enemy_name]
 		),
 		"duration": 3.0
 	}

@@ -1,16 +1,20 @@
 extends RefCounted
 
 
-func active_pickups_for_meta(pickups_root: Node, meta_key: String, meta_value: Variant) -> Array[Node3D]:
+func active_nodes_for_meta(root: Node, meta_key: String, meta_value: Variant) -> Array[Node3D]:
 	var matches: Array[Node3D] = []
-	for pickup in pickups_root.get_children():
-		if not is_instance_valid(pickup) or pickup.is_queued_for_deletion():
+	for node in root.get_children():
+		if not is_instance_valid(node) or node.is_queued_for_deletion():
 			continue
-		if pickup.get_meta(meta_key, null) != meta_value:
+		if node.get_meta(meta_key, null) != meta_value:
 			continue
-		if pickup is Node3D:
-			matches.append(pickup as Node3D)
+		if node is Node3D:
+			matches.append(node as Node3D)
 	return matches
+
+
+func active_pickups_for_meta(pickups_root: Node, meta_key: String, meta_value: Variant) -> Array[Node3D]:
+	return active_nodes_for_meta(pickups_root, meta_key, meta_value)
 
 
 func nearest_pickup_target(candidates: Array[Node3D], reference_position: Vector3) -> Node3D:
@@ -24,6 +28,28 @@ func nearest_pickup_target(candidates: Array[Node3D], reference_position: Vector
 	return nearest
 
 
+func meta_target(
+	player_position: Vector3,
+	root: Node,
+	meta_key: String,
+	meta_value: Variant,
+	label: String,
+	accent: Color,
+	height_offset: float = 1.5
+) -> Dictionary:
+	var target: Node3D = nearest_pickup_target(
+		active_nodes_for_meta(root, meta_key, meta_value),
+		player_position
+	)
+	if target == null:
+		return {}
+	return {
+		"world_position": target.global_position + Vector3(0.0, height_offset, 0.0),
+		"text": label,
+		"accent": accent
+	}
+
+
 func objective_target(
 	player_position: Vector3,
 	pickups_root: Node,
@@ -31,31 +57,27 @@ func objective_target(
 	label: String,
 	accent: Color
 ) -> Dictionary:
-	var objective_pickup: Node3D = nearest_pickup_target(
-		active_pickups_for_meta(pickups_root, "room_objective_id", room_objective_id),
-		player_position
+	return meta_target(
+		player_position,
+		pickups_root,
+		"room_objective_id",
+		room_objective_id,
+		label,
+		accent,
+		1.5
 	)
-	if objective_pickup == null:
-		return {}
-	return {
-		"world_position": objective_pickup.global_position + Vector3(0.0, 1.5, 0.0),
-		"text": label,
-		"accent": accent
-	}
 
 
 func beacon_target(player_position: Vector3, pickups_root: Node, label: String, accent: Color) -> Dictionary:
-	var beacon_pickup: Node3D = nearest_pickup_target(
-		active_pickups_for_meta(pickups_root, "chamber_break_beacon", true),
-		player_position
+	return meta_target(
+		player_position,
+		pickups_root,
+		"chamber_break_beacon",
+		true,
+		label,
+		accent,
+		1.65
 	)
-	if beacon_pickup == null:
-		return {}
-	return {
-		"world_position": beacon_pickup.global_position + Vector3(0.0, 1.65, 0.0),
-		"text": label,
-		"accent": accent
-	}
 
 
 func screen_indicator_payload(

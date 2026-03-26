@@ -307,6 +307,7 @@ const CHAMBER_LAYOUTS := {
 		"exit_objectives": [
 			{
 				"id": "storm_latch_seal",
+				"mode": "gatekeeper",
 				"glyph": "封",
 				"pickup_positions": [
 					Vector3(0.0, 0.0, 1.5)
@@ -319,6 +320,23 @@ const CHAMBER_LAYOUTS := {
 					"glyph": "简",
 					"tint": Color(0.62, 0.72, 0.92, 1.0),
 					"health_scale": 1.22
+				}
+			},
+			{
+				"id": "copyist_priority_hunt",
+				"mode": "hunt",
+				"glyph": "缉",
+				"pickup_positions": [
+					Vector3(6.5, 0.0, 12.0)
+				],
+				"marker_tint": Color(0.66, 0.78, 0.98, 1.0),
+				"marker_glow": Color(0.9, 0.96, 1.0, 1.0),
+				"target": {
+					"id": "slip_archive_priority_target",
+					"type": "elite",
+					"glyph": "缉",
+					"tint": Color(0.66, 0.78, 0.98, 1.0),
+					"health_scale": 1.3
 				}
 			}
 		],
@@ -1264,15 +1282,43 @@ func _localized_room_objective_name(objective: Dictionary) -> String:
 	return _front_end_text(_battle_room_objective_entry(objective), "name", fallback_id, fallback_id)
 
 
-func _room_objective_gatekeeper_name(objective: Dictionary) -> String:
-	var fallback_name := _battle_guidance_text("room_objective_gatekeeper_default_name", "守关魁首", "Gatekeeper")
-	var gatekeeper_variant: Variant = objective.get("gatekeeper", {})
-	if gatekeeper_variant is Dictionary:
+func _room_objective_mode(objective: Dictionary) -> String:
+	var mode := String(objective.get("mode", ""))
+	if not mode.is_empty():
+		return mode
+	if objective.has("target"):
+		return "hunt"
+	if objective.has("gatekeeper"):
+		return "gatekeeper"
+	return "relay"
+
+
+func _room_objective_enemy_variant(objective: Dictionary) -> Dictionary:
+	var enemy_key := "target" if _room_objective_mode(objective) == "hunt" else "gatekeeper"
+	var enemy_variant: Variant = objective.get(enemy_key, {})
+	if enemy_variant is Dictionary:
+		return enemy_variant as Dictionary
+	return {}
+
+
+func _room_objective_enemy_name(objective: Dictionary) -> String:
+	var objective_mode := _room_objective_mode(objective)
+	var fallback_name := _battle_guidance_text(
+		"room_objective_priority_target_default_name",
+		"缉卷魁首",
+		"Priority Target"
+	) if objective_mode == "hunt" else _battle_guidance_text(
+		"room_objective_gatekeeper_default_name",
+		"守关魁首",
+		"Gatekeeper"
+	)
+	var objective_enemy := _room_objective_enemy_variant(objective)
+	if not objective_enemy.is_empty():
 		return _front_end_text(
-			_battle_room_gatekeeper_entry(objective, gatekeeper_variant as Dictionary),
+			_battle_room_gatekeeper_entry(objective, objective_enemy),
 			"name",
-			"守关魁首",
-			"Gatekeeper"
+			"缉卷魁首" if objective_mode == "hunt" else "守关魁首",
+			"Priority Target" if objective_mode == "hunt" else "Gatekeeper"
 		)
 	return fallback_name
 
@@ -1285,20 +1331,36 @@ func _room_objective_status_text(objective: Dictionary, remaining: int) -> Strin
 	var objective_name := _localized_room_objective_name(objective)
 	var fallback_tip := _current_chamber_tip()
 	var base_tip := _front_end_text(_battle_room_objective_entry(objective), "tip", fallback_tip, fallback_tip)
-	if String(objective.get("id", "")) == "seal_gatekeeper":
-		var gatekeeper_name := _room_objective_gatekeeper_name(objective)
+	var objective_mode := _room_objective_mode(objective)
+	if objective_mode == "gatekeeper":
+		var objective_enemy_name := _room_objective_enemy_name(objective)
 		if room_objective_gatekeeper_active:
 			return _battle_guidance_format(
 				"room_objective_status_gatekeeper_active_format",
 				"%s · %s 击败%s后，卷间奖印才会解封。",
 				"%s · %s Defeat %s to unseal the reward beacon.",
-				[objective_name, base_tip, gatekeeper_name]
+				[objective_name, base_tip, objective_enemy_name]
 			)
 		return _battle_guidance_format(
 			"room_objective_status_gatekeeper_reach_format",
 			"%s · %s 先靠近封门印，逼出守关魁首。",
 			"%s · %s Reach the sealed ward to draw the gatekeeper out.",
 			[objective_name, base_tip]
+		)
+	if objective_mode == "hunt":
+		var objective_enemy_name := _room_objective_enemy_name(objective)
+		if room_objective_gatekeeper_active:
+			return _battle_guidance_format(
+				"room_objective_status_priority_target_active_format",
+				"%s · %s 击败%s后，卷间奖印才会显形。",
+				"%s · %s Defeat %s to raise the reward beacon.",
+				[objective_name, base_tip, objective_enemy_name]
+			)
+		return _battle_guidance_format(
+			"room_objective_status_priority_target_reach_format",
+			"%s · %s 先靠近猎印，逼出%s。",
+			"%s · %s Reach the hunt marker to flush out %s.",
+			[objective_name, base_tip, objective_enemy_name]
 		)
 	return _battle_guidance_format(
 		"room_objective_status_seal_remaining_format",
@@ -1330,11 +1392,28 @@ func _current_guidance_target() -> Dictionary:
 	var accent := _current_chamber_accent()
 	if _room_objective_active():
 		var objective := _current_chamber_exit_objective()
+		var objective_mode := _room_objective_mode(objective)
+		if objective_mode == "hunt" and room_objective_gatekeeper_active and not room_objective_gatekeeper_id.is_empty():
+			var objective_enemy_target: Dictionary = battle_guidance_support.meta_target(
+				player.global_position,
+				enemies_root,
+				"room_objective_enemy_id",
+				room_objective_gatekeeper_id,
+				_battle_guidance_text("guidance_priority_target", "缉卷首魁", "Priority Target"),
+				accent.lerp(Color(objective.get("marker_tint", accent)), 0.35),
+				1.8
+			)
+			if not objective_enemy_target.is_empty():
+				return objective_enemy_target
 		var objective_text := _battle_guidance_text(
 			"guidance_sealed_ward",
 			"封门印",
 			"Sealed Ward"
-		) if String(objective.get("id", "")) == "seal_gatekeeper" else _battle_guidance_format(
+		) if objective_mode == "gatekeeper" else _battle_guidance_text(
+			"guidance_hunt_marker",
+			"猎印",
+			"Hunt Marker"
+		) if objective_mode == "hunt" else _battle_guidance_format(
 			"guidance_seals_remaining_format",
 			"封印 %d/%d",
 			"Seals %d/%d",
@@ -1469,15 +1548,16 @@ func _advance_room_objective(pickup_ref, tint: Color) -> bool:
 	if next_state_variant is Dictionary:
 		_apply_room_objective_state(next_state_variant as Dictionary)
 	var mode: String = String(advance_result.get("mode", ""))
-	if mode == "gatekeeper":
-		var gatekeeper_name := _spawn_room_objective_gatekeeper(objective, pickup_ref.global_position if pickup_ref != null else Vector3.ZERO)
-		if gatekeeper_name.is_empty():
+	if mode == "gatekeeper" or mode == "hunt":
+		var objective_enemy_name := _spawn_room_objective_enemy(objective, pickup_ref.global_position if pickup_ref != null else Vector3.ZERO)
+		if objective_enemy_name.is_empty():
 			_complete_room_objective(objective, accent)
 			return true
-		battle_room_objective_presentation.present_gatekeeper_waiting(
+		battle_room_objective_presentation.present_objective_enemy_waiting(
 			hud,
+			mode,
 			objective_name,
-			gatekeeper_name,
+			objective_enemy_name,
 			_room_objective_status_text(objective, room_objective_remaining),
 			accent,
 			String(pickup_ref.get_meta("room_objective_glyph", objective.get("glyph", "封"))),
@@ -1502,26 +1582,31 @@ func _advance_room_objective(pickup_ref, tint: Color) -> bool:
 	return true
 
 
-func _spawn_room_objective_gatekeeper(objective: Dictionary, beacon_position: Vector3) -> String:
+func _spawn_room_objective_enemy(objective: Dictionary, beacon_position: Vector3) -> String:
 	if not is_instance_valid(player):
 		return ""
-	var gatekeeper_variant: Variant = objective.get("gatekeeper", {})
-	if not (gatekeeper_variant is Dictionary):
+	var objective_mode := _room_objective_mode(objective)
+	var objective_enemy := _room_objective_enemy_variant(objective)
+	if objective_enemy.is_empty():
 		return ""
-	var gatekeeper := gatekeeper_variant as Dictionary
-	var spawn_plan: Dictionary = battle_room_objective_presentation.build_gatekeeper_spawn_plan(
+	var spawn_plan: Dictionary = battle_room_objective_presentation.build_objective_enemy_spawn_plan(
 		objective,
 		beacon_position,
 		elapsed_time
 	)
 	if spawn_plan.is_empty():
 		return ""
-	gatekeeper["id"] = String(spawn_plan.get("id", ""))
+	objective_enemy["id"] = String(spawn_plan.get("id", ""))
 	var enemy = ENEMY_SCENE.instantiate()
 	enemy.position = spawn_plan.get("position", Vector3.ZERO)
 	enemy.configure(String(spawn_plan.get("type", "elite")), float(spawn_plan.get("power_scale", 1.0)), player)
-	var gatekeeper_copy := _battle_room_gatekeeper_entry(objective, gatekeeper)
-	enemy.enemy_name = _front_end_text(gatekeeper_copy, "name", "守关魁首", "Gatekeeper")
+	var objective_enemy_copy := _battle_room_gatekeeper_entry(objective, objective_enemy)
+	enemy.enemy_name = _front_end_text(
+		objective_enemy_copy,
+		"name",
+		"缉卷魁首" if objective_mode == "hunt" else "守关魁首",
+		"Priority Target" if objective_mode == "hunt" else "Gatekeeper"
+	)
 	enemy.glyph = String(spawn_plan.get("glyph", "魁"))
 	enemy.tint = Color(spawn_plan.get("tint", Color(0.82, 0.54, 0.34, 1.0)))
 	enemy.max_health *= float(spawn_plan.get("health_scale", 1.0))
@@ -1534,10 +1619,11 @@ func _spawn_room_objective_gatekeeper(objective: Dictionary, beacon_position: Ve
 	enemy.defeated.connect(_on_enemy_defeated)
 	if enemy.has_signal("damaged"):
 		enemy.damaged.connect(_on_enemy_damaged)
-	enemy.defeated.connect(Callable(self, "_on_room_objective_gatekeeper_defeated").bind(String(spawn_plan.get("id", ""))))
+	enemy.defeated.connect(Callable(self, "_on_room_objective_enemy_defeated").bind(String(spawn_plan.get("id", ""))))
 	enemy.request_hazard.connect(_on_enemy_request_hazard)
 	enemy.request_line_hazard.connect(_on_enemy_request_line_hazard)
 	enemy.request_projectile.connect(_on_enemy_request_projectile)
+	enemy.set_meta("room_objective_enemy_id", String(spawn_plan.get("id", "")))
 	enemies_root.add_child(enemy)
 	_apply_room_objective_state(
 		battle_room_objective_rules.with_gatekeeper_id(
@@ -1545,29 +1631,36 @@ func _spawn_room_objective_gatekeeper(objective: Dictionary, beacon_position: Ve
 			String(spawn_plan.get("id", ""))
 		)
 	)
-	var gatekeeper_callout: Dictionary = battle_room_objective_presentation.build_gatekeeper_callout(
-		gatekeeper_copy,
+	var objective_enemy_callout: Dictionary = battle_room_objective_presentation.build_objective_enemy_callout(
+		objective_mode,
+		objective_enemy_copy,
 		enemy.enemy_name,
 		Color(enemy.tint),
 		Callable(self, "_battle_guidance_format")
 	)
-	if not gatekeeper_callout.is_empty():
+	if not objective_enemy_callout.is_empty():
 		_show_battle_callout(
-			String(gatekeeper_callout.get("title", "")),
-			String(gatekeeper_callout.get("text", "")),
-			Color(gatekeeper_callout.get("accent", Color(enemy.tint))),
-			String(gatekeeper_callout.get("log_prefix", "")),
-			float(gatekeeper_callout.get("duration", 3.0))
+			String(objective_enemy_callout.get("title", "")),
+			String(objective_enemy_callout.get("text", "")),
+			Color(objective_enemy_callout.get("accent", Color(enemy.tint))),
+			String(objective_enemy_callout.get("log_prefix", "")),
+			float(objective_enemy_callout.get("duration", 3.0))
 		)
 	_spawn_wave_effect(enemy.global_position, 3.9, Color(enemy.tint), String(enemy.glyph))
 	return String(enemy.enemy_name)
 
 
-func _on_room_objective_gatekeeper_defeated(_world_position: Vector3, _enemy_type: String, gatekeeper_id: String) -> void:
-	if gatekeeper_id.is_empty() or gatekeeper_id != room_objective_gatekeeper_id:
+func _on_room_objective_enemy_defeated(_world_position: Vector3, _enemy_type: String, objective_enemy_id: String) -> void:
+	if objective_enemy_id.is_empty() or objective_enemy_id != room_objective_gatekeeper_id:
 		return
 	var objective := _current_chamber_exit_objective()
-	var accent := Color(objective.get("seal_tint", _current_chamber_accent()))
+	var objective_mode := _room_objective_mode(objective)
+	var accent := Color(
+		objective.get(
+			"marker_tint" if objective_mode == "hunt" else "seal_tint",
+			_current_chamber_accent()
+		)
+	)
 	_apply_room_objective_state(battle_room_objective_rules.clear_gatekeeper(_room_objective_state_snapshot()))
 	_complete_room_objective(objective, accent)
 

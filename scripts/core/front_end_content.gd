@@ -5044,6 +5044,19 @@ const BATTLE_CHAMBER_CONTENT := {
 							"taunt": {"zh": "转钥未开，先破我阵。", "en": "Break my lattice before the vault unseals."}
 						}
 					}
+				},
+				"copyist_priority_hunt": {
+					"name": {"zh": "缉卷首魁", "en": "Copyist Priority Hunt"},
+					"tip": {
+						"zh": "简库卷主退散后，出口有时会改成猎印追缉。先靠近猎印，逼出被标记的首魁，击败后卷间奖印才会显形。",
+						"en": "Once the archive lord falls, the exit can sometimes flip into a hunt marker. Reach it to flush out the marked priority target, then defeat that elite before the reward beacon can rise."
+					},
+					"gatekeepers": {
+						"slip_archive_priority_target": {
+							"name": {"zh": "缉卷魁首", "en": "Copyist Prime"},
+							"taunt": {"zh": "想拿这卷奖印，先追上我。", "en": "Catch me first if you want that reward beacon."}
+						}
+					}
 				}
 			}
 		},
@@ -5179,6 +5192,10 @@ const BATTLE_GUIDANCE_CONTENT := {
 		"zh": "守关魁首",
 		"en": "Gatekeeper"
 	},
+	"room_objective_priority_target_default_name": {
+		"zh": "缉卷魁首",
+		"en": "Priority Target"
+	},
 	"room_objective_status_gatekeeper_active_format": {
 		"zh": "%s · %s 击败%s后，卷间奖印才会解封。",
 		"en": "%s · %s Defeat %s to unseal the reward beacon."
@@ -5191,9 +5208,25 @@ const BATTLE_GUIDANCE_CONTENT := {
 		"zh": "%s · %s 当前还差 %d / %d 枚封印。",
 		"en": "%s · %s Remaining seals %d/%d."
 	},
+	"room_objective_status_priority_target_active_format": {
+		"zh": "%s · %s 击败%s后，卷间奖印才会显形。",
+		"en": "%s · %s Defeat %s to raise the reward beacon."
+	},
+	"room_objective_status_priority_target_reach_format": {
+		"zh": "%s · %s 先靠近猎印，逼出%s。",
+		"en": "%s · %s Reach the hunt marker to flush out %s."
+	},
 	"guidance_sealed_ward": {
 		"zh": "封门印",
 		"en": "Sealed Ward"
+	},
+	"guidance_hunt_marker": {
+		"zh": "猎印",
+		"en": "Hunt Marker"
+	},
+	"guidance_priority_target": {
+		"zh": "缉卷首魁",
+		"en": "Priority Target"
 	},
 	"guidance_seals_remaining_format": {
 		"zh": "封印 %d/%d",
@@ -5251,6 +5284,22 @@ const BATTLE_GUIDANCE_CONTENT := {
 		"zh": "%s · %s拦路",
 		"en": "%s · %s emerges"
 	},
+	"room_objective_priority_target_banner_format": {
+		"zh": "%s  首魁现身",
+		"en": "%s  Priority target marked"
+	},
+	"room_objective_priority_target_reveal_title": {
+		"zh": "缉卷首魁",
+		"en": "Priority Target"
+	},
+	"room_objective_priority_target_reveal_body_format": {
+		"zh": "击败%s后，卷间奖印才会真正显形。",
+		"en": "Defeat %s to raise the reward beacon."
+	},
+	"room_objective_priority_target_log_format": {
+		"zh": "%s · %s现身",
+		"en": "%s · %s marked"
+	},
 	"room_objective_seals_remaining_banner_format": {
 		"zh": "%s  还差 %d 枚",
 		"en": "%s  %d seals remain"
@@ -5272,6 +5321,14 @@ const BATTLE_GUIDANCE_CONTENT := {
 		"en": "%s Challenges You"
 	},
 	"room_objective_gatekeeper_callout_source_format": {
+		"zh": "%s：",
+		"en": "%s: "
+	},
+	"room_objective_priority_target_callout_title_format": {
+		"zh": "%s现身",
+		"en": "%s Marked"
+	},
+	"room_objective_priority_target_callout_source_format": {
 		"zh": "%s：",
 		"en": "%s: "
 	},
