@@ -1911,6 +1911,13 @@ func _open_chamber_transition_overlay(next_chamber_id: String, next_wave: int) -
 		_set_map_overlay(false)
 	paused = true
 	Engine.time_scale = 0.0
+	var next_chamber_accent := battle_chamber_catalog.current_chamber_accent(
+		next_chamber_id,
+		CHAMBER_LAYOUTS,
+		CHAMBER_ORDER,
+		Color(0.96, 0.82, 0.54, 1.0)
+	)
+	_play_cue_sfx("chamber_transition", 1.0)
 	if hud != null and hud.has_method("show_chamber_transition"):
 		hud.show_chamber_transition(
 			battle_chamber_presentation.transition_title(
@@ -1936,7 +1943,8 @@ func _open_chamber_transition_overlay(next_chamber_id: String, next_wave: int) -
 				Callable(self, "_battle_interlude_format"),
 				Callable(self, "_battle_guidance_text"),
 				Callable(self, "_localized_enemy_data")
-			)
+			),
+			next_chamber_accent
 		)
 
 
@@ -4381,6 +4389,12 @@ func _open_chamber_break_gate() -> void:
 	if hud != null and hud.has_method("show_chamber_interlude"):
 		var next_wave := maxi(threat_level + 1, 2)
 		var next_chamber_id := _chamber_interlude_next_chamber_id()
+		var next_chamber_accent := battle_chamber_catalog.current_chamber_accent(
+			next_chamber_id,
+			CHAMBER_LAYOUTS,
+			CHAMBER_ORDER,
+			Color(0.96, 0.82, 0.54, 1.0)
+		)
 		hud.show_chamber_interlude(
 			battle_chamber_presentation.interlude_title(
 				_current_scroll_label(),
@@ -4401,7 +4415,8 @@ func _open_chamber_break_gate() -> void:
 				Callable(self, "_battle_interlude_format"),
 				Callable(self, "_battle_guidance_text"),
 				Callable(self, "_localized_enemy_data")
-			)
+			),
+			next_chamber_accent
 		)
 	_log_battle_event("Between Chambers · Choose one route" if _is_english() else "卷间抉择 · 先定一条路", Color(0.96, 0.82, 0.54, 1.0))
 

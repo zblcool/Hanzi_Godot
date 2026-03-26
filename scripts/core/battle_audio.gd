@@ -505,6 +505,12 @@ func play_cue(kind: String, intensity: float = 1.0) -> void:
 				return
 			_push_voice({"waveform": "sine", "start_freq": 360.0, "end_freq": 520.0, "amplitude": 0.09 * power, "duration": 0.28, "release": 0.34})
 			_push_voice({"waveform": "triangle", "start_freq": 720.0, "end_freq": 980.0, "amplitude": 0.05 * power, "duration": 0.2, "release": 0.24, "delay": 0.04, "pan": _small_pan()})
+		"chamber_transition":
+			if not _can_play(kind, 0.46):
+				return
+			_push_voice({"waveform": "triangle", "start_freq": 210.0, "end_freq": 330.0, "amplitude": 0.11 * power, "duration": 0.22, "release": 0.28})
+			_push_voice({"waveform": "sine", "start_freq": 420.0, "end_freq": 620.0, "amplitude": 0.065 * power, "duration": 0.18, "release": 0.22, "delay": 0.022, "pan": _small_pan()})
+			_push_voice({"waveform": "square", "start_freq": 660.0, "end_freq": 820.0, "amplitude": 0.045 * power, "duration": 0.12, "release": 0.14, "delay": 0.05, "pan": _small_pan()})
 		"ground_warning":
 			if not _can_play(kind, 0.12):
 				return

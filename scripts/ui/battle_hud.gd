@@ -1750,6 +1750,7 @@ func show_pause_menu(elapsed: float, kills: int, threat: int, level: int) -> voi
 	_hide_reveal()
 	_hide_state_name_editor()
 	_hide_state_preview()
+	_apply_state_overlay_theme(Color(0.94, 0.7, 0.4, 1.0))
 	last_pause_summary = {
 		"elapsed": elapsed,
 		"kills": kills,
@@ -1768,12 +1769,18 @@ func show_pause_menu(elapsed: float, kills: int, threat: int, level: int) -> voi
 	state_overlay.visible = true
 
 
-func show_chamber_transition(title: String, body: String, preview_lines: Array[String] = []) -> void:
+func show_chamber_transition(
+	title: String,
+	body: String,
+	preview_lines: Array[String] = [],
+	accent: Color = Color(0.94, 0.7, 0.4, 1.0)
+) -> void:
 	var state_content := FrontEndContent.battle_state_content()
 	hide_choice_overlay()
 	hide_map_overlay()
 	overlay_label.visible = false
 	_hide_state_name_editor()
+	_apply_state_overlay_theme(accent)
 	state_mode = "chamber_transition"
 	state_title_label.text = title
 	state_body_label.text = body
@@ -1790,12 +1797,19 @@ func show_chamber_transition(title: String, body: String, preview_lines: Array[S
 	state_overlay.visible = true
 
 
-func show_chamber_interlude(title: String, body: String, options: Array[Dictionary], preview_lines: Array[String] = []) -> void:
+func show_chamber_interlude(
+	title: String,
+	body: String,
+	options: Array[Dictionary],
+	preview_lines: Array[String] = [],
+	accent: Color = Color(0.94, 0.7, 0.4, 1.0)
+) -> void:
 	var state_content := FrontEndContent.battle_state_content()
 	hide_choice_overlay()
 	hide_map_overlay()
 	overlay_label.visible = false
 	_hide_state_name_editor()
+	_apply_state_overlay_theme(accent)
 	state_mode = "chamber_interlude"
 	state_title_label.text = title
 	state_body_label.text = body
@@ -1829,11 +1843,13 @@ func hide_state_overlay() -> void:
 	if state_overlay != null:
 		state_overlay.visible = false
 	_hide_state_preview()
+	_apply_state_overlay_theme(Color(0.94, 0.7, 0.4, 1.0))
 
 
 func _show_settings_menu() -> void:
 	var state_content := FrontEndContent.battle_state_content()
 	state_mode = "settings"
+	_apply_state_overlay_theme(Color(0.94, 0.7, 0.4, 1.0))
 	state_title_label.text = _battle_state_text(state_content, "settings_title", "战场布置", "Battle Setup")
 	state_body_label.text = _build_settings_body()
 	_hide_state_name_editor()
@@ -1862,6 +1878,7 @@ func set_game_over(
 	var normalized_view := _normalize_local_leaderboard_view(leaderboard_view)
 	_hide_state_preview()
 	state_mode = "game_over"
+	_apply_state_overlay_theme(Color(0.94, 0.7, 0.4, 1.0))
 	last_game_over_data = {
 		"summary": summary,
 		"elapsed": elapsed,
@@ -1931,6 +1948,7 @@ func _show_test_leaderboard() -> void:
 func _refresh_local_leaderboard_overlay() -> void:
 	state_mode = "leaderboard"
 	_hide_state_preview()
+	_apply_state_overlay_theme(Color(0.94, 0.7, 0.4, 1.0))
 	local_leaderboard_view = _normalize_local_leaderboard_view(local_leaderboard_view)
 	var leaderboard_content := FrontEndContent.local_leaderboard_content()
 	var manual_count := Session.get_local_leaderboard_count("manual")
@@ -3746,6 +3764,33 @@ func _clear_state_button_connections(button: Button) -> void:
 		var callable: Callable = connection.get("callable", Callable())
 		if button.pressed.is_connected(callable):
 			button.pressed.disconnect(callable)
+
+
+func _apply_state_overlay_theme(accent: Color) -> void:
+	var preview_accent := accent.lerp(Color(0.82, 0.9, 1.0, 1.0), 0.34)
+	if state_panel != null:
+		state_panel.add_theme_stylebox_override(
+			"panel",
+			_make_panel_style(
+				Color(accent.r * 0.08, accent.g * 0.08, accent.b * 0.1, 0.96),
+				Color(accent.r * 0.74 + 0.2, accent.g * 0.74 + 0.2, accent.b * 0.74 + 0.2, 0.92),
+				24
+			)
+		)
+	if state_preview_panel != null:
+		state_preview_panel.add_theme_stylebox_override(
+			"panel",
+			_make_panel_style(
+				Color(preview_accent.r * 0.12, preview_accent.g * 0.12, preview_accent.b * 0.16, 0.94),
+				Color(preview_accent.r * 0.78 + 0.18, preview_accent.g * 0.78 + 0.18, preview_accent.b * 0.78 + 0.18, 0.5),
+				18
+			)
+		)
+	if state_preview_title_label != null:
+		state_preview_title_label.add_theme_color_override(
+			"font_color",
+			Color(preview_accent.r * 0.22 + 0.72, preview_accent.g * 0.2 + 0.76, preview_accent.b * 0.18 + 0.78, 0.98)
+		)
 
 
 func _make_map_legend_row(symbol_text: String, title: String, detail: String, color: Color) -> Control:
