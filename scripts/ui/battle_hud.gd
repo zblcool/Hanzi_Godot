@@ -1131,6 +1131,10 @@ func _build_pause_state_body(elapsed: float, kills: int, threat: int, level: int
 	if not route_lines.is_empty():
 		lines.append("")
 		lines.append_array(route_lines)
+	var relic_lines := _build_relic_migration_state_lines(compact_copy)
+	if not relic_lines.is_empty():
+		lines.append("")
+		lines.append_array(relic_lines)
 	var carry_lines := _build_chamber_carry_state_lines(compact_copy)
 	if not carry_lines.is_empty():
 		lines.append("")
@@ -1184,6 +1188,10 @@ func _build_game_over_state_body(summary: String, elapsed: float, kills: int, th
 	if not route_lines.is_empty():
 		lines.append("")
 		lines.append_array(route_lines)
+	var relic_lines := _build_relic_migration_state_lines(compact_copy)
+	if not relic_lines.is_empty():
+		lines.append("")
+		lines.append_array(relic_lines)
 	var carry_lines := _build_chamber_carry_state_lines(compact_copy)
 	if not carry_lines.is_empty():
 		lines.append("")
@@ -1213,6 +1221,23 @@ func _build_route_focus_state_lines(compact_copy: bool = false) -> Array[String]
 	var detail := String(summary.get("detail", "")).strip_edges()
 	if not detail.is_empty():
 		lines.append(detail)
+	return lines
+
+
+func _build_relic_migration_state_lines(compact_copy: bool = false) -> Array[String]:
+	var lines: Array[String] = []
+	lines.append(_battle_state_text(battle_hud_content, "relic_migration_title", "遗物 / 神器", "Relics / Artifacts"))
+	var detail := _battle_state_text(
+		battle_hud_content,
+		"relic_migration_compact" if compact_copy else "relic_migration_detail",
+		"待迁回  ·  宝箱当前仍给即时补给" if compact_copy else "source 的暂停 / 结算会把已持遗物一起摊开。Godot 当前宝箱仍只掉即时补给，所以这条成长线还在迁移中。",
+		"Pending port  ·  chests still grant direct pickups" if compact_copy else "The source pause/result views lay owned relics out alongside the build. Godot chests still grant direct pickups only, so this growth lane is still mid-migration."
+	)
+	lines.append(
+		_truncate_overlay_text(detail, 60 if _is_english() else 28)
+		if compact_copy
+		else detail
+	)
 	return lines
 
 

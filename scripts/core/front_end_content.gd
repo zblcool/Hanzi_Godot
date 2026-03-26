@@ -4603,6 +4603,12 @@ const BATTLE_HUD_CONTENT := {
 	"compact_route_placeholder": {"zh": "墨守流  ·  开卷补笔", "en": "Inkguard Route  ·  Opening Strokes"},
 	"route_focus_state_title": {"zh": "路线参考", "en": "Route Focus"},
 	"route_progress_format": {"zh": "构筑进度：偏旁 %d  ·  成字 %d  ·  词技 %d", "en": "Build: radicals %d  ·  glyphs %d  ·  phrases %d"},
+	"relic_migration_title": {"zh": "遗物 / 神器", "en": "Relics / Artifacts"},
+	"relic_migration_compact": {"zh": "待迁回  ·  宝箱当前仍给即时补给", "en": "Pending port  ·  chests still grant direct pickups"},
+	"relic_migration_detail": {
+		"zh": "source 的暂停 / 结算会把已持遗物一起摊开。Godot 当前宝箱仍只掉即时补给，所以这条成长线还在迁移中。",
+		"en": "The source pause/result views lay owned relics out alongside the build. Godot chests still grant direct pickups only, so this growth lane is still mid-migration."
+	},
 	"skill_badge_phrase_art": {"zh": "成词技能", "en": "Phrase Art"},
 	"skill_badge_glyph_skill": {"zh": "成字技能", "en": "Glyph Skill"},
 	"skill_refine_format": {"zh": "磨词 %d/%d", "en": "Refine %d/%d"},
