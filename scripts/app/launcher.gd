@@ -55,6 +55,20 @@ const EN_TEXT := {
 	"把偏旁、合字、词技做成真正的成长主线。": "Turn radicals, fused glyphs, and phrase arts into the real growth spine.",
 	"让战斗里的字、墨、纸和敌人轮廓属于同一世界。": "Make glyphs, ink, paper, and enemy silhouettes feel like one world.",
 	"把菜单和 HUD 提到可展示、可录像的完成度。": "Push the menu and HUD to a presentable, recordable level of polish.",
+	"启动器按任意键引导页已迁回": "Launcher press-any-key intro restored",
+	"Godot 首页现在会先经过与 hanziHero source 对齐的双语 intro splash，再落到双游戏选择器。": "The Godot home now passes through a bilingual intro splash aligned with the hanziHero source before landing on the two-game selector.",
+	"引导页": "Intro Gate",
+	"现在会先显示一层独立的《字海残卷》引导页，按键或点屏后才揭开 Godot 启动器主界面。": "A dedicated Ink-Sea intro layer now appears first, and only after a key press or tap does the Godot launcher shell reveal itself.",
+	"引导页沿用了当前语言切换能力，不必先落到首页再改 `中 / EN`。": "The intro gate keeps the runtime language toggle, so you do not have to reach the home shell first to switch `中 / EN`.",
+	"迁移清单、README 与首页最近更新卡也已同步刷新，方便继续对照 source 启动器入口。": "The checklist, README, and home latest-update card were refreshed together so the source launcher entry stays easy to compare.",
+	"source 风格启动器引导页接回 Godot": "Source-style launcher intro restored in Godot",
+	"Godot 首页现在会先显示一层双语 `按任意键开始` 引导页，再进入双游戏选择器，更贴近 hanziHero 的启动入口节拍。": "The Godot home now shows a bilingual `Press Any Key` intro layer before the two-game selector, moving closer to the hanziHero launch cadence.",
+	"首页现在会先显示 `字海残卷 / Ink-Sea Remnant Scroll` 的 source 风格引导页，按键或点屏后才进入主启动器。": "The home page now opens on a source-style `字海残卷 / Ink-Sea Remnant Scroll` intro gate before the main launcher.",
+	"引导页顶部保留运行时 `中 / EN` 切换，不必先落到首页才能改语言。": "A runtime `中 / EN` toggle stays in the intro toolbar so language can change before the home shell appears.",
+	"README 与 `MIGRATION_CHECKLIST.md` 已补上这层启动器入口迁移说明，保持 source 对照更清楚。": "README and `MIGRATION_CHECKLIST.md` now record this launcher-entry migration so source parity is clearer.",
+	"首页最近更新聚光卡也切到这次引导页迁移，前台最近完成项不再停在旧的 changelog 面板接线。": "The home update spotlight now points to this intro migration instead of stopping at the older changelog-panel reconnect.",
+	"继续对齐 launcher 端更细的 release/readout 细节，或回到菜单层补更完整的 build / progression 展示。": "Continue matching finer launcher release/readout details, or return to the menu layer for fuller build/progression presentation.",
+	"仓颉之路仍保持 portal 预览路线，真正的 Godot 爬塔战斗基础还要后续单独迁移。": "Cangjie Road still stays on the portal-preview path; the real Godot climb-combat foundation still needs a separate future migration.",
 	"启动器更新日志入口已补齐": "Launcher changelog entry restored",
 	"Godot 启动器首页现在既保留最近更新聚光卡，也能直接打开内置更新历史面板，继续向 web 原型首页的 changelog panel 对齐。": "The Godot launcher now keeps the recent update spotlight and can open an in-app changelog panel, moving closer to the web prototype front page.",
 	"Godot 启动器": "Godot Launcher",
@@ -135,6 +149,9 @@ var floating_symbols: Array[Dictionary] = []
 var preview_motifs: Array[Dictionary] = []
 var current_theme := "night-ink"
 var current_language := "zh"
+var intro_overlay: Control
+var intro_dismissed := false
+var intro_transitioning := false
 var about_overlay: Control
 var cangjie_overlay: Control
 var cangjie_section_title_label: Label
@@ -272,6 +289,7 @@ func _rebuild_ui() -> void:
 	cangjie_section_title_label = null
 	cangjie_section_content_box = null
 	cangjie_nav_buttons.clear()
+	intro_overlay = null
 	launcher_profile_button = null
 	cangjie_profile_button = null
 	changelog_overlay = null
@@ -691,6 +709,7 @@ func _build_ui() -> void:
 	_build_cangjie_overlay()
 	_build_changelog_overlay()
 	_build_profile_overlay()
+	_build_intro_overlay()
 
 
 func _make_game_card(title: String, badge_text: String, tagline: String, tags: Array[String], accent: Color, preview_kind: String, button_text: String, callback: Callable, enabled: bool) -> Control:
@@ -884,6 +903,118 @@ func _make_update_spotlight_panel() -> PanelContainer:
 	history_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	action_row.add_child(history_button)
 	return panel
+
+
+func _build_intro_overlay() -> void:
+	var intro_content := FrontEndContent.launcher_intro_content()
+	var accent := Color(0.92, 0.68, 0.38, 1.0)
+	var portrait_layout := _is_portrait_layout()
+	intro_overlay = Control.new()
+	intro_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	intro_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	intro_overlay.visible = not intro_dismissed
+	intro_overlay.modulate = Color(1.0, 1.0, 1.0, 0.0 if intro_dismissed else 1.0)
+	add_child(intro_overlay)
+
+	var scrim := ColorRect.new()
+	scrim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	scrim.color = Color(0.03, 0.05, 0.07, 0.82) if not _is_paper_theme() else Color(0.95, 0.91, 0.83, 0.78)
+	intro_overlay.add_child(scrim)
+
+	var dismiss_button := Button.new()
+	dismiss_button.set_anchors_preset(Control.PRESET_FULL_RECT)
+	dismiss_button.flat = true
+	dismiss_button.focus_mode = Control.FOCUS_NONE
+	var empty_style := StyleBoxEmpty.new()
+	dismiss_button.add_theme_stylebox_override("normal", empty_style)
+	dismiss_button.add_theme_stylebox_override("hover", empty_style)
+	dismiss_button.add_theme_stylebox_override("pressed", empty_style)
+	dismiss_button.add_theme_stylebox_override("focus", empty_style)
+	dismiss_button.pressed.connect(_dismiss_intro)
+	intro_overlay.add_child(dismiss_button)
+
+	var root := MarginContainer.new()
+	root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_apply_root_safe_margins(root, 22.0, 20.0, 22.0, 24.0)
+	intro_overlay.add_child(root)
+
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", _i(12))
+	root.add_child(column)
+
+	var toolbar := HBoxContainer.new()
+	toolbar.add_theme_constant_override("separation", _i(12))
+	column.add_child(toolbar)
+
+	var toolbar_spacer := Control.new()
+	toolbar_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	toolbar.add_child(toolbar_spacer)
+
+	var language_button := _make_language_toggle_button(_v(78.0, 54.0))
+	toolbar.add_child(language_button)
+
+	var spacer_top := Control.new()
+	spacer_top.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	column.add_child(spacer_top)
+
+	var center := CenterContainer.new()
+	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	column.add_child(center)
+
+	var spacer_bottom := Control.new()
+	spacer_bottom.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	column.add_child(spacer_bottom)
+
+	var shell := VBoxContainer.new()
+	shell.alignment = BoxContainer.ALIGNMENT_CENTER
+	shell.add_theme_constant_override("separation", _i(14))
+	center.add_child(shell)
+
+	var eyebrow_tag := _make_tag(
+		_localize_cangjie_text(intro_content.get("eyebrow", "")),
+		Color(0.14, 0.18, 0.24, 0.88),
+		Color(0.96, 0.82, 0.56, 0.98)
+	)
+	shell.add_child(eyebrow_tag)
+
+	var mark_frame := PanelContainer.new()
+	mark_frame.custom_minimum_size = _v(320.0 if portrait_layout else 360.0, 214.0 if portrait_layout else 234.0)
+	mark_frame.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.1, accent.g * 0.09, accent.b * 0.08, 0.56), Color(accent.r, accent.g, accent.b, 0.36)))
+	shell.add_child(mark_frame)
+
+	var mark_margin := MarginContainer.new()
+	mark_margin.add_theme_constant_override("margin_left", _i(18))
+	mark_margin.add_theme_constant_override("margin_top", _i(18))
+	mark_margin.add_theme_constant_override("margin_right", _i(18))
+	mark_margin.add_theme_constant_override("margin_bottom", _i(18))
+	mark_frame.add_child(mark_margin)
+
+	var mark_center := CenterContainer.new()
+	mark_margin.add_child(mark_center)
+
+	var preview := PanelContainer.new()
+	preview.custom_minimum_size = _v(248.0, 150.0)
+	preview.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.14, accent.g * 0.12, accent.b * 0.1, 0.26), Color(accent.r, accent.g, accent.b, 0.18)))
+	mark_center.add_child(preview)
+	_build_preview_stage(preview, "zihai", accent)
+
+	var title := _make_label(_localize_cangjie_text(intro_content.get("title", "")), 68 if not portrait_layout else 56, Color(1.0, 0.95, 0.86, 1.0))
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	shell.add_child(title)
+
+	var summary := _make_label(_localize_cangjie_text(intro_content.get("summary", "")), 18, Color(0.9, 0.92, 0.96, 0.92))
+	summary.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	summary.custom_minimum_size = _v(320.0 if portrait_layout else 680.0, 0.0)
+	shell.add_child(summary)
+
+	var prompt := _make_label(_localize_cangjie_text(intro_content.get("prompt", "")), 24, Color(0.98, 0.9, 0.76, 0.98))
+	prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	shell.add_child(prompt)
+
+	var footnote := _make_label(_localize_cangjie_text(intro_content.get("footnote", "")), 16, Color(0.82, 0.88, 0.94, 0.82))
+	footnote.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	footnote.custom_minimum_size = _v(320.0 if portrait_layout else 620.0, 0.0)
+	shell.add_child(footnote)
 
 
 func _build_about_overlay() -> void:
@@ -5015,6 +5146,21 @@ func _show_about() -> void:
 		about_overlay.visible = true
 
 
+func _dismiss_intro() -> void:
+	if intro_overlay == null or intro_dismissed or intro_transitioning:
+		return
+	intro_transitioning = true
+	intro_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var tween := create_tween()
+	tween.tween_property(intro_overlay, "modulate:a", 0.0, 0.32).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	tween.finished.connect(func() -> void:
+		intro_dismissed = true
+		intro_transitioning = false
+		if intro_overlay != null:
+			intro_overlay.visible = false
+	)
+
+
 func _hide_about() -> void:
 	if about_overlay != null:
 		about_overlay.visible = false
@@ -5170,6 +5316,15 @@ func _get_profile_monogram(profile_name: String) -> String:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if intro_overlay != null and intro_overlay.visible and not intro_dismissed and not intro_transitioning:
+		if event is InputEventKey and event.pressed and not event.echo:
+			_dismiss_intro()
+			get_viewport().set_input_as_handled()
+			return
+		if event is InputEventJoypadButton and event.pressed:
+			_dismiss_intro()
+			get_viewport().set_input_as_handled()
+			return
 	if not event.is_action_pressed("ui_cancel"):
 		return
 	if cangjie_overlay != null and cangjie_overlay.visible:

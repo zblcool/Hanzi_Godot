@@ -109,20 +109,63 @@ const LAUNCHER_ABOUT_CONTENT := {
 	"close_text": "返回启动器"
 }
 
+const LAUNCHER_INTRO_CONTENT := {
+	"eyebrow": {"zh": "Action Roguelite", "en": "Action Roguelite"},
+	"title": {"zh": "字海残卷", "en": "Ink-Sea Remnant Scroll"},
+	"summary": {
+		"zh": "先过一层 source 风格的引导页，再进入双游戏选择器，保持《字海残卷》在启动器最前端的主视觉地位。",
+		"en": "Pass through a source-style intro gate before the two-game selector so Ink-Sea keeps the frontmost visual role in the launcher."
+	},
+	"prompt": {"zh": "按任意键或点击屏幕开始", "en": "Press Any Key Or Tap To Begin"},
+	"footnote": {
+		"zh": "继续可进入启动器首页，并在《字海残卷》与《仓颉之路》之间切换。",
+		"en": "Continue into the launcher home, then switch between Ink-Sea and Cangjie Road."
+	}
+}
+
 const LAUNCHER_UPDATE_SPOTLIGHT := {
-	"eyebrow": "Update History",
-	"title": "启动器更新日志入口已补齐",
-	"summary": "Godot 启动器首页现在既保留最近更新聚光卡，也能直接打开内置更新历史面板，继续向 web 原型首页的 changelog panel 对齐。",
-	"meta": ["2026-03-22", "Godot 启动器", "更新日志"],
+	"eyebrow": "Intro Splash",
+	"title": "启动器按任意键引导页已迁回",
+	"summary": "Godot 首页现在会先经过与 hanziHero source 对齐的双语 intro splash，再落到双游戏选择器。",
+	"meta": ["2026-03-26", "Godot 启动器", "引导页"],
 	"highlights": [
-		"首页“最近更新”卡现在可以直接展开最近几次迁移里程碑，不再只停在单条快照。",
-		"前台已补齐主题联动、玩家名帖与场景 smoke 检查，近期推进可以留在同一层里回看。",
-		"启动器层剩余更大的缺口仍是双语切换与仓颉入口接入。"
+		"现在会先显示一层独立的《字海残卷》引导页，按键或点屏后才揭开 Godot 启动器主界面。",
+		"引导页沿用了当前语言切换能力，不必先落到首页再改 `中 / EN`。",
+		"迁移清单、README 与首页最近更新卡也已同步刷新，方便继续对照 source 启动器入口。"
 	],
 	"footnote": "完整长期追踪仍以仓库根目录的 MIGRATION_CHECKLIST 为准。"
 }
 
 const LAUNCHER_CHANGELOG_HISTORY := [
+	{
+		"date": "2026-03-26",
+		"title": "source 风格启动器引导页接回 Godot",
+		"summary": "Godot 首页现在会先显示一层双语 `按任意键开始` 引导页，再进入双游戏选择器，更贴近 hanziHero 的启动入口节拍。",
+		"meta": ["Godot 启动器", "引导页", "Launcher"],
+		"sections": [
+			{
+				"label": "新增",
+				"items": [
+					"首页现在会先显示 `字海残卷 / Ink-Sea Remnant Scroll` 的 source 风格引导页，按键或点屏后才进入主启动器。",
+					"引导页顶部保留运行时 `中 / EN` 切换，不必先落到首页才能改语言。"
+				]
+			},
+			{
+				"label": "同步",
+				"items": [
+					"README 与 `MIGRATION_CHECKLIST.md` 已补上这层启动器入口迁移说明，保持 source 对照更清楚。",
+					"首页最近更新聚光卡也切到这次引导页迁移，前台最近完成项不再停在旧的 changelog 面板接线。"
+				]
+			},
+			{
+				"label": "下一步",
+				"items": [
+					"继续对齐 launcher 端更细的 release/readout 细节，或回到菜单层补更完整的 build / progression 展示。",
+					"仓颉之路仍保持 portal 预览路线，真正的 Godot 爬塔战斗基础还要后续单独迁移。"
+				]
+			}
+		]
+	},
 	{
 		"date": "2026-03-22",
 		"title": "启动器更新日志面板接回首页",
@@ -5574,6 +5617,10 @@ static func launcher_roadmap_info_panels() -> Array:
 
 static func launcher_about_content() -> Dictionary:
 	return LAUNCHER_ABOUT_CONTENT.duplicate(true)
+
+
+static func launcher_intro_content() -> Dictionary:
+	return LAUNCHER_INTRO_CONTENT.duplicate(true)
 
 
 static func launcher_update_spotlight() -> Dictionary:

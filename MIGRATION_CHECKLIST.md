@@ -11,6 +11,7 @@ Status legend:
 ## Launcher
 
 - `[done]` Godot launcher home with two game cards, floating glyph ambience, and mobile browser guidance. Notes: hanziHero uses a launcher homepage with portal cards; Godot now preserves the same top-level game-selection role.
+- `[done]` Launcher intro splash and `Press Any Key` gate. Notes: hanziHero opens on a branded `字海残卷` title splash before the selector; Godot now mirrors that with a bilingual intro overlay that keeps a runtime language toggle and only reveals the two-game launcher after a key press or tap.
 - `[done]` About overlay upgraded to a richer story/article layout with two game summaries and migration notes. Notes: hanziHero's launcher has an about portal with story paragraphs, game cards, and note cards; Godot now carries that structure in-code.
 - `[done]` Theme toggle parity for launcher and about surface. Notes: hanziHero supports a paper-ink theme switch; Godot launcher and about overlay now expose a remembered `夜墨 / 纸墨` toggle while preserving the existing night-ink default.
 - `[done]` Launcher-side latest update spotlight. Notes: hanziHero's homepage surfaces a recent version / changelog spotlight; Godot launcher now mirrors that front-page role with an in-launcher migration progress card.

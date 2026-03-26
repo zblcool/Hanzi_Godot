@@ -2,6 +2,11 @@
 
 All notable changes to this Godot migration project are documented here.
 
+## 2026-03-26
+
+- Added a source-style launcher intro splash so the Godot home now opens on a bilingual `Press Any Key` gate before revealing the two-game selector.
+- Kept the intro-layer `中 / EN` toggle in the same surface, and refreshed the README plus migration checklist to document the restored launcher entry flow.
+
 ## 2026-03-22
 
 - Added an in-launcher changelog history overlay so the latest-update card can open recent migration milestones directly on the Godot home screen.
