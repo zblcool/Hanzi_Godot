@@ -157,6 +157,7 @@ func _process(delta: float) -> void:
 		reaction_time_remaining = max(reaction_time_remaining - delta, 0.0)
 		if reaction_time_remaining <= 0.0 and not active_card_reaction_hero.is_empty():
 			_clear_card_reactions()
+			_show_reaction_prompt(_localized_hero_data(selected_hero))
 	if selection_pulse_time_remaining > 0.0:
 		selection_pulse_time_remaining = max(selection_pulse_time_remaining - delta, 0.0)
 	_update_selection_pulse()
@@ -3976,8 +3977,24 @@ func _refresh_selection(trigger_reaction: bool = false) -> void:
 	_set_stat_value("pickup_radius", float(selected_data.get("collect_radius", 0.0)), 4.5, String(page_content.get("detail_stat_pickup_value_format", "%.1f")))
 	if trigger_reaction:
 		_show_hero_reaction(selected_hero, selected_data)
-	elif detail_reaction_panel != null:
-		detail_reaction_panel.visible = false
+	else:
+		_show_reaction_prompt(selected_data)
+
+
+func _show_reaction_prompt(hero_data: Dictionary) -> void:
+	if detail_reaction_panel == null or detail_reaction_label == null:
+		return
+
+	var accent: Color = hero_data["accent"]
+	detail_reaction_panel.add_theme_stylebox_override(
+		"panel",
+		_make_panel_style(
+			Color(accent.r * 0.1, accent.g * 0.1, accent.b * 0.14, 0.72),
+			Color(accent.r, accent.g, accent.b, 0.18)
+		)
+	)
+	detail_reaction_panel.visible = true
+	detail_reaction_label.text = _localize_text(String(FrontEndContent.menu_page_content().get("reaction_prompt", "点一下角色，让他先开口。")))
 
 
 func _show_hero_reaction(hero_id: String, hero_data: Dictionary) -> void:
