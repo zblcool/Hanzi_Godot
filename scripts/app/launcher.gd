@@ -55,6 +55,8 @@ const EN_TEXT := {
 	"把偏旁、合字、词技做成真正的成长主线。": "Turn radicals, fused glyphs, and phrase arts into the real growth spine.",
 	"让战斗里的字、墨、纸和敌人轮廓属于同一世界。": "Make glyphs, ink, paper, and enemy silhouettes feel like one world.",
 	"把菜单和 HUD 提到可展示、可录像的完成度。": "Push the menu and HUD to a presentable, recordable level of polish.",
+	"最近更新": "Latest Update",
+	"当前快照": "Current Snapshot",
 	"启动器按任意键引导页已迁回": "Launcher press-any-key intro restored",
 	"Godot 首页现在会先经过与 hanziHero source 对齐的双语 intro splash，再落到双游戏选择器。": "The Godot home now passes through a bilingual intro splash aligned with the hanziHero source before landing on the two-game selector.",
 	"引导页": "Intro Gate",
@@ -442,6 +444,74 @@ func _localize_cangjie_text(value: Variant) -> String:
 			return String(localized.get("en", localized.get("zh", "")))
 		return String(localized.get("zh", localized.get("en", "")))
 	return _localize_text(String(value))
+
+
+func _parse_iso_date(date_string: String) -> Dictionary:
+	var parts := date_string.strip_edges().split("-")
+	if parts.size() != 3:
+		return {}
+	return {
+		"year": int(parts[0]),
+		"month": int(parts[1]),
+		"day": int(parts[2])
+	}
+
+
+func _format_update_date(date_string: String) -> String:
+	var parsed := _parse_iso_date(date_string)
+	if parsed.is_empty():
+		return date_string
+	var year := int(parsed.get("year", 0))
+	var month := int(parsed.get("month", 0))
+	var day := int(parsed.get("day", 0))
+	if year <= 0 or month <= 0 or day <= 0:
+		return date_string
+	if _is_english():
+		var month_names := ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+		if month > month_names.size():
+			return date_string
+		return "%s %d, %d" % [month_names[month - 1], day, year]
+	return "%d年%d月%d日" % [year, month, day]
+
+
+func _format_update_age(date_string: String) -> String:
+	var parsed := _parse_iso_date(date_string)
+	if parsed.is_empty():
+		return ""
+	var today := Time.get_date_dict_from_system()
+	var today_string := "%04d-%02d-%02dT12:00:00" % [
+		int(today.get("year", 0)),
+		int(today.get("month", 0)),
+		int(today.get("day", 0))
+	]
+	var entry_string := "%04d-%02d-%02dT12:00:00" % [
+		int(parsed.get("year", 0)),
+		int(parsed.get("month", 0)),
+		int(parsed.get("day", 0))
+	]
+	var diff_seconds := Time.get_unix_time_from_datetime_string(today_string) - Time.get_unix_time_from_datetime_string(entry_string)
+	if diff_seconds <= 0.0:
+		return "Updated today" if _is_english() else "今天更新"
+	var diff_days := int(floor(diff_seconds / 86400.0))
+	if diff_days <= 0:
+		return "Updated today" if _is_english() else "今天更新"
+	if _is_english():
+		return "Updated 1 day ago" if diff_days == 1 else "Updated %d days ago" % diff_days
+	return "1 天前更新" if diff_days == 1 else "%d 天前更新" % diff_days
+
+
+func _make_update_pill_row(date_string: String, accent: Color, include_snapshot: bool) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", _i(8))
+	if include_snapshot:
+		row.add_child(_make_tag(_localize_text("当前快照"), Color(0.14, 0.18, 0.24, 0.9), Color(0.96, 0.82, 0.56, 0.98)))
+	var formatted_date := _format_update_date(date_string)
+	if not formatted_date.is_empty():
+		row.add_child(_make_tag(formatted_date, Color(accent.r * 0.14, accent.g * 0.14, accent.b * 0.16, 0.9), Color(0.98, 0.94, 0.88, 0.96)))
+	var age_label := _format_update_age(date_string)
+	if not age_label.is_empty():
+		row.add_child(_make_tag(age_label, Color(accent.r * 0.12, accent.g * 0.12, accent.b * 0.16, 0.84), Color(0.92, 0.94, 0.9, 0.94)))
+	return row
 
 
 func _resolve_surface_fill(fill_color: Color) -> Color:
@@ -860,6 +930,8 @@ func _make_info_panel(title: String, lines: Array[String], accent: Color) -> Pan
 
 func _make_update_spotlight_panel() -> PanelContainer:
 	var spotlight := FrontEndContent.launcher_update_spotlight()
+	var changelog_history := FrontEndContent.launcher_changelog_history()
+	var latest_entry: Dictionary = changelog_history[0] if not changelog_history.is_empty() else {}
 	var accent := Color(0.92, 0.7, 0.38, 1.0)
 	var panel := PanelContainer.new()
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -877,23 +949,24 @@ func _make_update_spotlight_panel() -> PanelContainer:
 	box.add_theme_constant_override("separation", _i(10))
 	margin.add_child(box)
 
-	box.add_child(_make_tag(String(spotlight.get("eyebrow", "")), Color(0.14, 0.18, 0.24, 0.88), Color(0.96, 0.82, 0.56, 0.98)))
-	box.add_child(_make_label(String(spotlight.get("title", "")), 32, Color(1.0, 0.95, 0.86, 1.0)))
-	box.add_child(_make_label(String(spotlight.get("summary", "")), 18, Color(0.9, 0.92, 0.96, 0.95)))
+	box.add_child(_make_tag(_localize_cangjie_text(spotlight.get("eyebrow", "")), Color(0.14, 0.18, 0.24, 0.88), Color(0.96, 0.82, 0.56, 0.98)))
+	box.add_child(_make_label(_localize_cangjie_text(spotlight.get("title", "")), 32, Color(1.0, 0.95, 0.86, 1.0)))
+	box.add_child(_make_label(_localize_cangjie_text(spotlight.get("summary", "")), 18, Color(0.9, 0.92, 0.96, 0.95)))
+	box.add_child(_make_update_pill_row(String(latest_entry.get("date", "")), accent, true))
 
 	var meta_row := HBoxContainer.new()
 	meta_row.add_theme_constant_override("separation", _i(8))
 	box.add_child(meta_row)
 	for meta_text_variant in spotlight.get("meta", []):
-		meta_row.add_child(_make_tag(String(meta_text_variant), Color(accent.r * 0.14, accent.g * 0.14, accent.b * 0.16, 0.9), Color(0.98, 0.94, 0.88, 0.96)))
+		meta_row.add_child(_make_tag(_localize_cangjie_text(meta_text_variant), Color(accent.r * 0.14, accent.g * 0.14, accent.b * 0.16, 0.9), Color(0.98, 0.94, 0.88, 0.96)))
 
 	var highlights_box := VBoxContainer.new()
 	highlights_box.add_theme_constant_override("separation", _i(6))
 	box.add_child(highlights_box)
 	for highlight_variant in spotlight.get("highlights", []):
-		highlights_box.add_child(_make_label("• %s" % String(highlight_variant), 16, Color(0.9, 0.92, 0.96, 0.92)))
+		highlights_box.add_child(_make_label("• %s" % _localize_cangjie_text(highlight_variant), 16, Color(0.9, 0.92, 0.96, 0.92)))
 
-	box.add_child(_make_label(String(spotlight.get("footnote", "")), 15, Color(0.86, 0.9, 0.94, 0.8)))
+	box.add_child(_make_label(_localize_cangjie_text(spotlight.get("footnote", "")), 15, Color(0.86, 0.9, 0.94, 0.8)))
 
 	var action_row := HBoxContainer.new()
 	action_row.add_theme_constant_override("separation", _i(10))
@@ -4544,10 +4617,10 @@ func _build_changelog_overlay() -> void:
 	box.add_theme_constant_override("separation", _i(16))
 	margin.add_child(box)
 
-	box.add_child(_make_tag(String(changelog_content.get("tag", "")), Color(0.14, 0.18, 0.24, 0.88), Color(0.96, 0.82, 0.56, 0.98)))
-	box.add_child(_make_label(String(changelog_content.get("title", "")), 44, Color(1.0, 0.95, 0.86, 1.0)))
-	box.add_child(_make_label(String(changelog_content.get("summary", "")), 18, Color(0.9, 0.92, 0.96, 0.95)))
-	box.add_child(_make_label(String(changelog_content.get("footnote", "")), 16, Color(0.86, 0.9, 0.94, 0.84)))
+	box.add_child(_make_tag(_localize_cangjie_text(changelog_content.get("tag", "")), Color(0.14, 0.18, 0.24, 0.88), Color(0.96, 0.82, 0.56, 0.98)))
+	box.add_child(_make_label(_localize_cangjie_text(changelog_content.get("title", "")), 44, Color(1.0, 0.95, 0.86, 1.0)))
+	box.add_child(_make_label(_localize_cangjie_text(changelog_content.get("summary", "")), 18, Color(0.9, 0.92, 0.96, 0.95)))
+	box.add_child(_make_label(_localize_cangjie_text(changelog_content.get("footnote", "")), 16, Color(0.86, 0.9, 0.94, 0.84)))
 
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -4831,20 +4904,25 @@ func _make_changelog_entry_card(entry: Dictionary, is_latest: bool) -> PanelCont
 	meta_row.add_theme_constant_override("separation", _i(8))
 	box.add_child(meta_row)
 	if is_latest:
-		meta_row.add_child(_make_tag("当前快照", Color(0.14, 0.18, 0.24, 0.9), Color(0.96, 0.82, 0.56, 0.98)))
-	meta_row.add_child(_make_tag(String(entry.get("date", "")), Color(accent.r * 0.14, accent.g * 0.14, accent.b * 0.16, 0.9), Color(0.98, 0.94, 0.88, 0.96)))
+		meta_row.add_child(_make_tag(_localize_text("当前快照"), Color(0.14, 0.18, 0.24, 0.9), Color(0.96, 0.82, 0.56, 0.98)))
+	var formatted_date := _format_update_date(String(entry.get("date", "")))
+	if not formatted_date.is_empty():
+		meta_row.add_child(_make_tag(formatted_date, Color(accent.r * 0.14, accent.g * 0.14, accent.b * 0.16, 0.9), Color(0.98, 0.94, 0.88, 0.96)))
+	var age_label := _format_update_age(String(entry.get("date", "")))
+	if not age_label.is_empty():
+		meta_row.add_child(_make_tag(age_label, Color(accent.r * 0.12, accent.g * 0.12, accent.b * 0.16, 0.84), Color(0.92, 0.94, 0.9, 0.94)))
 	for meta_variant in entry.get("meta", []):
-		meta_row.add_child(_make_tag(String(meta_variant), Color(accent.r * 0.12, accent.g * 0.12, accent.b * 0.16, 0.8), Color(0.92, 0.94, 0.9, 0.94)))
+		meta_row.add_child(_make_tag(_localize_cangjie_text(meta_variant), Color(accent.r * 0.12, accent.g * 0.12, accent.b * 0.16, 0.8), Color(0.92, 0.94, 0.9, 0.94)))
 
-	box.add_child(_make_label(String(entry.get("title", "")), 30 if is_latest else 26, Color(1.0, 0.95, 0.86, 1.0)))
-	box.add_child(_make_label(String(entry.get("summary", "")), 17, Color(0.9, 0.92, 0.96, 0.94)))
+	box.add_child(_make_label(_localize_cangjie_text(entry.get("title", "")), 30 if is_latest else 26, Color(1.0, 0.95, 0.86, 1.0)))
+	box.add_child(_make_label(_localize_cangjie_text(entry.get("summary", "")), 17, Color(0.9, 0.92, 0.96, 0.94)))
 
 	var sections_box := VBoxContainer.new()
 	sections_box.add_theme_constant_override("separation", _i(10))
 	box.add_child(sections_box)
 	for section_variant in entry.get("sections", []):
 		var section: Dictionary = section_variant
-		sections_box.add_child(_make_changelog_section_card(String(section.get("label", "")), section.get("items", []), accent))
+		sections_box.add_child(_make_changelog_section_card(_localize_cangjie_text(section.get("label", "")), section.get("items", []), accent))
 
 	return card
 
@@ -4864,9 +4942,9 @@ func _make_changelog_section_card(title: String, items: Array, accent: Color) ->
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", _i(8))
 	margin.add_child(box)
-	box.add_child(_make_label(title, 21, Color(1.0, 0.92, 0.8, 1.0)))
+	box.add_child(_make_label(_localize_text(title), 21, Color(1.0, 0.92, 0.8, 1.0)))
 	for item_variant in items:
-		box.add_child(_make_label("• %s" % String(item_variant), 16, Color(0.9, 0.92, 0.95, 0.93)))
+		box.add_child(_make_label("• %s" % _localize_cangjie_text(item_variant), 16, Color(0.9, 0.92, 0.95, 0.93)))
 
 	return card
 

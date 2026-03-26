@@ -124,7 +124,7 @@ const LAUNCHER_INTRO_CONTENT := {
 }
 
 const LAUNCHER_UPDATE_SPOTLIGHT := {
-	"eyebrow": "Intro Splash",
+	"eyebrow": "最近更新",
 	"title": "启动器按任意键引导页已迁回",
 	"summary": "Godot 首页现在会先经过与 hanziHero source 对齐的双语 intro splash，再落到双游戏选择器。",
 	"meta": ["2026-03-26", "Godot 启动器", "引导页"],
@@ -4045,7 +4045,7 @@ const CANGJIE_PORTAL_SECTIONS := [
 ]
 
 const LAUNCHER_CHANGELOG_CONTENT := {
-	"tag": "Update History",
+	"tag": "最近更新",
 	"title": "更新日志",
 	"summary": "首页最近更新卡现在会把近期 Godot 迁移里程碑一并展开，方便直接对照前台推进节奏。",
 	"footnote": "完整变更记录仍保留在仓库根目录 CHANGELOG.md；长期迁移状态仍以 MIGRATION_CHECKLIST.md 为准。",
