@@ -4,6 +4,7 @@ All notable changes to this Godot migration project are documented here.
 
 ## 2026-03-26
 
+- Reworked the menu-side local leaderboard into a source-style featured-best card plus expandable run history, so build tags, takedown mix, and recorded metadata no longer stop at a flat text list.
 - Added a source-style launcher intro splash so the Godot home now opens on a bilingual `Press Any Key` gate before revealing the two-game selector.
 - Kept the intro-layer `中 / EN` toggle in the same surface, and refreshed the README plus migration checklist to document the restored launcher entry flow.
 - Localized the launcher latest-update card and in-app changelog under the shared `中 / EN` toggle, and added a source-style current-snapshot/date/freshness pill readout on the home spotlight.

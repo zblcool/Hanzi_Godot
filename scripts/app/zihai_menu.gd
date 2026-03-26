@@ -8,6 +8,7 @@ const MIN_UI_SCALE := 0.6
 const HERO_REACTION_DURATION := 3.2
 const HERO_SELECTION_PULSE_DURATION := 0.72
 const LEADERBOARD_SCROLL_TOP_THRESHOLD := 260
+const LEADERBOARD_HISTORY_COLLAPSED_LIMIT := 4
 const NIGHT_THEME := {
 	"background": Color(0.03, 0.05, 0.07, 1.0),
 	"glow_amber": Color(0.88, 0.58, 0.28, 0.08),
@@ -80,7 +81,7 @@ var enemy_archive_body_label: Label
 var leaderboard_overlay: Control
 var leaderboard_summary_label: Label
 var leaderboard_scroll: ScrollContainer
-var leaderboard_body_label: Label
+var leaderboard_entries_root: VBoxContainer
 var leaderboard_manual_button: Button
 var leaderboard_test_button: Button
 var leaderboard_sort_wave_button: Button
@@ -90,6 +91,7 @@ var leaderboard_scroll_top_button: Button
 var leaderboard_scroll_top_tween: Tween
 var leaderboard_view: String = "manual"
 var leaderboard_sort: String = "wave"
+var leaderboard_show_all_history := false
 var profile_overlay: Control
 var profile_name_input: LineEdit
 var profile_status_label: Label
@@ -252,7 +254,7 @@ func _rebuild_ui() -> void:
 	leaderboard_overlay = null
 	leaderboard_summary_label = null
 	leaderboard_scroll = null
-	leaderboard_body_label = null
+	leaderboard_entries_root = null
 	leaderboard_manual_button = null
 	leaderboard_test_button = null
 	leaderboard_sort_wave_button = null
@@ -260,6 +262,7 @@ func _rebuild_ui() -> void:
 	leaderboard_sort_time_button = null
 	leaderboard_scroll_top_button = null
 	leaderboard_scroll_top_tween = null
+	leaderboard_show_all_history = false
 	profile_overlay = null
 	profile_name_input = null
 	profile_status_label = null
@@ -1909,11 +1912,12 @@ func _build_leaderboard_overlay() -> void:
 	box.add_child(leaderboard_scroll)
 	leaderboard_scroll.get_v_scroll_bar().value_changed.connect(_on_leaderboard_scroll_changed)
 
-	leaderboard_body_label = _make_label("", 18, Color(0.9, 0.92, 0.95, 0.96))
-	leaderboard_body_label.custom_minimum_size = _v(720.0, 0.0)
-	leaderboard_body_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	leaderboard_body_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	leaderboard_scroll.add_child(leaderboard_body_label)
+	leaderboard_entries_root = VBoxContainer.new()
+	leaderboard_entries_root.custom_minimum_size = _v(720.0, 0.0)
+	leaderboard_entries_root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	leaderboard_entries_root.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	leaderboard_entries_root.add_theme_constant_override("separation", _i(14))
+	leaderboard_scroll.add_child(leaderboard_entries_root)
 
 	var action_row := HBoxContainer.new()
 	action_row.alignment = BoxContainer.ALIGNMENT_END
@@ -2942,7 +2946,7 @@ func _build_local_leaderboard_text(view: String = "manual", limit: int = 8, sort
 
 
 func _refresh_leaderboard_overlay() -> void:
-	if leaderboard_body_label == null or leaderboard_summary_label == null:
+	if leaderboard_entries_root == null or leaderboard_summary_label == null:
 		return
 	var leaderboard_content := FrontEndContent.menu_leaderboard_content()
 
@@ -2961,7 +2965,43 @@ func _refresh_leaderboard_overlay() -> void:
 	else:
 		leaderboard_summary_label.text = _localize_text(String(leaderboard_content.get("summary_manual", "主卷榜只收从第 1 波真正开卷的战绩；现在也能在波次 / 击破 / 存活三种排序之间切换，开局前可以从不同角度回看 route 成果。")))
 
-	leaderboard_body_label.text = _build_local_leaderboard_text(leaderboard_view, 8, leaderboard_sort)
+	for child in leaderboard_entries_root.get_children():
+		child.queue_free()
+
+	var entries := _get_local_leaderboard_overlay_entries(leaderboard_view, leaderboard_sort, Session.LOCAL_LEADERBOARD_LIMIT)
+	if entries.is_empty():
+		var empty_text := String(leaderboard_content.get("empty_test", "当前还没有试阵记录。用第 10 / 20 波捷径打一轮后，这里会单独留下试阵榜。"))
+		if leaderboard_view != "test":
+			empty_text = String(leaderboard_content.get("empty_manual", "当前还没有可展示的主卷战绩。下一次从第 1 波真正开卷后，这里会留下你的记录。"))
+		leaderboard_entries_root.add_child(_make_leaderboard_empty_card(_localize_text(empty_text)))
+	else:
+		var featured_title := String(leaderboard_content.get("featured_title_test", "当前最佳试阵"))
+		if leaderboard_view != "test":
+			featured_title = String(leaderboard_content.get("featured_title_manual", "当前最佳定卷"))
+		leaderboard_entries_root.add_child(_make_label(featured_title, 22, Color(1.0, 0.95, 0.86, 1.0)))
+		leaderboard_entries_root.add_child(_make_leaderboard_entry_card(entries[0], 1, leaderboard_view, true))
+
+		var history_total := maxi(entries.size() - 1, 0)
+		if history_total > 0:
+			var history_title := _localize_text(String(leaderboard_content.get("history_title", "其余战绩")))
+			var history_summary_format := String(leaderboard_content.get("history_summary_format", "继续回看剩余 %d 条 build 结果。"))
+			leaderboard_entries_root.add_child(_make_label(history_title, 20, Color(0.96, 0.82, 0.56, 0.96)))
+			leaderboard_entries_root.add_child(_make_label(_localize_text(history_summary_format) % history_total, 15, Color(0.82, 0.9, 1.0, 0.9)))
+
+			var history_visible_count := history_total if leaderboard_show_all_history else mini(LEADERBOARD_HISTORY_COLLAPSED_LIMIT, history_total)
+			for history_index in range(history_visible_count):
+				var entry_index := history_index + 1
+				leaderboard_entries_root.add_child(_make_leaderboard_entry_card(entries[entry_index], entry_index + 1, leaderboard_view, false))
+
+			if history_total > LEADERBOARD_HISTORY_COLLAPSED_LIMIT:
+				var hidden_count := maxi(history_total - LEADERBOARD_HISTORY_COLLAPSED_LIMIT, 0)
+				var toggle_text := String(leaderboard_content.get("show_less_history", "收起其余战绩"))
+				if not leaderboard_show_all_history:
+					toggle_text = _localize_text(String(leaderboard_content.get("show_more_history_format", "展开其余 %d 条"))) % hidden_count
+				var toggle_button := _make_pill_button(toggle_text, _v(0.0, 48.0), Callable(self, "_on_leaderboard_history_toggle_pressed"))
+				toggle_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				leaderboard_entries_root.add_child(toggle_button)
+
 	_apply_leaderboard_view_button(leaderboard_manual_button, _localize_text(String(leaderboard_content.get("main_board", "主卷榜"))), manual_count, leaderboard_view == "manual")
 	_apply_leaderboard_view_button(leaderboard_test_button, _localize_text(String(leaderboard_content.get("test_board", "试阵榜"))), test_count, leaderboard_view == "test")
 	_apply_leaderboard_sort_button(leaderboard_sort_wave_button, _localize_text(String(leaderboard_content.get("sort_wave", "按波次"))), leaderboard_sort == "wave")
@@ -3293,6 +3333,7 @@ func _show_leaderboard_overlay() -> void:
 	_hide_character_archive_overlay()
 	_hide_recipe_atlas_overlay()
 	_hide_enemy_archive_overlay()
+	leaderboard_show_all_history = false
 	_refresh_leaderboard_overlay()
 	if leaderboard_scroll != null:
 		leaderboard_scroll.scroll_vertical = 0
@@ -3311,27 +3352,39 @@ func _hide_leaderboard_overlay() -> void:
 
 func _on_leaderboard_manual_pressed() -> void:
 	leaderboard_view = "manual"
+	leaderboard_show_all_history = false
 	_refresh_leaderboard_overlay()
 
 
 func _on_leaderboard_test_pressed() -> void:
 	leaderboard_view = "test"
+	leaderboard_show_all_history = false
 	_refresh_leaderboard_overlay()
 
 
 func _on_leaderboard_sort_wave_pressed() -> void:
 	leaderboard_sort = "wave"
+	leaderboard_show_all_history = false
 	_refresh_leaderboard_overlay()
 
 
 func _on_leaderboard_sort_kills_pressed() -> void:
 	leaderboard_sort = "kills"
+	leaderboard_show_all_history = false
 	_refresh_leaderboard_overlay()
 
 
 func _on_leaderboard_sort_time_pressed() -> void:
 	leaderboard_sort = "time"
+	leaderboard_show_all_history = false
 	_refresh_leaderboard_overlay()
+
+
+func _on_leaderboard_history_toggle_pressed() -> void:
+	leaderboard_show_all_history = not leaderboard_show_all_history
+	_refresh_leaderboard_overlay()
+	if leaderboard_scroll != null and not leaderboard_show_all_history:
+		leaderboard_scroll.scroll_vertical = 0
 
 
 func _on_leaderboard_scroll_changed(_value: float) -> void:
@@ -3361,6 +3414,218 @@ func _refresh_leaderboard_scroll_top_button() -> void:
 		and leaderboard_scroll.scroll_vertical > LEADERBOARD_SCROLL_TOP_THRESHOLD
 	)
 	leaderboard_scroll_top_button.visible = should_show
+
+
+func _make_leaderboard_empty_card(text: String) -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.08, 0.12, 0.16, 0.72), Color(0.28, 0.36, 0.42, 0.46)))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", _i(20))
+	margin.add_theme_constant_override("margin_top", _i(18))
+	margin.add_theme_constant_override("margin_right", _i(20))
+	margin.add_theme_constant_override("margin_bottom", _i(18))
+	panel.add_child(margin)
+
+	margin.add_child(_make_label(text, 18, Color(0.9, 0.92, 0.96, 0.96)))
+	return panel
+
+
+func _make_leaderboard_entry_card(entry: Dictionary, rank: int, view: String, featured: bool) -> PanelContainer:
+	var leaderboard_content := FrontEndContent.menu_leaderboard_content()
+	var accent := _resolve_leaderboard_entry_accent(entry)
+	var panel := PanelContainer.new()
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.add_theme_stylebox_override(
+		"panel",
+		_make_panel_style(
+			Color(accent.r * 0.14, accent.g * 0.14, accent.b * 0.18, 0.88 if featured else 0.72),
+			Color(accent.r, accent.g, accent.b, 0.46 if featured else 0.3)
+		)
+	)
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", _i(18))
+	margin.add_theme_constant_override("margin_top", _i(16))
+	margin.add_theme_constant_override("margin_right", _i(18))
+	margin.add_theme_constant_override("margin_bottom", _i(16))
+	panel.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", _i(12))
+	margin.add_child(box)
+
+	var badge_row := HFlowContainer.new()
+	badge_row.add_theme_constant_override("h_separation", _i(8))
+	badge_row.add_theme_constant_override("v_separation", _i(8))
+	box.add_child(badge_row)
+
+	if featured:
+		badge_row.add_child(_make_tag(String(leaderboard_content.get("featured_badge", "当前最佳")), Color(0.16, 0.22, 0.28, 0.9), Color(0.96, 0.82, 0.56, 0.98)))
+	badge_row.add_child(_make_tag(String(leaderboard_content.get("rank_tag_format", "#%d")) % rank, Color(accent.r * 0.18, accent.g * 0.18, accent.b * 0.22, 0.92), Color(0.98, 0.95, 0.9, 0.98)))
+	badge_row.add_child(_make_tag(_get_leaderboard_run_badge(entry, view), Color(accent.r * 0.12, accent.g * 0.12, accent.b * 0.18, 0.84), Color(0.9, 0.95, 1.0, 0.96)))
+
+	box.add_child(_make_label(_format_leaderboard_identity(entry), 24 if featured else 21, Color(1.0, 0.95, 0.86, 1.0)))
+
+	var meta_parts: Array[String] = []
+	var recorded_line := _build_local_leaderboard_recorded_line(entry)
+	if not recorded_line.is_empty():
+		meta_parts.append(recorded_line)
+	var time_zone_line := _build_local_leaderboard_time_zone_line(entry)
+	if not time_zone_line.is_empty():
+		meta_parts.append(time_zone_line)
+	if not meta_parts.is_empty():
+		box.add_child(_make_label("  ·  ".join(meta_parts), 14, Color(0.82, 0.9, 1.0, 0.88)))
+
+	var metric_row := HFlowContainer.new()
+	metric_row.add_theme_constant_override("h_separation", _i(10))
+	metric_row.add_theme_constant_override("v_separation", _i(10))
+	box.add_child(metric_row)
+	metric_row.add_child(_make_leaderboard_metric_card(String(leaderboard_content.get("bosses_label", "卷主")), str(int(entry.get("bosses", 0))), accent))
+	metric_row.add_child(_make_leaderboard_metric_card(String(leaderboard_content.get("wave_label", "波次")), str(int(entry.get("threat", 1))), accent))
+	metric_row.add_child(_make_leaderboard_metric_card(String(leaderboard_content.get("kills_label", "击破")), str(int(entry.get("kills", 0))), accent))
+	metric_row.add_child(_make_leaderboard_metric_card(String(leaderboard_content.get("level_label", "等级")), "Lv.%d" % int(entry.get("level", 1)), accent))
+	metric_row.add_child(_make_leaderboard_metric_card(String(leaderboard_content.get("time_label", "存活")), _format_elapsed(float(entry.get("elapsed", 0.0))), accent))
+
+	var section_row := HFlowContainer.new()
+	section_row.add_theme_constant_override("h_separation", _i(12))
+	section_row.add_theme_constant_override("v_separation", _i(12))
+
+	var radicals_tags := _collect_run_count_tags(entry.get("radicals", {}), Session.RADICAL_ORDER, "radical")
+	if not radicals_tags.is_empty():
+		section_row.add_child(_make_leaderboard_tag_section(String(leaderboard_content.get("section_radicals", "偏旁")), radicals_tags, accent))
+
+	var glyph_tags := _collect_run_count_tags(entry.get("recipes", {}), Session.RECIPE_ORDER, "recipe")
+	if not glyph_tags.is_empty():
+		section_row.add_child(_make_leaderboard_tag_section(String(leaderboard_content.get("section_glyphs", "成字")), glyph_tags, accent))
+
+	var phrase_tags := _collect_run_count_tags(entry.get("words", {}), Session.WORD_ORDER, "word")
+	if not phrase_tags.is_empty():
+		section_row.add_child(_make_leaderboard_tag_section(String(leaderboard_content.get("section_phrases", "词技")), phrase_tags, accent))
+
+	var enemy_tags := _collect_enemy_kill_tags(entry.get("enemy_kills", {}))
+	if not enemy_tags.is_empty():
+		section_row.add_child(_make_leaderboard_tag_section(String(leaderboard_content.get("section_takedowns", "击倒")), enemy_tags, accent))
+
+	if section_row.get_child_count() > 0:
+		box.add_child(section_row)
+
+	return panel
+
+
+func _make_leaderboard_metric_card(title: String, value: String, accent: Color) -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = _v(132.0, 68.0)
+	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.1, accent.g * 0.1, accent.b * 0.14, 0.72), Color(accent.r, accent.g, accent.b, 0.24)))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", _i(14))
+	margin.add_theme_constant_override("margin_top", _i(12))
+	margin.add_theme_constant_override("margin_right", _i(14))
+	margin.add_theme_constant_override("margin_bottom", _i(12))
+	panel.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", _i(4))
+	margin.add_child(box)
+	box.add_child(_make_label(title, 13, Color(0.82, 0.9, 1.0, 0.88)))
+	box.add_child(_make_label(value, 18, Color(1.0, 0.95, 0.86, 1.0)))
+	return panel
+
+
+func _make_leaderboard_tag_section(title: String, tags: Array[String], accent: Color) -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.08, accent.g * 0.1, accent.b * 0.12, 0.68), Color(accent.r, accent.g, accent.b, 0.2)))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", _i(14))
+	margin.add_theme_constant_override("margin_top", _i(12))
+	margin.add_theme_constant_override("margin_right", _i(14))
+	margin.add_theme_constant_override("margin_bottom", _i(12))
+	panel.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", _i(8))
+	margin.add_child(box)
+	box.add_child(_make_label(title, 14, Color(0.96, 0.82, 0.56, 0.92)))
+
+	var tag_row := HFlowContainer.new()
+	tag_row.add_theme_constant_override("h_separation", _i(8))
+	tag_row.add_theme_constant_override("v_separation", _i(8))
+	box.add_child(tag_row)
+	for tag_text in tags:
+		tag_row.add_child(_make_tag(tag_text, Color(accent.r * 0.16, accent.g * 0.16, accent.b * 0.2, 0.88), Color(0.98, 0.95, 0.9, 0.96)))
+	return panel
+
+
+func _resolve_leaderboard_entry_accent(entry: Dictionary) -> Color:
+	var hero_id := String(entry.get("hero_id", "scholar"))
+	var hero := _localized_hero_data(hero_id)
+	return hero.get("accent", Color(0.58, 0.82, 0.94, 1.0))
+
+
+func _get_leaderboard_run_badge(entry: Dictionary, view: String) -> String:
+	var leaderboard_content := FrontEndContent.menu_leaderboard_content()
+	if _normalize_leaderboard_view(view) == "test":
+		return _localize_text(String(leaderboard_content.get("test_run_format", "试阵 W%d"))) % int(entry.get("start_wave", 1))
+	if bool(entry.get("chapter_complete", false)):
+		return _localize_text(String(leaderboard_content.get("manual_completed", "定卷")))
+	return _localize_text(String(leaderboard_content.get("manual_scroll", "残卷")))
+
+
+func _collect_run_count_tags(raw_counts: Variant, order: Array, category: String, limit: int = 4) -> Array[String]:
+	var tags: Array[String] = []
+	if not (raw_counts is Dictionary):
+		return tags
+	var counts := raw_counts as Dictionary
+	for key_variant in order:
+		var key := String(key_variant)
+		var amount := int(counts.get(key, 0))
+		if amount <= 0:
+			continue
+		tags.append("%s%d" % [_run_count_label(key, category), amount])
+		if tags.size() >= limit:
+			break
+	return tags
+
+
+func _collect_enemy_kill_tags(raw_counts: Variant, limit: int = 4) -> Array[String]:
+	var tags: Array[String] = []
+	if not (raw_counts is Dictionary):
+		return tags
+
+	var counts := raw_counts as Dictionary
+	var ranked_enemies: Array[Dictionary] = []
+	for enemy_id_variant in Session.ENEMY_ORDER:
+		var enemy_id := String(enemy_id_variant)
+		var amount := int(counts.get(enemy_id, 0))
+		if amount <= 0:
+			continue
+		ranked_enemies.append({
+			"id": enemy_id,
+			"amount": amount
+		})
+
+	if ranked_enemies.is_empty():
+		return tags
+
+	ranked_enemies.sort_custom(func(left: Dictionary, right: Dictionary) -> bool:
+		var left_amount := int(left.get("amount", 0))
+		var right_amount := int(right.get("amount", 0))
+		if left_amount != right_amount:
+			return left_amount > right_amount
+		return Session.ENEMY_ORDER.find(String(left.get("id", ""))) < Session.ENEMY_ORDER.find(String(right.get("id", "")))
+	)
+
+	var visible_count := mini(limit, ranked_enemies.size())
+	for index in range(visible_count):
+		var item := ranked_enemies[index]
+		var enemy_id := String(item.get("id", "basic"))
+		tags.append("%s%d" % [String(Session.get_enemy_data(enemy_id).get("glyph", enemy_id)), int(item.get("amount", 0))])
+
+	return tags
 
 
 func _show_profile_overlay() -> void:
