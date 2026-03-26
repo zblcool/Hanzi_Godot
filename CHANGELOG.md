@@ -4,6 +4,7 @@ All notable changes to this Godot migration project are documented here.
 
 ## 2026-03-26
 
+- Made the menu-side source build-route cards label their radical lean explicitly, so `源稿偏旁偏向 / Source Radical Lean` now sits beside the existing relic and word pairings in both the main spotlight and the archive.
 - Reworked the menu-side local leaderboard into a source-style featured-best card plus expandable run history, so build tags, takedown mix, and recorded metadata no longer stop at a flat text list.
 - Added a source-style launcher intro splash so the Godot home now opens on a bilingual `Press Any Key` gate before revealing the two-game selector.
 - Kept the intro-layer `中 / EN` toggle in the same surface, and refreshed the README plus migration checklist to document the restored launcher entry flow.

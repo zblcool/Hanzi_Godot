@@ -2577,12 +2577,15 @@ func _make_build_route_card(card: Dictionary, accent: Color, compact: bool = fal
 
 	var tags_variant: Variant = card.get("tags", [])
 	if tags_variant is Array and not (tags_variant as Array).is_empty():
-		var tag_row := HFlowContainer.new()
-		tag_row.add_theme_constant_override("h_separation", _i(10))
-		tag_row.add_theme_constant_override("v_separation", _i(10))
-		box.add_child(tag_row)
-		for tag_variant in tags_variant:
-			tag_row.add_child(_make_tag(String(tag_variant), Color(accent.r * 0.16, accent.g * 0.16, accent.b * 0.2, 0.88), Color(0.98, 0.95, 0.9, 0.96)))
+		box.add_child(
+			_make_build_route_pairing_block(
+				_localize_text(String(FrontEndContent.menu_archive_content().get("build_route_radical_title", "源稿偏旁偏向"))),
+				tags_variant as Array,
+				Color(accent.r * 0.16, accent.g * 0.16, accent.b * 0.2, 0.88),
+				Color(0.98, 0.95, 0.9, 0.96),
+				compact
+			)
+		)
 
 	var source_relics_variant: Variant = card.get("source_relics", [])
 	if source_relics_variant is Array and not (source_relics_variant as Array).is_empty():
