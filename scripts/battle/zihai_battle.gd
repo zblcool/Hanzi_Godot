@@ -2650,7 +2650,7 @@ func _on_player_fire_projectile(origin: Vector3, direction: Vector3, damage: flo
 	bolt.configure(origin, direction, damage, speed, glyph, tint)
 	bolt.impact.connect(_on_player_projectile_impact)
 	projectiles_root.add_child(bolt)
-	if glyph == "炎":
+	if glyph == "炎" or glyph == "强" or glyph == "火":
 		_play_attack_sfx("flame_burst", 1.0 + damage / 28.0)
 	elif glyph == "昌":
 		_play_attack_sfx("prosper_volley", 0.94 + damage / 30.0)
@@ -3242,26 +3242,36 @@ func _record_radical_pick(radical: String, silent: bool = false) -> void:
 
 
 func _reveal_secret_radicals_for(radical: String, silent: bool = false) -> void:
-	if radical != "亻":
+	var secret_configs := {
+		"亻": {"secret_radical": "夋", "fusion_glyph": "俊"},
+		"弓": {"secret_radical": "虽", "fusion_glyph": "强"}
+	}
+	if not secret_configs.has(radical):
 		return
+	var secret_config: Dictionary = secret_configs[radical]
+	var secret_radical := String(secret_config.get("secret_radical", ""))
+	var fusion_glyph := String(secret_config.get("fusion_glyph", ""))
 	if int(radical_pick_counts.get(radical, 0)) < 2:
 		return
-	if bool(revealed_secret_radicals.get("夋", false)):
+	if secret_radical.is_empty() or fusion_glyph.is_empty():
 		return
-	revealed_secret_radicals["夋"] = true
+	if bool(revealed_secret_radicals.get(secret_radical, false)):
+		return
+	revealed_secret_radicals[secret_radical] = true
 	if silent or not is_instance_valid(hud):
 		return
-	var secret_color: Color = Color(Session.RADICAL_COLORS.get("夋", Color(0.68, 0.88, 1.0, 1.0)))
+	var secret_color: Color = Color(Session.RADICAL_COLORS.get(secret_radical, Color(0.68, 0.88, 1.0, 1.0)))
 	hud.show_banner(
-		_battle_state_format("secret_radical_reveal_banner_format", "秘旁现形  %s", "Secret Radical  %s", ["夋"]),
+		_battle_state_format("secret_radical_reveal_banner_format", "秘旁现形  %s", "Secret Radical  %s", [secret_radical]),
 		secret_color,
 		1.9
 	)
 	hud.set_tip(
-		_battle_guidance_text(
-			"secret_radical_reveal_tip",
-			"两次人势后，秘旁「夋」已经现形；再补一枚「亻」就能继续合成「俊」。",
-			"After two human picks, the hidden radical `夋` is now revealed; pair it with another `亻` to form `俊`."
+		_battle_guidance_format(
+			"secret_radical_reveal_tip_format",
+			"累计两次「%s」后，秘旁「%s」已经现形；与「%s」同路时就能继续暗合成「%s」。",
+			"After collecting `%s` twice, the hidden radical `%s` is now revealed; combine it with `%s` to form `%s`.",
+			[radical, secret_radical, radical, fusion_glyph]
 		)
 	)
 	_log_battle_event(
@@ -3269,7 +3279,7 @@ func _reveal_secret_radicals_for(radical: String, silent: bool = false) -> void:
 			"secret_radical_reveal_log_format",
 			"秘旁现形 · %s · 现可暗合「%s」",
 			"Secret radical revealed · %s · `%s` is now craftable",
-			["夋", "俊"]
+			[secret_radical, fusion_glyph]
 		),
 		secret_color
 	)

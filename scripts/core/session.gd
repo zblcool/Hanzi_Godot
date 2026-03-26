@@ -256,7 +256,7 @@ func _ensure_input_action(action_name: StringName, keycodes: Array) -> void:
 			event.physical_keycode = keycode
 			InputMap.action_add_event(action_name, event)
 
-const RECIPE_ORDER := ["ming", "chang", "xiu", "forest", "hai", "lei", "rock", "qiu", "jun", "ren", "qin", "yan"]
+const RECIPE_ORDER := ["ming", "chang", "xiu", "forest", "hai", "lei", "rock", "qiu", "jun", "strong", "ren", "qin", "yan"]
 const RECIPES := {
 	"ming": {
 		"id": "ming",
@@ -345,6 +345,17 @@ const RECIPES := {
 		"title": "俊游成字",
 		"description": "秘旁现形后可写成 15 秒俊字水舞，围绕自身连续喷水并牵动回复。",
 		"color": Color(0.7, 0.9, 1.0, 1.0),
+		"max_level": 3,
+		"word_id": ""
+	},
+	"strong": {
+		"id": "strong",
+		"display": "强",
+		"radicals": ["弓", "虽"],
+		"persistent_radicals": ["弓"],
+		"title": "强焰成字",
+		"description": "秘旁现形后可写成 15 秒强字烈势，围绕自身连续喷火并轰散近敌。",
+		"color": Color(0.96, 0.56, 0.34, 1.0),
 		"max_level": 3,
 		"word_id": ""
 	},
@@ -549,10 +560,12 @@ const ENEMIES := {
 	}
 }
 
-const RADICAL_ORDER := ["亻", "夋", "木", "日", "月", "石", "山", "氵", "每", "雨", "田", "囗", "心", "火", "刂"]
+const RADICAL_ORDER := ["亻", "夋", "弓", "虽", "木", "日", "月", "石", "山", "氵", "每", "雨", "田", "囗", "心", "火", "刂"]
 const RADICAL_COLORS := {
 	"亻": Color(0.88, 0.71, 0.55, 1.0),
 	"夋": Color(0.68, 0.88, 1.0, 1.0),
+	"弓": Color(0.96, 0.66, 0.42, 1.0),
+	"虽": Color(1.0, 0.76, 0.58, 1.0),
 	"木": Color(0.49, 0.82, 0.56, 1.0),
 	"日": Color(1.0, 0.78, 0.32, 1.0),
 	"月": Color(0.68, 0.79, 1.0, 1.0),
@@ -580,6 +593,19 @@ const RADICALS := {
 		"name": "俊骨",
 		"description": "秘旁。两次人势后现形，再与 `亻` 暗合成「俊」，进入 15 秒俊字水舞。",
 		"recipe_id": "jun",
+		"hidden": true
+	},
+	"弓": {
+		"display": "弓",
+		"name": "弓字旁",
+		"description": "累计两次弓势后会显出秘旁「虽」，再与 `弓` 暗合成「强」，走更烈的追击火线。",
+		"recipe_id": "strong"
+	},
+	"虽": {
+		"display": "虽",
+		"name": "强芯",
+		"description": "秘旁。两次弓势后现形，再与 `弓` 暗合成「强」，进入 15 秒强字烈势。",
+		"recipe_id": "strong",
 		"hidden": true
 	},
 	"木": {

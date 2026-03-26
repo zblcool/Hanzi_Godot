@@ -44,6 +44,7 @@ var slash_radius_bonus: float = 0.0
 var blade_level: int = 0
 var heal_level: int = 0
 var jun_level: int = 0
+var strong_level: int = 0
 var wave_level: int = 0
 var chang_level: int = 0
 var chang_word_level: int = 0
@@ -80,6 +81,9 @@ var qiu_timer: float = 0.0
 var jun_mode_time: float = 0.0
 var jun_mode_cooldown: float = 0.0
 var jun_burst_timer: float = 0.0
+var strong_mode_time: float = 0.0
+var strong_mode_cooldown: float = 0.0
+var strong_burst_timer: float = 0.0
 var flame_timer: float = 0.0
 var resolve_pulse_timer: float = 0.0
 var stealth_time: float = 0.0
@@ -198,6 +202,9 @@ func _physics_process(delta: float) -> void:
 	jun_mode_time = max(jun_mode_time - delta, 0.0)
 	jun_mode_cooldown = max(jun_mode_cooldown - delta, 0.0)
 	jun_burst_timer = max(jun_burst_timer - delta, 0.0)
+	strong_mode_time = max(strong_mode_time - delta, 0.0)
+	strong_mode_cooldown = max(strong_mode_cooldown - delta, 0.0)
+	strong_burst_timer = max(strong_burst_timer - delta, 0.0)
 
 	_handle_passives(delta)
 	if stun_time <= 0.0:
@@ -382,6 +389,14 @@ func _handle_passives(delta: float) -> void:
 				jun_burst_timer = max(0.42, 0.78 - float(jun_level) * 0.08)
 		elif jun_mode_cooldown <= 0.0:
 			_activate_jun_mode()
+
+	if strong_level > 0:
+		if strong_mode_time > 0.0:
+			if strong_burst_timer <= 0.0:
+				_trigger_strong_burst()
+				strong_burst_timer = max(0.4, 0.74 - float(strong_level) * 0.08)
+		elif strong_mode_cooldown <= 0.0:
+			_activate_strong_mode()
 
 	if flame_level > 0:
 		flame_timer -= delta
@@ -582,6 +597,29 @@ func _trigger_jun_burst() -> void:
 		fire_projectile.emit(origin + direction * 0.9, direction, damage, speed, glyph, tint)
 
 
+func _activate_strong_mode() -> void:
+	if strong_level <= 0 or is_dead:
+		return
+	strong_mode_time = 15.0
+	strong_mode_cooldown = max(16.0, 23.0 - float(strong_level) * 0.7)
+	strong_burst_timer = 0.08
+	_update_visual_state()
+
+
+func _trigger_strong_burst() -> void:
+	var origin := global_position + Vector3(0.0, 1.0, 0.0)
+	var projectile_count: int = 7 + mini(3, strong_level)
+	var speed: float = max(11.6, projectile_speed + 1.6 + float(strong_level) * 0.28)
+	var damage: float = 5.0 + current_attack_damage * (0.62 + float(strong_level) * 0.05)
+	var tint: Color = Session.RECIPES["strong"]["color"]
+	var phase: float = motion_time * 0.62
+	for index in range(projectile_count):
+		var angle: float = phase + TAU * float(index) / float(projectile_count)
+		var direction := Vector3(cos(angle), 0.0, sin(angle)).normalized()
+		var glyph := "强" if index % 3 == 0 else "火"
+		fire_projectile.emit(origin + direction * 0.94, direction, damage, speed, glyph, tint)
+
+
 func _trigger_resolve_activation() -> void:
 	if resolve_word_level > 0:
 		heal(2.8 + float(resolve_word_level) * 1.8)
@@ -670,6 +708,8 @@ func _get_attack_interval() -> float:
 	var interval := current_attack_interval
 	if fury_time > 0.0:
 		interval /= FURY_ATTACK_RATE_MULTIPLIER
+	if strong_mode_time > 0.0:
+		interval *= 0.9
 	return max(0.18 if role == "ranged" else 0.24, interval)
 
 
@@ -709,6 +749,7 @@ func _apply_skill_levels() -> void:
 	var chang_recipe_level: int = int(skill_levels.get("chang", 0))
 	var xiu_level: int = int(skill_levels.get("xiu", 0))
 	var jun_recipe_level: int = int(skill_levels.get("jun", 0))
+	var strong_recipe_level: int = int(skill_levels.get("strong", 0))
 	var forest_recipe_level: int = int(skill_levels.get("forest", 0))
 	var hai_level: int = int(skill_levels.get("hai", 0))
 	var lei_level: int = int(skill_levels.get("lei", 0))
@@ -728,6 +769,7 @@ func _apply_skill_levels() -> void:
 
 	heal_level = xiu_level + xiu_word_level
 	jun_level = jun_recipe_level
+	strong_level = strong_recipe_level
 	wave_level = hai_level + hai_word_level * 2
 	chang_level = chang_recipe_level
 	chang_word_level = chang_word_recipe_level
@@ -758,13 +800,13 @@ func _apply_skill_levels() -> void:
 		resolve_pulse_timer = 0.0
 	move_speed = base_move_speed + float(jun_level) * 0.18
 	collect_radius = base_collect_radius + float(jun_level) * 0.38
-	projectile_speed = base_projectile_speed + float(blade_level) * 0.8 + float(ming_word_level) * 1.0
+	projectile_speed = base_projectile_speed + float(blade_level) * 0.8 + float(ming_word_level) * 1.0 + float(strong_level) * 0.45
 
-	current_attack_damage = base_attack_damage + float(ming_level) * 2.4 + float(jun_level) * 0.9 + float(wave_level) * 1.2 + float(ming_word_level) * 4.0 + float(lei_level) * 1.1 + float(rock_level) * 0.9 + float(yan_level) * 1.0
+	current_attack_damage = base_attack_damage + float(ming_level) * 2.4 + float(jun_level) * 0.9 + float(strong_level) * 1.2 + float(wave_level) * 1.2 + float(ming_word_level) * 4.0 + float(lei_level) * 1.1 + float(rock_level) * 0.9 + float(yan_level) * 1.0
 	current_attack_interval = max(0.28, base_attack_interval - float(ming_level) * 0.03 - float(ming_word_level) * 0.04)
 
 	if role == "ranged":
-		extra_projectiles = ming_level + ming_word_level + int(floor(float(blade_level) / 3.0))
+		extra_projectiles = ming_level + ming_word_level + int(floor(float(blade_level) / 3.0)) + int(floor(float(strong_level) / 3.0))
 		slash_radius_bonus = 0.0
 	else:
 		extra_projectiles = 0
@@ -933,6 +975,14 @@ func _update_visual_state() -> void:
 	elif fury_time > 0.0:
 		current_accent = current_accent.lerp(Color(1.0, 0.68, 0.42, 1.0), 0.36)
 		current_trim = current_trim.lerp(Color(1.0, 0.9, 0.82, 1.0), 0.24)
+	elif strong_mode_time > 0.0 and jun_mode_time > 0.0:
+		current_body = current_body.lerp(Color(0.98, 0.95, 0.9, 1.0), 0.22)
+		current_accent = current_accent.lerp(Session.RECIPES["jun"]["color"].lerp(Session.RECIPES["strong"]["color"], 0.5), 0.58)
+		current_trim = current_trim.lerp(Color(1.0, 0.96, 0.9, 1.0), 0.32)
+	elif strong_mode_time > 0.0:
+		current_body = current_body.lerp(Color(1.0, 0.92, 0.84, 1.0), 0.16)
+		current_accent = current_accent.lerp(Session.RECIPES["strong"]["color"], 0.54)
+		current_trim = current_trim.lerp(Color(1.0, 0.94, 0.86, 1.0), 0.28)
 	elif jun_mode_time > 0.0:
 		current_body = current_body.lerp(Color(0.86, 0.96, 1.0, 1.0), 0.14)
 		current_accent = current_accent.lerp(Session.RECIPES["jun"]["color"], 0.52)
