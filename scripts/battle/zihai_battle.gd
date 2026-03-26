@@ -1255,6 +1255,11 @@ func _current_chamber_glyph() -> String:
 	return battle_chamber_catalog.current_chamber_glyph(current_chamber_id, CHAMBER_LAYOUTS, CHAMBER_ORDER, "界")
 
 
+func _current_hero_glyph() -> String:
+	var hero_data: Dictionary = Session.get_selected_hero()
+	return String(hero_data.get("glyph", "侠"))
+
+
 func _current_chamber_exit_objective() -> Dictionary:
 	return battle_chamber_catalog.current_chamber_exit_objective(
 		room_objective_data,
@@ -2500,12 +2505,43 @@ func _transition_to_chamber(next_chamber_id: String) -> void:
 		)
 		hud.set_tip(_current_chamber_tip())
 	if is_instance_valid(player):
-		_spawn_wave_effect(player.global_position, 5.0, chamber_accent, _current_chamber_glyph())
-	_play_cue_sfx("chamber_shift", 1.0)
+		_spawn_chamber_arrival_flourish(player.global_position, chamber_accent)
+	_play_cue_sfx("chamber_arrival", 1.0)
 	_log_battle_event(
 		_battle_interlude_format("transition_log_format", "房间更替 · %s", "Chamber Shift · %s", [chamber_name]),
 		chamber_accent
 	)
+
+
+func _spawn_chamber_arrival_flourish(origin: Vector3, tint: Color) -> void:
+	if not _visual_effects_enabled():
+		return
+	var landing_origin := Vector3(origin.x, 0.05, origin.z)
+	var landing_glyph := _current_hero_glyph()
+	var chamber_glyph := _current_chamber_glyph()
+	_spawn_field_phase_stamp(landing_origin, chamber_glyph, {"accent": tint})
+	_spawn_wave_effect(landing_origin, 5.4, tint, landing_glyph)
+	var drift_directions := [
+		Vector3(0.84, 0.0, 0.18),
+		Vector3(-0.78, 0.0, 0.26),
+		Vector3(0.24, 0.0, 0.86),
+		Vector3(-0.2, 0.0, -0.82)
+	]
+	for index in range(drift_directions.size()):
+		var drift: Vector3 = Vector3(drift_directions[index]).normalized()
+		var glyph_text := landing_glyph if index == 0 else chamber_glyph if index == 1 else "丶"
+		_spawn_afterimage_glyph(
+			landing_origin + drift * 0.14,
+			glyph_text,
+			tint.lightened(0.12 + float(index) * 0.03),
+			drift,
+			0.84 if index < 2 else 0.68,
+			0.24 + float(index) * 0.03,
+			0.3 + float(index) * 0.04
+		)
+	var bounce_tween := create_tween()
+	bounce_tween.tween_interval(0.1)
+	bounce_tween.tween_callback(Callable(self, "_spawn_wave_effect").bind(landing_origin, 2.8, tint.lightened(0.08), chamber_glyph))
 
 
 func _spawn_enemy() -> void:
