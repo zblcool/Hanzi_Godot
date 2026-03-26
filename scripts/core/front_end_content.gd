@@ -4977,9 +4977,13 @@ const BATTLE_INTERLUDE_CONTENT := {
 	"preview_line_chamber_format": {"zh": "下一房间 · %s", "en": "Chamber · %s"},
 	"preview_line_wave_format": {"zh": "下一波 · 第 %d 波%s", "en": "Next Wave · %d%s"},
 	"preview_wave_major_suffix": {"zh": " · 大潮压境", "en": " · Major Surge"},
+	"preview_line_room_read_format": {"zh": "房间读法 · %s", "en": "Room Read · %s"},
 	"preview_line_realm_format": {"zh": "字境 · %s", "en": "Realm · %s"},
 	"preview_line_pressure_format": {"zh": "压境重点 · %s", "en": "Pressure · %s"},
 	"preview_line_threat_mix_format": {"zh": "威胁混编 · %s", "en": "Threat Mix · %s"},
+	"preview_line_exit_format": {"zh": "后段出口 · %s", "en": "Exit Beat · %s"},
+	"preview_exit_open": {"zh": "常规卷间奖印", "en": "Standard reward beacon"},
+	"preview_exit_final": {"zh": "终室定卷", "en": "Final chapter secure"},
 	"short_rest_echo_banner_format": {"zh": "歇笔回气  再补 %d%% 气血", "en": "Short Rest  Echo heal %d%%"},
 	"short_rest_echo_log_format": {"zh": "第 %d 波 · 歇笔回气再次回响", "en": "Wave %d · Short Rest echoes again"},
 	"interlude_body_archive_format": {

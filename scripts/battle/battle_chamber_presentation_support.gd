@@ -62,7 +62,8 @@ func preview_lines(
 	big_wave: bool,
 	localized_field_phase_theme: Callable,
 	field_phase_theme_for_wave: Callable,
-	localized_chamber_name: Callable,
+	localized_chamber_tip: Callable,
+	localized_chamber_exit_preview: Callable,
 	battle_interlude_text: Callable,
 	battle_interlude_format: Callable,
 	guidance_text: Callable,
@@ -70,19 +71,36 @@ func preview_lines(
 ) -> Array[String]:
 	var localized_next_theme: Dictionary = localized_field_phase_theme.call(field_phase_theme_for_wave.call(next_wave))
 	var next_theme_name := String(localized_next_theme.get("name", "Inkfield" if english_mode else "字境"))
-	var next_chamber_name := String(localized_chamber_name.call(next_chamber_id))
+	var next_room_read := String(localized_chamber_tip.call(next_chamber_id)).strip_edges()
+	var next_exit_preview := String(localized_chamber_exit_preview.call(next_chamber_id)).strip_edges()
 	var threat_joiner := ", " if english_mode else " / "
 	var threat_mix := threat_joiner.join(PackedStringArray(preview_threat_names(next_wave, localized_enemy_data)))
 	var wave_suffix := ""
 	if big_wave:
 		wave_suffix = String(battle_interlude_text.call("preview_wave_major_suffix", " · 大潮压境", " · Major Surge"))
-	return [
-		String(battle_interlude_format.call("preview_line_chamber_format", "下一房间 · %s", "Chamber · %s", [next_chamber_name])),
-		String(battle_interlude_format.call("preview_line_wave_format", "下一波 · 第 %d 波%s", "Next Wave · %d%s", [next_wave, wave_suffix])),
-		String(battle_interlude_format.call("preview_line_realm_format", "字境 · %s", "Realm · %s", [next_theme_name])),
-		String(battle_interlude_format.call("preview_line_pressure_format", "压境重点 · %s", "Pressure · %s", [preview_pressure_copy(next_wave, big_wave, guidance_text)])),
-		String(battle_interlude_format.call("preview_line_threat_mix_format", "威胁混编 · %s", "Threat Mix · %s", [threat_mix]))
+	var lines: Array[String] = [
+		String(battle_interlude_format.call("preview_line_wave_format", "下一波 · 第 %d 波%s", "Next Wave · %d%s", [next_wave, wave_suffix]))
 	]
+	if not next_room_read.is_empty():
+		lines.append(String(battle_interlude_format.call(
+			"preview_line_room_read_format",
+			"房间读法 · %s",
+			"Room Read · %s",
+			[next_room_read]
+		)))
+	lines.append_array([
+		String(battle_interlude_format.call("preview_line_realm_format", "字境 · %s", "Realm · %s", [next_theme_name])),
+		String(battle_interlude_format.call("preview_line_pressure_format", "压境重点 · %s", "Pressure · %s", [preview_pressure_copy(next_wave, big_wave, guidance_text)]))
+	])
+	if not next_exit_preview.is_empty():
+		lines.append(String(battle_interlude_format.call(
+			"preview_line_exit_format",
+			"后段出口 · %s",
+			"Exit Beat · %s",
+			[next_exit_preview]
+		)))
+	lines.append(String(battle_interlude_format.call("preview_line_threat_mix_format", "威胁混编 · %s", "Threat Mix · %s", [threat_mix])))
+	return lines
 
 
 func interlude_title(current_scroll_label: String, battle_interlude_text: Callable) -> String:

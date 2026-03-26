@@ -3606,7 +3606,7 @@ func _build_state_overlay(root: Control) -> void:
 	)
 	preview_box.add_child(state_preview_title_label)
 
-	for _index in range(4):
+	for _index in range(6):
 		var preview_line := _make_label("", 14, Color(0.86, 0.92, 0.98, 0.92))
 		preview_line.visible = false
 		state_preview_line_labels.append(preview_line)

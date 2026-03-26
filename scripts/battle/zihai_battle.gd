@@ -1229,13 +1229,17 @@ func _localized_chamber_name(chamber_id: String) -> String:
 	return _front_end_text(_battle_chamber_entry(chamber_id), "name", chamber_id, chamber_id)
 
 
+func _localized_chamber_tip(chamber_id: String) -> String:
+	var fallback_tip := _default_battle_tip()
+	return _front_end_text(_battle_chamber_entry(chamber_id), "tip", fallback_tip, fallback_tip)
+
+
 func _current_chamber_name() -> String:
 	return _localized_chamber_name(current_chamber_id)
 
 
 func _current_chamber_tip() -> String:
-	var fallback_tip := _default_battle_tip()
-	return _front_end_text(_battle_chamber_entry(current_chamber_id), "tip", fallback_tip, fallback_tip)
+	return _localized_chamber_tip(current_chamber_id)
 
 
 func _current_chamber_accent() -> Color:
@@ -1280,6 +1284,39 @@ func _pick_chamber_exit_objective() -> Dictionary:
 func _localized_room_objective_name(objective: Dictionary) -> String:
 	var fallback_id := String(objective.get("id", "room_objective"))
 	return _front_end_text(_battle_room_objective_entry(objective), "name", fallback_id, fallback_id)
+
+
+func _localized_room_objective_name_for_chamber(objective: Dictionary, chamber_id: String) -> String:
+	var fallback_id := String(objective.get("id", "room_objective"))
+	return _front_end_text(
+		battle_chamber_catalog.battle_room_objective_entry(
+			objective,
+			chamber_id,
+			FrontEndContent.battle_chamber_content()
+		),
+		"name",
+		fallback_id,
+		fallback_id
+	)
+
+
+func _localized_chamber_exit_preview(chamber_id: String) -> String:
+	if not CHAMBER_ORDER.is_empty() and chamber_id == String(CHAMBER_ORDER[CHAMBER_ORDER.size() - 1]):
+		return _battle_interlude_text("preview_exit_final", "终室定卷", "Final chapter secure")
+	var objectives := battle_chamber_catalog.available_chamber_exit_objectives(
+		chamber_id,
+		CHAMBER_LAYOUTS,
+		CHAMBER_ORDER
+	)
+	var objective_names: Array[String] = []
+	for objective in objectives:
+		var objective_name := _localized_room_objective_name_for_chamber(objective, chamber_id)
+		if objective_name.is_empty() or objective_names.has(objective_name):
+			continue
+		objective_names.append(objective_name)
+	if objective_names.is_empty():
+		return _battle_interlude_text("preview_exit_open", "常规卷间奖印", "Standard reward beacon")
+	return " / ".join(PackedStringArray(objective_names))
 
 
 func _room_objective_mode(objective: Dictionary) -> String:
@@ -1893,7 +1930,8 @@ func _open_chamber_transition_overlay(next_chamber_id: String, next_wave: int) -
 				_is_big_wave(next_wave),
 				Callable(self, "_localized_field_phase_theme"),
 				Callable(self, "_field_phase_theme_for_wave"),
-				Callable(self, "_localized_chamber_name"),
+				Callable(self, "_localized_chamber_tip"),
+				Callable(self, "_localized_chamber_exit_preview"),
 				Callable(self, "_battle_interlude_text"),
 				Callable(self, "_battle_interlude_format"),
 				Callable(self, "_battle_guidance_text"),
@@ -4357,7 +4395,8 @@ func _open_chamber_break_gate() -> void:
 				_is_big_wave(next_wave),
 				Callable(self, "_localized_field_phase_theme"),
 				Callable(self, "_field_phase_theme_for_wave"),
-				Callable(self, "_localized_chamber_name"),
+				Callable(self, "_localized_chamber_tip"),
+				Callable(self, "_localized_chamber_exit_preview"),
 				Callable(self, "_battle_interlude_text"),
 				Callable(self, "_battle_interlude_format"),
 				Callable(self, "_battle_guidance_text"),
