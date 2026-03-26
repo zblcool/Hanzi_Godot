@@ -4190,9 +4190,27 @@ const MENU_TOP_ACTIONS := [
 ]
 
 const MENU_QUICK_START_ACTIONS := [
-	{"title": "标准入卷", "accent": Color(0.92, 0.68, 0.42, 1.0), "action": "start"},
-	{"title": "试阵 · 第10波", "accent": Color(0.56, 0.84, 1.0, 1.0), "action": "start_wave_10"},
-	{"title": "压测 · 第20波", "accent": Color(0.78, 0.52, 1.0, 1.0), "action": "start_wave_20"}
+	{
+		"title": "标准入卷",
+		"summary": "从第 1 波正式入卷，正常写入主卷榜，最适合检验完整的开卷路线。",
+		"tags": ["主卷榜", "完整开卷", "标准 build"],
+		"accent": Color(0.92, 0.68, 0.42, 1.0),
+		"action": "start"
+	},
+	{
+		"title": "试阵 · 第10波",
+		"summary": "直接落在中盘，适合快速回看 HUD、混编敌潮与当前执笔者的 build 轮廓。",
+		"tags": ["试阵榜", "中盘检查", "HUD / build"],
+		"accent": Color(0.56, 0.84, 1.0, 1.0),
+		"action": "start_wave_10"
+	},
+	{
+		"title": "压测 · 第20波",
+		"summary": "直接切到后段压测，优先确认高压敌潮、卷间成果和残局读法是否还能站住。",
+		"tags": ["试阵榜", "后段压测", "残局读法"],
+		"accent": Color(0.78, 0.52, 1.0, 1.0),
+		"action": "start_wave_20"
+	}
 ]
 
 const MENU_OVERLAY_CONTENT := {
@@ -5459,6 +5477,15 @@ const MENU_EN_TEXT := {
 	"标准入卷": "Standard Entry",
 	"试阵 · 第10波": "Test Run · Wave 10",
 	"压测 · 第20波": "Stress Run · Wave 20",
+	"从第 1 波正式入卷，正常写入主卷榜，最适合检验完整的开卷路线。": "Start from wave 1 and write into the main board normally. This remains the cleanest way to verify the full opening route.",
+	"完整开卷": "Full Opening",
+	"标准 build": "Standard Build",
+	"直接落在中盘，适合快速回看 HUD、混编敌潮与当前执笔者的 build 轮廓。": "Drop straight into the midgame so HUD, mixed enemy packs, and the current hero build can be reviewed quickly.",
+	"中盘检查": "Midgame Check",
+	"HUD / build": "HUD / Build",
+	"直接切到后段压测，优先确认高压敌潮、卷间成果和残局读法是否还能站住。": "Jump straight into the late stress pass to confirm high-pressure enemy packs, interlude carryovers, and endgame reads still hold up.",
+	"后段压测": "Late Stress",
+	"残局读法": "Endgame Read",
 	"把偏旁、成字与砚台磨词路线收进二级菜单，开局前就能快速确认成长链。": "Keep radicals, formed glyphs, and inkstone phrase routes inside the menu so you can review the growth chain before entering battle.",
 	"当前先集中展示已经接入的偏旁、合字等级、词技等级与独立武器偏旁。真正的磨词仍然发生在战场砚台旁。": "This screen currently focuses on migrated radicals, glyph levels, phrase levels, and the independent weapon radical. Actual phrase refinement still happens beside the battlefield inkstone.",
 	"把已经接入的执笔者档案收进二级菜单，进入残卷前先确认每名角色的身份与战斗轮廓。": "Keep the migrated hero dossiers inside the menu so you can confirm each fighter's identity and combat profile before entering the scroll.",

@@ -1121,6 +1121,15 @@ func _build_ui() -> void:
 			_resolve_menu_action(action_id)
 		))
 
+	quick_start_box.add_child(_make_label(String(page_content.get("quick_start_title", "快速试阵")), 16, Color(0.96, 0.82, 0.54, 0.92)))
+	quick_start_box.add_child(_make_label(String(page_content.get("quick_start_summary", "对照 web 原型保留第 10 / 20 波捷径，便于快速检查 HUD、混编敌潮与角色 build。试阵入口会单独写入试阵榜，不影响主卷榜。")), 14, Color(0.82, 0.9, 1.0, 0.92)))
+
+	var quick_start_preview_cards := VBoxContainer.new()
+	quick_start_preview_cards.add_theme_constant_override("separation", _i(8))
+	quick_start_box.add_child(quick_start_preview_cards)
+	for quick_start in FrontEndContent.menu_quick_start_actions():
+		quick_start_preview_cards.add_child(_make_quick_start_preview_card(quick_start))
+
 	var progression_panel := PanelContainer.new()
 	progression_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	progression_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.08, 0.12, 0.16, 0.72), Color(0.74, 0.56, 0.28, 0.34)))
@@ -1546,6 +1555,43 @@ func _make_quick_start_button(text: String, accent: Color, callback: Callable) -
 	button.add_theme_font_size_override("font_size", _i(18))
 	button.pressed.connect(callback)
 	return button
+
+
+func _make_quick_start_preview_card(card: Dictionary) -> PanelContainer:
+	var accent: Color = card.get("accent", Color.WHITE)
+	var panel := PanelContainer.new()
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.12, accent.g * 0.12, accent.b * 0.16, 0.58), Color(accent.r, accent.g, accent.b, 0.24)))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", _i(14))
+	margin.add_theme_constant_override("margin_top", _i(12))
+	margin.add_theme_constant_override("margin_right", _i(14))
+	margin.add_theme_constant_override("margin_bottom", _i(12))
+	panel.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", _i(6))
+	margin.add_child(box)
+
+	var title := String(card.get("title", "")).strip_edges()
+	if not title.is_empty():
+		box.add_child(_make_label(title, 15, Color(1.0, 0.92, 0.8, 1.0)))
+
+	var summary := String(card.get("summary", "")).strip_edges()
+	if not summary.is_empty():
+		box.add_child(_make_label(summary, 14, Color(0.88, 0.92, 0.96, 0.94)))
+
+	var tags_variant: Variant = card.get("tags", [])
+	if tags_variant is Array and not (tags_variant as Array).is_empty():
+		var tag_row := HFlowContainer.new()
+		tag_row.add_theme_constant_override("h_separation", _i(8))
+		tag_row.add_theme_constant_override("v_separation", _i(8))
+		box.add_child(tag_row)
+		for tag_variant in tags_variant:
+			tag_row.add_child(_make_tag(String(tag_variant), Color(accent.r * 0.16, accent.g * 0.16, accent.b * 0.2, 0.88), Color(0.98, 0.95, 0.9, 0.96)))
+
+	return panel
 
 
 func _make_label(text: String, font_size: int, color: Color) -> Label:
