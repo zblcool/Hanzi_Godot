@@ -3261,10 +3261,19 @@ func _reveal_secret_radicals_for(radical: String, silent: bool = false) -> void:
 	if silent or not is_instance_valid(hud):
 		return
 	var secret_color: Color = Color(Session.RADICAL_COLORS.get(secret_radical, Color(0.68, 0.88, 1.0, 1.0)))
+	var secret_radical_data: Dictionary = _localized_radical_data(secret_radical)
 	hud.show_banner(
 		_battle_state_format("secret_radical_reveal_banner_format", "秘旁现形  %s", "Secret Radical  %s", [secret_radical]),
 		secret_color,
 		1.9
+	)
+	hud.show_reveal(
+		_battle_state_text("secret_radical_reveal_kicker", "秘旁现形", "Secret Radical"),
+		String(secret_radical_data.get("name", secret_radical)),
+		String(secret_radical_data.get("description", "")),
+		secret_color,
+		secret_radical,
+		2.6
 	)
 	hud.set_tip(
 		_battle_guidance_format(

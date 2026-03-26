@@ -4556,6 +4556,12 @@ const BATTLE_STATE_CONTENT := {
 	"threat_wave_major_log_format": {"zh": "第 %d 波 · 大潮压境", "en": "Wave %d · Major Surge"},
 	"weapon_core_attuned_banner_format": {"zh": "%s 入%s", "en": "%s into %s"},
 	"radical_attuned_banner_format": {"zh": "领悟 %s", "en": "Attuned %s"},
+	"secret_radical_reveal_banner_format": {"zh": "秘旁现形  %s", "en": "Secret Radical  %s"},
+	"secret_radical_reveal_kicker": {"zh": "秘旁现形", "en": "Secret Radical"},
+	"secret_radical_reveal_log_format": {
+		"zh": "秘旁现形 · %s · 现可暗合「%s」",
+		"en": "Secret radical revealed · %s · `%s` is now craftable"
+	},
 	"glyph_formed_banner_format": {"zh": "合字成型  %s", "en": "Glyph Formed  %s"},
 	"glyph_formed_reveal_kicker": {"zh": "合字成型", "en": "Glyph Formed"},
 	"glyph_formed_log_format": {"zh": "合字成型 · %s", "en": "Glyph Formed · %s"},
@@ -5102,6 +5108,10 @@ const BATTLE_GUIDANCE_CONTENT := {
 	"choice_weapon_core_suffix_format": {
 		"zh": " 并强化%s。",
 		"en": " Also strengthen %s."
+	},
+	"secret_radical_reveal_tip_format": {
+		"zh": "累计两次「%s」后，秘旁「%s」已经现形；与「%s」同路时就能继续暗合成「%s」。",
+		"en": "After collecting `%s` twice, the hidden radical `%s` is now revealed; combine it with `%s` to form `%s`."
 	},
 	"word_refine_stock_missing": {
 		"zh": "余材不足",
