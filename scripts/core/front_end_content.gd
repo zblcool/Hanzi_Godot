@@ -4088,6 +4088,52 @@ const MENU_PAGE_CONTENT := {
 	"select_button": "进入主舞台"
 }
 
+const MENU_CHAMBER_ROUTE_META := {
+	"title": {"zh": "卷间前瞻", "en": "Chamber Route"},
+	"summary": {
+		"zh": "source 里的长卷现在已经拆成命名房间与卷间停顿。Godot 菜单先把当前可玩的房间顺序、每层读法和压测落点压回开局前台。",
+		"en": "The source run now breaks into named chambers and between-room pauses. The Godot menu brings the playable chamber order, room read, and stress-test landing points back into the front end before a run starts."
+	},
+	"note": {
+		"zh": "这里只先做前台预览，不会提前改写战斗掉落、房间目标或卷间抉择；真正的房间切换仍以战斗内进度为准。",
+		"en": "This is a front-end preview only. It does not pre-apply drop bias, room objectives, or interlude choices; the real chamber swaps still depend on in-battle progression."
+	},
+	"cards": [
+		{
+			"chamber_id": "entry_court",
+			"phase": {"zh": "第 1 房", "en": "Room 1"},
+			"tags": [
+				{"zh": "标准入卷", "en": "Standard Start"},
+				{"zh": "宽场开卷", "en": "Wide Opening"}
+			]
+		},
+		{
+			"chamber_id": "slip_archive",
+			"phase": {"zh": "卷间一", "en": "Interlude I"},
+			"tags": [
+				{"zh": "首次换房", "en": "First Chamber Swap"},
+				{"zh": "句阵守卫", "en": "Phrase Guardians"}
+			]
+		},
+		{
+			"chamber_id": "thunder_vault",
+			"phase": {"zh": "卷间二", "en": "Interlude II"},
+			"tags": [
+				{"zh": "雷纹收束", "en": "Storm Compression"},
+				{"zh": "冷色中轴", "en": "Central Lane"}
+			]
+		},
+		{
+			"chamber_id": "abyss_sanctum",
+			"phase": {"zh": "终室", "en": "Final Room"},
+			"tags": [
+				{"zh": "卷渊压阵", "en": "Abyss Pressure"},
+				{"zh": "第 20 波压测", "en": "Wave 20 Shortcut"}
+			]
+		}
+	]
+}
+
 const MENU_TOP_ACTIONS := [
 	{"kind": "action", "title": "返回启动器", "size": Vector2(168.0, 54.0), "action": "back"},
 	{"kind": "action", "title": "人物志", "size": Vector2(148.0, 54.0), "action": "character_archive"},
@@ -5552,6 +5598,26 @@ static func launcher_profile_content() -> Dictionary:
 
 static func menu_page_content() -> Dictionary:
 	return MENU_PAGE_CONTENT.duplicate(true)
+
+
+static func menu_chamber_route_content() -> Dictionary:
+	var content := MENU_CHAMBER_ROUTE_META.duplicate(true)
+	var chamber_collection_variant: Variant = BATTLE_CHAMBER_CONTENT.get("chambers", {})
+	var chamber_collection: Dictionary = chamber_collection_variant as Dictionary if chamber_collection_variant is Dictionary else {}
+	var cards_variant: Variant = content.get("cards", [])
+	var cards: Array = []
+	if cards_variant is Array:
+		for card_variant in cards_variant:
+			if card_variant is Dictionary:
+				var card := (card_variant as Dictionary).duplicate(true)
+				var chamber_id := String(card.get("chamber_id", "")).strip_edges()
+				var chamber_entry_variant: Variant = chamber_collection.get(chamber_id, {})
+				var chamber_entry: Dictionary = chamber_entry_variant as Dictionary if chamber_entry_variant is Dictionary else {}
+				card["title"] = chamber_entry.get("name", card.get("title", {}))
+				card["description"] = chamber_entry.get("tip", card.get("description", {}))
+				cards.append(card)
+	content["cards"] = cards
+	return content
 
 
 static func menu_top_actions() -> Array:

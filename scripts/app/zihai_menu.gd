@@ -65,6 +65,7 @@ var detail_opening_radicals_row: Container
 var detail_source_skill_title_label: Label
 var detail_source_skill_body_label: Label
 var detail_progression_cards_root: VBoxContainer
+var detail_chamber_route_cards_root: VBoxContainer
 var detail_build_route_cards_root: VBoxContainer
 var detail_spotlight_panel: PanelContainer
 var detail_spotlight_context_panel: PanelContainer
@@ -237,6 +238,7 @@ func _rebuild_ui() -> void:
 	detail_source_skill_title_label = null
 	detail_source_skill_body_label = null
 	detail_progression_cards_root = null
+	detail_chamber_route_cards_root = null
 	detail_build_route_cards_root = null
 	detail_spotlight_panel = null
 	detail_spotlight_context_panel = null
@@ -416,6 +418,15 @@ func _localize_text(text: String) -> String:
 	if text.begins_with("• "):
 		return "• %s" % _localize_text(text.substr(2))
 	return String(MENU_EN_TEXT.get(text, text))
+
+
+func _localize_content_value(value: Variant) -> String:
+	if value is Dictionary:
+		var localized: Dictionary = value
+		if _is_english():
+			return String(localized.get("en", localized.get("zh", "")))
+		return String(localized.get("zh", localized.get("en", "")))
+	return _localize_text(String(value))
 
 
 func _resolve_surface_fill(fill_color: Color) -> Color:
@@ -1130,6 +1141,30 @@ func _build_ui() -> void:
 	detail_progression_cards_root.add_theme_constant_override("separation", _i(8))
 	progression_box.add_child(detail_progression_cards_root)
 	progression_box.add_child(_make_label(String(page_content.get("progression_note", "当前只先保留 web 原型的 build 顺序与路线提示，Godot 战斗内还没有真正的路线权重修正。")), 14, Color(0.82, 0.9, 1.0, 0.88)))
+
+	var chamber_route_content := FrontEndContent.menu_chamber_route_content()
+	var chamber_route_panel := PanelContainer.new()
+	chamber_route_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	chamber_route_panel.add_theme_stylebox_override("panel", _make_panel_style(Color(0.08, 0.12, 0.16, 0.72), Color(0.38, 0.58, 0.9, 0.34)))
+	detail_box.add_child(chamber_route_panel)
+
+	var chamber_route_margin := MarginContainer.new()
+	chamber_route_margin.add_theme_constant_override("margin_left", _i(16))
+	chamber_route_margin.add_theme_constant_override("margin_top", _i(16))
+	chamber_route_margin.add_theme_constant_override("margin_right", _i(16))
+	chamber_route_margin.add_theme_constant_override("margin_bottom", _i(16))
+	chamber_route_panel.add_child(chamber_route_margin)
+
+	var chamber_route_box := VBoxContainer.new()
+	chamber_route_box.add_theme_constant_override("separation", _i(10))
+	chamber_route_margin.add_child(chamber_route_box)
+	chamber_route_box.add_child(_make_label(_localize_content_value(chamber_route_content.get("title", "卷间前瞻")), 18, Color(1.0, 0.92, 0.8, 1.0)))
+	chamber_route_box.add_child(_make_label(_localize_content_value(chamber_route_content.get("summary", "")), 15, Color(0.88, 0.92, 0.96, 0.94)))
+
+	detail_chamber_route_cards_root = VBoxContainer.new()
+	detail_chamber_route_cards_root.add_theme_constant_override("separation", _i(8))
+	chamber_route_box.add_child(detail_chamber_route_cards_root)
+	chamber_route_box.add_child(_make_label(_localize_content_value(chamber_route_content.get("note", "")), 14, Color(0.82, 0.9, 1.0, 0.88)))
 
 	_build_character_archive_overlay()
 	_build_recipe_atlas_overlay()
@@ -2389,6 +2424,59 @@ func _populate_progression_cards(root: VBoxContainer, hero: Dictionary, accent: 
 				root.add_child(_make_progression_card(card_variant as Dictionary, accent, compact))
 
 
+func _make_chamber_route_card(card: Dictionary, accent: Color) -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.12, accent.g * 0.12, accent.b * 0.16, 0.58), Color(accent.r, accent.g, accent.b, 0.24)))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", _i(16))
+	margin.add_theme_constant_override("margin_top", _i(14))
+	margin.add_theme_constant_override("margin_right", _i(16))
+	margin.add_theme_constant_override("margin_bottom", _i(14))
+	panel.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", _i(8))
+	margin.add_child(box)
+
+	var phase_text := _localize_content_value(card.get("phase", "")).strip_edges()
+	if not phase_text.is_empty():
+		box.add_child(_make_label(phase_text, 14, Color(0.82, 0.9, 1.0, 0.92)))
+
+	var title_text := _localize_content_value(card.get("title", "")).strip_edges()
+	if not title_text.is_empty():
+		box.add_child(_make_label(title_text, 17, Color(1.0, 0.92, 0.8, 1.0)))
+
+	var description_text := _localize_content_value(card.get("description", "")).strip_edges()
+	if not description_text.is_empty():
+		box.add_child(_make_label(description_text, 15, Color(0.9, 0.92, 0.95, 0.95)))
+
+	var tags_variant: Variant = card.get("tags", [])
+	if tags_variant is Array and not (tags_variant as Array).is_empty():
+		var tag_row := HFlowContainer.new()
+		tag_row.add_theme_constant_override("h_separation", _i(10))
+		tag_row.add_theme_constant_override("v_separation", _i(10))
+		box.add_child(tag_row)
+		for tag_variant in tags_variant:
+			tag_row.add_child(_make_tag(_localize_content_value(tag_variant), Color(accent.r * 0.16, accent.g * 0.16, accent.b * 0.2, 0.88), Color(0.98, 0.95, 0.9, 0.96)))
+
+	return panel
+
+
+func _populate_chamber_route_cards(root: VBoxContainer, accent: Color) -> void:
+	if root == null:
+		return
+	for child in root.get_children():
+		child.queue_free()
+	var chamber_route_content := FrontEndContent.menu_chamber_route_content()
+	var cards_variant: Variant = chamber_route_content.get("cards", [])
+	if cards_variant is Array:
+		for card_variant in cards_variant:
+			if card_variant is Dictionary:
+				root.add_child(_make_chamber_route_card(card_variant as Dictionary, accent))
+
+
 func _make_build_route_card(card: Dictionary, accent: Color, compact: bool = false) -> PanelContainer:
 	var panel := PanelContainer.new()
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -3508,6 +3596,7 @@ func _refresh_selection(trigger_reaction: bool = false) -> void:
 		detail_source_skill_body_label.text = _build_hero_active_skill_body(selected_data)
 	_populate_detail_build_route_preview(detail_build_route_cards_root, selected_data, accent)
 	_populate_progression_cards(detail_progression_cards_root, selected_data, accent, true)
+	_populate_chamber_route_cards(detail_chamber_route_cards_root, accent)
 	if detail_preview_quote_label != null:
 		var excerpt := String(selected_data.get("record_excerpt", "")).strip_edges()
 		if excerpt.is_empty():
