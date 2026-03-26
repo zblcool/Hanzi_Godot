@@ -43,6 +43,7 @@ var extra_projectiles: int = 0
 var slash_radius_bonus: float = 0.0
 var blade_level: int = 0
 var heal_level: int = 0
+var jun_level: int = 0
 var wave_level: int = 0
 var chang_level: int = 0
 var chang_word_level: int = 0
@@ -55,7 +56,6 @@ var thunder_level: int = 0
 var thunder_word_level: int = 0
 var rock_level: int = 0
 var qiu_level: int = 0
-var jun_level: int = 0
 var resolve_level: int = 0
 var resolve_word_level: int = 0
 var flame_level: int = 0
@@ -708,12 +708,12 @@ func _apply_skill_levels() -> void:
 	var ming_level: int = int(skill_levels.get("ming", 0))
 	var chang_recipe_level: int = int(skill_levels.get("chang", 0))
 	var xiu_level: int = int(skill_levels.get("xiu", 0))
+	var jun_recipe_level: int = int(skill_levels.get("jun", 0))
 	var forest_recipe_level: int = int(skill_levels.get("forest", 0))
 	var hai_level: int = int(skill_levels.get("hai", 0))
 	var lei_level: int = int(skill_levels.get("lei", 0))
 	var rock_recipe_level: int = int(skill_levels.get("rock", 0))
 	var qiu_recipe_level: int = int(skill_levels.get("qiu", 0))
-	var jun_recipe_level: int = int(skill_levels.get("jun", 0))
 	var ren_level: int = int(skill_levels.get("ren", 0))
 	var qin_recipe_level: int = int(skill_levels.get("qin", 0))
 	var yan_level: int = int(skill_levels.get("yan", 0))
@@ -727,6 +727,7 @@ func _apply_skill_levels() -> void:
 	var yan_word_level: int = int(word_skill_levels.get("yan_chao", 0))
 
 	heal_level = xiu_level + xiu_word_level
+	jun_level = jun_recipe_level
 	wave_level = hai_level + hai_word_level * 2
 	chang_level = chang_recipe_level
 	chang_word_level = chang_word_recipe_level
@@ -739,7 +740,6 @@ func _apply_skill_levels() -> void:
 	thunder_word_level = lei_word_level
 	rock_level = rock_recipe_level
 	qiu_level = qiu_recipe_level
-	jun_level = jun_recipe_level
 	resolve_level = ren_level
 	resolve_word_level = ren_word_level
 	flame_level = yan_level
@@ -760,7 +760,7 @@ func _apply_skill_levels() -> void:
 	collect_radius = base_collect_radius + float(jun_level) * 0.38
 	projectile_speed = base_projectile_speed + float(blade_level) * 0.8 + float(ming_word_level) * 1.0
 
-	current_attack_damage = base_attack_damage + float(ming_level) * 2.4 + float(wave_level) * 1.2 + float(ming_word_level) * 4.0 + float(lei_level) * 1.1 + float(rock_level) * 0.9 + float(yan_level) * 1.0
+	current_attack_damage = base_attack_damage + float(ming_level) * 2.4 + float(jun_level) * 0.9 + float(wave_level) * 1.2 + float(ming_word_level) * 4.0 + float(lei_level) * 1.1 + float(rock_level) * 0.9 + float(yan_level) * 1.0
 	current_attack_interval = max(0.28, base_attack_interval - float(ming_level) * 0.03 - float(ming_word_level) * 0.04)
 
 	if role == "ranged":

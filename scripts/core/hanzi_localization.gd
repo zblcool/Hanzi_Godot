@@ -143,6 +143,7 @@ const RECIPE_EN := {
 	"ming": {"title": "Sun-Moon Wheels", "description": "Strengthens your main attack rhythm and periodically releases twin pursuit wheels."},
 	"chang": {"title": "Twin Suns", "description": "Periodically writes parallel sun wheels straight ahead, turning repeated suns into direct chase pressure."},
 	"xiu": {"title": "Forest Rest", "description": "Heals over time and knocks back nearby enemies to stretch survivability."},
+	"jun": {"title": "Handsome Drift", "description": "Periodically writes a ring of swift water glyphs around you, healing and clearing the nearest pressure."},
 	"forest": {"title": "Grove Array", "description": "Periodically lays a forest-glyph lane forward, tangling enemies along one path."},
 	"hai": {"title": "Sea Tide", "description": "Detonates ink-wave ripples on a timer to clear nearby swarms."},
 	"lei": {"title": "Falling Thunder", "description": "Locks onto the nearest cluster and slams the mid-field with lightning."},

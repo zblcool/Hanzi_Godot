@@ -2656,7 +2656,7 @@ func _on_player_fire_projectile(origin: Vector3, direction: Vector3, damage: flo
 		_play_attack_sfx("prosper_volley", 0.94 + damage / 30.0)
 	elif glyph == "明" or glyph == "月" or glyph == "日":
 		_play_attack_sfx("bright_volley", 0.9 + damage / 30.0)
-	elif glyph == "沁" or glyph == "水" or glyph == "心":
+	elif glyph == "俊" or glyph == "沁" or glyph == "氵" or glyph == "水" or glyph == "心":
 		_play_attack_sfx("sea_wave", 0.92 + damage / 34.0)
 	else:
 		_play_attack_sfx("scholar_shot", 0.92 + speed / 28.0)
@@ -3294,9 +3294,7 @@ func _try_unlock_new_recipe() -> bool:
 		var recipe_radicals: Array = recipe["radicals"]
 		if not _has_recipe_parts(recipe_radicals):
 			continue
-		for radical_variant in recipe_radicals:
-			var radical := String(radical_variant)
-			radical_counts[radical] = int(radical_counts.get(radical, 0)) - 1
+		_consume_recipe_radicals(recipe)
 		_set_recipe_level(recipe_id, 1)
 		return true
 	return false
@@ -3400,6 +3398,22 @@ func _has_recipe_parts(radicals: Array) -> bool:
 		if int(radical_counts.get(radical, 0)) < int(requirements[radical_variant]):
 			return false
 	return true
+
+
+func _consume_recipe_radicals(recipe: Dictionary) -> void:
+	var requirements: Dictionary = _build_radical_requirement_counts(recipe["radicals"])
+	var persistent_counts: Dictionary = {}
+	var persistent_variant: Variant = recipe.get("persistent_radicals", [])
+	if persistent_variant is Array:
+		for radical_variant in persistent_variant:
+			var radical := String(radical_variant)
+			persistent_counts[radical] = int(persistent_counts.get(radical, 0)) + 1
+	for radical_variant in requirements.keys():
+		var radical := String(radical_variant)
+		var consume_count := maxi(0, int(requirements[radical_variant]) - int(persistent_counts.get(radical, 0)))
+		if consume_count <= 0:
+			continue
+		radical_counts[radical] = maxi(0, int(radical_counts.get(radical, 0)) - consume_count)
 
 
 func _find_available_recipe_radical(radicals: Array) -> String:
@@ -3946,8 +3960,10 @@ func _apply_intro_preset() -> void:
 	for radical_variant in preset_radicals.keys():
 		var radical := String(radical_variant)
 		radical_counts[radical] = maxi(0, int(preset_radicals[radical_variant]))
+		radical_pick_counts[radical] = maxi(0, int(preset_radicals[radical_variant]))
 	for radical in Session.get_hero_starting_radicals():
 		radical_counts[radical] = int(radical_counts.get(radical, 0)) + 1
+		radical_pick_counts[radical] = int(radical_pick_counts.get(radical, 0)) + 1
 		if radical == "刂":
 			player.apply_blade_upgrade()
 	for radical_variant in Session.RADICAL_ORDER:

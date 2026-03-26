@@ -572,6 +572,7 @@ const RADICALS := {
 		"display": "亻",
 		"name": "单人旁",
 		"description": "和 `木` 一起合成「休」，累计两次人势后还会显出秘旁「夋」，继续暗合成「俊」。",
+		"recipe_ids": ["xiu", "jun"],
 		"recipe_id": "xiu"
 	},
 	"夋": {
