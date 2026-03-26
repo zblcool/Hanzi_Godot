@@ -2630,6 +2630,45 @@ func _make_build_route_pairing_block(title: String, entries: Array, fill_color: 
 	return block
 
 
+func _make_build_route_hint_card(card: Dictionary, accent: Color) -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.add_theme_stylebox_override("panel", _make_panel_style(Color(accent.r * 0.1, accent.g * 0.1, accent.b * 0.14, 0.52), Color(accent.r, accent.g, accent.b, 0.2)))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", _i(14))
+	margin.add_theme_constant_override("margin_top", _i(12))
+	margin.add_theme_constant_override("margin_right", _i(14))
+	margin.add_theme_constant_override("margin_bottom", _i(12))
+	panel.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", _i(8))
+	margin.add_child(box)
+
+	var title := String(card.get("title", "")).strip_edges()
+	if not title.is_empty():
+		box.add_child(_make_label(title, 15, Color(1.0, 0.92, 0.8, 1.0)))
+
+	var subtitle := String(card.get("subtitle", "")).strip_edges()
+	if not subtitle.is_empty():
+		box.add_child(_make_label(subtitle, 13, Color(0.82, 0.9, 1.0, 0.92)))
+
+	var tags_variant: Variant = card.get("tags", [])
+	if tags_variant is Array and not (tags_variant as Array).is_empty():
+		box.add_child(
+			_make_build_route_pairing_block(
+				_localize_text(String(FrontEndContent.menu_archive_content().get("build_route_radical_title", "源稿偏旁偏向"))),
+				tags_variant as Array,
+				Color(accent.r * 0.16, accent.g * 0.16, accent.b * 0.2, 0.88),
+				Color(0.98, 0.95, 0.9, 0.96),
+				true
+			)
+		)
+
+	return panel
+
+
 func _populate_build_route_cards(root: VBoxContainer, hero: Dictionary, accent: Color, compact: bool = false) -> void:
 	if root == null:
 		return
@@ -2669,19 +2708,16 @@ func _populate_detail_build_route_preview(root: VBoxContainer, hero: Dictionary,
 	var cards: Array = cards_variant as Array
 	if cards.is_empty():
 		return
-	var first_card_variant: Variant = cards[0]
-	if first_card_variant is Dictionary:
-		root.add_child(_make_build_route_card(first_card_variant as Dictionary, accent, true))
-	if cards.size() <= 1:
-		return
-	var hint_row := HFlowContainer.new()
-	hint_row.add_theme_constant_override("h_separation", _i(8))
-	hint_row.add_theme_constant_override("v_separation", _i(8))
-	root.add_child(hint_row)
-	for index in range(1, cards.size()):
-		var card_variant: Variant = cards[index]
-		if card_variant is Dictionary:
-			hint_row.add_child(_make_tag(_build_route_hint_text(card_variant as Dictionary), Color(accent.r * 0.16, accent.g * 0.16, accent.b * 0.2, 0.88), Color(0.98, 0.95, 0.9, 0.96)))
+	var primary_added := false
+	for card_variant in cards:
+		if not (card_variant is Dictionary):
+			continue
+		var card := card_variant as Dictionary
+		if not primary_added:
+			root.add_child(_make_build_route_card(card, accent, true))
+			primary_added = true
+		else:
+			root.add_child(_make_build_route_hint_card(card, accent))
 
 
 func _make_archive_stat_item(title: String, value: String, accent: Color) -> PanelContainer:
