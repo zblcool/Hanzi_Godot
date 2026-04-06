@@ -1,0 +1,737 @@
+{
+  "version": "0.2.0",
+  "project": "字海残卷",
+  "design_goal": {
+    "core_loop": "战斗获取基础字根，先形成结构字，再通过升级、卷页、遗物、题名等方式进入进阶字与词技，最终用这一整套语言结构解决越来越复杂的战场问题。",
+    "primary_pleasure": "不是单纯升级变强，而是“我的字成了、我的字长成词了”",
+    "design_principles": [
+      "不要把汉字退化成皮肤",
+      "结构合成必须讲得通",
+      "语义进阶不伪装成构形合成",
+      "词技是毕业层，不要求双完整字树",
+      "成语与题名是低频高价值的章级改写器",
+      "遗物与商店优先卖构词机会，而不是纯数值"
+    ]
+  },
+  "system_layers": {
+    "layer_a_runes": {
+      "name": "基础字根层",
+      "role": "局内高频获取的种子资源",
+      "rules": [
+        "常驻主池",
+        "用于形成结构字",
+        "也可作为词技副义来源"
+      ]
+    },
+    "layer_b_structural_chars": {
+      "name": "结构字层",
+      "role": "由基础字根合理构成的核心 build 单位",
+      "rules": [
+        "只有构形合理的字进入本层",
+        "是玩家一局主养的核心字",
+        "升到3级后可作为进阶字或词技前置"
+      ]
+    },
+    "layer_c_advanced_chars": {
+      "name": "进阶字层",
+      "role": "由结构字通过升级、卷页、遗物、题名等方式转义晋阶",
+      "rules": [
+        "不要求构形合成",
+        "表达字意强化、风格专精、玩法转向",
+        "是结构字到词技之间的重要中层"
+      ]
+    },
+    "layer_d_word_skills": {
+      "name": "词技层",
+      "role": "中后期毕业层",
+      "rules": [
+        "采用“主字3级 + 副义来源”模式",
+        "不要求两棵完整字树",
+        "要带来明显玩法变化，不只是数值提高"
+      ]
+    },
+    "layer_e_titles_and_idioms": {
+      "name": "题名/成语层",
+      "role": "章级改写器",
+      "rules": [
+        "不进入普通升级池",
+        "只由Boss、守门怪、异事、章末奖励提供",
+        "低频但极强，承担段落终点感"
+      ]
+    }
+  },
+  "runes": [
+    {
+      "id": "fire",
+      "char": "火",
+      "theme": "爆发、灼烧、燃烧",
+      "combat_tags": ["burst", "burn", "spread"]
+    },
+    {
+      "id": "water",
+      "char": "水",
+      "theme": "流动、润化、缓速",
+      "combat_tags": ["slow", "ripple", "sustain"]
+    },
+    {
+      "id": "rain",
+      "char": "雨",
+      "theme": "覆盖、下落、多段",
+      "combat_tags": ["falling", "coverage", "repeat"]
+    },
+    {
+      "id": "field",
+      "char": "田",
+      "theme": "阵域、落点、格局",
+      "combat_tags": ["zone", "grid", "placement"]
+    },
+    {
+      "id": "person",
+      "char": "人",
+      "theme": "行动、身法、追击",
+      "combat_tags": ["mobility", "strike", "pursuit"]
+    },
+    {
+      "id": "wood",
+      "char": "木",
+      "theme": "生长、延展、持续",
+      "combat_tags": ["growth", "linger", "spawn"]
+    },
+    {
+      "id": "mouth",
+      "char": "口",
+      "theme": "声波、咒令、扩散",
+      "combat_tags": ["wave", "command", "cast"]
+    },
+    {
+      "id": "heart",
+      "char": "心",
+      "theme": "意念、回响、蓄能",
+      "combat_tags": ["echo", "trigger", "intent"]
+    },
+    {
+      "id": "mountain",
+      "char": "山",
+      "theme": "坚固、阻挡、地形",
+      "combat_tags": ["block", "fortify", "terrain"]
+    },
+    {
+      "id": "wind",
+      "char": "风",
+      "theme": "疾速、穿透、牵引",
+      "combat_tags": ["dash", "pierce", "push_pull"]
+    }
+  ],
+  "structural_chars": [
+    {
+      "id": "rest",
+      "char": "休",
+      "compose_from": ["person", "wood"],
+      "validity": "strict_structure",
+      "role": "续航/喘息",
+      "path": "墨守",
+      "levels": {
+        "1": "击杀时有概率生成息点，拾取小回复",
+        "2": "静止短时间获得减伤与回复强化",
+        "3": "低血自动展开休息圈，圈内持续恢复并缓速敌人"
+      },
+      "advance_to": ["nourish", "calm_rest"]
+    },
+    {
+      "id": "thunder",
+      "char": "雷",
+      "compose_from": ["rain", "field"],
+      "validity": "strict_structure",
+      "role": "区域落雷/连锁",
+      "path": "雷阵",
+      "levels": {
+        "1": "指定区域落雷，命中后爆开",
+        "2": "命中后链向附近1个目标",
+        "3": "落点留下导电区，敌人停留持续受击"
+      },
+      "advance_to": ["storm_thunder", "heavy_thunder"],
+      "word_skills": ["thunder_rain", "thunder_array", "thunderbolt"]
+    },
+    {
+      "id": "sprout",
+      "char": "苗",
+      "compose_from": ["field", "wood"],
+      "validity": "strict_structure",
+      "role": "生长阵地/区域延展",
+      "path": "墨守",
+      "levels": {
+        "1": "地面生成苗点，敌人经过受微伤",
+        "2": "苗点可扩成小片区域并减速",
+        "3": "区域内敌人死亡会再生新苗点"
+      },
+      "advance_to": ["dense_growth", "array_seed"]
+    },
+    {
+      "id": "encircle",
+      "char": "囚",
+      "compose_from": ["mouth", "person"],
+      "validity": "strict_structure",
+      "role": "围困/锁定",
+      "path": "雷阵",
+      "levels": {
+        "1": "生成小困格，敌人进入后减速",
+        "2": "困格边缘持续造成切割伤害",
+        "3": "困格中心敌人短暂定身"
+      },
+      "advance_to": ["seal_prison", "binding_order"]
+    }
+  ],
+  "advanced_chars": [
+    {
+      "id": "flame",
+      "char": "炎",
+      "source_type": "semantic_advance",
+      "advance_from": ["fire"],
+      "role": "基础火系主核",
+      "path": "烈笔",
+      "levels": {
+        "1": "前方短距火爆，附1层灼烧",
+        "2": "爆点范围增大，灼烧死亡溅出火星",
+        "3": "连续命中同目标触发炎脉，第3次爆点强化"
+      },
+      "advance_to": ["fierce", "blaze"],
+      "word_skills": ["blazing_flame"]
+    },
+    {
+      "id": "guard",
+      "char": "守",
+      "source_type": "semantic_advance",
+      "advance_from": ["mountain", "heart"],
+      "role": "护场核心",
+      "path": "墨守",
+      "levels": {
+        "1": "自身周围展开小守域，域内减伤",
+        "2": "敌人首次进入守域时被减速",
+        "3": "站在守域内时主技伤害提升并强化回复"
+      },
+      "advance_to": ["solid", "fortress_guard"],
+      "word_skills": ["solid_guard", "guard_array"]
+    },
+    {
+      "id": "move",
+      "char": "行",
+      "source_type": "semantic_advance",
+      "advance_from": ["person"],
+      "role": "机动输出",
+      "path": "游侠",
+      "levels": {
+        "1": "冲刺后留下残影，对路径敌人造成斩击",
+        "2": "连续移动叠加行势，提高移速与残影伤害",
+        "3": "每第3次冲刺触发穿透斩线"
+      },
+      "advance_to": ["swift", "roam"],
+      "word_skills": ["wind_walk", "swift_walk"]
+    },
+    {
+      "id": "wave",
+      "char": "波",
+      "source_type": "semantic_advance",
+      "advance_from": ["water"],
+      "role": "扩散控场",
+      "path": "墨守",
+      "levels": {
+        "1": "向外释放一圈波纹，击退并减速",
+        "2": "波纹可连续弹出第二层",
+        "3": "每命中5个敌人返还一次小波纹"
+      },
+      "advance_to": ["surge", "tidal_wave"]
+    },
+    {
+      "id": "chant",
+      "char": "念",
+      "source_type": "semantic_advance",
+      "advance_from": ["heart"],
+      "role": "回响/延迟施法",
+      "path": "游侠",
+      "levels": {
+        "1": "主攻击有概率在短延迟后再现一次",
+        "2": "再现技优先锁最近敌人并提高伤害",
+        "3": "每隔数次触发生成双念，再现两次"
+      },
+      "advance_to": ["curse", "mind_echo"],
+      "word_skills": ["chant_spell", "heart_mind"]
+    },
+    {
+      "id": "order",
+      "char": "令",
+      "source_type": "semantic_advance",
+      "advance_from": ["mouth", "person"],
+      "role": "指令/追击/目标管理",
+      "path": "游侠",
+      "levels": {
+        "1": "标记一个目标，后续技能优先追击",
+        "2": "击杀被标记者后刷新部分冷却",
+        "3": "标记可扩散到附近一小群敌人"
+      },
+      "advance_to": ["command", "pursuit_order"]
+    },
+    {
+      "id": "array",
+      "char": "阵",
+      "source_type": "semantic_advance",
+      "advance_from": ["field"],
+      "role": "部署体系",
+      "path": "雷阵",
+      "levels": {
+        "1": "放置阵点，周期性触发小伤害",
+        "2": "两个阵点间形成连线伤害",
+        "3": "阵点上限提高，阵内敌人减速"
+      },
+      "advance_to": ["solid_array", "thunder_array"],
+      "word_skills": ["thunder_array", "guard_array"]
+    },
+    {
+      "id": "mist",
+      "char": "岚",
+      "source_type": "semantic_advance",
+      "advance_from": ["wind", "mountain"],
+      "role": "风墙/地形控制",
+      "path": "游侠",
+      "levels": {
+        "1": "生成一段山岚风带，推动敌人",
+        "2": "风带边缘形成切割伤害",
+        "3": "风带持续期间，投射物获得偏转与加速"
+      },
+      "advance_to": ["mountain_mist"],
+      "word_skills": ["mountain_mist"]
+    },
+    {
+      "id": "blaze",
+      "char": "焰",
+      "source_type": "semantic_advance",
+      "advance_from": ["flame", "wind"],
+      "role": "扩散爆燃",
+      "path": "烈笔",
+      "levels": {
+        "1": "射出带拖尾火焰，命中后留下火带",
+        "2": "火带变长，敌人穿过额外受击",
+        "3": "灼烧敌人死亡时，火带向最近敌人跳燃"
+      },
+      "advance_to": ["fierce", "cinder"],
+      "word_skills": ["flame_rain", "blazing_flame"]
+    },
+    {
+      "id": "drizzle",
+      "char": "霖",
+      "source_type": "semantic_advance",
+      "advance_from": ["rain", "wood"],
+      "role": "持续覆盖/润化",
+      "path": "墨守",
+      "levels": {
+        "1": "区域持续落下细雨，低伤多段",
+        "2": "区域内敌人叠润，移速降低",
+        "3": "带润敌人被其他技能命中时额外触发水爆"
+      },
+      "advance_to": ["marsh", "wet_field"],
+      "word_skills": ["drizzle_marsh"]
+    },
+    {
+      "id": "shield",
+      "char": "盾",
+      "source_type": "semantic_advance",
+      "advance_from": ["mountain", "person"],
+      "role": "近压防御",
+      "path": "墨守",
+      "levels": {
+        "1": "面朝方向生成短时盾面",
+        "2": "成功挡伤后反震前方敌人",
+        "3": "格挡后下一次主攻击强化"
+      },
+      "advance_to": ["solid", "wall_shield"]
+    },
+    {
+      "id": "torrent",
+      "char": "涛",
+      "source_type": "semantic_advance",
+      "advance_from": ["water"],
+      "role": "大型推进/群体击退",
+      "path": "雷阵",
+      "levels": {
+        "1": "向前推出一道大浪，击退成群敌人",
+        "2": "大浪尾部留下水迹，敌人减速",
+        "3": "命中大量敌人后补一段小浪"
+      },
+      "advance_to": ["tidal_wave"]
+    },
+    {
+      "id": "rampart",
+      "char": "垒",
+      "source_type": "semantic_advance",
+      "advance_from": ["field", "mountain"],
+      "role": "阵地硬化",
+      "path": "墨守",
+      "levels": {
+        "1": "在目标点立起小土垒，阻挡路径",
+        "2": "土垒周围形成减速环",
+        "3": "土垒被打碎时产生冲击波"
+      },
+      "advance_to": ["solid_array", "fortress_guard"]
+    },
+    {
+      "id": "fierce",
+      "char": "烈",
+      "source_type": "semantic_advance",
+      "advance_from": ["flame", "blaze"],
+      "role": "火系毕业前置",
+      "path": "烈笔",
+      "levels": {
+        "1": "火系伤害对灼烧目标增伤",
+        "2": "连续施放会提高爆点半径",
+        "3": "触发烈势，所有火系命中附小范围炸裂"
+      },
+      "word_skills": ["blazing_flame"]
+    },
+    {
+      "id": "swift",
+      "char": "疾",
+      "source_type": "semantic_advance",
+      "advance_from": ["move", "wind"],
+      "role": "高速毕业前置",
+      "path": "游侠",
+      "levels": {
+        "1": "移速越高，技能伤害越高",
+        "2": "冲刺后短时间提高追击频率",
+        "3": "高速状态下穿敌附额外斩击"
+      },
+      "word_skills": ["swift_walk"]
+    },
+    {
+      "id": "solid",
+      "char": "固",
+      "source_type": "semantic_advance",
+      "advance_from": ["guard", "shield", "rampart"],
+      "role": "坚守毕业前置",
+      "path": "墨守",
+      "levels": {
+        "1": "站在自己的域或阵中时减伤增强",
+        "2": "域内受伤时反震周围",
+        "3": "静止越久，域的尺寸越大"
+      },
+      "word_skills": ["solid_guard", "solid_array"]
+    },
+    {
+      "id": "curse",
+      "char": "咒",
+      "source_type": "semantic_advance",
+      "advance_from": ["chant", "mouth"],
+      "role": "咒印毕业前置",
+      "path": "游侠",
+      "levels": {
+        "1": "技能命中后附加咒印",
+        "2": "咒印叠满触发额外法击",
+        "3": "带咒印目标死亡会把咒传给附近敌人"
+      },
+      "word_skills": ["chant_spell"]
+    },
+    {
+      "id": "heavy_thunder",
+      "char": "霆",
+      "source_type": "semantic_advance",
+      "advance_from": ["thunder"],
+      "role": "高爆雷系毕业前置",
+      "path": "雷阵",
+      "levels": {
+        "1": "落雷首次命中伤害大幅提高",
+        "2": "雷击额外穿透护甲与重敌",
+        "3": "每隔若干次落雷触发重霆大落点"
+      },
+      "word_skills": ["thunderbolt"]
+    }
+  ],
+  "word_skills": [
+    {
+      "id": "thunder_rain",
+      "word": "雷雨",
+      "main_char": "thunder",
+      "requirements": {
+        "main_level": 3,
+        "secondary_source": ["rain", "scroll_rain", "event_rain"]
+      },
+      "effect": "周期性覆盖落雷，控场毕业"
+    },
+    {
+      "id": "thunder_array",
+      "word": "雷阵",
+      "main_char": "thunder",
+      "requirements": {
+        "main_level": 3,
+        "secondary_source": ["array", "scroll_array", "relic_array"]
+      },
+      "effect": "阵点之间导电，敌人越密集越强"
+    },
+    {
+      "id": "thunderbolt",
+      "word": "雷霆",
+      "main_char": "heavy_thunder",
+      "requirements": {
+        "main_level": 3,
+        "secondary_source": ["thunder", "scroll_heavy"]
+      },
+      "effect": "雷击频率降低但爆发极高，偏Boss战"
+    },
+    {
+      "id": "blazing_flame",
+      "word": "烈焰",
+      "main_char": "fierce",
+      "requirements": {
+        "main_level": 3,
+        "secondary_source": ["blaze", "scroll_flame"]
+      },
+      "effect": "爆发后留下燃带，近中距压场"
+    },
+    {
+      "id": "flame_rain",
+      "word": "焰雨",
+      "main_char": "blaze",
+      "requirements": {
+        "main_level": 3,
+        "secondary_source": ["rain", "scroll_rain"]
+      },
+      "effect": "天降火雨，适合守点与清节点"
+    },
+    {
+      "id": "wind_walk",
+      "word": "风行",
+      "main_char": "move",
+      "requirements": {
+        "main_level": 3,
+        "secondary_source": ["wind", "scroll_wind"]
+      },
+      "effect": "冲刺后残影追斩，位移完全转化为输出"
+    },
+    {
+      "id": "swift_walk",
+      "word": "疾行",
+      "main_char": "swift",
+      "requirements": {
+        "main_level": 3,
+        "secondary_source": ["move", "scroll_swift"]
+      },
+      "effect": "连续位移叠伤，极强机动单体压制"
+    },
+    {
+      "id": "solid_guard",
+      "word": "固守",
+      "main_char": "solid",
+      "requirements": {
+        "main_level": 3,
+        "secondary_source": ["guard", "scroll_guard"]
+      },
+      "effect": "静止越久越强，守点房毕业"
+    },
+    {
+      "id": "guard_array",
+      "word": "守阵",
+      "main_char": "guard",
+      "requirements": {
+        "main_level": 3,
+        "secondary_source": ["array", "field", "scroll_array"]
+      },
+      "effect": "定点结界，敌入阵受束缚并持续受击"
+    },
+    {
+      "id": "chant_spell",
+      "word": "念咒",
+      "main_char": "chant",
+      "requirements": {
+        "main_level": 3,
+        "secondary_source": ["curse", "mouth", "scroll_spell"]
+      },
+      "effect": "施放延迟字波，触发链丰富"
+    },
+    {
+      "id": "heart_mind",
+      "word": "心念",
+      "main_char": "chant",
+      "requirements": {
+        "main_level": 3,
+        "secondary_source": ["heart", "scroll_heart"]
+      },
+      "effect": "低血或蓄满时自动回响一次主技"
+    },
+    {
+      "id": "mountain_mist",
+      "word": "山岚",
+      "main_char": "mist",
+      "requirements": {
+        "main_level": 3,
+        "secondary_source": ["mountain", "wind", "scroll_mist"]
+      },
+      "effect": "旋风墙重塑安全区，强地形控制"
+    },
+    {
+      "id": "drizzle_marsh",
+      "word": "霖泽",
+      "main_char": "drizzle",
+      "requirements": {
+        "main_level": 3,
+        "secondary_source": ["water", "scroll_marsh"]
+      },
+      "effect": "大范围缓速与润化，辅助雷系与守阵"
+    }
+  ],
+  "titles_and_idioms": [
+    {
+      "id": "title_feng_chi_dian_che",
+      "text": "风驰电掣",
+      "source": "chapter_reward",
+      "requirements": ["swift_walk", "wind_or_thunder_path"],
+      "effect": "位移、追击、雷链三者联动，整局机动性重写"
+    },
+    {
+      "id": "title_gu_ruo_jin_tang",
+      "text": "固若金汤",
+      "source": "chapter_reward",
+      "requirements": ["solid_guard", "guard_array"],
+      "effect": "站场、防御、结界强度大幅提高"
+    },
+    {
+      "id": "title_lei_ting_wan_jun",
+      "text": "雷霆万钧",
+      "source": "chapter_reward",
+      "requirements": ["thunderbolt", "thunder_array"],
+      "effect": "落雷伤害与导电传播规模大幅提高"
+    }
+  ],
+  "relics": [
+    {
+      "id": "ember_fragment",
+      "name": "墨烬残片",
+      "type": "rune_bias",
+      "effect": "提高火、风、口的出现率"
+    },
+    {
+      "id": "tide_bamboo",
+      "name": "潮纹竹简",
+      "type": "rune_bias",
+      "effect": "提高水、雨、田的出现率"
+    },
+    {
+      "id": "old_copybook",
+      "name": "旧抄本",
+      "type": "structure_modifier",
+      "effect": "本局第一次形成结构字时少消耗1个字根"
+    },
+    {
+      "id": "radical_borrow",
+      "name": "偏旁互借",
+      "type": "structure_modifier",
+      "effect": "每章一次，可把一个字根临时视作相邻语义字根"
+    },
+    {
+      "id": "misread_note",
+      "name": "旁注误读",
+      "type": "advance_modifier",
+      "effect": "开启一条稀有进阶字分支"
+    },
+    {
+      "id": "red_annotation",
+      "name": "断简批红",
+      "type": "word_skill_modifier",
+      "effect": "第一次词技毕业所需副义来源减少1个条件"
+    },
+    {
+      "id": "seal_ink_nail",
+      "name": "封卷墨钉",
+      "type": "risk_reward",
+      "effect": "词技伤害提升，但下一房敌人更快"
+    },
+    {
+      "id": "title_mark",
+      "name": "题名残印",
+      "type": "chapter_reward",
+      "effect": "通关守门怪后可为当前主字题名一次"
+    }
+  ],
+  "shop_scrolls": [
+    {
+      "id": "scroll_rain",
+      "name": "卷页·雨",
+      "effect": "为雷、焰、霖提供雨义来源"
+    },
+    {
+      "id": "scroll_swift",
+      "name": "卷页·疾",
+      "effect": "为行、风提供高速分支"
+    },
+    {
+      "id": "scroll_guard",
+      "name": "卷页·固",
+      "effect": "为守、山、盾提供坚守分支"
+    },
+    {
+      "id": "scroll_flame",
+      "name": "卷页·烈",
+      "effect": "为炎、焰、火提供爆燃毕业"
+    },
+    {
+      "id": "scroll_spell",
+      "name": "卷页·咒",
+      "effect": "为念、口、令提供咒印与触发链"
+    },
+    {
+      "id": "scroll_array",
+      "name": "卷页·阵",
+      "effect": "为雷、守、田提供阵列与连线分支"
+    },
+    {
+      "id": "scroll_mist",
+      "name": "卷页·岚",
+      "effect": "为风、山提供风墙与地形控制分支"
+    },
+    {
+      "id": "scroll_weird_write",
+      "name": "卷页·异写",
+      "effect": "提供一次高风险高收益的稀有进阶机会"
+    }
+  ],
+  "draw_rules": {
+    "normal_upgrade_pool": [
+      "基础字根",
+      "结构字强化",
+      "进阶字解锁机会",
+      "词义来源"
+    ],
+    "not_in_normal_pool": [
+      "成语",
+      "题名",
+      "章级改写器"
+    ],
+    "soft_weight_rules": [
+      "已持有相关字根时，对应结构字权重提高",
+      "已持有结构字时，对应进阶字权重提高",
+      "已持有进阶字时，对应词义来源与卷页权重提高",
+      "已形成词技方向时，对应题名权重提高"
+    ],
+    "guarantees": [
+      "第3房前至少给一次形成结构字的机会",
+      "第6房前至少给一次形成进阶字或词义来源的机会",
+      "第一章末至少给一次足以改写下半局的卷页、遗物或题名"
+    ]
+  },
+  "run_flow": {
+    "early_game": {
+      "focus": "拿字根、形成第一个结构字或主进阶字",
+      "expected_player_feeling": "我这把开始有方向了"
+    },
+    "mid_game": {
+      "focus": "把主字升到3级，获取副义来源，开始接近词技",
+      "expected_player_feeling": "我这个字快毕业了"
+    },
+    "late_game": {
+      "focus": "词技成型、守门怪奖励、题名改写",
+      "expected_player_feeling": "这已经不是一个字，而是一整套打法"
+    }
+  },
+  "validation_targets": [
+    "玩家能否明确说出这把主养的是哪个字",
+    "玩家是否经常处于“差一点就成词”的期待中",
+    "守门怪或章末奖励是否足以改变下半局玩法",
+    "玩家是否能区分“合字成功”“进阶晋阶”“词技毕业”三种不同满足"
+  ]
+}

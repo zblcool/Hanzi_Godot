@@ -1,6 +1,6 @@
 extends RefCounted
 
-const FONT_PATH := "res://assets/fonts/cjk-symbols-fallback.ttc"
+const FONT_PATH := "res://assets/fonts/ui-zh.ttc"
 
 static var cached_font: Font
 

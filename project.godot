@@ -21,9 +21,13 @@ window/size/viewport_width=1280
 window/size/viewport_height=720
 window/stretch/mode="canvas_items"
 
-[physics]
+[editor_plugins]
 
-3d/physics_engine="Jolt Physics"
+enabled=PackedStringArray("res://addons/godot_mcp/plugin.cfg")
+
+[gui]
+
+theme/custom="res://assets/themes/app_theme.tres"
 
 [rendering]
 
